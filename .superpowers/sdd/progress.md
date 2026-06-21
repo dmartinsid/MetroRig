@@ -8,4 +8,4 @@
 - [x] **Task 6**: UI Implementation (commits 91fcc95..ad05e2d, review clean)
 - [x] **Task 7**: WASM Build & Copy Automation (commits 71e4a60..43d8288, review clean)
 - [x] **Task 8**: Create User Guide (README.md) (commits a34731e..a268934, review clean)
-- [ ] **Task 9**: Create Contributor Guide (CONTRIBUTING.md)
+- [x] **Task 9**: Create Contributor Guide (CONTRIBUTING.md) (commits 6cef74c, review clean)
