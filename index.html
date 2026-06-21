@@ -11,8 +11,13 @@
     <header>
       <span class="logo">MetroRig</span>
       <div class="preset-controls">
-        <input type="text" id="preset-name" value="Default Beat">
-        <button id="btn-save">Save Preset</button>
+        <select id="preset-selector">
+          <optgroup id="group-signatures" label="Time Signatures"></optgroup>
+          <optgroup id="group-genres" label="Drum Grooves"></optgroup>
+          <optgroup id="group-user" label="User Presets"></optgroup>
+        </select>
+        <input type="text" id="preset-name" value="Default Beat" style="display:none;">
+        <button id="btn-save" style="display:none;">Save Preset</button>
       </div>
       <button id="btn-toggle-view">GO TO STADIUM MODE</button>
     </header>

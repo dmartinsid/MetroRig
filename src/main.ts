@@ -1,5 +1,5 @@
 import { MetronomeNode } from './audio/MetronomeNode';
-import { StateManager } from './state';
+import { StateManager, FACTORY_PRESETS, Preset } from './state';
 import workletUrl from './audio/metronome-processor?url';
 
 const state = new StateManager();
@@ -30,6 +30,64 @@ const trainerCurve = document.getElementById('trainer-curve') as HTMLSelectEleme
 
 const gridContainer = document.getElementById('grid-container') as HTMLElement;
 
+const presetSelector = document.getElementById('preset-selector') as HTMLSelectElement;
+const groupSignatures = document.getElementById('group-signatures') as HTMLOptGroupElement;
+const groupGenres = document.getElementById('group-genres') as HTMLOptGroupElement;
+const groupUser = document.getElementById('group-user') as HTMLOptGroupElement;
+const presetNameInput = document.getElementById('preset-name') as HTMLInputElement;
+const btnSave = document.getElementById('btn-save') as HTMLButtonElement;
+
+// Helper to show save button when preset is modified
+function markPresetAsModified() {
+  presetNameInput.style.display = 'inline-block';
+  btnSave.style.display = 'inline-block';
+}
+
+// Build option elements
+function populatePresetsDropdown(selectedId?: string) {
+  groupSignatures.innerHTML = '';
+  groupGenres.innerHTML = '';
+  
+  // Add Factory Time Signatures (indices 0 to 3)
+  FACTORY_PRESETS.slice(0, 4).forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = `factory:${p.id}`;
+    opt.innerText = p.name;
+    groupSignatures.appendChild(opt);
+  });
+  
+  // Add Factory Genres (indices 4 onwards)
+  FACTORY_PRESETS.slice(4).forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = `factory:${p.id}`;
+    opt.innerText = p.name;
+    groupGenres.appendChild(opt);
+  });
+
+  // Load User Presets from database
+  state.getAllPresets().then(userPresets => {
+    groupUser.innerHTML = '';
+    if (userPresets.length === 0) {
+      const opt = document.createElement('option');
+      opt.disabled = true;
+      opt.innerText = "No custom presets";
+      groupUser.appendChild(opt);
+    } else {
+      userPresets.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = `user:${p.id}`;
+        opt.innerText = p.name;
+        groupUser.appendChild(opt);
+      });
+    }
+    if (selectedId) {
+      presetSelector.value = selectedId;
+    } else {
+      presetSelector.value = `factory:${state.activePreset.id}`;
+    }
+  });
+}
+
 // Initialize Metronome Engine
 let isAudioInit = false;
 async function initAudio() {
@@ -51,6 +109,9 @@ function syncAudioSettings() {
   
   // Set active BPM
   audioNode.setBpm(state.activePreset.bpm);
+  
+  // Set measure length
+  audioNode.setMeasureLength(state.activePreset.measureLength || 16);
   
   // Update active tracks
   for (let trackId = 0; trackId < 4; trackId++) {
@@ -74,6 +135,9 @@ function syncAudioSettings() {
 const trackNames = ['Click', 'Kick', 'Snare', 'Hi-hat'];
 function drawGrid() {
   gridContainer.innerHTML = '';
+  const measureLength = state.activePreset.measureLength || 16;
+  gridContainer.style.gridTemplateColumns = `auto repeat(${measureLength}, 1fr)`;
+
   for (let trackId = 0; trackId < 4; trackId++) {
     const label = document.createElement('div');
     label.className = 'track-label';
@@ -81,7 +145,7 @@ function drawGrid() {
     gridContainer.appendChild(label);
 
     const trackSteps = state.activePreset.gridData[trackId] || new Array(16).fill(0);
-    for (let step = 0; step < 16; step++) {
+    for (let step = 0; step < measureLength; step++) {
       const cell = document.createElement('div');
       cell.className = 'step-cell';
       if (trackSteps[step] === 1) cell.classList.add('active');
@@ -104,6 +168,8 @@ function drawGrid() {
         if (isAudioInit) {
           audioNode.updateGrid(trackId, new Uint8Array(trackSteps));
         }
+
+        markPresetAsModified();
       };
       gridContainer.appendChild(cell);
     }
@@ -166,6 +232,7 @@ bpmSlider.oninput = () => {
   bpmNumber.innerText = String(bpm);
   state.activePreset.bpm = bpm;
   if (isAudioInit) audioNode.setBpm(bpm);
+  markPresetAsModified();
 };
 
 btnPlay.onclick = togglePlay;
@@ -176,6 +243,7 @@ const formInputs = [trainerEnable, trainerStart, trainerTarget, trainerInc, trai
 formInputs.forEach(el => {
   el.onchange = () => {
     syncAudioSettings();
+    markPresetAsModified();
   };
 });
 
@@ -197,5 +265,60 @@ audioNode.addEventListener('tick', (e: any) => {
   setTimeout(() => beatFlash.classList.remove('flash'), 100);
 });
 
-// Initial draw
+// Handle Preset Dropdown Selection Change
+presetSelector.onchange = () => {
+  const val = presetSelector.value;
+  let targetPreset: Preset | undefined;
+
+  if (val.startsWith('factory:')) {
+    const pid = val.replace('factory:', '');
+    targetPreset = FACTORY_PRESETS.find(p => p.id === pid);
+    if (targetPreset) {
+      loadPresetIntoUI(targetPreset);
+    }
+  } else if (val.startsWith('user:')) {
+    const pid = val.replace('user:', '');
+    state.getAllPresets().then(userPresets => {
+      const p = userPresets.find(up => up.id === pid);
+      if (p) loadPresetIntoUI(p);
+    });
+  }
+};
+
+function loadPresetIntoUI(preset: Preset) {
+  state.activePreset = JSON.parse(JSON.stringify(preset));
+  
+  bpmSlider.value = String(state.activePreset.bpm);
+  bpmNumber.innerText = String(state.activePreset.bpm);
+  
+  presetNameInput.style.display = 'none';
+  btnSave.style.display = 'none';
+  
+  drawGrid();
+  syncAudioSettings();
+}
+
+btnSave.onclick = () => {
+  const name = presetNameInput.value.trim() || 'Custom Preset';
+  const id = 'user_' + Date.now();
+  
+  const newPreset: Preset = {
+    id,
+    name,
+    bpm: state.activePreset.bpm,
+    timeSignature: state.activePreset.timeSignature,
+    measureLength: state.activePreset.measureLength || 16,
+    gridData: JSON.parse(JSON.stringify(state.activePreset.gridData)),
+    trainerSettings: JSON.parse(JSON.stringify(state.activePreset.trainerSettings))
+  };
+  
+  state.savePreset(newPreset).then(() => {
+    populatePresetsDropdown(`user:${id}`);
+    presetNameInput.style.display = 'none';
+    btnSave.style.display = 'none';
+  });
+};
+
+// Initial draw and population
+populatePresetsDropdown();
 drawGrid();
