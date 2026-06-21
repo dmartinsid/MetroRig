@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "/home/deivid/.cargo/bin/cargo build --target wasm32-unknown-unknown --release && vite build",
+    "build:wasm": "/home/deivid/.cargo/bin/cargo build --target wasm32-unknown-unknown --release && node scripts/copy_wasm.js",
+    "build": "npm run build:wasm && vite build",
     "test:js": "vitest run",
     "test:rust": "/home/deivid/.cargo/bin/cargo test"
   },
