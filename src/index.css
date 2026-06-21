@@ -193,3 +193,19 @@ input[type="number"], select {
   width: 200px;
   font-size: 1.5rem;
 }
+
+#preset-selector {
+  background-color: var(--card-bg);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+#preset-selector:focus {
+  border-color: var(--neon-green);
+  box-shadow: 0 0 8px var(--neon-green-dim);
+}
