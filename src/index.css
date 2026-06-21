@@ -1,151 +1,455 @@
+/* ─── Google Fonts ──────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;900&display=swap');
+
+/* ─── Design Tokens ─────────────────────────────────────── */
 :root {
-  --bg-color: #0b0b0c;
-  --card-bg: #151518;
-  --border-color: #27272a;
-  --neon-green: #39ff14;
+  --bg:             #080810;
+  --glass-bg:       rgba(255, 255, 255, 0.04);
+  --glass-border:   rgba(255, 255, 255, 0.08);
+  --neon-green:     #39FF14;
   --neon-green-dim: #1e640b;
-  --cyber-yellow: #ffe600;
-  --text-color: #f3f4f6;
-  --text-muted: #9ca3af;
+  --color-click:    #FFB800;
+  --color-kick:     #FF2D55;
+  --color-snare:    #00D4FF;
+  --color-hihat:    #00FF94;
+  --text:           #F3F4F6;
+  --text-muted:     #9CA3AF;
+  --cyber-yellow:   #FFE600;
+  --radius-card:    12px;
+  --radius-cell:    6px;
 }
+
+/* ─── Track color shortcuts (used in cascade selectors) ─── */
+[data-track="0"] { --track-color: var(--color-click); }
+[data-track="1"] { --track-color: var(--color-kick);  }
+[data-track="2"] { --track-color: var(--color-snare); }
+[data-track="3"] { --track-color: var(--color-hihat); }
+
+/* ─── Reset & Base ───────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  margin: 0;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background-color: var(--bg-color);
-  color: var(--text-color);
+  background-color: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
 }
 
+/* ─── Glass card mixin (applied as class) ───────────────── */
+.card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-card);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06);
+}
+
+/* ─── Header ─────────────────────────────────────────────── */
 header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 1rem 2rem;
-  background-color: var(--card-bg);
-  border-bottom: 1px solid var(--border-color);
+  background: rgba(8, 8, 16, 0.8);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--glass-border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
 }
 
 .logo {
-  font-weight: 800;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
   font-size: 1.5rem;
-  letter-spacing: -0.05em;
   color: var(--neon-green);
+  text-shadow: 0 0 20px rgba(57, 255, 20, 0.4);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-button {
-  background-color: var(--border-color);
-  color: var(--text-color);
-  border: none;
-  padding: 0.5rem 1rem;
+.logo .badge {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--neon-green);
+  border: 1px solid var(--neon-green);
   border-radius: 4px;
+  padding: 1px 5px;
+  opacity: 0.7;
+  align-self: flex-start;
+  margin-top: 4px;
+}
+
+.preset-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+#preset-selector {
+  background: rgba(8, 8, 16, 0.8);
+  color: var(--text);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  padding: 0.5rem 2rem 0.5rem 0.75rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
   cursor: pointer;
+  outline: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239CA3AF' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+#preset-selector:focus {
+  border-color: var(--neon-green);
+  box-shadow: 0 0 8px rgba(57, 255, 20, 0.3);
+}
+
+/* ─── Stadium Mode Button ────────────────────────────────── */
+#btn-toggle-view {
+  background: transparent;
+  color: var(--neon-green);
+  border: 1px solid var(--neon-green);
+  border-radius: 999px;
+  padding: 0.5rem 1.25rem;
+  font-size: 0.85rem;
   font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  letter-spacing: 0.05em;
 }
 
-button:hover {
-  background-color: #3f3f46;
+#btn-toggle-view:hover {
+  background: var(--neon-green);
+  color: var(--bg);
+  box-shadow: 0 0 16px rgba(57, 255, 20, 0.4);
 }
 
+/* ─── Editor Layout ──────────────────────────────────────── */
 #editor-view {
-  padding: 2rem;
   display: grid;
   grid-template-columns: 2fr 1fr;
-  gap: 2rem;
-}
-
-.sequencer-container, .controls-container > div {
-  background-color: var(--card-bg);
+  gap: 1.5rem;
   padding: 1.5rem;
-  border-radius: 8px;
-  border: 1px solid var(--border-color);
 }
 
-.controls-container {
+/* ─── Sequencer Panel ────────────────────────────────────── */
+.sequencer-container {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1rem;
 }
 
-.form-group {
-  margin-bottom: 1rem;
-}
-
-.form-group label {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.panel-header {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
   color: var(--text-muted);
-}
-
-input[type="number"], select {
-  background-color: var(--bg-color);
-  border: 1px solid var(--border-color);
-  color: var(--text-color);
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  width: 80px;
+  letter-spacing: 0.05em;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--glass-border);
+  margin-bottom: 0.5rem;
 }
 
 .sequencer-grid {
   display: grid;
   grid-template-columns: auto repeat(16, 1fr);
-  gap: 0.5rem;
-  margin-top: 1rem;
+  gap: 0.4rem;
   align-items: center;
 }
 
+/* Track label pill */
 .track-label {
-  font-weight: bold;
-  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--track-color);
+  background: rgba(0,0,0,0.3);
+  border: 1px solid var(--track-color);
+  border-radius: 999px;
+  padding: 3px 10px;
   min-width: 60px;
+  text-align: center;
+  text-transform: uppercase;
 }
 
+/* Step cells */
 .step-cell {
   aspect-ratio: 1;
-  background-color: var(--bg-color);
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-cell);
   cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.step-cell:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+[data-track] .step-cell:hover {
+  border-color: color-mix(in srgb, var(--track-color) 50%, transparent);
 }
 
 .step-cell.active {
-  background-color: var(--neon-green-dim);
-  box-shadow: 0 0 8px var(--neon-green-dim);
-  border-color: var(--neon-green);
+  background: color-mix(in srgb, var(--track-color) 25%, transparent);
+  border-color: var(--track-color);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--track-color) 40%, transparent);
 }
 
 .step-cell.accent {
-  background-color: var(--neon-green);
-  box-shadow: 0 0 12px var(--neon-green);
-  border-color: var(--neon-green);
+  background: var(--track-color);
+  border-color: var(--track-color);
+  box-shadow: 0 0 16px var(--track-color);
 }
 
-.play-btn, .play-btn-large {
-  background-color: var(--neon-green-dim);
+/* ─── Controls Panel ─────────────────────────────────────── */
+.controls-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* BPM Card */
+.bpm-card {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.bpm-display {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 4rem;
+  font-weight: 700;
+  color: var(--neon-green);
+  text-shadow: 0 0 30px rgba(57, 255, 20, 0.35);
+  line-height: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.bpm-display .bpm-unit {
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--glass-border);
+  outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--neon-green);
+  box-shadow: 0 0 8px rgba(57, 255, 20, 0.6);
+  cursor: pointer;
+}
+
+/* Play Button */
+.play-btn {
+  background: transparent;
   color: var(--neon-green);
   border: 1px solid var(--neon-green);
-  width: 100%;
-  padding: 1rem;
   border-radius: 8px;
-  font-size: 1.2rem;
+  width: 100%;
+  padding: 0.9rem;
+  font-size: 1rem;
+  font-weight: 700;
   letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
 }
 
 .play-btn:hover {
-  background-color: var(--neon-green);
-  color: var(--bg-color);
+  background: var(--neon-green);
+  color: var(--bg);
+  box-shadow: 0 0 20px rgba(57, 255, 20, 0.4);
 }
 
-/* Stadium View */
-.hidden {
-  display: none !important;
+.play-btn .icon-play { display: inline; }
+.play-btn .icon-stop { display: none; }
+.play-btn.playing .icon-play { display: none; }
+.play-btn.playing .icon-stop { display: inline; }
+
+/* Trainer Card */
+.trainer-card {
+  padding: 1.25rem;
+  overflow: hidden;
 }
 
+.trainer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.trainer-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.trainer-active-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--neon-green);
+  box-shadow: 0 0 6px var(--neon-green);
+  display: none;
+}
+
+.trainer-active-dot.visible { display: block; }
+
+.trainer-chevron {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  transition: transform 0.3s ease;
+}
+
+.trainer-body {
+  height: 0;
+  overflow: hidden;
+}
+
+.trainer-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  padding-top: 1rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.form-group label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+input[type="number"],
+select {
+  background: rgba(8, 8, 16, 0.8);
+  border: 1px solid var(--glass-border);
+  color: var(--text);
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+input[type="number"]:focus,
+select:focus {
+  border-color: var(--neon-green);
+}
+
+input[type="checkbox"] {
+  accent-color: var(--neon-green);
+  width: 16px;
+  height: 16px;
+}
+
+/* Save Preset Toast */
+.save-toast {
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-20px);
+  pointer-events: none;
+}
+
+.save-toast.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.save-toast input[type="text"] {
+  flex: 1;
+  background: rgba(8, 8, 16, 0.8);
+  border: 1px solid var(--glass-border);
+  color: var(--text);
+  padding: 0.4rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  outline: none;
+}
+
+.save-toast input[type="text"]:focus {
+  border-color: var(--neon-green);
+}
+
+.btn-save {
+  background: var(--neon-green-dim);
+  color: var(--neon-green);
+  border: 1px solid var(--neon-green);
+  border-radius: 6px;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s, color 0.2s;
+}
+
+.btn-save:hover {
+  background: var(--neon-green);
+  color: var(--bg);
+}
+
+/* ─── Utilities ──────────────────────────────────────────── */
+.hidden { display: none !important; }
+
+/* ─── Stadium View ───────────────────────────────────────── */
 #stadium-view {
   height: calc(100vh - 70px);
   display: flex;
   justify-content: center;
   align-items: center;
+  background: radial-gradient(ellipse at center, rgba(57,255,20,0.03) 0%, transparent 70%);
 }
 
 .stadium-display {
@@ -157,55 +461,73 @@ input[type="number"], select {
 }
 
 .stadium-timer {
-  font-size: 2rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.2rem;
   color: var(--text-muted);
-  font-family: monospace;
+  letter-spacing: 0.15em;
 }
 
 .stadium-bpm {
+  font-family: 'JetBrains Mono', monospace;
   font-size: 8rem;
   font-weight: 900;
   color: var(--neon-green);
   text-shadow: 0 0 30px rgba(57, 255, 20, 0.4);
   letter-spacing: -0.05em;
+  line-height: 1;
 }
 
 .stadium-trainer-info {
-  font-size: 1.5rem;
+  font-size: 1rem;
   color: var(--cyber-yellow);
+  letter-spacing: 0.05em;
 }
 
-.stadium-beat-flasher {
-  width: 300px;
-  height: 10px;
-  background-color: var(--border-color);
-  border-radius: 5px;
+/* Orb row */
+.orb-row {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.orb {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
   position: relative;
-  overflow: hidden;
 }
 
-.stadium-beat-flasher.flash {
-  background-color: var(--neon-green);
-  box-shadow: 0 0 15px var(--neon-green);
+[data-track="0"].orb {
+  background: rgba(255, 184, 0, 0.1);
+  border: 1px solid rgba(255, 184, 0, 0.25);
+}
+[data-track="1"].orb {
+  background: rgba(255, 45, 85, 0.1);
+  border: 1px solid rgba(255, 45, 85, 0.25);
+}
+[data-track="2"].orb {
+  background: rgba(0, 212, 255, 0.1);
+  border: 1px solid rgba(0, 212, 255, 0.25);
+}
+[data-track="3"].orb {
+  background: rgba(0, 255, 148, 0.1);
+  border: 1px solid rgba(0, 255, 148, 0.25);
 }
 
+/* Background flash overlay */
+#bg-flash {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 0;
+}
+
+/* Stadium play button */
 .play-btn-large {
   width: 200px;
-  font-size: 1.5rem;
-}
-
-#preset-selector {
-  background-color: var(--card-bg);
-  color: var(--text-color);
-  border: 1px solid var(--border-color);
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  font-size: 1rem;
-  cursor: pointer;
-  outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-#preset-selector:focus {
-  border-color: var(--neon-green);
-  box-shadow: 0 0 8px var(--neon-green-dim);
+  font-size: 1.2rem;
+  border-radius: 999px;
+  padding: 1rem 2rem;
 }
