@@ -37,25 +37,41 @@ class MetronomeProcessor extends AudioWorkletProcessor {
   constructor() {
     super();
     this.port.onmessage = this.handleMessage.bind(this);
+    this.port.start();
   }
 
   private handleMessage(event: MessageEvent) {
     const msg = event.data;
+    console.log("MetronomeProcessor: handleMessage received type:", msg.type);
     if (msg.type === 'INIT_WASM') {
-      WebAssembly.instantiate(msg.module, {}).then((instance) => {
-        this.wasmExports = instance.exports as unknown as WasmEngineExports;
-        this.initializeEngine();
-      });
+      console.log("MetronomeProcessor: starting WebAssembly.instantiate with ArrayBuffer...");
+      WebAssembly.instantiate(msg.wasmBuffer, {})
+        .then((result) => {
+          console.log("MetronomeProcessor: WebAssembly instantiated successfully!");
+          this.wasmExports = result.instance.exports as unknown as WasmEngineExports;
+          this.initializeEngine();
+        })
+        .catch((err) => {
+          console.error("MetronomeProcessor: WebAssembly instantiation FAILED:", err);
+          this.port.postMessage({ type: 'WASM_ERROR', error: err.toString() });
+        });
     } else if (this.wasmExports && this.enginePtr !== 0) {
       this.processCommand(msg);
+    } else {
+      console.log("MetronomeProcessor: message ignored because engine is not initialized yet:", msg.type);
     }
   }
 
   private initializeEngine() {
-    if (!this.wasmExports) return;
+    if (!this.wasmExports) {
+      console.error("MetronomeProcessor: cannot initializeEngine, wasmExports is missing");
+      return;
+    }
     
+    console.log("MetronomeProcessor: initializing Rust engine...");
     // Instantiate engine in Rust
     this.enginePtr = this.wasmExports.engine_new(sampleRate);
+    console.log("MetronomeProcessor: Rust engine created at pointer:", this.enginePtr);
     
     // Allocate outputs and state buffers
     const floatSize = 4;
@@ -63,6 +79,11 @@ class MetronomeProcessor extends AudioWorkletProcessor {
     this.outLBufferPtr = this.wasmExports.engine_alloc(bytesNeeded);
     this.outRBufferPtr = this.wasmExports.engine_alloc(bytesNeeded);
     this.bpmPtr = this.wasmExports.engine_alloc(8); // f64 is 8 bytes
+    console.log("MetronomeProcessor: engine buffers allocated.");
+
+    // Notify main thread that engine is initialized
+    console.log("MetronomeProcessor: sending WASM_READY...");
+    this.port.postMessage({ type: 'WASM_READY' });
   }
 
   private processCommand(msg: any) {

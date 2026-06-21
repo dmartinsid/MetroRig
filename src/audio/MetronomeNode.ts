@@ -3,6 +3,7 @@ export class MetronomeNode extends EventTarget {
   private workletNode: AudioWorkletNode | null = null;
   private wasmModule: WebAssembly.Module | null = null;
   private isInitialized: boolean = false;
+  private initPromise: Promise<void> | null = null;
 
   constructor() {
     super();
@@ -12,40 +13,80 @@ export class MetronomeNode extends EventTarget {
     });
   }
 
-  async init(wasmUrl: string, workletUrl: string) {
-    if (this.isInitialized) return;
+  async init(wasmUrl: string, workletUrl: string): Promise<void> {
+    if (this.isInitialized) {
+      console.log("MetronomeNode: Already initialized");
+      return;
+    }
+    if (this.initPromise) {
+      console.log("MetronomeNode: Initialization already in progress, returning promise");
+      return this.initPromise;
+    }
 
-    // 1. Compile WASM binary streaming
-    const wasmFetch = await fetch(wasmUrl);
-    const wasmBuffer = await wasmFetch.arrayBuffer();
-    this.wasmModule = await WebAssembly.compile(wasmBuffer);
+    console.log("MetronomeNode: Starting initialization. WASM URL:", wasmUrl, "Worklet URL:", workletUrl);
+    this.initPromise = new Promise<void>(async (resolve, reject) => {
+      try {
+        // 1. Fetch WASM binary as ArrayBuffer
+        console.log("MetronomeNode: Fetching WASM...");
+        const wasmFetch = await fetch(wasmUrl);
+        console.log("MetronomeNode: Fetch completed. Status:", wasmFetch.status);
+        if (!wasmFetch.ok) {
+          throw new Error(`Failed to fetch WASM binary: ${wasmFetch.statusText}`);
+        }
+        const wasmBuffer = await wasmFetch.arrayBuffer();
+        console.log("MetronomeNode: WASM fetched successfully. Bytes:", wasmBuffer.byteLength);
 
-    // 2. Load the AudioWorklet script
-    await this.ctx.audioWorklet.addModule(workletUrl);
+        // 2. Load the AudioWorklet script
+        console.log("MetronomeNode: Adding AudioWorklet module...");
+        await this.ctx.audioWorklet.addModule(workletUrl);
+        console.log("MetronomeNode: AudioWorklet module added.");
 
-    // 3. Create AudioWorkletNode
-    this.workletNode = new AudioWorkletNode(this.ctx, 'metronome-processor', {
-      outputChannelCount: [2]
-    });
+        // 3. Create AudioWorkletNode
+        this.workletNode = new AudioWorkletNode(this.ctx, 'metronome-processor', {
+          outputChannelCount: [2]
+        });
+        console.log("MetronomeNode: AudioWorkletNode created.");
 
-    // 4. Initialize WASM in the processor thread
-    this.workletNode.port.postMessage({
-      type: 'INIT_WASM',
-      module: this.wasmModule
-    });
+        // Monitor processor errors
+        this.workletNode.onprocessorerror = (event) => {
+          console.error("MetronomeNode: Processor error occurred inside AudioWorklet:", event);
+        };
 
-    // 5. Connect node to audio output destination
-    this.workletNode.connect(this.ctx.destination);
+        // 4. Connect node to audio output destination
+        this.workletNode.connect(this.ctx.destination);
+        console.log("MetronomeNode: Connected to AudioContext destination.");
 
-    // 6. Listen for tick events from processor
-    this.workletNode.port.onmessage = (event) => {
-      const msg = event.data;
-      if (msg.type === 'TICK') {
-        this.dispatchEvent(new CustomEvent('tick', { detail: msg }));
+        // 5. Listen for events
+        this.workletNode.port.onmessage = (event) => {
+          const msg = event.data;
+          console.log("MetronomeNode: Received message from AudioWorklet:", msg.type);
+          if (msg.type === 'WASM_READY') {
+            console.log("MetronomeNode: WASM is ready inside the worklet.");
+            this.isInitialized = true;
+            resolve();
+          } else if (msg.type === 'WASM_ERROR') {
+            console.error("MetronomeNode: WASM error reported from worklet:", msg.error);
+            reject(new Error(msg.error));
+          } else if (msg.type === 'TICK') {
+            this.dispatchEvent(new CustomEvent('tick', { detail: msg }));
+          }
+        };
+        this.workletNode.port.start();
+
+        // 6. Initialize WASM in the processor thread (transfer ownership of ArrayBuffer)
+        console.log("MetronomeNode: Posting INIT_WASM to worklet with ArrayBuffer...");
+        this.workletNode.port.postMessage({
+          type: 'INIT_WASM',
+          wasmBuffer: wasmBuffer
+        }, [wasmBuffer]);
+      } catch (err) {
+        console.error("MetronomeNode: Initialization failed with error:", err);
+        this.initPromise = null;
+        reject(err);
       }
-    };
+    });
 
-    this.isInitialized = true;
+    return this.initPromise;
   }
 
   async resumeContext() {
