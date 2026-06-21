@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "cargo build --target wasm32-unknown-unknown --release && vite build",
+    "build": "/home/deivid/.cargo/bin/cargo build --target wasm32-unknown-unknown --release && vite build",
     "test:js": "vitest run",
-    "test:rust": "cargo test"
+    "test:rust": "/home/deivid/.cargo/bin/cargo test"
   },
   "devDependencies": {
     "happy-dom": "^20.10.6",

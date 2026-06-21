@@ -367,6 +367,21 @@ pub extern "C" fn engine_process(ptr: *mut Engine, out_l_ptr: *mut f32, out_r_pt
     engine.fill_buffers(out_l, out_r);
 }
 
+#[no_mangle]
+pub extern "C" fn engine_alloc(size: usize) -> *mut u8 {
+    let mut buf = vec![0u8; size];
+    let ptr = buf.as_mut_ptr();
+    std::mem::forget(buf);
+    ptr
+}
+
+#[no_mangle]
+pub extern "C" fn engine_free_buf(ptr: *mut u8, size: usize) {
+    if !ptr.is_null() {
+        unsafe { let _ = Vec::from_raw_parts(ptr, size, size); }
+    }
+}
+
 // --- UNIT TESTS ---
 #[cfg(test)]
 mod tests {

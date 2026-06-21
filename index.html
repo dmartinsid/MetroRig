@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MetroRig - Pro Metronome & Drum Machine</title>
+  <link rel="stylesheet" href="./src/index.css">
+</head>
+<body>
+  <div id="app">
+    <header>
+      <span class="logo">MetroRig</span>
+      <div class="preset-controls">
+        <input type="text" id="preset-name" value="Default Beat">
+        <button id="btn-save">Save Preset</button>
+      </div>
+      <button id="btn-toggle-view">GO TO STADIUM MODE</button>
+    </header>
+
+    <!-- Editor Mode Screen -->
+    <main id="editor-view">
+      <section class="sequencer-container">
+        <h2>Step Sequencer</h2>
+        <div class="sequencer-grid" id="grid-container"></div>
+      </section>
+
+      <section class="controls-container">
+        <div class="trainer-config">
+          <h2>Tempo Trainer Config</h2>
+          <div class="form-group">
+            <label>Trainer Active: <input type="checkbox" id="trainer-enable"></label>
+          </div>
+          <div class="form-group">
+            <label>Start BPM: <input type="number" id="trainer-start" value="120"></label>
+          </div>
+          <div class="form-group">
+            <label>Target BPM: <input type="number" id="trainer-target" value="160"></label>
+          </div>
+          <div class="form-group">
+            <label>Increment (BPM): <input type="number" id="trainer-inc" value="5"></label>
+          </div>
+          <div class="form-group">
+            <label>Step Type:
+              <select id="trainer-type">
+                <option value="measures">Measures</option>
+                <option value="seconds">Seconds</option>
+              </select>
+            </label>
+          </div>
+          <div class="form-group">
+            <label>Step Limit Value: <input type="number" id="trainer-val" value="4"></label>
+          </div>
+          <div class="form-group">
+            <label>Curve Mode:
+              <select id="trainer-curve">
+                <option value="stepped">Stepped</option>
+                <option value="smooth">Smooth Ramp</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <div class="metronome-panel">
+          <h2>Speed Controls</h2>
+          <div class="bpm-display-control">
+            <input type="range" id="bpm-slider" min="40" max="240" value="120">
+            <span id="bpm-number">120</span> BPM
+          </div>
+          <button id="btn-play" class="play-btn">PLAY</button>
+        </div>
+      </section>
+    </main>
+
+    <!-- Stadium View Screen -->
+    <main id="stadium-view" class="hidden">
+      <div class="stadium-display">
+        <div class="stadium-timer" id="stadium-timer">00:00</div>
+        <div class="stadium-bpm" id="stadium-bpm">120.0</div>
+        <div class="stadium-trainer-info" id="stadium-status">Trainer Off</div>
+        <div class="stadium-beat-flasher" id="beat-flash"></div>
+        <div class="stadium-controls">
+          <button id="btn-stadium-play" class="play-btn-large">PLAY</button>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script type="module" src="./src/main.ts"></script>
+</body>
+</html>
