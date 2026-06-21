@@ -1,0 +1,10 @@
+[package]
+name = "metrorig_audio"
+version = "1.0.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+# No external crates needed for pure DSP math

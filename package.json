@@ -1,0 +1,18 @@
+{
+  "name": "metrorig",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "cargo build --target wasm32-unknown-unknown --release && vite build",
+    "test:js": "vitest run",
+    "test:rust": "cargo test"
+  },
+  "devDependencies": {
+    "happy-dom": "^20.10.6",
+    "typescript": "^5.0.0",
+    "vite": "^5.0.0",
+    "vitest": "^1.0.0"
+  }
+}
