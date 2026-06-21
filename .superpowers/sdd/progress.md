@@ -7,5 +7,5 @@
 - [x] **Task 5**: State Manager & Database Persistence (commits 2397628..29d7688, review clean)
 - [x] **Task 6**: UI Implementation (commits 91fcc95..ad05e2d, review clean)
 - [x] **Task 7**: WASM Build & Copy Automation (commits 71e4a60..43d8288, review clean)
-- [ ] **Task 8**: Create User Guide (README.md)
+- [x] **Task 8**: Create User Guide (README.md) (commits a34731e..a268934, review clean)
 - [ ] **Task 9**: Create Contributor Guide (CONTRIBUTING.md)
