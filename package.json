@@ -5,10 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build:wasm": "/home/deivid/.cargo/bin/cargo build --target wasm32-unknown-unknown --release && node scripts/copy_wasm.js",
+    "build:wasm": "cargo build --target wasm32-unknown-unknown --release && node scripts/copy_wasm.js",
     "build": "npm run build:wasm && vite build",
     "test:js": "vitest run",
-    "test:rust": "/home/deivid/.cargo/bin/cargo test"
+    "test:rust": "cargo test"
   },
   "devDependencies": {
     "happy-dom": "^20.10.6",
