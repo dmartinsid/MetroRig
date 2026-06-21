@@ -50,6 +50,9 @@ pub struct Engine {
     // Events queued for Javascript
     last_tick_index: i32, // -1 if no tick in last process
     last_tick_bpm: f64,
+
+    // Dynamic measure length looping
+    measure_length: usize,
 }
 
 impl Engine {
@@ -88,6 +91,7 @@ impl Engine {
             trainer_accumulated_samples: 0,
             last_tick_index: -1,
             last_tick_bpm: 120.0,
+            measure_length: 16,
         };
         eng.recalc_tempo();
         eng
@@ -135,7 +139,7 @@ impl Engine {
         }
 
         // Update step index
-        self.step_index = (self.step_index + 1) % STEPS_COUNT;
+        self.step_index = (self.step_index + 1) % self.measure_length;
         if self.step_index == 0 {
             // End of a measure
             self.on_measure_complete();
@@ -170,7 +174,7 @@ impl Engine {
             self.trainer_step_value * self.sample_rate as f64
         } else {
             // By measure: samples per measure
-            self.samples_per_step * STEPS_COUNT as f64 * self.trainer_step_value
+            self.samples_per_step * self.measure_length as f64 * self.trainer_step_value
         };
 
         if self.bpm < self.trainer_target_bpm {
@@ -319,6 +323,16 @@ pub extern "C" fn engine_update_grid(ptr: *mut Engine, sample_id: u32, steps_ptr
     let engine = unsafe { &mut *ptr };
     let steps_slice = unsafe { slice::from_raw_parts(steps_ptr, length) };
     engine.tracks[sample_id as usize].steps.copy_from_slice(steps_slice);
+}
+
+#[no_mangle]
+pub extern "C" fn engine_set_measure_length(ptr: *mut Engine, length: u32) {
+    if ptr.is_null() || length == 0 || length > STEPS_COUNT as u32 { return; }
+    let engine = unsafe { &mut *ptr };
+    engine.measure_length = length as usize;
+    if engine.step_index >= engine.measure_length {
+        engine.step_index = 0;
+    }
 }
 
 #[no_mangle]
@@ -563,5 +577,24 @@ mod tests {
         
         engine_stop(ptr);
         engine_free(ptr);
+    }
+
+    #[test]
+    fn test_measure_length_looping() {
+        let mut engine = Engine::new(44100.0);
+        engine.start();
+        
+        // Update measure length to 12 steps (3/4 time signature)
+        engine_set_measure_length(&mut engine as *mut Engine, 12);
+        
+        // Manually trigger steps. Triggering 12 times should loop the step_index from 0 to 11 and back to 0.
+        for _ in 0..11 {
+            engine.trigger_step();
+        }
+        assert_eq!(engine.step_index, 11);
+        
+        // The 12th trigger should wrap step_index back to 0
+        engine.trigger_step();
+        assert_eq!(engine.step_index, 0);
     }
 }
