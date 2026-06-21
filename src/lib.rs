@@ -24,7 +24,6 @@ pub struct Engine {
     
     // Synthesis params for click (Oscillator)
     click_phase: f32,
-    click_decay: f32,
     active_click_freq: f32,
     active_click_amp: f32,
 
@@ -71,7 +70,6 @@ impl Engine {
             step_index: 0,
             samples_in_current_step: 0.0,
             click_phase: 0.0,
-            click_decay: 0.0,
             active_click_freq: 0.0,
             active_click_amp: 0.0,
             samples: [None, None, None, None],
@@ -124,7 +122,6 @@ impl Engine {
             self.active_click_freq = if click_step == 2 { 880.0 } else { 440.0 };
             self.active_click_amp = 1.0;
             self.click_phase = 0.0;
-            self.click_decay = 1.0;
         }
 
         // Check drum tracks (1 = Kick, 2 = Snare, 3 = Hi-hat)
@@ -146,7 +143,7 @@ impl Engine {
     }
 
     fn on_measure_complete(&mut self) {
-        if self.trainer_enabled && self.trainer_step_type == 0 {
+        if self.trainer_enabled && self.trainer_step_type == 0 && self.trainer_curve == 0 {
             self.trainer_accumulated_measures += 1;
             if self.trainer_accumulated_measures >= self.trainer_step_value as u64 {
                 self.trainer_accumulated_measures = 0;
@@ -276,18 +273,21 @@ pub extern "C" fn engine_free(ptr: *mut Engine) {
 
 #[no_mangle]
 pub extern "C" fn engine_start(ptr: *mut Engine) {
+    if ptr.is_null() { return; }
     let engine = unsafe { &mut *ptr };
     engine.start();
 }
 
 #[no_mangle]
 pub extern "C" fn engine_stop(ptr: *mut Engine) {
+    if ptr.is_null() { return; }
     let engine = unsafe { &mut *ptr };
     engine.stop();
 }
 
 #[no_mangle]
 pub extern "C" fn engine_set_bpm(ptr: *mut Engine, bpm: f64) {
+    if ptr.is_null() || bpm <= 0.0 || !bpm.is_finite() { return; }
     let engine = unsafe { &mut *ptr };
     engine.bpm = bpm;
     engine.recalc_tempo();
@@ -301,7 +301,7 @@ pub extern "C" fn engine_load_sample(
     right_ptr: *const f32,
     length: usize
 ) {
-    if sample_id >= MAX_SAMPLES as u32 { return; }
+    if ptr.is_null() || left_ptr.is_null() || right_ptr.is_null() || sample_id >= MAX_SAMPLES as u32 { return; }
     let engine = unsafe { &mut *ptr };
     let left_slice = unsafe { slice::from_raw_parts(left_ptr, length) };
     let right_slice = unsafe { slice::from_raw_parts(right_ptr, length) };
@@ -315,7 +315,7 @@ pub extern "C" fn engine_load_sample(
 
 #[no_mangle]
 pub extern "C" fn engine_update_grid(ptr: *mut Engine, sample_id: u32, steps_ptr: *const u8, length: usize) {
-    if sample_id >= MAX_SAMPLES as u32 || length != STEPS_COUNT { return; }
+    if ptr.is_null() || steps_ptr.is_null() || sample_id >= MAX_SAMPLES as u32 || length != STEPS_COUNT { return; }
     let engine = unsafe { &mut *ptr };
     let steps_slice = unsafe { slice::from_raw_parts(steps_ptr, length) };
     engine.tracks[sample_id as usize].steps.copy_from_slice(steps_slice);
@@ -332,6 +332,12 @@ pub extern "C" fn engine_set_trainer(
     step_value: f64,
     curve_type: u32
 ) {
+    if ptr.is_null() { return; }
+    if start_bpm <= 0.0 || !start_bpm.is_finite() { return; }
+    if target_bpm <= 0.0 || !target_bpm.is_finite() { return; }
+    if increment < 0.0 || !increment.is_finite() { return; }
+    if step_value <= 0.0 || !step_value.is_finite() { return; }
+
     let engine = unsafe { &mut *ptr };
     engine.trainer_enabled = enabled;
     engine.trainer_start_bpm = start_bpm;
@@ -346,6 +352,7 @@ pub extern "C" fn engine_set_trainer(
 
 #[no_mangle]
 pub extern "C" fn engine_get_tick(ptr: *mut Engine, out_bpm: *mut f64) -> i32 {
+    if ptr.is_null() || out_bpm.is_null() { return -1; }
     let engine = unsafe { &mut *ptr };
     unsafe { *out_bpm = engine.last_tick_bpm; }
     engine.last_tick_index
@@ -353,6 +360,7 @@ pub extern "C" fn engine_get_tick(ptr: *mut Engine, out_bpm: *mut f64) -> i32 {
 
 #[no_mangle]
 pub extern "C" fn engine_process(ptr: *mut Engine, out_l_ptr: *mut f32, out_r_ptr: *mut f32, length: usize) {
+    if ptr.is_null() || out_l_ptr.is_null() || out_r_ptr.is_null() { return; }
     let engine = unsafe { &mut *ptr };
     let out_l = unsafe { slice::from_raw_parts_mut(out_l_ptr, length) };
     let out_r = unsafe { slice::from_raw_parts_mut(out_r_ptr, length) };
