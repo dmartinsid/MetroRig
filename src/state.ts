@@ -3,6 +3,7 @@ export interface Preset {
   name: string;
   bpm: number;
   timeSignature: string;
+  measureLength: number;
   gridData: Record<number, number[]>; // trackId -> 16 steps
   trainerSettings: {
     enabled: boolean;
@@ -29,11 +30,12 @@ export class StateManager {
   
   public activePreset: Preset = {
     id: 'default',
-    name: 'Default Beat',
+    name: '4/4 Metronome',
     bpm: 120,
     timeSignature: '4/4',
+    measureLength: 16,
     gridData: {
-      0: [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0], // Clicks
+      0: [2, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0], // Clicks
       1: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // Kick
       2: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // Snare
       3: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // Hihat
@@ -158,3 +160,132 @@ export class StateManager {
     });
   }
 }
+
+export const FACTORY_PRESETS: Preset[] = [
+  {
+    id: 'default',
+    name: '4/4 Metronome',
+    bpm: 120,
+    timeSignature: '4/4',
+    measureLength: 16,
+    gridData: {
+      0: [2, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
+      1: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      2: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      3: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    },
+    trainerSettings: { enabled: false, startBpm: 120, targetBpm: 160, increment: 5, stepType: 'measures', stepValue: 4, curve: 'stepped' }
+  },
+  {
+    id: '3_4',
+    name: '3/4 Metronome',
+    bpm: 120,
+    timeSignature: '3/4',
+    measureLength: 12,
+    gridData: {
+      0: [2, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+      1: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      2: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      3: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    },
+    trainerSettings: { enabled: false, startBpm: 120, targetBpm: 160, increment: 5, stepType: 'measures', stepValue: 4, curve: 'stepped' }
+  },
+  {
+    id: '6_8',
+    name: '6/8 Metronome',
+    bpm: 120,
+    timeSignature: '6/8',
+    measureLength: 12,
+    gridData: {
+      0: [2, 0, 1, 0, 1, 0, 2, 0, 1, 0, 1, 0, 0, 0, 0, 0],
+      1: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      2: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      3: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    },
+    trainerSettings: { enabled: false, startBpm: 120, targetBpm: 160, increment: 5, stepType: 'measures', stepValue: 4, curve: 'stepped' }
+  },
+  {
+    id: '7_8',
+    name: '7/8 Metronome',
+    bpm: 120,
+    timeSignature: '7/8',
+    measureLength: 14,
+    gridData: {
+      0: [2, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+      1: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      2: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      3: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    },
+    trainerSettings: { enabled: false, startBpm: 120, targetBpm: 160, increment: 5, stepType: 'measures', stepValue: 4, curve: 'stepped' }
+  },
+  {
+    id: 'rock',
+    name: 'Rock Groove',
+    bpm: 120,
+    timeSignature: '4/4',
+    measureLength: 16,
+    gridData: {
+      0: [2, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
+      1: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+      2: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+      3: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+    },
+    trainerSettings: { enabled: false, startBpm: 120, targetBpm: 160, increment: 5, stepType: 'measures', stepValue: 4, curve: 'stepped' }
+  },
+  {
+    id: 'metal',
+    name: 'Metal Groove',
+    bpm: 140,
+    timeSignature: '4/4',
+    measureLength: 16,
+    gridData: {
+      0: [2, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
+      1: [1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0],
+      2: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+      3: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    },
+    trainerSettings: { enabled: false, startBpm: 120, targetBpm: 160, increment: 5, stepType: 'measures', stepValue: 4, curve: 'stepped' }
+  },
+  {
+    id: 'blues',
+    name: 'Blues Shuffle',
+    bpm: 90,
+    timeSignature: '12/8',
+    measureLength: 12,
+    gridData: {
+      0: [2, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+      1: [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      2: [0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+      3: [1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0],
+    },
+    trainerSettings: { enabled: false, startBpm: 120, targetBpm: 160, increment: 5, stepType: 'measures', stepValue: 4, curve: 'stepped' }
+  },
+  {
+    id: 'jazz',
+    name: 'Jazz Swing',
+    bpm: 130,
+    timeSignature: '12/8',
+    measureLength: 12,
+    gridData: {
+      0: [2, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+      1: [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      2: [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      3: [1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0],
+    },
+    trainerSettings: { enabled: false, startBpm: 120, targetBpm: 160, increment: 5, stepType: 'measures', stepValue: 4, curve: 'stepped' }
+  },
+  {
+    id: 'metalcore',
+    name: 'Metalcore Breakdown',
+    bpm: 160,
+    timeSignature: '4/4',
+    measureLength: 16,
+    gridData: {
+      0: [2, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
+      1: [1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0],
+      2: [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+      3: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+    },
+    trainerSettings: { enabled: false, startBpm: 120, targetBpm: 160, increment: 5, stepType: 'measures', stepValue: 4, curve: 'stepped' }
+  }
+];
