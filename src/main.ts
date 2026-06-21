@@ -41,6 +41,10 @@ const btnSave = document.getElementById('btn-save') as HTMLButtonElement;
 function markPresetAsModified() {
   presetNameInput.style.display = 'inline-block';
   btnSave.style.display = 'inline-block';
+  // Pre-populate with the current preset name so user can build on it
+  if (!presetNameInput.value) {
+    presetNameInput.value = state.activePreset.name;
+  }
 }
 
 // Build option elements
@@ -242,6 +246,16 @@ btnStadiumPlay.onclick = togglePlay;
 const formInputs = [trainerEnable, trainerStart, trainerTarget, trainerInc, trainerType, trainerVal, trainerCurve];
 formInputs.forEach(el => {
   el.onchange = () => {
+    // Sync DOM trainer values back into state so saves are accurate
+    state.activePreset.trainerSettings = {
+      enabled: trainerEnable.checked,
+      startBpm: Number(trainerStart.value),
+      targetBpm: Number(trainerTarget.value),
+      increment: Number(trainerInc.value),
+      stepType: trainerType.value as 'measures' | 'seconds',
+      stepValue: Number(trainerVal.value),
+      curve: trainerCurve.value as 'stepped' | 'smooth'
+    };
     syncAudioSettings();
     markPresetAsModified();
   };
@@ -287,11 +301,22 @@ presetSelector.onchange = () => {
 
 function loadPresetIntoUI(preset: Preset) {
   state.activePreset = JSON.parse(JSON.stringify(preset));
+  const ts = state.activePreset.trainerSettings;
   
   bpmSlider.value = String(state.activePreset.bpm);
   bpmNumber.innerText = String(state.activePreset.bpm);
   
+  // Sync trainer DOM inputs from preset state
+  trainerEnable.checked = ts.enabled;
+  trainerStart.value = String(ts.startBpm);
+  trainerTarget.value = String(ts.targetBpm);
+  trainerInc.value = String(ts.increment);
+  trainerType.value = ts.stepType;
+  trainerVal.value = String(ts.stepValue);
+  trainerCurve.value = ts.curve;
+  
   presetNameInput.style.display = 'none';
+  presetNameInput.value = '';
   btnSave.style.display = 'none';
   
   drawGrid();
@@ -313,7 +338,9 @@ btnSave.onclick = () => {
   };
   
   state.savePreset(newPreset).then(() => {
+    state.activePreset = newPreset;
     populatePresetsDropdown(`user:${id}`);
+    presetNameInput.value = '';
     presetNameInput.style.display = 'none';
     btnSave.style.display = 'none';
   });
