@@ -54,6 +54,8 @@ function markPresetAsModified() {
   if (!presetNameInput.value) {
     presetNameInput.value = state.activePreset.name;
   }
+  gsap.killTweensOf(saveToast);
+  gsap.set(saveToast, { display: 'flex' });
   gsap.to(saveToast, { y: 0, opacity: 1, duration: 0.25, ease: 'power2.out', pointerEvents: 'auto' });
 }
 
@@ -312,6 +314,7 @@ audioNode.addEventListener('tick', (e: any) => {
     : 'Trainer Off';
 
   // BPM display glow pulse
+  gsap.killTweensOf(stadiumBpm);
   gsap.fromTo(stadiumBpm,
     { textShadow: '0 0 60px rgba(57,255,20,0.9)' },
     { textShadow: '0 0 30px rgba(57,255,20,0.4)', duration: 0.4, ease: 'power2.out' }
@@ -324,26 +327,30 @@ audioNode.addEventListener('tick', (e: any) => {
     const color = TRACK_COLORS[trackId];
     if (!orb || !color) return;
     gsap.killTweensOf(orb);
-    gsap.timeline()
-      .to(orb, {
-        scale: 1.8,
-        backgroundColor: color,
-        boxShadow: `0 0 40px ${color}, 0 0 80px ${color}`,
-        duration: 0.05,
-        ease: 'none',
-      })
-      .to(orb, {
-        scale: 1.0,
-        backgroundColor: `${color}1A`, // ~10% opacity hex
-        boxShadow: 'none',
-        duration: 0.35,
-        ease: 'power2.out',
-      });
+    gsap.to(orb, {
+      scale: 1.8,
+      backgroundColor: color,
+      boxShadow: `0 0 40px ${color}, 0 0 80px ${color}`,
+      duration: 0.05,
+      ease: 'none',
+      onComplete: () => {
+        gsap.to(orb, {
+          scale: 1.0,
+          backgroundColor: `${color}1A`,
+          boxShadow: 'none',
+          duration: 0.35,
+          ease: 'power2.out',
+        });
+      }
+    });
   });
 
-  // Background flash — dominant color = lowest trackId in activeTrackIds
+  // Background flash
   if (ids.length > 0) {
-    const dominantColor = TRACK_COLORS[Math.min(...ids)];
+    // Filter out Click (0) if there are other drum hits active on this beat, to prevent click dominance
+    const nonClickIds = ids.filter(id => id > 0);
+    const dominantId = nonClickIds.length > 0 ? Math.min(...nonClickIds) : 0;
+    const dominantColor = TRACK_COLORS[dominantId];
     gsap.set(bgFlash, { backgroundColor: dominantColor });
     gsap.fromTo(bgFlash,
       { opacity: 0.05 },
@@ -400,7 +407,17 @@ function loadPresetIntoUI(preset: Preset) {
   }
   
   presetNameInput.value = '';
-  gsap.to(saveToast, { y: -20, opacity: 0, duration: 0.2, ease: 'power2.in', pointerEvents: 'none' });
+  gsap.killTweensOf(saveToast);
+  gsap.to(saveToast, {
+    y: -20,
+    opacity: 0,
+    duration: 0.2,
+    ease: 'power2.in',
+    pointerEvents: 'none',
+    onComplete: () => {
+      gsap.set(saveToast, { display: 'none' });
+    }
+  });
   
   drawGrid();
   syncAudioSettings();
@@ -428,7 +445,17 @@ btnSave.onclick = () => {
     state.activePreset = newPreset;
     populatePresetsDropdown(`user:${id}`);
     presetNameInput.value = '';
-    gsap.to(saveToast, { y: -20, opacity: 0, duration: 0.2, ease: 'power2.in', pointerEvents: 'none' });
+    gsap.killTweensOf(saveToast);
+    gsap.to(saveToast, {
+      y: -20,
+      opacity: 0,
+      duration: 0.2,
+      ease: 'power2.in',
+      pointerEvents: 'none',
+      onComplete: () => {
+        gsap.set(saveToast, { display: 'none' });
+      }
+    });
   });
 };
 
