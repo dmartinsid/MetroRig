@@ -2,6 +2,9 @@ import { MetronomeNode } from './audio/MetronomeNode';
 import { StateManager, FACTORY_PRESETS, Preset } from './state';
 import workletUrl from './audio/metronome-processor?url';
 
+declare const gsap: any;
+const TRACK_COLORS = ['#FFB800', '#FF2D55', '#00D4FF', '#00FF94'];
+
 const state = new StateManager();
 const audioNode = new MetronomeNode();
 
@@ -18,7 +21,15 @@ const btnStadiumPlay = document.getElementById('btn-stadium-play') as HTMLButton
 const stadiumBpm = document.getElementById('stadium-bpm') as HTMLElement;
 const stadiumTimer = document.getElementById('stadium-timer') as HTMLElement;
 const stadiumStatus = document.getElementById('stadium-status') as HTMLElement;
-const beatFlash = document.getElementById('beat-flash') as HTMLElement;
+
+const panelHeaderText = document.getElementById('panel-header-text') as HTMLElement;
+const saveToast = document.getElementById('save-toast') as HTMLElement;
+const trainerToggle = document.getElementById('trainer-toggle') as HTMLElement;
+const trainerBody = document.getElementById('trainer-body') as HTMLElement;
+const trainerChevron = document.getElementById('trainer-chevron') as HTMLElement;
+const trainerDot = document.getElementById('trainer-dot') as HTMLElement;
+const bgFlash = document.getElementById('bg-flash') as HTMLElement;
+const orbs = [0, 1, 2, 3].map(i => document.getElementById(`orb-${i}`) as HTMLElement);
 
 const trainerEnable = document.getElementById('trainer-enable') as HTMLInputElement;
 const trainerStart = document.getElementById('trainer-start') as HTMLInputElement;
@@ -39,12 +50,11 @@ const btnSave = document.getElementById('btn-save') as HTMLButtonElement;
 
 // Helper to show save button when preset is modified
 function markPresetAsModified() {
-  presetNameInput.style.display = 'inline-block';
-  btnSave.style.display = 'inline-block';
   // Pre-populate with the current preset name so user can build on it
   if (!presetNameInput.value) {
     presetNameInput.value = state.activePreset.name;
   }
+  gsap.to(saveToast, { y: 0, opacity: 1, duration: 0.25, ease: 'power2.out', pointerEvents: 'auto' });
 }
 
 // Build option elements
@@ -189,15 +199,15 @@ function togglePlay() {
     if (state.isPlaying) {
       audioNode.stop();
       state.isPlaying = false;
-      btnPlay.innerText = 'PLAY';
-      btnStadiumPlay.innerText = 'PLAY';
+      btnPlay.classList.remove('playing');
+      btnStadiumPlay.classList.remove('playing');
       clearInterval(timerInterval);
     } else {
       syncAudioSettings();
       audioNode.start();
       state.isPlaying = true;
-      btnPlay.innerText = 'STOP';
-      btnStadiumPlay.innerText = 'STOP';
+      btnPlay.classList.add('playing');
+      btnStadiumPlay.classList.add('playing');
       
       startTime = Date.now();
       timerInterval = setInterval(updatePracticeTimer, 1000);
@@ -237,6 +247,9 @@ bpmSlider.oninput = () => {
   state.activePreset.bpm = bpm;
   if (isAudioInit) audioNode.setBpm(bpm);
   markPresetAsModified();
+
+  const ts = measureLengthToTimeSig(state.activePreset.measureLength || 16);
+  panelHeaderText.textContent = `${state.activePreset.name}  ·  ${ts}  ·  ${bpm} BPM`;
 };
 
 btnPlay.onclick = togglePlay;
@@ -261,22 +274,76 @@ formInputs.forEach(el => {
   };
 });
 
+let trainerOpen = false;
+trainerToggle.onclick = () => {
+  trainerOpen = !trainerOpen;
+  if (trainerOpen) {
+    gsap.to(trainerBody, { height: 'auto', duration: 0.3, ease: 'power2.out' });
+    gsap.to(trainerChevron, { rotation: 180, duration: 0.3, ease: 'power2.out' });
+  } else {
+    gsap.to(trainerBody, { height: 0, duration: 0.25, ease: 'power2.in' });
+    gsap.to(trainerChevron, { rotation: 0, duration: 0.25, ease: 'power2.in' });
+  }
+};
+
+trainerEnable.addEventListener('change', () => {
+  if (trainerEnable.checked) {
+    trainerDot.classList.add('visible');
+  } else {
+    trainerDot.classList.remove('visible');
+  }
+});
+
 // Handle Tick triggers from audio worklet thread
 audioNode.addEventListener('tick', (e: any) => {
-  const { currentBpm } = e.detail;
-  
-  // Update live BPM text in Stadium Mode
-  stadiumBpm.innerText = Number(currentBpm).toFixed(1);
-  
-  if (trainerEnable.checked) {
-    stadiumStatus.innerText = `Trainer Running (${trainerCurve.value})`;
-  } else {
-    stadiumStatus.innerText = `Trainer Off`;
-  }
+  const { currentBpm, activeTrackIds } = e.detail;
 
-  // Visual Flash Pulse
-  beatFlash.classList.add('flash');
-  setTimeout(() => beatFlash.classList.remove('flash'), 100);
+  // Update BPM text
+  stadiumBpm.innerText = Number(currentBpm).toFixed(1);
+
+  // Trainer status
+  stadiumStatus.innerText = trainerEnable.checked
+    ? `Trainer Running (${trainerCurve.value})`
+    : 'Trainer Off';
+
+  // BPM display glow pulse
+  gsap.fromTo(stadiumBpm,
+    { textShadow: '0 0 60px rgba(57,255,20,0.9)' },
+    { textShadow: '0 0 30px rgba(57,255,20,0.4)', duration: 0.4, ease: 'power2.out' }
+  );
+
+  // Orb pulses for each active track
+  const ids: number[] = activeTrackIds ?? [];
+  ids.forEach((trackId: number) => {
+    const orb = orbs[trackId];
+    const color = TRACK_COLORS[trackId];
+    if (!orb || !color) return;
+    gsap.timeline()
+      .to(orb, {
+        scale: 1.8,
+        backgroundColor: color,
+        boxShadow: `0 0 40px ${color}, 0 0 80px ${color}`,
+        duration: 0.05,
+        ease: 'none',
+      })
+      .to(orb, {
+        scale: 1.0,
+        backgroundColor: `${color}1A`, // ~10% opacity hex
+        boxShadow: 'none',
+        duration: 0.35,
+        ease: 'power2.out',
+      });
+  });
+
+  // Background flash — dominant color = lowest trackId in activeTrackIds
+  if (ids.length > 0) {
+    const dominantColor = TRACK_COLORS[Math.min(...ids)];
+    gsap.set(bgFlash, { backgroundColor: dominantColor });
+    gsap.fromTo(bgFlash,
+      { opacity: 0.05 },
+      { opacity: 0, duration: 0.35, ease: 'power2.out' }
+    );
+  }
 });
 
 // Handle Preset Dropdown Selection Change
@@ -299,6 +366,11 @@ presetSelector.onchange = () => {
   }
 };
 
+function measureLengthToTimeSig(len: number): string {
+  const map: Record<number, string> = { 12: '3/4', 14: '7/8', 16: '4/4' };
+  return map[len] ?? `${len} steps`;
+}
+
 function loadPresetIntoUI(preset: Preset) {
   state.activePreset = JSON.parse(JSON.stringify(preset));
   const ts = state.activePreset.trainerSettings;
@@ -314,13 +386,22 @@ function loadPresetIntoUI(preset: Preset) {
   trainerType.value = ts.stepType;
   trainerVal.value = String(ts.stepValue);
   trainerCurve.value = ts.curve;
+
+  if (ts.enabled) {
+    trainerDot.classList.add('visible');
+  } else {
+    trainerDot.classList.remove('visible');
+  }
   
-  presetNameInput.style.display = 'none';
   presetNameInput.value = '';
-  btnSave.style.display = 'none';
+  gsap.to(saveToast, { y: -20, opacity: 0, duration: 0.2, ease: 'power2.in', pointerEvents: 'none' });
   
   drawGrid();
   syncAudioSettings();
+
+  const bpm = state.activePreset.bpm;
+  const timeSig = measureLengthToTimeSig(state.activePreset.measureLength || 16);
+  panelHeaderText.textContent = `${state.activePreset.name}  ·  ${timeSig}  ·  ${bpm} BPM`;
 }
 
 btnSave.onclick = () => {
@@ -341,8 +422,7 @@ btnSave.onclick = () => {
     state.activePreset = newPreset;
     populatePresetsDropdown(`user:${id}`);
     presetNameInput.value = '';
-    presetNameInput.style.display = 'none';
-    btnSave.style.display = 'none';
+    gsap.to(saveToast, { y: -20, opacity: 0, duration: 0.2, ease: 'power2.in', pointerEvents: 'none' });
   });
 };
 

@@ -27,6 +27,16 @@ class MockAudioWorkletNode {
 vi.stubGlobal('AudioContext', MockAudioContext);
 vi.stubGlobal('AudioWorkletNode', MockAudioWorkletNode);
 
+const mockGsap = {
+  to: vi.fn(),
+  fromTo: vi.fn(),
+  set: vi.fn(),
+  timeline: vi.fn().mockReturnValue({
+    to: vi.fn().mockImplementation(function(this: any) { return this; })
+  })
+};
+vi.stubGlobal('gsap', mockGsap);
+
 describe('Integration Test', () => {
   it('should load main.ts without throwing', async () => {
     const htmlPath = path.resolve(__dirname, '../index.html');
