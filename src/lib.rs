@@ -103,14 +103,18 @@ impl Engine {
         eng
     }
 
-    pub fn start(&mut self) {
-        self.is_playing = true;
-        self.step_index = 0;
-        self.current_step_limit = if self.step_index % 2 == 0 {
+    fn get_step_limit(&self, step_idx: usize) -> f64 {
+        if step_idx % 2 == 1 {
             self.samples_per_step * (1.0 + self.swing)
         } else {
             self.samples_per_step * (1.0 - self.swing)
-        };
+        }
+    }
+
+    pub fn start(&mut self) {
+        self.is_playing = true;
+        self.step_index = 0;
+        self.current_step_limit = self.get_step_limit(self.step_index);
         self.samples_in_current_step = self.current_step_limit - 1.0; // Trigger first beat immediately
     }
 
@@ -125,11 +129,7 @@ impl Engine {
         // Samples per step = sample_rate / steps_per_second
         let steps_per_second = (self.bpm / 60.0) * 4.0;
         self.samples_per_step = self.sample_rate as f64 / steps_per_second;
-        self.current_step_limit = if self.step_index % 2 == 0 {
-            self.samples_per_step * (1.0 + self.swing)
-        } else {
-            self.samples_per_step * (1.0 - self.swing)
-        };
+        self.current_step_limit = self.get_step_limit(self.step_index);
     }
 
     fn trigger_step(&mut self) {
@@ -162,11 +162,7 @@ impl Engine {
         }
 
         // Recalculate limit for new step_index
-        self.current_step_limit = if self.step_index % 2 == 0 {
-            self.samples_per_step * (1.0 + self.swing)
-        } else {
-            self.samples_per_step * (1.0 - self.swing)
-        };
+        self.current_step_limit = self.get_step_limit(self.step_index);
     }
 
     fn on_measure_complete(&mut self) {
@@ -350,10 +346,12 @@ pub extern "C" fn engine_load_sample(
 
 #[no_mangle]
 pub extern "C" fn engine_update_grid(ptr: *mut Engine, sample_id: u32, steps_ptr: *const u8, length: usize) {
-    if ptr.is_null() || steps_ptr.is_null() || sample_id >= MAX_SAMPLES as u32 || length != STEPS_COUNT { return; }
+    if ptr.is_null() || steps_ptr.is_null() || sample_id >= MAX_SAMPLES as u32 || length > STEPS_COUNT { return; }
     let engine = unsafe { &mut *ptr };
     let steps_slice = unsafe { slice::from_raw_parts(steps_ptr, length) };
-    engine.tracks[sample_id as usize].steps.copy_from_slice(steps_slice);
+    let track_steps = &mut engine.tracks[sample_id as usize].steps;
+    track_steps[..length].copy_from_slice(steps_slice);
+    track_steps[length..].fill(0);
 }
 
 #[no_mangle]
@@ -633,12 +631,41 @@ mod tests {
     fn test_swing_timings() {
         let mut engine = Engine::new(44100.0);
         engine.swing = 0.2; // 20% swing
-        engine.start();
+        engine.bpm = 120.0;
+        engine.recalc_tempo(); // samples_per_step = 5512.5
+        
+        engine.start(); // triggers step 0 immediately
         assert_eq!(engine.step_index, 0);
-        assert_eq!(engine.current_step_limit, engine.samples_per_step * 1.2);
-
-        engine.trigger_step();
+        
+        // Step 0 triggers on the very first sample of this buffer.
+        // So last_tick_index is 0, and step_index becomes 1.
+        // The next transition (to step 2) will happen after get_step_limit(1) = 6615 samples.
+        // So the next transition happens at sample 6615.
+        // Buffer of 6615 samples:
+        let mut buf_l = vec![0.0f32; 6615];
+        let mut buf_r = vec![0.0f32; 6615];
+        engine.fill_buffers(&mut buf_l, &mut buf_r);
+        assert_eq!(engine.last_tick_index, 0); // step 0 triggered at sample 0
         assert_eq!(engine.step_index, 1);
-        assert_eq!(engine.current_step_limit, engine.samples_per_step * 0.8);
+        
+        // At the 6616th sample (index 6615), step 1 triggers.
+        // Let's verify by filling 1 sample.
+        let mut single_l = vec![0.0f32; 1];
+        let mut single_r = vec![0.0f32; 1];
+        engine.fill_buffers(&mut single_l, &mut single_r);
+        assert_eq!(engine.last_tick_index, 1); // step 1 triggered
+        assert_eq!(engine.step_index, 2);
+        
+        // Step 2 is active, next is step 3. Limit is get_step_limit(2) = 5512.5 * 0.8 = 4410 samples.
+        // We fill 4409 samples first.
+        let mut buf_l2 = vec![0.0f32; 4409];
+        let mut buf_r2 = vec![0.0f32; 4409];
+        engine.fill_buffers(&mut buf_l2, &mut buf_r2);
+        assert_eq!(engine.last_tick_index, -1); // no new trigger
+        
+        // The 4410th sample of step 2 (index 4409 of this transition) triggers step 2.
+        engine.fill_buffers(&mut single_l, &mut single_r);
+        assert_eq!(engine.last_tick_index, 2); // step 2 triggered
+        assert_eq!(engine.step_index, 3);
     }
 }
