@@ -116,10 +116,8 @@ class MetronomeProcessor extends AudioWorkletProcessor {
         const { trackId, steps } = msg;
         const length = steps.length;
         
-        // Update local mirror
-        for (let i = 0; i < length; i++) {
-          this.gridMirror[trackId][i] = steps[i];
-        }
+        // Update local mirror (clone array directly to update length and avoid stale steps)
+        this.gridMirror[trackId] = Array.from(steps);
 
         // Allocate buffer, copy data, and update grid
         const ptr = exports.engine_alloc(length);

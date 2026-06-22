@@ -390,8 +390,8 @@ input[type="checkbox"] {
 
 /* Save Preset Toast */
 .save-toast {
+  display: none;
   padding: 0.75rem 1rem;
-  display: flex;
   align-items: center;
   gap: 0.75rem;
   overflow: hidden;
