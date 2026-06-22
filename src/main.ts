@@ -286,7 +286,7 @@ function updateTimeSignature() {
   
   // Clamp to 32 steps max
   if (measureLength > 32) {
-    alert("Fórmula de compasso excede o limite máximo de 32 passos!");
+    alert("Time signature exceeds the maximum limit of 32 steps!");
     if (state.activePreset.timeSignature) {
       const parts = state.activePreset.timeSignature.split('/');
       timeSigNum.value = parts[0];
@@ -294,6 +294,8 @@ function updateTimeSignature() {
     }
     return;
   }
+
+  grooveSelector.value = "";
 
   state.activePreset.timeSignature = sigStr;
   state.activePreset.measureLength = measureLength;
@@ -515,6 +517,7 @@ function loadPresetIntoUI(preset: Preset) {
   
   drawGrid();
   syncAudioSettings();
+  grooveSelector.value = "";
 
   const bpm = state.activePreset.bpm;
   const timeSig = measureLengthToTimeSig(state.activePreset.measureLength || 16);
@@ -562,7 +565,7 @@ const FACTORY_GROOVES = [
 ];
 
 function populateGroovesDropdown() {
-  grooveSelector.innerHTML = '<option value="">-- Escolha um Groove --</option>';
+  grooveSelector.innerHTML = '<option value="">-- Choose a Groove --</option>';
   
   const factoryGroup = document.createElement('optgroup');
   factoryGroup.label = "Factory Grooves";
@@ -623,13 +626,18 @@ grooveSelector.onchange = () => {
 };
 
 btnSaveGroove.onclick = () => {
-  const name = prompt("Digite um nome para o seu Groove de Bateria:");
+  const name = prompt("Enter a name for your Drum Groove:");
   if (!name) return;
 
   const activeLen = state.activePreset.measureLength || 16;
   const gridData: Record<number, number[]> = {};
   for (let trackId = 1; trackId < 4; trackId++) {
-    gridData[trackId] = [...(state.activePreset.gridData[trackId] || new Array(activeLen).fill(0))];
+    const srcTrack = state.activePreset.gridData[trackId] || [];
+    const paddedTrack = new Array(activeLen).fill(0);
+    for (let i = 0; i < Math.min(srcTrack.length, activeLen); i++) {
+      paddedTrack[i] = srcTrack[i];
+    }
+    gridData[trackId] = paddedTrack;
   }
 
   const id = 'groove_' + Date.now();
@@ -637,7 +645,7 @@ btnSaveGroove.onclick = () => {
 
   state.saveGroove(newGroove).then(() => {
     populateGroovesDropdown();
-    alert(`Groove "${name}" salvo com sucesso!`);
+    alert(`Groove "${name}" saved successfully!`);
   });
 };
 
