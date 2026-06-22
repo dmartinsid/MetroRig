@@ -35,6 +35,14 @@ class MetronomeProcessor extends AudioWorkletProcessor {
   private bpmPtr: number = 0;
   private bufferLength: number = 128; // Standard AudioWorklet block size
 
+  // Local mirror of the grid data for computing activeTrackIds on tick
+  private gridMirror: number[][] = [
+    new Array(32).fill(0),
+    new Array(32).fill(0),
+    new Array(32).fill(0),
+    new Array(32).fill(0),
+  ];
+
   constructor() {
     super();
     this.port.onmessage = this.handleMessage.bind(this);
@@ -108,6 +116,11 @@ class MetronomeProcessor extends AudioWorkletProcessor {
         const { trackId, steps } = msg;
         const length = steps.length;
         
+        // Update local mirror
+        for (let i = 0; i < length; i++) {
+          this.gridMirror[trackId][i] = steps[i];
+        }
+
         // Allocate buffer, copy data, and update grid
         const ptr = exports.engine_alloc(length);
         const heap = new Uint8Array(exports.memory.buffer);
@@ -179,10 +192,20 @@ class MetronomeProcessor extends AudioWorkletProcessor {
     if (tickIndex >= 0) {
       const heapDouble = new Float64Array(exports.memory.buffer);
       const bpm = heapDouble[this.bpmPtr / 8];
+
+      // Determine which tracks have a step active at this beat
+      const activeTrackIds: number[] = [];
+      for (let t = 0; t < 4; t++) {
+        if ((this.gridMirror[t][tickIndex] ?? 0) > 0) {
+          activeTrackIds.push(t);
+        }
+      }
+
       this.port.postMessage({
         type: 'TICK',
         beatIndex: tickIndex,
-        currentBpm: bpm
+        currentBpm: bpm,
+        activeTrackIds,
       });
     }
 
