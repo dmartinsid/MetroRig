@@ -48,6 +48,11 @@ const groupUser = document.getElementById('group-user') as HTMLOptGroupElement;
 const presetNameInput = document.getElementById('preset-name') as HTMLInputElement;
 const btnSave = document.getElementById('btn-save') as HTMLButtonElement;
 
+const timeSigNum = document.getElementById('time-sig-num') as HTMLInputElement;
+const timeSigDen = document.getElementById('time-sig-den') as HTMLSelectElement;
+const swingSlider = document.getElementById('swing-slider') as HTMLInputElement;
+const swingDisplay = document.getElementById('swing-display') as HTMLElement;
+
 // Helper to show save button when preset is modified
 function markPresetAsModified() {
   // Pre-populate with the current preset name so user can build on it
@@ -128,6 +133,9 @@ function syncAudioSettings() {
   
   // Set measure length
   audioNode.setMeasureLength(state.activePreset.measureLength || 16);
+  
+  // Set swing
+  audioNode.setSwing(state.activePreset.swing || 0);
   
   // Update active tracks
   for (let trackId = 0; trackId < 4; trackId++) {
@@ -259,6 +267,56 @@ bpmSlider.oninput = () => {
   panelHeaderText.textContent = `${state.activePreset.name}  ·  ${ts}  ·  ${bpm} BPM`;
 };
 
+function updateTimeSignature() {
+  const num = Number(timeSigNum.value);
+  const den = Number(timeSigDen.value);
+  const sigStr = `${num}/${den}`;
+  
+  // Calculate measure length
+  let measureLength = num;
+  if (den === 4) measureLength = num * 4;
+  else if (den === 8) measureLength = num * 2;
+  
+  // Clamp to 32 steps max
+  if (measureLength > 32) {
+    alert("Fórmula de compasso excede o limite máximo de 32 passos!");
+    return;
+  }
+
+  state.activePreset.timeSignature = sigStr;
+  state.activePreset.measureLength = measureLength;
+
+  // Resize gridData tracks to match the new length
+  for (let trackId = 0; trackId < 4; trackId++) {
+    const oldSteps = state.activePreset.gridData[trackId] || [];
+    const newSteps = new Array(measureLength).fill(0);
+    for (let i = 0; i < Math.min(oldSteps.length, measureLength); i++) {
+      newSteps[i] = oldSteps[i];
+    }
+    state.activePreset.gridData[trackId] = newSteps;
+  }
+
+  drawGrid();
+  syncAudioSettings();
+  markPresetAsModified();
+
+  const bpm = state.activePreset.bpm;
+  panelHeaderText.textContent = `${state.activePreset.name}  ·  ${sigStr}  ·  ${bpm} BPM`;
+}
+
+timeSigNum.onchange = updateTimeSignature;
+timeSigDen.onchange = updateTimeSignature;
+
+swingSlider.oninput = () => {
+  const val = Number(swingSlider.value);
+  swingDisplay.innerText = `${val}%`;
+  state.activePreset.swing = val;
+  if (isAudioInit) {
+    audioNode.setSwing(val);
+  }
+  markPresetAsModified();
+};
+
 btnPlay.onclick = togglePlay;
 btnStadiumPlay.onclick = togglePlay;
 
@@ -380,6 +438,10 @@ presetSelector.onchange = () => {
 };
 
 function measureLengthToTimeSig(len: number): string {
+  // Try to parse from state.activePreset.timeSignature first
+  if (state.activePreset.timeSignature && state.activePreset.timeSignature.includes('/')) {
+    return state.activePreset.timeSignature;
+  }
   const map: Record<number, string> = { 12: '3/4', 14: '7/8', 16: '4/4' };
   return map[len] ?? `${len} steps`;
 }
@@ -391,6 +453,26 @@ function loadPresetIntoUI(preset: Preset) {
   bpmSlider.value = String(state.activePreset.bpm);
   bpmNumber.innerText = String(state.activePreset.bpm);
   
+  swingSlider.value = String(state.activePreset.swing || 0);
+  swingDisplay.innerText = `${state.activePreset.swing || 0}%`;
+
+  // parse timeSignature
+  if (preset.timeSignature && preset.timeSignature.includes('/')) {
+    const parts = preset.timeSignature.split('/');
+    timeSigNum.value = parts[0];
+    timeSigDen.value = parts[1];
+  } else {
+    // Fallback map
+    const map: Record<number, {num: string, den: string}> = {
+      12: { num: '3', den: '4' },
+      14: { num: '7', den: '8' },
+      16: { num: '4', den: '4' }
+    };
+    const parsed = map[preset.measureLength] || { num: String(preset.measureLength), den: '16' };
+    timeSigNum.value = parsed.num;
+    timeSigDen.value = parsed.den;
+  }
+
   // Sync trainer DOM inputs from preset state
   trainerEnable.checked = ts.enabled;
   trainerStart.value = String(ts.startBpm);
@@ -437,6 +519,7 @@ btnSave.onclick = () => {
     bpm: state.activePreset.bpm,
     timeSignature: state.activePreset.timeSignature,
     measureLength: state.activePreset.measureLength || 16,
+    swing: state.activePreset.swing || 0,
     gridData: JSON.parse(JSON.stringify(state.activePreset.gridData)),
     trainerSettings: JSON.parse(JSON.stringify(state.activePreset.trainerSettings))
   };

@@ -530,3 +530,52 @@ input[type="checkbox"] {
   border-radius: 999px;
   padding: 1rem 2rem;
 }
+
+.groove-settings-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+.groove-settings-card .card-section-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 0.5rem;
+}
+.ui-row {
+  display: flex;
+  gap: 1rem;
+}
+.form-group-inline {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.form-group-inline label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+.form-group-inline input, .form-group-inline select {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  color: #fff;
+  padding: 0.4rem 0.6rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+}
+.slider-label-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+}
+#swing-display {
+  color: var(--primary);
+  font-weight: 600;
+}

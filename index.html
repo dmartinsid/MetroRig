@@ -59,6 +59,34 @@
           <button class="btn-save" id="btn-save">Save</button>
         </div>
 
+        <!-- Compasso & Swing Controls -->
+        <div class="groove-settings-card card">
+          <div class="card-section-title">Compasso &amp; Swing</div>
+          
+          <div class="ui-row">
+            <div class="form-group-inline">
+              <label for="time-sig-num">Numerador</label>
+              <input type="number" id="time-sig-num" min="1" max="16" value="4">
+            </div>
+            <div class="form-group-inline">
+              <label for="time-sig-den">Denominador</label>
+              <select id="time-sig-den">
+                <option value="4">/4</option>
+                <option value="8">/8</option>
+                <option value="16">/16</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="slider-label-row">
+              <label for="swing-slider">Swing / Balanço</label>
+              <span id="swing-display">0%</span>
+            </div>
+            <input type="range" id="swing-slider" min="0" max="100" value="0">
+          </div>
+        </div>
+
         <!-- Trainer (collapsible) -->
         <div class="trainer-card card">
           <div class="trainer-header" id="trainer-toggle">
