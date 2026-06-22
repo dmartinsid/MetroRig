@@ -7,6 +7,7 @@ interface WasmEngineExports {
   engine_stop(ptr: number): void;
   engine_set_bpm(ptr: number, bpm: number): void;
   engine_set_measure_length(ptr: number, length: number): void;
+  engine_set_swing(ptr: number, swing: number): void;
   engine_load_sample(ptr: number, sampleId: number, leftPtr: number, rightPtr: number, length: number): void;
   engine_update_grid(ptr: number, sampleId: number, stepsPtr: number, length: number): void;
   engine_set_trainer(
@@ -112,17 +113,23 @@ class MetronomeProcessor extends AudioWorkletProcessor {
       case 'SET_MEASURE_LENGTH':
         exports.engine_set_measure_length(this.enginePtr, msg.length);
         break;
+      case 'SET_SWING': {
+        exports.engine_set_swing(this.enginePtr, msg.swing);
+        break;
+      }
       case 'UPDATE_GRID': {
         const { trackId, steps } = msg;
-        const length = steps.length;
+        const length = 32;
         
-        // Update local mirror (clone array directly to update length and avoid stale steps)
-        this.gridMirror[trackId] = Array.from(steps);
+        // Padded to 32 steps for Rust engine compatibility
+        const paddedSteps = new Uint8Array(32);
+        paddedSteps.set(steps.subarray(0, Math.min(steps.length, 32)));
 
-        // Allocate buffer, copy data, and update grid
+        this.gridMirror[trackId] = Array.from(paddedSteps);
+
         const ptr = exports.engine_alloc(length);
         const heap = new Uint8Array(exports.memory.buffer);
-        heap.set(steps, ptr);
+        heap.set(paddedSteps, ptr);
         
         exports.engine_update_grid(this.enginePtr, trackId, ptr, length);
         exports.engine_free_buf(ptr, length);
