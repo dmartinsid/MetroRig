@@ -318,6 +318,7 @@ audioNode.addEventListener('tick', (e: any) => {
     const orb = orbs[trackId];
     const color = TRACK_COLORS[trackId];
     if (!orb || !color) return;
+    gsap.killTweensOf(orb);
     gsap.timeline()
       .to(orb, {
         scale: 1.8,
