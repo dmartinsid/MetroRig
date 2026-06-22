@@ -78,7 +78,7 @@ describe('Integration Test', () => {
     timeSigDen.value = '4';
     timeSigNum.onchange?.(new Event('change'));
 
-    expect(alertSpy).toHaveBeenCalledWith('Fórmula de compasso excede o limite máximo de 32 passos!');
+    expect(alertSpy).toHaveBeenCalledWith('Time signature exceeds the maximum limit of 32 steps!');
     // Reverted back to 4/4
     expect(timeSigNum.value).toBe('4');
     expect(timeSigDen.value).toBe('4');

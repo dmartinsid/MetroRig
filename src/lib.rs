@@ -103,11 +103,16 @@ impl Engine {
         eng
     }
 
-    fn get_step_limit(&self, step_idx: usize) -> f64 {
-        if step_idx % 2 == 1 {
+    fn get_step_limit(&self, next_step_idx: usize) -> f64 {
+        if next_step_idx % 2 == 1 {
             self.samples_per_step * (1.0 + self.swing)
         } else {
-            self.samples_per_step * (1.0 - self.swing)
+            let current_step_idx = (next_step_idx + self.measure_length - 1) % self.measure_length;
+            if current_step_idx % 2 == 1 {
+                self.samples_per_step * (1.0 - self.swing)
+            } else {
+                self.samples_per_step
+            }
         }
     }
 
@@ -667,5 +672,25 @@ mod tests {
         engine.fill_buffers(&mut single_l, &mut single_r);
         assert_eq!(engine.last_tick_index, 2); // step 2 triggered
         assert_eq!(engine.step_index, 3);
+    }
+
+    #[test]
+    fn test_measure_total_duration_no_drift() {
+        // Test both even and odd lengths
+        for length in [12, 15, 16, 20] {
+            let mut engine = Engine::new(44100.0);
+            engine.swing = 0.25;
+            engine.measure_length = length;
+            engine.start();
+            
+            let mut total_limit = 0.0;
+            for _ in 0..length {
+                total_limit += engine.current_step_limit;
+                engine.trigger_step();
+            }
+            
+            let expected_total = engine.samples_per_step * (length as f64);
+            assert!((total_limit - expected_total).abs() < 1e-5, "Drift detected on length {}: total_limit={}, expected={}", length, total_limit, expected_total);
+        }
     }
 }
