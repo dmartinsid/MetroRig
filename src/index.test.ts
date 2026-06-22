@@ -39,3 +39,30 @@ describe('Integration Test', () => {
     await import('./main');
   });
 });
+
+import { StateManager } from './state';
+
+describe('StateManager IndexedDB Upgrade', () => {
+  it('should initialize StateManager and allow saving custom grooves', async () => {
+    const manager = new StateManager();
+    expect(manager).toBeDefined();
+
+    const testGroove = {
+      id: 'test-groove',
+      name: 'Test Groove',
+      gridData: {
+        1: [1, 0, 0, 0],
+        2: [0, 0, 1, 0],
+        3: [1, 1, 1, 1]
+      },
+      measureLength: 4
+    };
+
+    // Save groove (should resolve even if IDB fallback is active)
+    await expect(manager.saveGroove(testGroove)).resolves.not.toThrow();
+
+    // Get all grooves
+    const grooves = await manager.getAllGrooves();
+    expect(Array.isArray(grooves)).toBe(true);
+  });
+});

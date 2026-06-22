@@ -4,7 +4,8 @@ export interface Preset {
   bpm: number;
   timeSignature: string;
   measureLength: number;
-  gridData: Record<number, number[]>; // trackId -> 16 steps
+  gridData: Record<number, number[]>; // trackId -> up to 32 steps
+  swing?: number;
   trainerSettings: {
     enabled: boolean;
     startBpm: number;
@@ -22,6 +23,13 @@ export interface PracticeLog {
   durationSeconds: number;
   startBpm: number;
   maxBpm: number;
+}
+
+export interface CustomGroove {
+  id: string;
+  name: string;
+  gridData: Record<number, number[]>; // tracks 1 (Kick), 2 (Snare), 3 (Hi-hat)
+  measureLength: number;
 }
 
 export class StateManager {
@@ -66,14 +74,17 @@ export class StateManager {
         resolve({} as IDBDatabase);
         return;
       }
-      const request = indexedDB.open('metrorig_db', 1);
-      request.onupgradeneeded = () => {
+      const request = indexedDB.open('metrorig_db', 2);
+      request.onupgradeneeded = (event) => {
         const db = request.result;
         if (!db.objectStoreNames.contains('presets')) {
           db.createObjectStore('presets', { keyPath: 'id' });
         }
         if (!db.objectStoreNames.contains('practice_logs')) {
           db.createObjectStore('practice_logs', { autoIncrement: true });
+        }
+        if (!db.objectStoreNames.contains('grooves')) {
+          db.createObjectStore('grooves', { keyPath: 'id' });
         }
       };
       request.onsuccess = () => resolve(request.result);
@@ -154,6 +165,30 @@ export class StateManager {
     return new Promise((resolve, reject) => {
       const transaction = db.transaction('practice_logs', 'readonly');
       const store = transaction.objectStore('practice_logs');
+      const request = store.getAll();
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async saveGroove(groove: CustomGroove): Promise<void> {
+    const db = await this.dbPromise;
+    if (!db.transaction) return;
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction('grooves', 'readwrite');
+      const store = transaction.objectStore('grooves');
+      const request = store.put(groove);
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async getAllGrooves(): Promise<CustomGroove[]> {
+    const db = await this.dbPromise;
+    if (!db.transaction) return [];
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction('grooves', 'readonly');
+      const store = transaction.objectStore('grooves');
       const request = store.getAll();
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error);
