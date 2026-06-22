@@ -2,7 +2,7 @@
 use std::slice;
 
 const MAX_SAMPLES: usize = 4; // 0: Click, 1: Kick, 2: Snare, 3: Hi-hat
-const STEPS_COUNT: usize = 16;
+const STEPS_COUNT: usize = 32;
 
 struct Sample {
     left_channel: Vec<f32>,
@@ -53,6 +53,10 @@ pub struct Engine {
 
     // Dynamic measure length looping
     measure_length: usize,
+
+    // Swing and step limit timing
+    swing: f64,
+    current_step_limit: f64,
 }
 
 impl Engine {
@@ -92,6 +96,8 @@ impl Engine {
             last_tick_index: -1,
             last_tick_bpm: 120.0,
             measure_length: 16,
+            swing: 0.0,
+            current_step_limit: 0.0,
         };
         eng.recalc_tempo();
         eng
@@ -100,7 +106,12 @@ impl Engine {
     pub fn start(&mut self) {
         self.is_playing = true;
         self.step_index = 0;
-        self.samples_in_current_step = self.samples_per_step - 1.0; // Trigger first beat immediately
+        self.current_step_limit = if self.step_index % 2 == 0 {
+            self.samples_per_step * (1.0 + self.swing)
+        } else {
+            self.samples_per_step * (1.0 - self.swing)
+        };
+        self.samples_in_current_step = self.current_step_limit - 1.0; // Trigger first beat immediately
     }
 
     pub fn stop(&mut self) {
@@ -114,6 +125,11 @@ impl Engine {
         // Samples per step = sample_rate / steps_per_second
         let steps_per_second = (self.bpm / 60.0) * 4.0;
         self.samples_per_step = self.sample_rate as f64 / steps_per_second;
+        self.current_step_limit = if self.step_index % 2 == 0 {
+            self.samples_per_step * (1.0 + self.swing)
+        } else {
+            self.samples_per_step * (1.0 - self.swing)
+        };
     }
 
     fn trigger_step(&mut self) {
@@ -144,6 +160,13 @@ impl Engine {
             // End of a measure
             self.on_measure_complete();
         }
+
+        // Recalculate limit for new step_index
+        self.current_step_limit = if self.step_index % 2 == 0 {
+            self.samples_per_step * (1.0 + self.swing)
+        } else {
+            self.samples_per_step * (1.0 - self.swing)
+        };
     }
 
     fn on_measure_complete(&mut self) {
@@ -215,8 +238,8 @@ impl Engine {
             self.process_tick_samples();
 
             self.samples_in_current_step += 1.0;
-            if self.samples_in_current_step >= self.samples_per_step {
-                self.samples_in_current_step -= self.samples_per_step;
+            if self.samples_in_current_step >= self.current_step_limit {
+                self.samples_in_current_step -= self.current_step_limit;
                 self.trigger_step();
             }
 
@@ -294,6 +317,14 @@ pub extern "C" fn engine_set_bpm(ptr: *mut Engine, bpm: f64) {
     if ptr.is_null() || bpm <= 0.0 || !bpm.is_finite() { return; }
     let engine = unsafe { &mut *ptr };
     engine.bpm = bpm;
+    engine.recalc_tempo();
+}
+
+#[no_mangle]
+pub extern "C" fn engine_set_swing(ptr: *mut Engine, swing: f64) {
+    if ptr.is_null() || swing < 0.0 || swing > 0.5 || !swing.is_finite() { return; }
+    let engine = unsafe { &mut *ptr };
+    engine.swing = swing;
     engine.recalc_tempo();
 }
 
@@ -562,8 +593,8 @@ mod tests {
         engine_set_trainer(ptr, true, 135.0, 150.0, 5.0, 0, 4.0, 0);
         
         // Test update grid and load sample
-        let steps = [1u8; 16];
-        engine_update_grid(ptr, 0, steps.as_ptr(), 16);
+        let steps = [1u8; 32];
+        engine_update_grid(ptr, 0, steps.as_ptr(), 32);
         
         let sample_l = vec![0.1f32; 100];
         let sample_r = vec![0.1f32; 100];
@@ -596,5 +627,18 @@ mod tests {
         // The 12th trigger should wrap step_index back to 0
         engine.trigger_step();
         assert_eq!(engine.step_index, 0);
+    }
+
+    #[test]
+    fn test_swing_timings() {
+        let mut engine = Engine::new(44100.0);
+        engine.swing = 0.2; // 20% swing
+        engine.start();
+        assert_eq!(engine.step_index, 0);
+        assert_eq!(engine.current_step_limit, engine.samples_per_step * 1.2);
+
+        engine.trigger_step();
+        assert_eq!(engine.step_index, 1);
+        assert_eq!(engine.current_step_limit, engine.samples_per_step * 0.8);
     }
 }
