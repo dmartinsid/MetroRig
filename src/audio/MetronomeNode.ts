@@ -108,6 +108,11 @@ export class MetronomeNode extends EventTarget {
     this.workletNode?.port.postMessage({ type: 'SET_BPM', bpm });
   }
 
+  setSwing(swing: number) {
+    const factor = (swing / 100) * 0.5;
+    this.workletNode?.port.postMessage({ type: 'SET_SWING', swing: factor });
+  }
+
   setMeasureLength(length: number) {
     this.workletNode?.port.postMessage({ type: 'SET_MEASURE_LENGTH', length });
   }
