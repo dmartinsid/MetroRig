@@ -153,20 +153,24 @@ function drawGrid() {
   gridContainer.style.gridTemplateColumns = `auto repeat(${measureLength}, 1fr)`;
 
   for (let trackId = 0; trackId < 4; trackId++) {
+    // Label cell
     const label = document.createElement('div');
     label.className = 'track-label';
+    label.setAttribute('data-track', String(trackId));
     label.innerText = trackNames[trackId];
     gridContainer.appendChild(label);
 
     const trackSteps = state.activePreset.gridData[trackId] || new Array(16).fill(0);
+
     for (let step = 0; step < measureLength; step++) {
       const cell = document.createElement('div');
       cell.className = 'step-cell';
+      cell.setAttribute('data-track', String(trackId));
+
       if (trackSteps[step] === 1) cell.classList.add('active');
       if (trackSteps[step] === 2) cell.classList.add('accent');
-      
+
       cell.onclick = () => {
-        // Cycle states: 0 -> 1 -> 2 -> 0 (for Clicks), 0 -> 1 -> 0 (for Drums)
         let nextState = 0;
         if (trackId === 0) {
           nextState = (trackSteps[step] + 1) % 3;
@@ -174,17 +178,18 @@ function drawGrid() {
           nextState = trackSteps[step] === 1 ? 0 : 1;
         }
         trackSteps[step] = nextState;
-        
+
         cell.className = 'step-cell';
+        cell.setAttribute('data-track', String(trackId));
         if (nextState === 1) cell.classList.add('active');
         if (nextState === 2) cell.classList.add('accent');
 
         if (isAudioInit) {
           audioNode.updateGrid(trackId, new Uint8Array(trackSteps));
         }
-
         markPresetAsModified();
       };
+
       gridContainer.appendChild(cell);
     }
   }
