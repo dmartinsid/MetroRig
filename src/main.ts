@@ -268,7 +268,11 @@ bpmSlider.oninput = () => {
 };
 
 function updateTimeSignature() {
-  const num = Number(timeSigNum.value);
+  let num = parseInt(timeSigNum.value, 10);
+  if (isNaN(num) || num < 1) num = 1;
+  if (num > 16) num = 16;
+  timeSigNum.value = String(num);
+
   const den = Number(timeSigDen.value);
   const sigStr = `${num}/${den}`;
   
@@ -280,6 +284,11 @@ function updateTimeSignature() {
   // Clamp to 32 steps max
   if (measureLength > 32) {
     alert("Fórmula de compasso excede o limite máximo de 32 passos!");
+    if (state.activePreset.timeSignature) {
+      const parts = state.activePreset.timeSignature.split('/');
+      timeSigNum.value = parts[0];
+      timeSigDen.value = parts[1];
+    }
     return;
   }
 
@@ -462,7 +471,6 @@ function loadPresetIntoUI(preset: Preset) {
     timeSigNum.value = parts[0];
     timeSigDen.value = parts[1];
   } else {
-    // Fallback map
     const map: Record<number, {num: string, den: string}> = {
       12: { num: '3', den: '4' },
       14: { num: '7', den: '8' },
@@ -471,6 +479,7 @@ function loadPresetIntoUI(preset: Preset) {
     const parsed = map[preset.measureLength] || { num: String(preset.measureLength), den: '16' };
     timeSigNum.value = parsed.num;
     timeSigDen.value = parsed.den;
+    state.activePreset.timeSignature = `${parsed.num}/${parsed.den}`;
   }
 
   // Sync trainer DOM inputs from preset state
