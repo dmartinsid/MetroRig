@@ -579,3 +579,37 @@ input[type="checkbox"] {
   color: var(--primary);
   font-weight: 600;
 }
+
+.groove-library-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.groove-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+.groove-actions select {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  color: #fff;
+  padding: 0.4rem;
+  font-family: inherit;
+}
+.btn-subtle {
+  background: rgba(0, 212, 255, 0.1);
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  border-radius: 4px;
+  color: #00d4ff;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.btn-subtle:hover {
+  background: rgba(0, 212, 255, 0.2);
+}

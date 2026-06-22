@@ -1,5 +1,5 @@
 import { MetronomeNode } from './audio/MetronomeNode';
-import { StateManager, FACTORY_PRESETS, Preset } from './state';
+import { StateManager, FACTORY_PRESETS, Preset, CustomGroove } from './state';
 import workletUrl from './audio/metronome-processor?url';
 
 declare const gsap: any;
@@ -52,6 +52,9 @@ const timeSigNum = document.getElementById('time-sig-num') as HTMLInputElement;
 const timeSigDen = document.getElementById('time-sig-den') as HTMLSelectElement;
 const swingSlider = document.getElementById('swing-slider') as HTMLInputElement;
 const swingDisplay = document.getElementById('swing-display') as HTMLElement;
+
+const grooveSelector = document.getElementById('groove-selector') as HTMLSelectElement;
+const btnSaveGroove = document.getElementById('btn-save-groove') as HTMLButtonElement;
 
 // Helper to show save button when preset is modified
 function markPresetAsModified() {
@@ -551,6 +554,94 @@ btnSave.onclick = () => {
   });
 };
 
+const FACTORY_GROOVES = [
+  { id: 'rock', name: 'Rock Groove', length: 16, tracks: { 1: [1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0], 2: [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], 3: [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0] } },
+  { id: 'metal', name: 'Metal Groove', length: 16, tracks: { 1: [1,0,1,0,0,0,1,0,1,0,1,0,0,0,1,0], 2: [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], 3: [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1] } },
+  { id: 'blues', name: 'Blues Shuffle', length: 12, tracks: { 1: [1,0,0,0,0,0,1,0,0,0,0,0], 2: [0,0,0,1,0,0,0,0,0,1,0,0], 3: [1,0,1,1,0,1,1,0,1,1,0,1] } },
+  { id: 'jazz', name: 'Jazz Swing', length: 12, tracks: { 1: [1,0,0,0,0,0,1,0,0,0,0,0], 2: [0,0,0,0,0,1,0,0,0,0,0,0], 3: [1,0,1,1,0,1,1,0,1,1,0,1] } }
+];
+
+function populateGroovesDropdown() {
+  grooveSelector.innerHTML = '<option value="">-- Escolha um Groove --</option>';
+  
+  const factoryGroup = document.createElement('optgroup');
+  factoryGroup.label = "Factory Grooves";
+  FACTORY_GROOVES.forEach(g => {
+    const opt = document.createElement('option');
+    opt.value = `factory:${g.id}`;
+    opt.innerText = g.name;
+    factoryGroup.appendChild(opt);
+  });
+  grooveSelector.appendChild(factoryGroup);
+
+  state.getAllGrooves().then(userGrooves => {
+    if (userGrooves.length > 0) {
+      const userGroup = document.createElement('optgroup');
+      userGroup.label = "User Grooves";
+      userGrooves.forEach(g => {
+        const opt = document.createElement('option');
+        opt.value = `user:${g.id}`;
+        opt.innerText = g.name;
+        userGroup.appendChild(opt);
+      });
+      grooveSelector.appendChild(userGroup);
+    }
+  });
+}
+
+grooveSelector.onchange = () => {
+  const val = grooveSelector.value;
+  if (!val) return;
+
+  const activeLen = state.activePreset.measureLength || 16;
+
+  const applyPattern = (length: number, tracks: Record<number, number[]>) => {
+    for (let trackId = 1; trackId < 4; trackId++) {
+      const srcPattern = tracks[trackId] || [];
+      const destPattern = new Array(activeLen).fill(0);
+      for (let i = 0; i < activeLen; i++) {
+        destPattern[i] = srcPattern[i % length] || 0;
+      }
+      state.activePreset.gridData[trackId] = destPattern;
+    }
+    drawGrid();
+    syncAudioSettings();
+    markPresetAsModified();
+  };
+
+  if (val.startsWith('factory:')) {
+    const gid = val.replace('factory:', '');
+    const g = FACTORY_GROOVES.find(fg => fg.id === gid);
+    if (g) applyPattern(g.length, g.tracks);
+  } else if (val.startsWith('user:')) {
+    const gid = val.replace('user:', '');
+    state.getAllGrooves().then(grooves => {
+      const g = grooves.find(ug => ug.id === gid);
+      if (g) applyPattern(g.measureLength, g.gridData);
+    });
+  }
+};
+
+btnSaveGroove.onclick = () => {
+  const name = prompt("Digite um nome para o seu Groove de Bateria:");
+  if (!name) return;
+
+  const activeLen = state.activePreset.measureLength || 16;
+  const gridData: Record<number, number[]> = {};
+  for (let trackId = 1; trackId < 4; trackId++) {
+    gridData[trackId] = [...(state.activePreset.gridData[trackId] || new Array(activeLen).fill(0))];
+  }
+
+  const id = 'groove_' + Date.now();
+  const newGroove = { id, name, gridData, measureLength: activeLen };
+
+  state.saveGroove(newGroove).then(() => {
+    populateGroovesDropdown();
+    alert(`Groove "${name}" salvo com sucesso!`);
+  });
+};
+
 // Initial draw and population
 populatePresetsDropdown();
+populateGroovesDropdown();
 drawGrid();
