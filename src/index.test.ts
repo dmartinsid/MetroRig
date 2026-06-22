@@ -27,16 +27,61 @@ class MockAudioWorkletNode {
 vi.stubGlobal('AudioContext', MockAudioContext);
 vi.stubGlobal('AudioWorkletNode', MockAudioWorkletNode);
 
+const mockGsap = {
+  killTweensOf: vi.fn(),
+  set: vi.fn(),
+  to: vi.fn(),
+  fromTo: vi.fn(),
+};
+vi.stubGlobal('gsap', mockGsap);
+
 describe('Integration Test', () => {
-  it('should load main.ts without throwing', async () => {
+  it('should load main.ts without throwing and sanitize/validate time signature', async () => {
     const htmlPath = path.resolve(__dirname, '../index.html');
     let html = fs.readFileSync(htmlPath, 'utf8');
     // Strip stylesheet links to avoid happy-dom fetch errors
     html = html.replace(/<link[^>]*stylesheet[^>]*>/g, '');
     document.documentElement.innerHTML = html;
 
+    // Spy on global alert
+    const alertSpy = vi.fn();
+    vi.stubGlobal('alert', alertSpy);
+
     // This will trigger main.ts execution
     await import('./main');
+
+    const timeSigNum = document.getElementById('time-sig-num') as HTMLInputElement;
+    const timeSigDen = document.getElementById('time-sig-den') as HTMLSelectElement;
+
+    // 1. Numerator Input Sanitization
+    timeSigDen.value = '16'; // Set denominator to 16 so that 16 steps does not exceed 32 max steps
+    timeSigNum.value = '20'; // > 16 limit
+    timeSigNum.onchange?.(new Event('change'));
+    expect(timeSigNum.value).toBe('16');
+
+    timeSigNum.value = '0'; // < 1 limit
+    timeSigNum.onchange?.(new Event('change'));
+    expect(timeSigNum.value).toBe('1');
+
+    timeSigNum.value = 'abc'; // non-numeric
+    timeSigNum.onchange?.(new Event('change'));
+    expect(timeSigNum.value).toBe('1');
+
+    // 2. Revert UI on Max Step Validation Failure (measureLength > 32 steps)
+    // Setup valid 4/4 first
+    timeSigNum.value = '4';
+    timeSigDen.value = '4';
+    timeSigNum.onchange?.(new Event('change'));
+
+    // Trigger invalid transition (10/4, which translates to 40 steps, > 32 max)
+    timeSigNum.value = '10';
+    timeSigDen.value = '4';
+    timeSigNum.onchange?.(new Event('change'));
+
+    expect(alertSpy).toHaveBeenCalledWith('Fórmula de compasso excede o limite máximo de 32 passos!');
+    // Reverted back to 4/4
+    expect(timeSigNum.value).toBe('4');
+    expect(timeSigDen.value).toBe('4');
   });
 });
 
