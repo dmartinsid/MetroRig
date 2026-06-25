@@ -257,10 +257,11 @@ impl Engine {
             }
 
             // 2. Synthesize Click (decaying sine wave) or Play Sample
-            let mut click_out = 0.0;
+            let mut click_out_l = 0.0;
+            let mut click_out_r = 0.0;
             if self.click_mode == 0 {
                 if self.active_click_amp > 0.0 {
-                    click_out = (self.click_phase * 2.0 * std::f32::consts::PI).sin() * self.active_click_amp;
+                    let click_out = (self.click_phase * 2.0 * std::f32::consts::PI).sin() * self.active_click_amp;
                     self.click_phase += self.active_click_freq / self.sample_rate;
                     if self.click_phase >= 1.0 {
                         self.click_phase -= 1.0;
@@ -269,18 +270,22 @@ impl Engine {
                     if self.active_click_amp < 0.001 {
                         self.active_click_amp = 0.0;
                     }
+                    click_out_l = click_out * 0.5;
+                    click_out_r = click_out * 0.5;
                 }
             } else if self.playback_active[0] {
                 if let Some(ref sample) = self.samples[0] {
                     let offset = self.playback_offsets[0];
                     if offset < sample.left_channel.len() {
                         let vol = if self.click_accent { 1.0 } else { 0.5 };
-                        // Combine stereo channels with volume multiplier
-                        click_out = (sample.left_channel[offset] + sample.right_channel[offset]) * 0.5 * vol;
+                        click_out_l = sample.left_channel[offset] * vol;
+                        click_out_r = sample.right_channel[offset] * vol;
                         self.playback_offsets[0] += 1;
                     } else {
                         self.playback_active[0] = false;
                     }
+                } else {
+                    self.playback_active[0] = false;
                 }
             }
 
@@ -304,8 +309,8 @@ impl Engine {
             }
 
             // Combine (Left / Right)
-            out_l[i] = click_out * 0.5 + drums_l;
-            out_r[i] = click_out * 0.5 + drums_r;
+            out_l[i] = click_out_l + drums_l;
+            out_r[i] = click_out_r + drums_r;
         }
     }
 }
@@ -737,5 +742,53 @@ mod tests {
         // Switch to sample mode (1)
         engine_set_click_mode(&mut engine as *mut Engine, 1);
         assert_eq!(engine.click_mode, 1);
+    }
+
+    #[test]
+    fn test_click_sample_playback() {
+        let mut engine = Engine::new(44100.0);
+        engine.start();
+        
+        // Load dummy click sample (slot 0)
+        let sample_l = vec![0.2f32, 0.4f32, 0.6f32];
+        let sample_r = vec![-0.2f32, -0.4f32, -0.6f32];
+        engine.samples[0] = Some(Sample {
+            left_channel: sample_l.clone(),
+            right_channel: sample_r.clone(),
+        });
+        
+        // Switch to click mode 1 (sample mode)
+        engine_set_click_mode(&mut engine as *mut Engine, 1);
+        
+        // Set accent click on step 0
+        engine.tracks[0].steps[0] = 2; // Accent
+        
+        let mut buf_l = vec![0.0f32; 3];
+        let mut buf_r = vec![0.0f32; 3];
+        
+        engine.fill_buffers(&mut buf_l, &mut buf_r);
+        
+        // Accent volume is 1.0
+        assert_eq!(buf_l[0], 0.2 * 1.0);
+        assert_eq!(buf_r[0], -0.2 * 1.0);
+        assert_eq!(buf_l[1], 0.4 * 1.0);
+        assert_eq!(buf_r[1], -0.4 * 1.0);
+        assert_eq!(buf_l[2], 0.6 * 1.0);
+        assert_eq!(buf_r[2], -0.6 * 1.0);
+
+        // Now test non-accented click (volume is 0.5)
+        engine.tracks[0].steps[1] = 1; // Normal click
+        
+        engine.trigger_step(); // Triggers step 1 manually, increments to step 2
+        
+        let mut buf_l2 = vec![0.0f32; 3];
+        let mut buf_r2 = vec![0.0f32; 3];
+        
+        engine.fill_buffers(&mut buf_l2, &mut buf_r2);
+        
+        assert_eq!(buf_l2[0], 0.2 * 0.5);
+        assert_eq!(buf_r2[0], -0.2 * 0.5);
+        assert_eq!(buf_l2[1], 0.4 * 0.5);
+        assert_eq!(buf_r2[1], -0.4 * 0.5);
     }
 }
