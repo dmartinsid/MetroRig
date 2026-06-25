@@ -153,4 +153,8 @@ export class MetronomeNode extends EventTarget {
       rightChannel
     });
   }
+
+  setClickMode(mode: number) {
+    this.workletNode?.port.postMessage({ type: 'SET_CLICK_MODE', mode });
+  }
 }

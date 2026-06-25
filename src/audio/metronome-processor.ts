@@ -24,6 +24,7 @@ interface WasmEngineExports {
   engine_process(ptr: number, outL: number, outR: number, length: number): void;
   engine_alloc(size: number): number;
   engine_free_buf(ptr: number, size: number): void;
+  engine_set_click_mode(ptr: number, mode: number): void;
 }
 
 class MetronomeProcessor extends AudioWorkletProcessor {
@@ -169,6 +170,9 @@ class MetronomeProcessor extends AudioWorkletProcessor {
         );
         break;
       }
+      case 'SET_CLICK_MODE':
+        exports.engine_set_click_mode(this.enginePtr, msg.mode);
+        break;
     }
   }
 

@@ -39,4 +39,17 @@ describe('MetronomeNode', () => {
       length: 8,
     });
   });
+
+  it('should post message to worklet when setClickMode is called', () => {
+    const node = new MetronomeNode();
+    const mockWorkletNode = new MockAudioWorkletNode();
+    (node as any).workletNode = mockWorkletNode;
+
+    node.setClickMode(1);
+
+    expect(mockWorkletNode.port.postMessage).toHaveBeenCalledWith({
+      type: 'SET_CLICK_MODE',
+      mode: 1,
+    });
+  });
 });
