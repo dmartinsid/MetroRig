@@ -1,7 +1,6 @@
-# Custom Time Signatures & Grooves Progress Ledger
+# Click Sound Variations Progress Ledger
 
-- [x] Task 1: Rust Engine Modifications for 32 Steps and Swing Timing (commits ebfc609..2027383, review clean)
-- [x] Task 2: Update TypeScript Audio Bridge and Compile WASM (commits 2027383..6228114, review clean)
-- [x] Task 3: StateManager Updates for Custom Signatures, Swing, and Grooves (commit 8d75349, review clean)
-- [x] Task 4: Custom Time Signature & Swing UI Controls (commits 8d75349..089080d, review clean)
-- [x] Task 5: Implement Custom Groove Library & Application Logic (commit da73b04, review clean)
+- [x] Task 1: Generate Click Sound WAV Assets
+- [ ] Task 2: Implement Click Mode Logic in Rust WASM Engine & Bridge
+- [ ] Task 3: Implement Sound Selector UI & Styles
+- [ ] Task 4: Integrate Controller, LocalStorage and Sound Loading in Frontend
