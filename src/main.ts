@@ -47,6 +47,7 @@ const groupGenres = document.getElementById('group-genres') as HTMLOptGroupEleme
 const groupUser = document.getElementById('group-user') as HTMLOptGroupElement;
 const presetNameInput = document.getElementById('preset-name') as HTMLInputElement;
 const btnSave = document.getElementById('btn-save') as HTMLButtonElement;
+const clickSoundSelector = document.getElementById('click-sound-selector') as HTMLSelectElement;
 
 const timeSigNum = document.getElementById('time-sig-num') as HTMLInputElement;
 const timeSigDen = document.getElementById('time-sig-den') as HTMLSelectElement;
@@ -125,6 +126,7 @@ async function initAudio() {
   await audioNode.loadSample(3, '/hihat.wav');
   
   isAudioInit = true;
+  await syncClickSound(); // Wait for click sound loading
   syncAudioSettings();
 }
 
@@ -648,6 +650,31 @@ btnSaveGroove.onclick = () => {
     alert(`Groove "${name}" saved successfully!`);
   });
 };
+
+// Click Sound logic
+async function syncClickSound() {
+  if (!isAudioInit) return;
+  const sound = clickSoundSelector.value;
+  if (sound === 'digital') {
+    audioNode.setClickMode(0);
+  } else {
+    // Load requested WAV sample for slot 0
+    await audioNode.loadSample(0, `/${sound}.wav`);
+    audioNode.setClickMode(1);
+  }
+}
+
+clickSoundSelector.onchange = async () => {
+  const sound = clickSoundSelector.value;
+  localStorage.setItem('metrorig_click_sound', sound);
+  if (isAudioInit) {
+    await syncClickSound();
+  }
+};
+
+// Initialize dropdown value from localStorage
+const storedClickSound = localStorage.getItem('metrorig_click_sound') || 'digital';
+clickSoundSelector.value = storedClickSound;
 
 // Initial draw and population
 populatePresetsDropdown();
