@@ -57,6 +57,10 @@ pub struct Engine {
     // Swing and step limit timing
     swing: f64,
     current_step_limit: f64,
+
+    // Sound selection
+    click_mode: u32, // 0 = Synth, 1 = Sample
+    click_accent: bool,
 }
 
 impl Engine {
@@ -98,6 +102,8 @@ impl Engine {
             measure_length: 16,
             swing: 0.0,
             current_step_limit: 0.0,
+            click_mode: 0,
+            click_accent: false,
         };
         eng.recalc_tempo();
         eng
@@ -144,9 +150,15 @@ impl Engine {
         // Check click track
         let click_step = self.tracks[0].steps[self.step_index];
         if click_step > 0 {
-            self.active_click_freq = if click_step == 2 { 880.0 } else { 440.0 };
-            self.active_click_amp = 1.0;
-            self.click_phase = 0.0;
+            self.click_accent = click_step == 2;
+            if self.click_mode == 0 {
+                self.active_click_freq = if self.click_accent { 880.0 } else { 440.0 };
+                self.active_click_amp = 1.0;
+                self.click_phase = 0.0;
+            } else if self.samples[0].is_some() {
+                self.playback_active[0] = true;
+                self.playback_offsets[0] = 0;
+            }
         }
 
         // Check drum tracks (1 = Kick, 2 = Snare, 3 = Hi-hat)
@@ -244,18 +256,31 @@ impl Engine {
                 self.trigger_step();
             }
 
-            // 2. Synthesize Click (decaying sine wave)
+            // 2. Synthesize Click (decaying sine wave) or Play Sample
             let mut click_out = 0.0;
-            if self.active_click_amp > 0.0 {
-                // Exponential decay
-                click_out = (self.click_phase * 2.0 * std::f32::consts::PI).sin() * self.active_click_amp;
-                self.click_phase += self.active_click_freq / self.sample_rate;
-                if self.click_phase >= 1.0 {
-                    self.click_phase -= 1.0;
+            if self.click_mode == 0 {
+                if self.active_click_amp > 0.0 {
+                    click_out = (self.click_phase * 2.0 * std::f32::consts::PI).sin() * self.active_click_amp;
+                    self.click_phase += self.active_click_freq / self.sample_rate;
+                    if self.click_phase >= 1.0 {
+                        self.click_phase -= 1.0;
+                    }
+                    self.active_click_amp *= 0.9995; // Decay rate
+                    if self.active_click_amp < 0.001 {
+                        self.active_click_amp = 0.0;
+                    }
                 }
-                self.active_click_amp *= 0.9995; // Decay rate
-                if self.active_click_amp < 0.001 {
-                    self.active_click_amp = 0.0;
+            } else if self.playback_active[0] {
+                if let Some(ref sample) = self.samples[0] {
+                    let offset = self.playback_offsets[0];
+                    if offset < sample.left_channel.len() {
+                        let vol = if self.click_accent { 1.0 } else { 0.5 };
+                        // Combine stereo channels with volume multiplier
+                        click_out = (sample.left_channel[offset] + sample.right_channel[offset]) * 0.5 * vol;
+                        self.playback_offsets[0] += 1;
+                    } else {
+                        self.playback_active[0] = false;
+                    }
                 }
             }
 
@@ -396,6 +421,13 @@ pub extern "C" fn engine_set_trainer(
     engine.trainer_curve = curve_type;
     engine.trainer_accumulated_measures = 0;
     engine.trainer_accumulated_samples = 0;
+}
+
+#[no_mangle]
+pub extern "C" fn engine_set_click_mode(ptr: *mut Engine, mode: u32) {
+    if ptr.is_null() { return; }
+    let engine = unsafe { &mut *ptr };
+    engine.click_mode = mode;
 }
 
 #[no_mangle]
@@ -692,5 +724,18 @@ mod tests {
             let expected_total = engine.samples_per_step * (length as f64);
             assert!((total_limit - expected_total).abs() < 1e-5, "Drift detected on length {}: total_limit={}, expected={}", length, total_limit, expected_total);
         }
+    }
+
+    #[test]
+    fn test_click_mode_switching() {
+        let mut engine = Engine::new(44100.0);
+        engine.start();
+        
+        // Default mode is synth (0)
+        assert_eq!(engine.click_mode, 0);
+        
+        // Switch to sample mode (1)
+        engine_set_click_mode(&mut engine as *mut Engine, 1);
+        assert_eq!(engine.click_mode, 1);
     }
 }
