@@ -652,15 +652,27 @@ btnSaveGroove.onclick = () => {
 };
 
 // Click Sound logic
+let activeClickLoadId = 0;
+
 async function syncClickSound() {
   if (!isAudioInit) return;
   const sound = clickSoundSelector.value;
   if (sound === 'digital') {
+    activeClickLoadId++;
     audioNode.setClickMode(0);
   } else {
-    // Load requested WAV sample for slot 0
-    await audioNode.loadSample(0, `/${sound}.wav`);
-    audioNode.setClickMode(1);
+    const loadId = ++activeClickLoadId;
+    try {
+      await audioNode.loadSample(0, `/${sound}.wav`);
+      if (loadId === activeClickLoadId) {
+        audioNode.setClickMode(1);
+      }
+    } catch (err) {
+      console.error("Failed to load click sample, falling back to digital synth:", err);
+      if (loadId === activeClickLoadId) {
+        audioNode.setClickMode(0);
+      }
+    }
   }
 }
 
@@ -668,7 +680,11 @@ clickSoundSelector.onchange = async () => {
   const sound = clickSoundSelector.value;
   localStorage.setItem('metrorig_click_sound', sound);
   if (isAudioInit) {
-    await syncClickSound();
+    try {
+      await syncClickSound();
+    } catch (err) {
+      console.error("Failed to sync click sound on selector change:", err);
+    }
   }
 };
 
