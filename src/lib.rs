@@ -100,6 +100,7 @@ pub struct Engine {
     // Sound selection
     click_mode: u32, // 0 = Synth, 1 = Sample
     click_accent: bool,
+    reverb: Reverb,
 }
 
 impl Engine {
@@ -143,6 +144,7 @@ impl Engine {
             current_step_limit: 0.0,
             click_mode: 0,
             click_accent: false,
+            reverb: Reverb::new(sample_rate),
         };
         eng.recalc_tempo();
         eng
@@ -328,7 +330,18 @@ impl Engine {
                 }
             }
 
-            // 3. Play Drum Samples
+            // 3. Process Click Reverb
+            let (rev_out_l, rev_out_r) = if self.click_accent {
+                self.reverb.process(click_out_l, click_out_r)
+            } else {
+                self.reverb.process(0.0, 0.0)
+            };
+
+            // Mix dry click + reverb tail
+            let final_click_l = if self.click_accent { rev_out_l } else { click_out_l + rev_out_l };
+            let final_click_r = if self.click_accent { rev_out_r } else { click_out_r + rev_out_r };
+
+            // 4. Play Drum Samples
             let mut drums_l = 0.0;
             let mut drums_r = 0.0;
             
@@ -348,8 +361,8 @@ impl Engine {
             }
 
             // Combine (Left / Right)
-            out_l[i] = click_out_l + drums_l;
-            out_r[i] = click_out_r + drums_r;
+            out_l[i] = final_click_l + drums_l;
+            out_r[i] = final_click_r + drums_r;
         }
     }
 }
@@ -807,13 +820,13 @@ mod tests {
         
         engine.fill_buffers(&mut buf_l, &mut buf_r);
         
-        // Accent volume is 1.0
-        assert_eq!(buf_l[0], 0.2 * 1.0);
-        assert_eq!(buf_r[0], -0.2 * 1.0);
-        assert_eq!(buf_l[1], 0.4 * 1.0);
-        assert_eq!(buf_r[1], -0.4 * 1.0);
-        assert_eq!(buf_l[2], 0.6 * 1.0);
-        assert_eq!(buf_r[2], -0.6 * 1.0);
+        // Accent volume is 1.0, but scaled by (1.0 - wet) = 0.65 through reverb
+        assert_eq!(buf_l[0], 0.2 * 1.0 * 0.65);
+        assert_eq!(buf_r[0], -0.2 * 1.0 * 0.65);
+        assert_eq!(buf_l[1], 0.4 * 1.0 * 0.65);
+        assert_eq!(buf_r[1], -0.4 * 1.0 * 0.65);
+        assert_eq!(buf_l[2], 0.6 * 1.0 * 0.65);
+        assert_eq!(buf_r[2], -0.6 * 1.0 * 0.65);
 
         // Now test non-accented click (volume is 0.5)
         engine.tracks[0].steps[1] = 1; // Normal click
@@ -851,5 +864,44 @@ mod tests {
         }
         // Reverb tail must have triggered and output non-zero values after input ceased
         assert!(active_output_detected);
+    }
+
+    #[test]
+    fn test_engine_click_reverb() {
+        let mut engine = Engine::new(44100.0);
+        engine.start();
+
+        // Trigger an accented click on step 0
+        engine.tracks[0].steps[0] = 2; // Accent
+        let mut buf_l_accent = vec![0.0f32; 100];
+        let mut buf_r_accent = vec![0.0f32; 100];
+        engine.fill_buffers(&mut buf_l_accent, &mut buf_r_accent);
+
+        // Verify some signal was processed (accented beep)
+        assert!(buf_l_accent[1] != 0.0);
+
+        // The reverb buffer should contain non-zero samples (fed by the accented click)
+        assert!(engine.reverb.buffer_l.iter().any(|&x| x != 0.0));
+
+        // Now set step 0 to normal click (value 1) and reset engine to trigger it
+        engine.stop();
+        engine.start();
+        engine.tracks[0].steps[0] = 1; // Normal click (non-accented)
+
+        // Reset reverb state to silence to verify it isn't fed by normal click
+        engine.reverb.buffer_l.fill(0.0);
+        engine.reverb.buffer_r.fill(0.0);
+
+        let mut buf_l_normal = vec![0.0f32; 100];
+        let mut buf_r_normal = vec![0.0f32; 100];
+        engine.fill_buffers(&mut buf_l_normal, &mut buf_r_normal);
+
+        // Output should differ from the accented one because the accented version goes through reverb (attenuated dry component + delayed wet)
+        // Whereas normal click goes dry directly
+        assert_ne!(buf_l_accent[1], buf_l_normal[1]);
+
+        // Reverb buffer should still be completely silent since normal click does not feed it
+        assert!(engine.reverb.buffer_l.iter().all(|&x| x == 0.0));
+        assert!(engine.reverb.buffer_r.iter().all(|&x| x == 0.0));
     }
 }
