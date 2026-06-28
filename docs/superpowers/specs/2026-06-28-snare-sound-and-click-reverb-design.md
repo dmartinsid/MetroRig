@@ -5,8 +5,9 @@ This document outlines the design and implementation details for replacing synth
 ## 1. Overview & Requirements
 *   **Goal**: Improve the audio quality of MetroRig's metronome clicks and drum patterns.
 *   **Audio Assets Replacement**:
-    *   Replace all low-quality synthesized `.wav` files in `public/` (kick, snare, hi-hat, mechanical, woodblock, stick, cowbell) with high-quality, real recorded samples from stable open-source repositories.
-    *   Create a script `scripts/download_sounds.js` to download these files automatically to ensure easy setup.
+    *   Replace synthesized `.wav` files in `public/` (kick, snare, hi-hat, mechanical, woodblock, stick, cowbell) with high-quality, real recorded samples.
+    *   The user manually provides high-quality acoustic `kick.wav` and `snare.wav` from Hellforge Studio's "Classic Heavy Metal Drums" pack.
+    *   Create a script `scripts/download_sounds.js` to download the remaining files (`hihat.wav`, `mechanical.wav`, `click.wav`, `stick.wav`, `cowbell.wav`, `woodblock.wav`) automatically from stable open-source repositories to complete the kit.
 *   **Click Reverb**:
     *   Add a preset "room space" reverb to the accented click steps (sequencer track 0 steps with value `2`).
     *   The reverb must be implemented directly in the Rust audio engine to run sample-accurately and with zero latency in the AudioWorklet thread.
@@ -16,7 +17,8 @@ This document outlines the design and implementation details for replacing synth
 
 ```mermaid
 graph TD
-    Script[scripts/download_sounds.js] -->|fetches high-quality WAVs| PubDir[(public/)]
+    UserProv[Manually Provided Kick & Snare] --> PubDir[(public/)]
+    Script[scripts/download_sounds.js] -->|fetches remaining high-quality WAVs| PubDir
     PubDir -->|loaded by main.ts| Node[MetronomeNode]
     Node -->|transferred to| Proc[AudioWorkletProcessor]
     Proc -->|engine_process| Rust[Rust Engine src/lib.rs]
@@ -27,9 +29,9 @@ graph TD
 ## 3. Detailed Component Changes
 
 ### 3.1 Audio Asset Selection & Fetching
-We will implement `scripts/download_sounds.js` using Node.js to fetch the following high-quality assets:
-*   **`kick.wav`** (Acoustic Kick): `https://raw.githubusercontent.com/ArunMichaelDsouza/javascript-drum-kit/master/sounds/kick.wav`
-*   **`snare.wav`** (Acoustic Snare): `https://raw.githubusercontent.com/ArunMichaelDsouza/javascript-drum-kit/master/sounds/snare.wav`
+The user has manually replaced `kick.wav` and `snare.wav` in the `public/` directory with custom acoustic drum samples. 
+
+We will implement `scripts/download_sounds.js` using Node.js to fetch the remaining high-quality assets:
 *   **`hihat.wav`** (Closed Hihat): `https://raw.githubusercontent.com/ArunMichaelDsouza/javascript-drum-kit/master/sounds/hihat-close.wav`
 *   **`mechanical.wav`** (Mechanical Metronome Click): `https://raw.githubusercontent.com/rfauver/metronome/master/click.wav`
 *   **`click.wav`** (Default Click): `https://raw.githubusercontent.com/rfauver/metronome/master/click.wav`
