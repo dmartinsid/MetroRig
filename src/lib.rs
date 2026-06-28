@@ -24,8 +24,8 @@ struct Reverb {
 
 impl Reverb {
     pub fn new(sample_rate: f32) -> Self {
-        let len_l = (sample_rate * 0.038) as usize; // ~38ms delay
-        let len_r = (sample_rate * 0.045) as usize; // ~45ms delay
+        let len_l = ((sample_rate * 0.038) as usize).max(1); // ~38ms delay
+        let len_r = ((sample_rate * 0.045) as usize).max(1); // ~45ms delay
         Reverb {
             buffer_l: vec![0.0; len_l],
             buffer_r: vec![0.0; len_r],
@@ -46,8 +46,8 @@ impl Reverb {
         self.write_idx_l = (self.write_idx_l + 1) % self.buffer_l.len();
         self.write_idx_r = (self.write_idx_r + 1) % self.buffer_r.len();
 
-        let out_l = in_l * (1.0 - self.wet) + delayed_l * self.wet;
-        let out_r = in_r * (1.0 - self.wet) + delayed_r * self.wet;
+        let out_l = delayed_l * self.wet;
+        let out_r = delayed_r * self.wet;
         (out_l, out_r)
     }
 }
@@ -338,8 +338,8 @@ impl Engine {
             };
 
             // Mix dry click + reverb tail
-            let final_click_l = if self.click_accent { rev_out_l } else { click_out_l + rev_out_l };
-            let final_click_r = if self.click_accent { rev_out_r } else { click_out_r + rev_out_r };
+            let final_click_l = click_out_l + rev_out_l;
+            let final_click_r = click_out_r + rev_out_r;
 
             // 4. Play Drum Samples
             let mut drums_l = 0.0;
@@ -820,13 +820,14 @@ mod tests {
         
         engine.fill_buffers(&mut buf_l, &mut buf_r);
         
-        // Accent volume is 1.0, but scaled by (1.0 - wet) = 0.65 through reverb
-        assert_eq!(buf_l[0], 0.2 * 1.0 * 0.65);
-        assert_eq!(buf_r[0], -0.2 * 1.0 * 0.65);
-        assert_eq!(buf_l[1], 0.4 * 1.0 * 0.65);
-        assert_eq!(buf_r[1], -0.4 * 1.0 * 0.65);
-        assert_eq!(buf_l[2], 0.6 * 1.0 * 0.65);
-        assert_eq!(buf_r[2], -0.6 * 1.0 * 0.65);
+        // Accent volume is 1.0, and since reverb only outputs the wet (which is initially 0),
+        // the parallel mix output is simply the dry click sample.
+        assert_eq!(buf_l[0], 0.2);
+        assert_eq!(buf_r[0], -0.2);
+        assert_eq!(buf_l[1], 0.4);
+        assert_eq!(buf_r[1], -0.4);
+        assert_eq!(buf_l[2], 0.6);
+        assert_eq!(buf_r[2], -0.6);
 
         // Now test non-accented click (volume is 0.5)
         engine.tracks[0].steps[1] = 1; // Normal click
@@ -850,9 +851,8 @@ mod tests {
         let (out_l, out_r) = reverb.process(1.0, 1.0);
         
         // Initially, delayed buffer contains 0, so wet component is 0.
-        // Dry component is 1.0 * (1.0 - wet) = 0.65
-        assert_eq!(out_l, 0.65);
-        assert_eq!(out_r, 0.65);
+        assert_eq!(out_l, 0.0);
+        assert_eq!(out_r, 0.0);
 
         // Process silence for enough steps to ring out the delay lines (approx 50ms = 2205 samples)
         let mut active_output_detected = false;
