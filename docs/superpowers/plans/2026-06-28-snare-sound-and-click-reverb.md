@@ -35,12 +35,12 @@
   import path from 'path';
 
   const assets = {
-    'hihat.wav': 'https://raw.githubusercontent.com/ArunMichaelDsouza/javascript-drum-kit/master/sounds/hihat-close.wav',
+    'hihat.wav': 'https://raw.githubusercontent.com/ArunMichaelDsouza/javascript-30-course/master/src/01-javascript-drum-kit/sounds/hihat-close.wav',
     'mechanical.wav': 'https://raw.githubusercontent.com/rfauver/metronome/master/click.wav',
     'click.wav': 'https://raw.githubusercontent.com/rfauver/metronome/master/click.wav',
     'stick.wav': 'https://raw.githubusercontent.com/wesbos/JavaScript30/master/01%20-%20JavaScript%20Drum%20Kit/sounds/tink.wav',
-    'cowbell.wav': 'https://raw.githubusercontent.com/tidalcycles/Dirt-Samples/master/drumtraks/DT%20Cowbell.wav',
-    'woodblock.wav': 'https://raw.githubusercontent.com/Manza12/MMM/master/sounds/woodblock.wav'
+    'cowbell.wav': 'https://raw.githubusercontent.com/tidalcycles/Dirt-Samples/master/drumtraks/002_DT%20Cowbell.wav',
+    'woodblock.wav': 'https://raw.githubusercontent.com/Manza12/MMM/main/data/audio/woodblock.wav'
   };
 
   const publicDir = path.resolve('public');

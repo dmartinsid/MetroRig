@@ -43,6 +43,13 @@ function download(filename, url) {
         }
         return;
       }
+
+      response.on('error', (err) => {
+        file.destroy();
+        fs.unlink(destPath, () => {});
+        reject(err);
+      });
+
       response.pipe(file);
       file.on('finish', () => {
         file.close();

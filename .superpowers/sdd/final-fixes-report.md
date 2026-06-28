@@ -1,54 +1,58 @@
-# Click Sound Variations: Final Code Review Fixes Report
+# Final Code Review Fixes Report
 
-This report documents the resolution of the final code review feedback for the Click Sound Variations feature in MetroRig.
+Date: 2026-06-28
+Author: Antigravity
 
-## Implemented Fixes
+This report details the implementation and verification of the fixes applied during the final code review.
 
-### 1. Asynchronous Load Race Condition & Fetch Rejection Fallback
-- **Race Condition Prevention**: Introduced a module-scoped tracking variable `activeClickLoadId` in `src/main.ts`.
-- **Implementation in `syncClickSound()`**:
-  - Increments `activeClickLoadId` inside the `else` (WAV sample loading) branch.
-  - Resolves or rejects the sample fetching asynchronously and validates that the `loadId` matches `activeClickLoadId` before updating the metronome node's click mode setting (`audioNode.setClickMode(1)`).
-  - Increments `activeClickLoadId` in the `'digital'` branch to invalidate any ongoing sample fetches immediately when the user switches to the digital synthesizer option.
-- **Fetch Rejection Safety**: Wrapped the async WAV sample loading logic in a `try/catch` block. If the sample load fails (due to a missing file, network error, etc.), we output an error message to the console and fall back to the digital click sound (mode `0`) if the load request is still the active one.
-- **Error Handling on Selector Change**: Added error-handling structure around the call to `syncClickSound()` in `clickSoundSelector.onchange` to ensure any uncaught rejections are logged safely.
+## Summary of Fixes
 
-### 2. Inline Style Elimination in Header
-- **`index.html`**: Removed the inline style attribute `style="margin-right: 0.5rem;"` from the select element with ID `#click-sound-selector`.
-- **`src/index.css`**: Appended `margin-right: 0.5rem;` to the existing CSS class rule for `#click-sound-selector`.
+### 1. Accented Click Dry Transient Attenuation & Volume Inversion
+- **Change**: Modified `Reverb::process` in [src/lib.rs](file:///home/deivid/Projects/Github/MetroRig/src/lib.rs#L45-L53) to return *only* the wet component (removed the dry component scaling/mixing from within the reverb class).
+- **Change**: Updated the mixing logic in `fill_buffers` in [src/lib.rs](file:///home/deivid/Projects/Github/MetroRig/src/lib.rs#L338-L343) to use a parallel send:
+  ```rust
+  let final_click_l = click_out_l + rev_out_l;
+  let final_click_r = click_out_r + rev_out_r;
+  ```
+- **Change**: Updated the unit tests `test_reverb_decay` and `test_click_sample_playback` in [src/lib.rs](file:///home/deivid/Projects/Github/MetroRig/src/lib.rs#L817-L856) to match the new parallel mix expectations (e.g. empty delay line starts at `0.0` wet output).
+
+### 2. WASM Panic Prevention on Zero or Invalid Sample Rates
+- **Change**: Clamped the delay line sizes in `Reverb::new` in [src/lib.rs](file:///home/deivid/Projects/Github/MetroRig/src/lib.rs#L25-L37) to be at least `1` sample, protecting against `0` or negative sample rates:
+  ```rust
+  let len_l = ((sample_rate * 0.038) as usize).max(1);
+  let len_r = ((sample_rate * 0.045) as usize).max(1);
+  ```
+
+### 3. Response Stream Error Handling in Downloader
+- **Change**: Registered an error listener on the response object inside the https request callback in [scripts/download_sounds.js](file:///home/deivid/Projects/Github/MetroRig/scripts/download_sounds.js#L44-L50):
+  ```javascript
+  response.on('error', (err) => {
+    file.destroy();
+    fs.unlink(destPath, () => {});
+    reject(err);
+  });
+  ```
+
+### 4. Implementation Plan Synchronization
+- **Change**: Synced the asset download URLs inside [docs/superpowers/plans/2026-06-28-snare-sound-and-click-reverb.md](file:///home/deivid/Projects/Github/MetroRig/docs/superpowers/plans/2026-06-28-snare-sound-and-click-reverb.md#L37-L44) to match the working URLs used in the download script.
 
 ---
 
-## Testing & Verification
+## Verification Results
 
-### 1. Automated Integration Tests
-Added a new test case inside `src/index.test.ts` named:
-`"should handle click sound variation selector changes, race conditions and fetch rejections"`
+The following checks have been executed successfully:
 
-This test does the following:
-- Mocks `./audio/MetronomeNode` using `vi.mock` to intercept network/audio hardware requests in Vitest/Happy-DOM.
-- Controls the resolution and rejection timing of the `loadSample` promise for the click track (slot `0`) while allowing drum tracks to load instantaneously.
-- Verifies click mode transitions during selection change.
-- Simulates fetch rejections and confirms fallback to digital mode.
-- Simulates rapid consecutive changes to WAV options (race condition) and verifies only the latest click sound is applied.
-- Simulates rapid transitions from custom sound to digital and validates that the late-resolving custom sound does not overwrite the digital state.
+1. **Rust Tests (`npm run test:rust`)**:
+   - Status: **Passed** (14 tests)
+   - Output: `test result: ok. 14 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out`
 
-All **8 JavaScript tests** passed successfully:
-```bash
-Test Files  3 passed (3)
-     Tests  8 passed (8)
-```
+2. **Sound Downloader (`npm run download:sounds`)**:
+   - Status: **Passed**
+   - Output: All audio assets downloaded successfully from their source URLs.
 
-All **12 Rust crate tests** passed successfully:
-```bash
-test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out
-```
+3. **WASM & Production Build (`npm run build`)**:
+   - Status: **Passed** (built successfully in release mode and copied WASM assets to `public/pkg`).
 
-### 2. Production Asset Build
-Ran `npm run build` to package the app for production. The build completed with zero warnings and compiled successfully:
-```bash
-dist/index.html                               7.56 kB
-dist/assets/metronome-processor-Dxowb-qf.ts   7.99 kB
-dist/assets/index-BJVbXkVC.css               10.83 kB
-dist/assets/index-lzonybwq.js                22.29 kB
-```
+4. **JavaScript Tests (`npm run test:js`)**:
+   - Status: **Passed** (8 tests)
+   - Output: `Test Files: 3 passed, Tests: 8 passed`
