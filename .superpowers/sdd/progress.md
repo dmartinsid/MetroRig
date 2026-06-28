@@ -1,5 +1,5 @@
 # Snare Sound Replacement & Click Reverb Progress Ledger
 
-- [ ] Task 1: Sound Assets Downloader Script
+- [x] Task 1: Sound Assets Downloader Script (commits 1de1e75..fc87d91, review clean)
 - [ ] Task 2: Implement Rust DSP Reverb Comb Filter
 - [ ] Task 3: Integrate Reverb into Rust Metronome Engine
