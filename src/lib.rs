@@ -13,6 +13,45 @@ struct SequencerTrack {
     steps: [u8; STEPS_COUNT], // 0 = Off, 1 = Low, 2 = High
 }
 
+struct Reverb {
+    buffer_l: Vec<f32>,
+    buffer_r: Vec<f32>,
+    write_idx_l: usize,
+    write_idx_r: usize,
+    feedback: f32,
+    wet: f32,
+}
+
+impl Reverb {
+    pub fn new(sample_rate: f32) -> Self {
+        let len_l = (sample_rate * 0.038) as usize; // ~38ms delay
+        let len_r = (sample_rate * 0.045) as usize; // ~45ms delay
+        Reverb {
+            buffer_l: vec![0.0; len_l],
+            buffer_r: vec![0.0; len_r],
+            write_idx_l: 0,
+            write_idx_r: 0,
+            feedback: 0.45,
+            wet: 0.35,
+        }
+    }
+
+    pub fn process(&mut self, in_l: f32, in_r: f32) -> (f32, f32) {
+        let delayed_l = self.buffer_l[self.write_idx_l];
+        let delayed_r = self.buffer_r[self.write_idx_r];
+
+        self.buffer_l[self.write_idx_l] = in_l + delayed_l * self.feedback;
+        self.buffer_r[self.write_idx_r] = in_r + delayed_r * self.feedback;
+
+        self.write_idx_l = (self.write_idx_l + 1) % self.buffer_l.len();
+        self.write_idx_r = (self.write_idx_r + 1) % self.buffer_r.len();
+
+        let out_l = in_l * (1.0 - self.wet) + delayed_l * self.wet;
+        let out_r = in_r * (1.0 - self.wet) + delayed_r * self.wet;
+        (out_l, out_r)
+    }
+}
+
 pub struct Engine {
     sample_rate: f32,
     bpm: f64,
@@ -790,5 +829,27 @@ mod tests {
         assert_eq!(buf_r2[0], -0.2 * 0.5);
         assert_eq!(buf_l2[1], 0.4 * 0.5);
         assert_eq!(buf_r2[1], -0.4 * 0.5);
+    }
+
+    #[test]
+    fn test_reverb_decay() {
+        let mut reverb = Reverb::new(44100.0);
+        let (out_l, out_r) = reverb.process(1.0, 1.0);
+        
+        // Initially, delayed buffer contains 0, so wet component is 0.
+        // Dry component is 1.0 * (1.0 - wet) = 0.65
+        assert_eq!(out_l, 0.65);
+        assert_eq!(out_r, 0.65);
+
+        // Process silence for enough steps to ring out the delay lines (approx 50ms = 2205 samples)
+        let mut active_output_detected = false;
+        for _ in 0..2500 {
+            let (o_l, _o_r) = reverb.process(0.0, 0.0);
+            if o_l > 0.0 {
+                active_output_detected = true;
+            }
+        }
+        // Reverb tail must have triggered and output non-zero values after input ceased
+        assert!(active_output_detected);
     }
 }
