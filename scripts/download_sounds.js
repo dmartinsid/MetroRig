@@ -18,10 +18,29 @@ if (!fs.existsSync(publicDir)) {
 
 function download(filename, url) {
   return new Promise((resolve, reject) => {
-    const file = fs.createWriteStream(path.join(publicDir, filename));
-    https.get(url, (response) => {
+    const destPath = path.join(publicDir, filename);
+    const file = fs.createWriteStream(destPath);
+    let isRejected = false;
+
+    const handleError = (err) => {
+      if (isRejected) return;
+      isRejected = true;
+      file.destroy();
+      fs.unlink(destPath, () => {});
+      reject(err);
+    };
+
+    file.on('error', handleError);
+
+    const request = https.get(url, (response) => {
       if (response.statusCode !== 200) {
-        reject(new Error(`Failed to download ${filename}: Status code ${response.statusCode}`));
+        file.destroy();
+        response.resume();
+        fs.unlink(destPath, () => {});
+        if (!isRejected) {
+          isRejected = true;
+          reject(new Error(`Failed to download ${filename}: Status code ${response.statusCode}`));
+        }
         return;
       }
       response.pipe(file);
@@ -30,10 +49,9 @@ function download(filename, url) {
         console.log(`Downloaded: ${filename}`);
         resolve();
       });
-    }).on('error', (err) => {
-      fs.unlink(path.join(publicDir, filename), () => {});
-      reject(err);
     });
+
+    request.on('error', handleError);
   });
 }
 
