@@ -160,9 +160,6 @@ function syncAudioSettings() {
   // Set measure length
   audioNode.setMeasureLength(state.activePreset.measureLength || 16);
   
-  // Set swing
-  audioNode.setSwing(state.activePreset.swing || 0);
-  
   // Update active tracks
   for (let trackId = 0; trackId < 4; trackId++) {
     const steps = new Uint8Array(state.activePreset.gridData[trackId] || new Array(16).fill(0));
@@ -474,9 +471,6 @@ swingSlider.oninput = () => {
   const val = Number(swingSlider.value);
   swingDisplay.innerText = `${val}%`;
   state.activePreset.swing = val;
-  if (isAudioInit) {
-    audioNode.setSwing(val);
-  }
   markPresetAsModified();
 };
 

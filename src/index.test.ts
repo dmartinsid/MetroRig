@@ -15,7 +15,6 @@ vi.mock('./audio/MetronomeNode', () => {
       start = vi.fn();
       stop = vi.fn();
       setBpm = vi.fn();
-      setSwing = vi.fn();
       setMeasureLength = vi.fn();
       updateGrid = vi.fn();
       setTrainer = vi.fn();

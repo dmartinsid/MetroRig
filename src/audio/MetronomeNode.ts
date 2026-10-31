@@ -1,3 +1,5 @@
+import { visualDelayMs } from '../visualSync';
+
 export class MetronomeNode extends EventTarget {
   private ctx: AudioContext;
   private workletNode: AudioWorkletNode | null = null;
@@ -59,9 +61,7 @@ export class MetronomeNode extends EventTarget {
         // 5. Listen for events
         this.workletNode.port.onmessage = (event) => {
           const msg = event.data;
-          console.log("MetronomeNode: Received message from AudioWorklet:", msg.type);
           if (msg.type === 'WASM_READY') {
-            console.log("MetronomeNode: WASM is ready inside the worklet.");
             this.isInitialized = true;
             resolve();
           } else if (msg.type === 'WASM_ERROR') {
@@ -74,7 +74,6 @@ export class MetronomeNode extends EventTarget {
         this.workletNode.port.start();
 
         // 6. Initialize WASM in the processor thread (transfer ownership of ArrayBuffer)
-        console.log("MetronomeNode: Posting INIT_WASM to worklet with ArrayBuffer...");
         this.workletNode.port.postMessage({
           type: 'INIT_WASM',
           wasmBuffer: wasmBuffer
@@ -106,11 +105,6 @@ export class MetronomeNode extends EventTarget {
 
   setBpm(bpm: number) {
     this.workletNode?.port.postMessage({ type: 'SET_BPM', bpm });
-  }
-
-  setSwing(swing: number) {
-    const factor = (swing / 100) * 0.5;
-    this.workletNode?.port.postMessage({ type: 'SET_SWING', swing: factor });
   }
 
   setMeasureLength(length: number) {
@@ -156,5 +150,9 @@ export class MetronomeNode extends EventTarget {
 
   setClickMode(mode: number) {
     this.workletNode?.port.postMessage({ type: 'SET_CLICK_MODE', mode });
+  }
+
+  visualDelayMs(): number {
+    return visualDelayMs(this.ctx.baseLatency, this.ctx.outputLatency);
   }
 }
