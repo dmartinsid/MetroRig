@@ -56,6 +56,32 @@ struct TrainerSettings {
     curve: Curve,
 }
 
+impl TrainerSettings {
+    fn from_ffi(
+        enabled: bool,
+        start_bpm: f64,
+        target_bpm: f64,
+        increment: f64,
+        step_type: u32,
+        step_value: f64,
+        curve_type: u32
+    ) -> Option<Self> {
+        if start_bpm <= 0.0 || !start_bpm.is_finite() { return None; }
+        if target_bpm <= 0.0 || !target_bpm.is_finite() { return None; }
+        if increment < 0.0 || !increment.is_finite() { return None; }
+        if step_value <= 0.0 || !step_value.is_finite() { return None; }
+        Some(TrainerSettings {
+            enabled,
+            start_bpm,
+            target_bpm,
+            increment,
+            step_type: StepType::from_ffi(step_type)?,
+            step_value,
+            curve: Curve::from_ffi(curve_type)?,
+        })
+    }
+}
+
 pub struct Engine {
     sample_rate: f32,
     bpm: f64,
@@ -252,9 +278,30 @@ impl Engine {
             || settings.curve != active.curve;
         self.trainer = settings;
         if schedule_restarted {
-            self.trainer_accumulated_measures = 0;
-            self.trainer_accumulated_samples = 0;
-            self.trainer_schedule_restarted = self.is_playing;
+            self.restart_trainer_schedule();
+        }
+    }
+
+    fn restart_trainer_schedule(&mut self) {
+        self.trainer_accumulated_measures = 0;
+        self.trainer_accumulated_samples = 0;
+        self.trainer_schedule_restarted = self.is_playing;
+    }
+
+    // A preset load: the old Trainer stops now, and its counters go with it.
+    fn replace_trainer(&mut self, settings: TrainerSettings) {
+        self.pending_trainer = None;
+        self.apply_trainer(settings);
+        self.restart_trainer_schedule();
+    }
+
+    fn set_trainer(&mut self, settings: TrainerSettings) {
+        if self.is_playing && settings.enabled {
+            self.pending_trainer = Some(settings);
+        } else {
+            // Stopped, or a disable: it applies now and replaces anything still waiting.
+            self.pending_trainer = None;
+            self.apply_trainer(settings);
         }
     }
 
@@ -481,31 +528,13 @@ pub extern "C" fn engine_set_measure_length(ptr: *mut Engine, length: u32) {
     }
 }
 
-fn valid_trainer_settings(
-    enabled: bool,
-    start_bpm: f64,
-    target_bpm: f64,
-    increment: f64,
-    step_type: u32,
-    step_value: f64,
-    curve_type: u32
-) -> Option<TrainerSettings> {
-    if start_bpm <= 0.0 || !start_bpm.is_finite() { return None; }
-    if target_bpm <= 0.0 || !target_bpm.is_finite() { return None; }
-    if increment < 0.0 || !increment.is_finite() { return None; }
-    if step_value <= 0.0 || !step_value.is_finite() { return None; }
-    Some(TrainerSettings {
-        enabled,
-        start_bpm,
-        target_bpm,
-        increment,
-        step_type: StepType::from_ffi(step_type)?,
-        step_value,
-        curve: Curve::from_ffi(curve_type)?,
-    })
+// Runs a Trainer update unless the pointer or any setting is invalid.
+fn update_trainer(ptr: *mut Engine, settings: Option<TrainerSettings>, update: fn(&mut Engine, TrainerSettings)) {
+    if ptr.is_null() { return; }
+    let Some(settings) = settings else { return };
+    update(unsafe { &mut *ptr }, settings);
 }
 
-// A preset load: the old Trainer stops now, and its counters go with it.
 #[no_mangle]
 pub extern "C" fn engine_replace_trainer(
     ptr: *mut Engine,
@@ -517,14 +546,8 @@ pub extern "C" fn engine_replace_trainer(
     step_value: f64,
     curve_type: u32
 ) {
-    if ptr.is_null() { return; }
-    let Some(settings) = valid_trainer_settings(enabled, start_bpm, target_bpm, increment, step_type, step_value, curve_type) else { return };
-    let engine = unsafe { &mut *ptr };
-    engine.pending_trainer = None;
-    engine.apply_trainer(settings);
-    engine.trainer_accumulated_measures = 0;
-    engine.trainer_accumulated_samples = 0;
-    engine.trainer_schedule_restarted = engine.is_playing;
+    let settings = TrainerSettings::from_ffi(enabled, start_bpm, target_bpm, increment, step_type, step_value, curve_type);
+    update_trainer(ptr, settings, Engine::replace_trainer);
 }
 
 #[no_mangle]
@@ -538,16 +561,8 @@ pub extern "C" fn engine_set_trainer(
     step_value: f64,
     curve_type: u32
 ) {
-    if ptr.is_null() { return; }
-    let Some(settings) = valid_trainer_settings(enabled, start_bpm, target_bpm, increment, step_type, step_value, curve_type) else { return };
-    let engine = unsafe { &mut *ptr };
-    if engine.is_playing && enabled {
-        engine.pending_trainer = Some(settings);
-    } else {
-        // Stopped, or a disable: it applies now and replaces anything still waiting.
-        engine.pending_trainer = None;
-        engine.apply_trainer(settings);
-    }
+    let settings = TrainerSettings::from_ffi(enabled, start_bpm, target_bpm, increment, step_type, step_value, curve_type);
+    update_trainer(ptr, settings, Engine::set_trainer);
 }
 
 #[no_mangle]
