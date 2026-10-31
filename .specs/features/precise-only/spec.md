@@ -44,6 +44,7 @@ MetroRig's audio engine already keeps exact time: a measured hour stayed within 
 | Legacy preset Trainer values | Leave them unchanged | The conversion covers only steps and BPM | n - agent default |
 | Trainer enabled during playback | Continue from the live BPM | Start BPM applies only at Play, so the tempo does not jump | n - agent default |
 | Preset loaded during playback | Apply its Start BPM if its Trainer is on, otherwise its BPM | The preset's own start rule applies | n - agent default |
+| Superpowers removal and agent skills | Included in this PR, replacing the Git row above for those files | The user asked for it: "pode adicionar essa mudancas que nao fazem parte da tarefa na PR, porque eu to removendo o superpowers do projeto" | y - user asked |
 | Saved swing data | Ignore it on load and omit it on the next save | Stored records stay readable | n - agent default |
 
 **Open questions:** none - all resolved or logged above.
@@ -133,6 +134,8 @@ MetroRig's audio engine already keeps exact time: a measured hour stayed within 
 16. TRAIN-16: IF Start BPM is at or above Target BPM THEN the engine SHALL hold Start BPM.
 17. TRAIN-17: WHEN a preset loads during playback THEN the engine SHALL replace the active Trainer settings immediately.
 18. TRAIN-18: WHEN a preset loads during playback THEN the engine SHALL count its first bar from the next beat 1.
+19. TRAIN-19: WHEN enabling, interval type, interval value or curve applies on beat 1 THEN the engine SHALL count the first interval from that beat 1.
+20. TRAIN-20: WHEN Target or Increment applies on beat 1 THEN the engine SHALL keep the progress of the current interval.
 
 **Independent Test**: Set BPM 100, Start BPM 80, and +5 every bar, then render 3 bars and check each interval around both downbeats.
 
@@ -248,6 +251,8 @@ MetroRig's audio engine already keeps exact time: a measured hour stayed within 
 | TRAIN-16 | P1: Precise Trainer | Tasks | Verified |
 | TRAIN-17 | P1: Precise Trainer | Tasks | Verified |
 | TRAIN-18 | P1: Precise Trainer | Tasks | Verified |
+| TRAIN-19 | P1: Precise Trainer | Tasks | Verified |
+| TRAIN-20 | P1: Precise Trainer | Tasks | Verified |
 | ONSET-01 | P1: Clean click sounds | Tasks | Verified |
 | ONSET-02 | P1: Clean click sounds | Tasks | Verified |
 | ONSET-03 | P1: Clean click sounds | Tasks | Verified |
@@ -263,7 +268,7 @@ MetroRig's audio engine already keeps exact time: a measured hour stayed within 
 
 **ID format:** `[CATEGORY]-[NUMBER]`
 
-**Coverage:** 46 total, 46 mapped to tasks, 0 unmapped.
+**Coverage:** 48 total, 48 mapped to tasks, 0 unmapped.
 
 ---
 
