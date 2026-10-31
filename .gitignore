@@ -1,5 +1,6 @@
 node_modules/
 target/
+__pycache__/
 dist/
 package-lock.json
 .DS_Store
