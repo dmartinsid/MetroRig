@@ -316,9 +316,9 @@ T14 → T15 → T16 → T17 → T18 → T19 → T20
 
 **Done when**:
 
-- [ ] Fake timers prove the delay and the cancel
-- [ ] Missing, non-finite and negative values give no delay
-- [ ] Gate passes with 33 JavaScript tests
+- [x] Fake timers prove the delay and the cancel
+- [x] Missing, non-finite and negative values give no delay
+- [x] Gate passes with 33 JavaScript tests
 
 **Tests**: unit
 **Gate**: quick
