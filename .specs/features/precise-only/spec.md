@@ -217,7 +217,7 @@ MetroRig's audio engine already keeps exact time: a measured hour stayed within 
 | TIME-03 | P1: Exact timing | Tasks | Implementing |
 | SWING-01 | P1: Swing removal | Tasks | Pending |
 | SWING-02 | P1: Swing removal | Tasks | Pending |
-| SWING-03 | P1: Swing removal | Tasks | Pending |
+| SWING-03 | P1: Swing removal | Tasks | Implementing |
 | SWING-04 | P1: Swing removal | Tasks | Pending |
 | SWING-05 | P1: Swing removal | Tasks | Pending |
 | BPM-01 | P1: BPM matches what plays | Tasks | Implementing |
@@ -225,9 +225,9 @@ MetroRig's audio engine already keeps exact time: a measured hour stayed within 
 | BPM-03 | P1: BPM matches what plays | Tasks | Implementing |
 | BPM-04 | P1: BPM matches what plays | Tasks | Implementing |
 | BPM-05 | P1: BPM matches what plays | Tasks | Pending |
-| BPM-06 | P1: BPM matches what plays | Tasks | Pending |
-| BPM-07 | P1: BPM matches what plays | Tasks | Pending |
-| BPM-08 | P1: BPM matches what plays | Tasks | Pending |
+| BPM-06 | P1: BPM matches what plays | Tasks | Implementing |
+| BPM-07 | P1: BPM matches what plays | Tasks | Implementing |
+| BPM-08 | P1: BPM matches what plays | Tasks | Implementing |
 | TRAIN-01 | P1: Precise Trainer | Tasks | Implementing |
 | TRAIN-02 | P1: Precise Trainer | Tasks | Implementing |
 | TRAIN-03 | P1: Precise Trainer | Tasks | Implementing |

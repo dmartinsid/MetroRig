@@ -5,7 +5,6 @@ export interface Preset {
   timeSignature: string;
   measureLength: number;
   gridData: Record<number, number[]>; // trackId -> up to 32 steps
-  swing?: number;
   trainerSettings: {
     enabled: boolean;
     startBpm: number;
@@ -16,6 +15,9 @@ export interface Preset {
     curve: 'stepped' | 'smooth';
   };
 }
+
+// What IndexedDB may still return for presets saved before swing was removed
+export type StoredPreset = Preset & { swing?: number };
 
 export interface PracticeLog {
   id?: number;
@@ -43,6 +45,25 @@ export function measureLengthFor(numerator: number, denominator: number): number
   if (denominator === 4) return numerator * 4;
   if (denominator === 8) return numerator * 2;
   return numerator;
+}
+
+// Drops stored swing and moves legacy 12-step 12/8 presets onto the 24-step grid
+export function normalizePreset(preset: StoredPreset): Preset {
+  const { swing: _swing, ...normalized } = structuredClone(preset);
+  if (normalized.timeSignature !== '12/8' || normalized.measureLength !== 12) return normalized;
+
+  const gridData: Record<number, number[]> = {};
+  for (const [trackId, steps] of Object.entries(normalized.gridData)) {
+    const expanded = new Array(24).fill(0);
+    for (let step = 0; step < 12; step++) expanded[step * 2] = steps[step] ?? 0;
+    gridData[Number(trackId)] = expanded;
+  }
+  return { ...normalized, measureLength: 24, gridData, bpm: Math.min(240, Math.round(normalized.bpm * 1.5)) };
+}
+
+// The tempo a preset plays its first hit at
+export function startBpmFor(preset: Preset): number {
+  return preset.trainerSettings.enabled ? preset.trainerSettings.startBpm : preset.bpm;
 }
 
 // Maps a sequencer step to its zero-based beat within the bar
