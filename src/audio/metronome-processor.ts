@@ -19,6 +19,7 @@ interface WasmEngineExports {
     stepValue: number,
     curveType: number
   ): void;
+  engine_replace_trainer: WasmEngineExports['engine_set_trainer'];
   engine_get_tick(ptr: number, bpmPtr: number): number;
   engine_process(ptr: number, outL: number, outR: number, length: number): void;
   engine_alloc(size: number): number;
@@ -150,7 +151,8 @@ class MetronomeProcessor extends AudioWorkletProcessor {
         break;
       }
       case 'SET_TRAINER': {
-        exports.engine_set_trainer(
+        const setTrainer = msg.replace ? exports.engine_replace_trainer : exports.engine_set_trainer;
+        setTrainer(
           this.enginePtr,
           msg.enabled ? 1 : 0,
           msg.startBpm,

@@ -123,10 +123,11 @@ export class MetronomeNode extends EventTarget {
     stepType: 'measures' | 'seconds';
     stepValue: number;
     curve: 'stepped' | 'smooth';
-  }) {
+  }, replace: boolean = false) {
     this.workletNode?.port.postMessage({
       type: 'SET_TRAINER',
-      ...settings
+      ...settings,
+      replace
     });
   }
 
