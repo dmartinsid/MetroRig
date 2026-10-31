@@ -69,7 +69,6 @@ pub struct Engine {
     measure_length: usize,
 
     // Step limit timing
-    current_step_limit: f64,
 
     // Sound selection
     click_mode: u32, // 0 = Synth, 1 = Sample
@@ -116,7 +115,6 @@ impl Engine {
             last_tick_index: -1,
             last_tick_bpm: 120.0,
             measure_length: 16,
-            current_step_limit: 0.0,
             click_mode: 0,
             click_accent: false,
         };
@@ -143,7 +141,7 @@ impl Engine {
         self.step_index = 0;
         self.first_hit = true;
         self.trainer_schedule_restarted = false;
-        self.samples_in_current_step = self.current_step_limit - 1.0; // Trigger first beat immediately
+        self.samples_in_current_step = self.samples_per_step - 1.0; // Trigger first beat immediately
     }
 
     pub fn stop(&mut self) {
@@ -157,7 +155,6 @@ impl Engine {
         // Samples per step = sample_rate / steps_per_second
         let steps_per_second = (self.bpm / 60.0) * 4.0;
         self.samples_per_step = self.sample_rate as f64 / steps_per_second;
-        self.current_step_limit = self.samples_per_step;
     }
 
     fn trigger_step(&mut self) {
@@ -314,8 +311,8 @@ impl Engine {
             self.process_tick_samples();
 
             self.samples_in_current_step += 1.0;
-            if self.samples_in_current_step >= self.current_step_limit {
-                self.samples_in_current_step -= self.current_step_limit;
+            if self.samples_in_current_step >= self.samples_per_step {
+                self.samples_in_current_step -= self.samples_per_step;
                 self.trigger_step();
             }
 
@@ -1677,7 +1674,7 @@ mod tests {
             
             let mut total_limit = 0.0;
             for _ in 0..length {
-                total_limit += engine.current_step_limit;
+                total_limit += engine.samples_per_step;
                 engine.trigger_step();
             }
             
