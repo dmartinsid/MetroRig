@@ -1,4 +1,11 @@
 import { visualDelayMs } from '../visualSync';
+import type { TrainerSettings } from '../state';
+
+export interface TickDetail {
+  beatIndex: number;
+  currentBpm: number;
+  activeTrackIds: number[];
+}
 
 export class MetronomeNode extends EventTarget {
   private ctx: AudioContext;
@@ -115,15 +122,7 @@ export class MetronomeNode extends EventTarget {
     this.workletNode?.port.postMessage({ type: 'UPDATE_GRID', trackId, steps });
   }
 
-  setTrainer(settings: {
-    enabled: boolean;
-    startBpm: number;
-    targetBpm: number;
-    increment: number;
-    stepType: 'measures' | 'seconds';
-    stepValue: number;
-    curve: 'stepped' | 'smooth';
-  }, replace: boolean = false) {
+  setTrainer(settings: TrainerSettings, replace: boolean = false) {
     this.workletNode?.port.postMessage({
       type: 'SET_TRAINER',
       ...settings,

@@ -19,6 +19,8 @@ export interface Preset {
 // What IndexedDB may still return for presets saved before swing was removed
 export type StoredPreset = Preset & { swing?: number };
 
+export type TrainerSettings = Preset['trainerSettings'];
+
 export interface PracticeLog {
   id?: number;
   date: string;

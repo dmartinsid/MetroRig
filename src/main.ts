@@ -1,5 +1,5 @@
-import { MetronomeNode } from './audio/MetronomeNode';
-import { StateManager, FACTORY_PRESETS, FACTORY_GROOVES, SPEED_TRAINER_PRESETS, Preset, StoredPreset, CustomGroove, FIGURES, getBeatsPerMeasure, getBeatForStep, isSustainedStep, applyFigure, measureLengthFor, normalizePreset, startBpmFor } from './state';
+import { MetronomeNode, TickDetail } from './audio/MetronomeNode';
+import { StateManager, FACTORY_PRESETS, FACTORY_GROOVES, SPEED_TRAINER_PRESETS, Preset, StoredPreset, TrainerSettings, CustomGroove, FIGURES, getBeatsPerMeasure, getBeatForStep, isSustainedStep, applyFigure, measureLengthFor, normalizePreset, startBpmFor } from './state';
 import { VisualScheduler } from './visualSync';
 import workletUrl from './audio/metronome-processor?url';
 
@@ -174,7 +174,11 @@ function syncPlaybackSettings(replaceTrainer = false) {
   }
   
   // Set trainer
-  audioNode.setTrainer({
+  audioNode.setTrainer(readTrainerInputs(), replaceTrainer);
+}
+
+function readTrainerInputs(): TrainerSettings {
+  return {
     enabled: trainerEnable.checked,
     startBpm: Number(trainerStart.value),
     targetBpm: Number(trainerTarget.value),
@@ -182,7 +186,7 @@ function syncPlaybackSettings(replaceTrainer = false) {
     stepType: trainerType.value as 'measures' | 'seconds',
     stepValue: Number(trainerVal.value),
     curve: trainerCurve.value as 'stepped' | 'smooth'
-  }, replaceTrainer);
+  };
 }
 
 // Draw Sequencer Grid
@@ -481,15 +485,7 @@ const formInputs = [trainerEnable, trainerStart, trainerTarget, trainerInc, trai
 formInputs.forEach(el => {
   el.onchange = () => {
     // Sync DOM trainer values back into state so saves are accurate
-    state.activePreset.trainerSettings = {
-      enabled: trainerEnable.checked,
-      startBpm: Number(trainerStart.value),
-      targetBpm: Number(trainerTarget.value),
-      increment: Number(trainerInc.value),
-      stepType: trainerType.value as 'measures' | 'seconds',
-      stepValue: Number(trainerVal.value),
-      curve: trainerCurve.value as 'stepped' | 'smooth'
-    };
+    state.activePreset.trainerSettings = readTrainerInputs();
     syncPlaybackSettings();
     markPresetAsModified();
   };
@@ -529,7 +525,7 @@ function formatLiveBpm(bpm: number): string {
 }
 
 // Draws one tick once its sound has left the device
-function renderTick({ beatIndex, currentBpm, activeTrackIds }: any) {
+function renderTick({ beatIndex, currentBpm, activeTrackIds }: TickDetail) {
   // Ticks still in flight after stop must not restart anything
   if (!state.isPlaying) return;
 
@@ -565,8 +561,9 @@ function renderTick({ beatIndex, currentBpm, activeTrackIds }: any) {
 }
 
 // Handle Tick triggers from audio worklet thread
-audioNode.addEventListener('tick', (e: any) => {
-  visualScheduler.schedule(() => renderTick(e.detail), audioNode.visualDelayMs());
+audioNode.addEventListener('tick', (e) => {
+  const detail = (e as CustomEvent<TickDetail>).detail;
+  visualScheduler.schedule(() => renderTick(detail), audioNode.visualDelayMs());
 });
 
 // Handle Preset Dropdown Selection Change
