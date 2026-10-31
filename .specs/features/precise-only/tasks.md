@@ -358,9 +358,9 @@ T14 → T15 → T16 → T17 → T18 → T19 → T20
 
 **Done when**:
 
-- [ ] `tests/MetronomeNode.test.ts` proves no log on tick and no swing message
-- [ ] `setSwing` is gone from the mock in `src/index.test.ts`
-- [ ] Gate passes with 39 JavaScript tests
+- [x] `tests/MetronomeNode.test.ts` proves no log on tick and no swing message
+- [x] `setSwing` is gone from the mock in `src/index.test.ts`
+- [x] Gate passes with 39 JavaScript tests
 
 **Tests**: unit
 **Gate**: quick
@@ -631,7 +631,7 @@ Proof: run js | ✓ tests/metronome-processor.test.ts > Worklet > rt_02 reuses h
 ## Handoff
 
 **Settled mid-build:** The user approved with "aprovado" after being told batch sub-agents are the default unless they say "inline".
-**Dispatched:** batch 1 (phases 1-2, T1-T8) - returned, last commit 3de3eee; batch 2 (phases 3-4, T9-T14) - sent
+**Dispatched:** batch 1 (phases 1-2, T1-T8) - returned, last commit 3de3eee; batch 2 (phases 3-4, T9-T14) - returned at T13; T14 closed by the orchestrator; batch 3 (phase 5, T15-T20) - sent
 **Walked:** none
 
 ---
