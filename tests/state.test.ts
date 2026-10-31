@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { StateManager, FACTORY_PRESETS, SPEED_TRAINER_PRESETS, FIGURES, getBeatsPerMeasure, getBeatForStep, isSustainedStep, applyFigure, measureLengthFor, normalizePreset, startBpmFor } from '../src/state';
+import { StateManager, FACTORY_PRESETS, FACTORY_GROOVES, SPEED_TRAINER_PRESETS, FIGURES, getBeatsPerMeasure, getBeatForStep, isSustainedStep, applyFigure, measureLengthFor, normalizePreset, startBpmFor } from '../src/state';
 import type { Preset } from '../src/state';
 
 describe('StateManager Tests', () => {
@@ -144,6 +144,20 @@ describe('Meter rules', () => {
     expect(hitsOf(jazz.gridData[2])).toEqual([10]);
     expect(hitsOf(jazz.gridData[3])).toEqual([0, 4, 6, 10, 12, 16, 18, 22]);
     expect((jazz.bpm * 4) / 6).toBe(130);
+  });
+
+  it('bpm_05 factory grooves hold 24 steps', () => {
+    const blues = FACTORY_GROOVES.find(g => g.id === 'blues')!;
+    const jazz = FACTORY_GROOVES.find(g => g.id === 'jazz')!;
+
+    [blues, jazz].forEach(groove => {
+      expect(groove.length).toBe(24);
+      [1, 2, 3].forEach(track => expect(groove.tracks[track]).toHaveLength(24));
+      expect(hitsOf(groove.tracks[1])).toEqual([0, 12]);
+      expect(hitsOf(groove.tracks[3])).toEqual([0, 4, 6, 10, 12, 16, 18, 22]);
+    });
+    expect(hitsOf(blues.tracks[2])).toEqual([6, 18]);
+    expect(hitsOf(jazz.tracks[2])).toEqual([10]);
   });
 });
 
