@@ -156,14 +156,20 @@ function syncAudioSettings() {
   if (!isAudioInit) return;
 
   audioNode.setBpm(startBpmFor(state.activePreset));
-  syncPlaybackSettings(true);
+  syncMeterAndGrid();
+  audioNode.replaceTrainer(readTrainerInputs()); // Applies now
 }
 
 // Sends everything but BPM, so a change during playback keeps the live tempo.
-// A replaced Trainer applies now; otherwise a running one takes the change on beat 1.
-function syncPlaybackSettings(replaceTrainer = false) {
+// A running Trainer takes the change on beat 1.
+function syncPlaybackSettings() {
   if (!isAudioInit) return;
 
+  syncMeterAndGrid();
+  audioNode.setTrainer(readTrainerInputs());
+}
+
+function syncMeterAndGrid() {
   // Set measure length
   audioNode.setMeasureLength(state.activePreset.measureLength || 16);
   
@@ -172,9 +178,6 @@ function syncPlaybackSettings(replaceTrainer = false) {
     const steps = new Uint8Array(state.activePreset.gridData[trackId] || new Array(16).fill(0));
     audioNode.updateGrid(trackId, steps);
   }
-  
-  // Set trainer
-  audioNode.setTrainer(readTrainerInputs(), replaceTrainer);
 }
 
 function readTrainerInputs(): TrainerSettings {

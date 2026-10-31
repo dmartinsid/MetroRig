@@ -150,24 +150,29 @@ class MetronomeProcessor extends AudioWorkletProcessor {
         exports.engine_free_buf(ptrR, byteLength);
         break;
       }
-      case 'SET_TRAINER': {
-        const setTrainer = msg.replace ? exports.engine_replace_trainer : exports.engine_set_trainer;
-        setTrainer(
-          this.enginePtr,
-          msg.enabled ? 1 : 0,
-          msg.startBpm,
-          msg.targetBpm,
-          msg.increment,
-          msg.stepType === 'measures' ? 0 : 1,
-          msg.stepValue,
-          msg.curve === 'stepped' ? 0 : 1
-        );
+      case 'SET_TRAINER':
+        this.sendTrainer(exports.engine_set_trainer, msg);
         break;
-      }
+      case 'REPLACE_TRAINER':
+        this.sendTrainer(exports.engine_replace_trainer, msg);
+        break;
       case 'SET_CLICK_MODE':
         exports.engine_set_click_mode(this.enginePtr, msg.mode);
         break;
     }
+  }
+
+  private sendTrainer(update: WasmEngineExports['engine_set_trainer'], msg: any) {
+    update(
+      this.enginePtr,
+      msg.enabled ? 1 : 0,
+      msg.startBpm,
+      msg.targetBpm,
+      msg.increment,
+      msg.stepType === 'measures' ? 0 : 1,
+      msg.stepValue,
+      msg.curve === 'stepped' ? 0 : 1
+    );
   }
 
   private rebuildHeapViews(buffer: ArrayBufferLike) {
