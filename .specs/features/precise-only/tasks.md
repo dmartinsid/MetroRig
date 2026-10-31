@@ -275,9 +275,9 @@ T14 → T15 → T16 → T17 → T18 → T19 → T20
 
 **Done when**:
 
-- [ ] 6/8 with 12 steps stays unchanged
-- [ ] `startBpmFor` covers the preset-load edge cases
-- [ ] Gate passes with 27 JavaScript tests
+- [x] 6/8 with 12 steps stays unchanged
+- [x] `startBpmFor` covers the preset-load edge cases
+- [x] Gate passes with 27 JavaScript tests
 
 **Tests**: unit
 **Gate**: quick

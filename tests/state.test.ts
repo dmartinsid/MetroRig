@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { StateManager, FACTORY_PRESETS, SPEED_TRAINER_PRESETS, FIGURES, getBeatsPerMeasure, getBeatForStep, isSustainedStep, applyFigure, measureLengthFor } from '../src/state';
+import { StateManager, FACTORY_PRESETS, SPEED_TRAINER_PRESETS, FIGURES, getBeatsPerMeasure, getBeatForStep, isSustainedStep, applyFigure, measureLengthFor, normalizePreset, startBpmFor } from '../src/state';
+import type { Preset } from '../src/state';
 
 describe('StateManager Tests', () => {
   let stateManager: StateManager;
@@ -143,5 +144,78 @@ describe('Meter rules', () => {
     expect(hitsOf(jazz.gridData[2])).toEqual([10]);
     expect(hitsOf(jazz.gridData[3])).toEqual([0, 4, 6, 10, 12, 16, 18, 22]);
     expect((jazz.bpm * 4) / 6).toBe(130);
+  });
+});
+
+describe('Preset normalization', () => {
+  const trainerSettings: Preset['trainerSettings'] = { enabled: false, startBpm: 100, targetBpm: 150, increment: 5, stepType: 'measures', stepValue: 4, curve: 'stepped' };
+  const legacy12_8 = () => ({
+    id: 'user_1',
+    name: 'Old shuffle',
+    bpm: 90,
+    timeSignature: '12/8',
+    measureLength: 12,
+    gridData: {
+      0: [2, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+      1: [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1],
+      2: [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+      3: [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    },
+    trainerSettings: { ...trainerSettings },
+  });
+
+  it('bpm_06 expands legacy steps', () => {
+    const stored = legacy12_8();
+    const original = structuredClone(stored);
+
+    const preset = normalizePreset(stored);
+
+    expect(preset.measureLength).toBe(24);
+    expect(preset.gridData[0]).toEqual([2, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]);
+    expect(preset.gridData[1]).toEqual([1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0]);
+    expect(preset.gridData[2]).toEqual([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+    expect(preset.gridData[3]).toEqual([0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+    expect(stored).toEqual(original);
+  });
+
+  it('bpm_07 rounds expanded bpm', () => {
+    expect(normalizePreset({ ...legacy12_8(), bpm: 90 }).bpm).toBe(135);
+    expect(normalizePreset({ ...legacy12_8(), bpm: 101 }).bpm).toBe(152);
+    expect(normalizePreset({ ...legacy12_8(), bpm: 100 }).bpm).toBe(150);
+    expect(normalizePreset({ ...legacy12_8(), bpm: 90 }).trainerSettings).toEqual(trainerSettings);
+  });
+
+  it('bpm_08 caps expanded bpm', () => {
+    expect(normalizePreset({ ...legacy12_8(), bpm: 160 }).bpm).toBe(240);
+    expect(normalizePreset({ ...legacy12_8(), bpm: 200 }).bpm).toBe(240);
+  });
+
+  it('drops a stored swing value without changing the record', () => {
+    const stored = { ...FACTORY_PRESETS[0], swing: 50 };
+
+    const preset = normalizePreset(stored);
+
+    expect(preset).not.toHaveProperty('swing');
+    expect(preset).toEqual(FACTORY_PRESETS[0]);
+    expect(stored.swing).toBe(50);
+    expect(preset.gridData[0]).not.toBe(stored.gridData[0]);
+  });
+
+  it('leaves presets outside legacy 12/8 unchanged', () => {
+    const sixEight = { ...legacy12_8(), timeSignature: '6/8' };
+    expect(normalizePreset(sixEight)).toEqual(sixEight);
+
+    const corrected = FACTORY_PRESETS.find(p => p.id === 'blues')!;
+    expect(normalizePreset(corrected)).toEqual(corrected);
+  });
+
+  it('starts at Start BPM when the Trainer is enabled', () => {
+    const preset = { ...legacy12_8(), bpm: 120, trainerSettings: { ...trainerSettings, enabled: true, startBpm: 80 } };
+    expect(startBpmFor(preset)).toBe(80);
+  });
+
+  it('starts at the preset BPM when the Trainer is disabled', () => {
+    const preset = { ...legacy12_8(), bpm: 120, trainerSettings: { ...trainerSettings, enabled: false, startBpm: 80 } };
+    expect(startBpmFor(preset)).toBe(120);
   });
 });
