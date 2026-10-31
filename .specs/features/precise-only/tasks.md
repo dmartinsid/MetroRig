@@ -191,9 +191,9 @@ T14 → T15 → T16 → T17 → T18 → T19 → T20
 
 **Done when**:
 
-- [ ] `public/woodblock.wav`, parsed in the test, sounds within 1 sample of its step
-- [ ] A silent sample loads unchanged
-- [ ] Gate passes with 22 Rust tests
+- [x] `public/woodblock.wav`, parsed in the test, sounds within 1 sample of its step
+- [x] A silent sample loads unchanged
+- [x] Gate passes with 22 Rust tests
 
 **Tests**: unit
 **Gate**: quick

@@ -351,9 +351,16 @@ pub extern "C" fn engine_load_sample(
     let left_slice = unsafe { slice::from_raw_parts(left_ptr, length) };
     let right_slice = unsafe { slice::from_raw_parts(right_ptr, length) };
 
+    // Start at the first frame reaching 1% of peak. A silent sample matches at frame 0.
+    let peak = left_slice.iter().chain(right_slice).fold(0.0f32, |peak, s| peak.max(s.abs()));
+    let threshold = peak * 0.01;
+    let onset = (0..length)
+        .find(|&i| left_slice[i].abs() >= threshold || right_slice[i].abs() >= threshold)
+        .unwrap_or(0);
+
     let sample = Sample {
-        left_channel: left_slice.to_vec(),
-        right_channel: right_slice.to_vec(),
+        left_channel: left_slice[onset..].to_vec(),
+        right_channel: right_slice[onset..].to_vec(),
     };
     engine.samples[sample_id as usize] = Some(sample);
 }
@@ -749,6 +756,145 @@ mod tests {
         assert_eq!(run.hits[0].step, 0);
         assert_eq!(run.hits[1].step, 1);
         assert_within_one_sample(run.interval(0), step_samples(SR, 120.0), "first step");
+    }
+
+    // Interleaved WAV frames as (left, right). Mono files return the same channel twice.
+    fn read_wav(path: &str) -> (Vec<f32>, Vec<f32>) {
+        let bytes = std::fs::read(path).unwrap();
+        let u16_at = |i: usize| u16::from_le_bytes([bytes[i], bytes[i + 1]]);
+        let u32_at = |i: usize| u32::from_le_bytes([bytes[i], bytes[i + 1], bytes[i + 2], bytes[i + 3]]);
+
+        let (mut format, mut channels, mut bits) = (0, 0, 0);
+        let mut chunk = 12;
+        loop {
+            let size = u32_at(chunk + 4) as usize;
+            let body = chunk + 8;
+            if &bytes[chunk..chunk + 4] == b"fmt " {
+                format = u16_at(body);
+                channels = u16_at(body + 2) as usize;
+                bits = u16_at(body + 14) as usize;
+            } else if &bytes[chunk..chunk + 4] == b"data" {
+                let width = bits / 8;
+                let decode = |frame: &[u8]| match (format, bits) {
+                    (1, 16) => i16::from_le_bytes([frame[0], frame[1]]) as f32 / 32768.0,
+                    (1, 24) => {
+                        i32::from_le_bytes([0, frame[0], frame[1], frame[2]]) as f32 / 2147483648.0
+                    }
+                    (1, 32) => {
+                        i32::from_le_bytes([frame[0], frame[1], frame[2], frame[3]]) as f32
+                            / 2147483648.0
+                    }
+                    (3, 32) => f32::from_le_bytes([frame[0], frame[1], frame[2], frame[3]]),
+                    other => panic!("unsupported WAV format {:?}", other),
+                };
+                let frames = bytes[body..body + size].chunks_exact(width * channels);
+                let left = frames.clone().map(|f| decode(f)).collect();
+                let right = frames.map(|f| decode(&f[(channels - 1) * width..])).collect();
+                return (left, right);
+            }
+            chunk = body + size + (size & 1);
+        }
+    }
+
+    // Plays a sample on the kick slot, at unity volume, from the first frame of a run.
+    fn kick_output(left: &[f32], right: &[f32], frames: usize) -> (Vec<f32>, Vec<f32>) {
+        let run = Run::new(120.0, &[0; 16]);
+        engine_load_sample(run.ptr, 1, left.as_ptr(), right.as_ptr(), left.len());
+        let mut grid = [0u8; 16];
+        grid[0] = 1;
+        engine_update_grid(run.ptr, 1, grid.as_ptr(), 16);
+        engine_start(run.ptr);
+        stereo_output(run.ptr, frames)
+    }
+
+    #[test]
+    fn onset_01_trims_before_one_percent() {
+        struct Case {
+            left: Vec<f32>,
+            right: Vec<f32>,
+            first_kept: usize,
+        }
+        let cases = [
+            // A frame below 1% goes, the frame exactly at 1% stays, later quiet frames stay.
+            Case {
+                left: vec![0.0, -0.009, 0.0, 0.01, 0.0, 1.0, 0.2],
+                right: vec![0.0; 7],
+                first_kept: 3,
+            },
+            // Either channel can reach 1%, and negative values count.
+            Case {
+                left: vec![0.0, 0.0, 0.0, 0.0, 0.8, 0.1],
+                right: vec![0.0, 0.001, -0.02, 0.0, -0.4, 0.1],
+                first_kept: 2,
+            },
+            // The peak can sit in the other channel.
+            Case {
+                left: vec![0.002, 0.002, 0.002, 0.002],
+                right: vec![0.0, 0.0, 1.0, 0.0],
+                first_kept: 2,
+            },
+            // The threshold is relative to this sample's peak, not to full scale.
+            Case {
+                left: vec![0.00005, 0.0002, 0.01, 0.0],
+                right: vec![0.0; 4],
+                first_kept: 1,
+            },
+            // A sample that starts loud loses nothing.
+            Case {
+                left: vec![0.5, 0.0, 0.2],
+                right: vec![0.5, 0.0, 0.2],
+                first_kept: 0,
+            },
+        ];
+
+        for case in cases {
+            let frames = case.left.len() + 5;
+            let (out_l, out_r) = kick_output(&case.left, &case.right, frames);
+
+            let mut expected_l = case.left[case.first_kept..].to_vec();
+            let mut expected_r = case.right[case.first_kept..].to_vec();
+            expected_l.resize(frames, 0.0);
+            expected_r.resize(frames, 0.0);
+            assert_eq!(out_l, expected_l);
+            assert_eq!(out_r, expected_r);
+        }
+    }
+
+    #[test]
+    fn onset_02_woodblock_on_the_step() {
+        let path = concat!(env!("CARGO_MANIFEST_DIR"), "/public/woodblock.wav");
+        let (left, right) = read_wav(path);
+        let peak = left.iter().chain(&right).fold(0.0f32, |peak, s| peak.max(s.abs()));
+        assert!(peak > 0.0);
+
+        for bpm in [97.0, 120.0] {
+            let mut grid = [0u8; 16];
+            grid[4] = 2; // Accented, so the sample plays at unity volume
+            let run = Run::new(bpm, &grid);
+            engine_load_sample(run.ptr, 0, left.as_ptr(), right.as_ptr(), left.len());
+            engine_start(run.ptr);
+
+            let step_position = 4.0 * step_samples(SR, bpm);
+            let (out_l, out_r) = stereo_output(run.ptr, step_position as usize + 20000);
+            let audible = 0.01 * peak;
+            let first_audible = (0..out_l.len())
+                .find(|&i| out_l[i].abs() >= audible || out_r[i].abs() >= audible)
+                .unwrap();
+            let what = format!("woodblock at {} BPM", bpm);
+            assert_within_one_sample(first_audible as f64, step_position, &what);
+        }
+    }
+
+    #[test]
+    fn onset_03_silent_sample_unchanged() {
+        let silence = vec![0.0f32; 100];
+        let run = Run::new(120.0, &[0; 16]);
+        engine_load_sample(run.ptr, 1, silence.as_ptr(), silence.as_ptr(), silence.len());
+
+        let engine = unsafe { &*run.ptr };
+        let stored = engine.samples[1].as_ref().unwrap();
+        assert_eq!(stored.left_channel, silence);
+        assert_eq!(stored.right_channel, silence);
     }
 
     #[test]

@@ -244,9 +244,9 @@ MetroRig's audio engine already keeps exact time: a measured hour stayed within 
 | TRAIN-14 | P1: Precise Trainer | Tasks | Pending |
 | TRAIN-15 | P1: Precise Trainer | Tasks | Pending |
 | TRAIN-16 | P1: Precise Trainer | Tasks | Pending |
-| ONSET-01 | P1: Clean click sounds | Tasks | Pending |
-| ONSET-02 | P1: Clean click sounds | Tasks | Pending |
-| ONSET-03 | P1: Clean click sounds | Tasks | Pending |
+| ONSET-01 | P1: Clean click sounds | Tasks | Implementing |
+| ONSET-02 | P1: Clean click sounds | Tasks | Implementing |
+| ONSET-03 | P1: Clean click sounds | Tasks | Implementing |
 | CLICK-01 | P1: Clean click sounds | Tasks | Implementing |
 | PLAY-01 | P1: Clean Stop and Play | Tasks | Implementing |
 | PLAY-02 | P1: Clean Stop and Play | Tasks | Implementing |
