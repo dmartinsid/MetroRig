@@ -12,9 +12,6 @@
   <script src="https://cdn.jsdelivr.net/npm/gsap@3/dist/gsap.min.js"></script>
 </head>
 <body>
-  <!-- Background flash overlay for stadium beats -->
-  <div id="bg-flash"></div>
-
   <div id="app">
     <header>
       <span class="logo">MetroRig<span class="badge">PRO</span></span>
@@ -31,6 +28,7 @@
         <select id="preset-selector">
           <optgroup id="group-signatures" label="Time Signatures"></optgroup>
           <optgroup id="group-genres" label="Drum Grooves"></optgroup>
+          <optgroup id="group-trainers" label="Speed Trainer"></optgroup>
           <optgroup id="group-user" label="User Presets"></optgroup>
         </select>
       </div>
@@ -43,6 +41,7 @@
       <!-- Left: Sequencer -->
       <section class="sequencer-container card" style="padding: 1.5rem;">
         <div class="panel-header" id="panel-header-text">Default · 4/4 · 120 BPM</div>
+        <div class="figure-palette" id="figure-palette"></div>
         <div class="sequencer-grid" id="grid-container"></div>
       </section>
 
@@ -162,22 +161,32 @@
     <!-- Stadium View -->
     <main id="stadium-view" class="hidden">
       <div class="stadium-display">
-        <div class="stadium-timer" id="stadium-timer">00:00</div>
-        <div class="stadium-bpm" id="stadium-bpm">120.0</div>
-        <div class="stadium-trainer-info" id="stadium-status">Trainer Off</div>
+        <!-- Rotating beat clock -->
+        <svg class="beat-clock" viewBox="-100 -100 200 200" aria-hidden="true">
+          <g id="clock-face"></g>
+          <line id="clock-hand" class="clock-hand" x1="0" y1="0" x2="0" y2="-74"></line>
+          <circle class="clock-hub" r="5"></circle>
+        </svg>
 
-        <!-- Per-instrument orbs -->
-        <div class="orb-row">
-          <div class="orb" id="orb-0" data-track="0" title="Click"></div>
-          <div class="orb" id="orb-1" data-track="1" title="Kick"></div>
-          <div class="orb" id="orb-2" data-track="2" title="Snare"></div>
-          <div class="orb" id="orb-3" data-track="3" title="Hi-hat"></div>
+        <div class="stadium-info">
+          <select id="stadium-preset-selector" aria-label="Speed trainer preset"></select>
+          <div class="stadium-timer" id="stadium-timer">00:00</div>
+          <div class="stadium-bpm" id="stadium-bpm">120.0</div>
+          <div class="stadium-trainer-info" id="stadium-status">Trainer Off</div>
+
+          <!-- Per-instrument orbs -->
+          <div class="orb-row">
+            <div class="orb" id="orb-0" data-track="0" title="Click"></div>
+            <div class="orb" id="orb-1" data-track="1" title="Kick"></div>
+            <div class="orb" id="orb-2" data-track="2" title="Snare"></div>
+            <div class="orb" id="orb-3" data-track="3" title="Hi-hat"></div>
+          </div>
+
+          <button id="btn-stadium-play" class="play-btn play-btn-large">
+            <span class="icon-play">▶ PLAY</span>
+            <span class="icon-stop">■ STOP</span>
+          </button>
         </div>
-
-        <button id="btn-stadium-play" class="play-btn play-btn-large">
-          <span class="icon-play">▶ PLAY</span>
-          <span class="icon-stop">■ STOP</span>
-        </button>
       </div>
     </main>
   </div>

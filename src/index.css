@@ -187,6 +187,56 @@ header {
   align-items: center;
 }
 
+/* Figure palette */
+.figure-palette {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.figure-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-cell);
+  padding: 0.35rem 0.6rem;
+  cursor: pointer;
+}
+
+.figure-btn:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.figure-btn.active {
+  color: var(--neon-green);
+  border-color: var(--neon-green);
+}
+
+.figure-pattern {
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.05em;
+}
+
+/* Beat count row */
+.step-count {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  text-align: center;
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
+.step-count.beat-start {
+  font-weight: 700;
+  color: var(--text);
+  opacity: 1;
+}
+
 /* Track label pill */
 .track-label {
   font-size: 0.75rem;
@@ -219,6 +269,11 @@ header {
 
 [data-track] .step-cell:hover {
   border-color: color-mix(in srgb, var(--track-color) 50%, transparent);
+}
+
+.step-cell.sustain {
+  background: color-mix(in srgb, var(--track-color) 12%, transparent);
+  border-color: color-mix(in srgb, var(--track-color) 25%, transparent);
 }
 
 .step-cell.active {
@@ -468,7 +523,7 @@ input[type="checkbox"] {
 
 /* ─── Stadium View ───────────────────────────────────────── */
 #stadium-view {
-  height: calc(100vh - 70px);
+  min-height: calc(100vh - 70px);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -476,6 +531,15 @@ input[type="checkbox"] {
 }
 
 .stadium-display {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem 4rem;
+  padding: 1.5rem 1rem;
+}
+
+.stadium-info {
   text-align: center;
   display: flex;
   flex-direction: column;
@@ -506,6 +570,64 @@ input[type="checkbox"] {
   letter-spacing: 0.05em;
 }
 
+#stadium-preset-selector {
+  width: 280px;
+  max-width: 100%;
+}
+
+/* Beat clock */
+.beat-clock {
+  width: min(70vh, 90vw);
+  max-width: 560px;
+  height: auto;
+}
+
+.clock-slice {
+  fill: #16161f;
+  stroke: var(--bg);
+  stroke-width: 0.6;
+}
+
+.clock-slice.on {
+  fill: var(--track-color);
+}
+
+.clock-slice.sustain {
+  fill: color-mix(in srgb, var(--track-color) 30%, #16161f);
+}
+
+.clock-beat-line {
+  stroke: var(--text-muted);
+  stroke-width: 1;
+}
+
+.clock-center {
+  fill: var(--bg);
+}
+
+.clock-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: central;
+  fill: var(--text-muted);
+}
+
+.clock-label.active {
+  fill: var(--neon-green);
+}
+
+.clock-hand {
+  stroke: rgba(255, 255, 255, 0.7);
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+
+.clock-hub {
+  fill: var(--text);
+}
+
 /* Orb row */
 .orb-row {
   display: flex;
@@ -519,32 +641,7 @@ input[type="checkbox"] {
   height: 48px;
   border-radius: 50%;
   position: relative;
-}
-
-[data-track="0"].orb {
-  background: rgba(255, 184, 0, 0.1);
-  border: 1px solid rgba(255, 184, 0, 0.25);
-}
-[data-track="1"].orb {
-  background: rgba(255, 45, 85, 0.1);
-  border: 1px solid rgba(255, 45, 85, 0.25);
-}
-[data-track="2"].orb {
-  background: rgba(0, 212, 255, 0.1);
-  border: 1px solid rgba(0, 212, 255, 0.25);
-}
-[data-track="3"].orb {
-  background: rgba(0, 255, 148, 0.1);
-  border: 1px solid rgba(0, 255, 148, 0.25);
-}
-
-/* Background flash overlay */
-#bg-flash {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0;
-  z-index: 0;
+  background: var(--track-color);
 }
 
 /* Stadium play button */

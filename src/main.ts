@@ -1,9 +1,8 @@
 import { MetronomeNode } from './audio/MetronomeNode';
-import { StateManager, FACTORY_PRESETS, Preset, CustomGroove } from './state';
+import { StateManager, FACTORY_PRESETS, SPEED_TRAINER_PRESETS, Preset, CustomGroove, FIGURES, getBeatsPerMeasure, getBeatForStep, isSustainedStep, applyFigure } from './state';
 import workletUrl from './audio/metronome-processor?url';
 
 declare const gsap: any;
-const TRACK_COLORS = ['#FFB800', '#FF2D55', '#00D4FF', '#00FF94'];
 
 const state = new StateManager();
 const audioNode = new MetronomeNode();
@@ -28,7 +27,8 @@ const trainerToggle = document.getElementById('trainer-toggle') as HTMLElement;
 const trainerBody = document.getElementById('trainer-body') as HTMLElement;
 const trainerChevron = document.getElementById('trainer-chevron') as HTMLElement;
 const trainerDot = document.getElementById('trainer-dot') as HTMLElement;
-const bgFlash = document.getElementById('bg-flash') as HTMLElement;
+const clockFace = document.getElementById('clock-face') as unknown as SVGGElement;
+const clockHand = document.getElementById('clock-hand') as unknown as SVGLineElement;
 const orbs = [0, 1, 2, 3].map(i => document.getElementById(`orb-${i}`) as HTMLElement);
 
 const trainerEnable = document.getElementById('trainer-enable') as HTMLInputElement;
@@ -39,12 +39,15 @@ const trainerType = document.getElementById('trainer-type') as HTMLSelectElement
 const trainerVal = document.getElementById('trainer-val') as HTMLInputElement;
 const trainerCurve = document.getElementById('trainer-curve') as HTMLSelectElement;
 
+const figurePalette = document.getElementById('figure-palette') as HTMLElement;
 const gridContainer = document.getElementById('grid-container') as HTMLElement;
 
 const presetSelector = document.getElementById('preset-selector') as HTMLSelectElement;
 const groupSignatures = document.getElementById('group-signatures') as HTMLOptGroupElement;
 const groupGenres = document.getElementById('group-genres') as HTMLOptGroupElement;
+const groupTrainers = document.getElementById('group-trainers') as HTMLOptGroupElement;
 const groupUser = document.getElementById('group-user') as HTMLOptGroupElement;
+const stadiumPresetSelector = document.getElementById('stadium-preset-selector') as HTMLSelectElement;
 const presetNameInput = document.getElementById('preset-name') as HTMLInputElement;
 const btnSave = document.getElementById('btn-save') as HTMLButtonElement;
 const clickSoundSelector = document.getElementById('click-sound-selector') as HTMLSelectElement;
@@ -72,6 +75,8 @@ function markPresetAsModified() {
 function populatePresetsDropdown(selectedId?: string) {
   groupSignatures.innerHTML = '';
   groupGenres.innerHTML = '';
+  groupTrainers.innerHTML = '';
+  stadiumPresetSelector.innerHTML = '<option value="">Choose a speed trainer</option>';
   
   // Add Factory Time Signatures (indices 0 to 3)
   FACTORY_PRESETS.slice(0, 4).forEach(p => {
@@ -87,6 +92,15 @@ function populatePresetsDropdown(selectedId?: string) {
     opt.value = `factory:${p.id}`;
     opt.innerText = p.name;
     groupGenres.appendChild(opt);
+  });
+
+  // Add Speed Trainers to both the header and Stadium dropdowns
+  SPEED_TRAINER_PRESETS.forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = `factory:${p.id}`;
+    opt.innerText = p.name;
+    groupTrainers.appendChild(opt);
+    stadiumPresetSelector.appendChild(opt.cloneNode(true));
   });
 
   // Load User Presets from database
@@ -110,7 +124,14 @@ function populatePresetsDropdown(selectedId?: string) {
     } else {
       presetSelector.value = `factory:${state.activePreset.id}`;
     }
+    syncStadiumPresetSelector();
   });
+}
+
+// Shows the placeholder when the active preset is not a speed trainer
+function syncStadiumPresetSelector() {
+  stadiumPresetSelector.value = presetSelector.value;
+  if (stadiumPresetSelector.selectedIndex < 0) stadiumPresetSelector.value = '';
 }
 
 // Initialize Metronome Engine
@@ -162,10 +183,62 @@ function syncAudioSettings() {
 
 // Draw Sequencer Grid
 const trackNames = ['Click', 'Kick', 'Snare', 'Hi-hat'];
+const SUBDIVISION_LABELS: Record<number, string[]> = { 2: ['', '&'], 4: ['', 'e', '&', 'a'] };
+
+// Figure stamped by grid clicks; null toggles single steps
+let activeFigure: typeof FIGURES[number] | null = null;
+
+function drawFigurePalette() {
+  figurePalette.innerHTML = '';
+  [null, ...FIGURES].forEach(figure => {
+    const btn = document.createElement('button');
+    btn.className = figure === activeFigure ? 'figure-btn active' : 'figure-btn';
+    btn.innerText = figure ? figure.name : 'Step';
+    if (figure) {
+      const pattern = document.createElement('span');
+      pattern.className = 'figure-pattern';
+      pattern.innerText = figure.pattern.map(hit => (hit ? '●' : '·')).join('');
+      btn.appendChild(pattern);
+    }
+    btn.onclick = () => {
+      activeFigure = figure;
+      drawFigurePalette();
+    };
+    figurePalette.appendChild(btn);
+  });
+}
+
 function drawGrid() {
   gridContainer.innerHTML = '';
+  const { gridData, timeSignature } = state.activePreset;
   const measureLength = state.activePreset.measureLength || 16;
-  gridContainer.style.gridTemplateColumns = `auto repeat(${measureLength}, 1fr)`;
+  const beats = getBeatsPerMeasure(timeSignature, measureLength);
+  const stepsPerBeat = measureLength / beats;
+
+  // A narrow spacer column separates beats, so each step maps to its own grid column
+  const templateColumns = ['auto'];
+  const stepColumns: number[] = [];
+  for (let step = 0; step < measureLength; step++) {
+    const isBeatStart = (step * beats) % measureLength === 0;
+    if (step > 0 && isBeatStart) templateColumns.push('0.5rem');
+    templateColumns.push('1fr');
+    stepColumns.push(templateColumns.length);
+  }
+  gridContainer.style.gridTemplateColumns = templateColumns.join(' ');
+
+  // Count row: 1 e & a 2 e & a ...
+  for (let step = 0; step < measureLength; step++) {
+    const beat = getBeatForStep(step, measureLength, beats);
+    const isBeatStart = (step * beats) % measureLength === 0;
+    const count = document.createElement('div');
+    count.className = isBeatStart ? 'step-count beat-start' : 'step-count';
+    count.innerText = isBeatStart
+      ? String(beat + 1)
+      : SUBDIVISION_LABELS[stepsPerBeat]?.[step - beat * stepsPerBeat] ?? '';
+    count.style.gridRow = '1';
+    count.style.gridColumn = String(stepColumns[step]);
+    gridContainer.appendChild(count);
+  }
 
   for (let trackId = 0; trackId < 4; trackId++) {
     // Label cell
@@ -173,41 +246,114 @@ function drawGrid() {
     label.className = 'track-label';
     label.setAttribute('data-track', String(trackId));
     label.innerText = trackNames[trackId];
+    label.style.gridRow = String(trackId + 2);
+    label.style.gridColumn = '1';
     gridContainer.appendChild(label);
 
-    const trackSteps = state.activePreset.gridData[trackId] || new Array(16).fill(0);
+    const trackSteps = gridData[trackId] ??= new Array(16).fill(0);
 
     for (let step = 0; step < measureLength; step++) {
       const cell = document.createElement('div');
       cell.className = 'step-cell';
       cell.setAttribute('data-track', String(trackId));
+      cell.style.gridRow = String(trackId + 2);
+      cell.style.gridColumn = String(stepColumns[step]);
 
       if (trackSteps[step] === 1) cell.classList.add('active');
       if (trackSteps[step] === 2) cell.classList.add('accent');
+      if (isSustainedStep(trackSteps, step, measureLength, beats)) cell.classList.add('sustain');
 
       cell.onclick = () => {
-        let nextState = 0;
-        if (trackId === 0) {
-          nextState = (trackSteps[step] + 1) % 3;
+        if (activeFigure) {
+          applyFigure(trackSteps, step, activeFigure.pattern, measureLength);
+        } else if (trackId === 0) {
+          trackSteps[step] = (trackSteps[step] + 1) % 3;
         } else {
-          nextState = trackSteps[step] === 1 ? 0 : 1;
+          trackSteps[step] = trackSteps[step] === 1 ? 0 : 1;
         }
-        trackSteps[step] = nextState;
-
-        cell.className = 'step-cell';
-        cell.setAttribute('data-track', String(trackId));
-        if (nextState === 1) cell.classList.add('active');
-        if (nextState === 2) cell.classList.add('accent');
 
         if (isAudioInit) {
           audioNode.updateGrid(trackId, new Uint8Array(trackSteps));
         }
+        drawGrid();
         markPresetAsModified();
       };
 
       gridContainer.appendChild(cell);
     }
   }
+
+  drawBeatClock();
+}
+
+// Draw Stadium beat clock: one ring per track, one slice per step, 12 o'clock is step 0
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const CLOCK_RING_OUTER = 80;
+const CLOCK_RING_WIDTH = 12.5;
+const CLOCK_LABEL_RADIUS = 90;
+
+function clockPoint(fraction: number, radius: number): [number, number] {
+  const angle = 2 * Math.PI * fraction - Math.PI / 2;
+  return [radius * Math.cos(angle), radius * Math.sin(angle)];
+}
+
+function drawBeatClock() {
+  const { gridData, timeSignature } = state.activePreset;
+  const measureLength = state.activePreset.measureLength || 16;
+  const beats = getBeatsPerMeasure(timeSignature, measureLength);
+  clockFace.innerHTML = '';
+
+  for (let trackId = 0; trackId < 4; trackId++) {
+    const radius = CLOCK_RING_OUTER - CLOCK_RING_WIDTH * trackId;
+    const trackSteps = gridData[trackId] || [];
+    for (let step = 0; step < measureLength; step++) {
+      // A slice can't span the full circle, which a single-step measure would need
+      const [x1, y1] = clockPoint(step / measureLength, radius);
+      const [x2, y2] = clockPoint((step + 1) / measureLength - 0.0001, radius);
+      const largeArc = measureLength === 1 ? 1 : 0;
+
+      const slice = document.createElementNS(SVG_NS, 'path');
+      slice.setAttribute('d', `M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2} L 0 0 Z`);
+      const sustained = isSustainedStep(trackSteps, step, measureLength, beats);
+      slice.setAttribute('class', trackSteps[step] > 0 ? 'clock-slice on' : sustained ? 'clock-slice sustain' : 'clock-slice');
+      slice.setAttribute('data-track', String(trackId));
+      clockFace.appendChild(slice);
+    }
+  }
+
+  const center = document.createElementNS(SVG_NS, 'circle');
+  center.setAttribute('r', String(CLOCK_RING_OUTER - CLOCK_RING_WIDTH * 4));
+  center.setAttribute('class', 'clock-center');
+  clockFace.appendChild(center);
+
+  for (let beat = 0; beat < beats; beat++) {
+    const [lineX, lineY] = clockPoint(beat / beats, CLOCK_RING_OUTER);
+    const line = document.createElementNS(SVG_NS, 'line');
+    line.setAttribute('x2', String(lineX));
+    line.setAttribute('y2', String(lineY));
+    line.setAttribute('class', 'clock-beat-line');
+    clockFace.insertBefore(line, center);
+
+    const [x, y] = clockPoint(beat / beats, CLOCK_LABEL_RADIUS);
+    const label = document.createElementNS(SVG_NS, 'text');
+    label.setAttribute('x', String(x));
+    label.setAttribute('y', String(y));
+    label.setAttribute('class', 'clock-label');
+    label.textContent = String(beat + 1);
+    clockFace.appendChild(label);
+  }
+}
+
+function highlightBeat(beat: number | null) {
+  clockFace.querySelectorAll('.clock-label').forEach((label, i) => {
+    label.classList.toggle('active', i === beat);
+  });
+}
+
+function resetBeatClock() {
+  gsap.killTweensOf(clockHand);
+  gsap.set(clockHand, { rotation: 0, svgOrigin: '0 0' });
+  highlightBeat(null);
 }
 
 // Handle Play/Stop state
@@ -222,6 +368,7 @@ function togglePlay() {
       btnPlay.classList.remove('playing');
       btnStadiumPlay.classList.remove('playing');
       clearInterval(timerInterval);
+      resetBeatClock();
     } else {
       syncAudioSettings();
       audioNode.start();
@@ -375,72 +522,59 @@ trainerEnable.addEventListener('change', () => {
   }
 });
 
+function updateStadiumStatus() {
+  const bars = trainerVal.value === '1' ? 'bar' : 'bars';
+  const unit = trainerType.value === 'measures' ? bars : 's';
+  stadiumStatus.innerText = trainerEnable.checked
+    ? `Trainer ${trainerStart.value} → ${trainerTarget.value} BPM · +${trainerInc.value} every ${trainerVal.value} ${unit}`
+    : 'Trainer Off';
+}
+
 // Handle Tick triggers from audio worklet thread
 audioNode.addEventListener('tick', (e: any) => {
-  const { currentBpm, activeTrackIds } = e.detail;
+  const { beatIndex, currentBpm, activeTrackIds } = e.detail;
 
   // Update BPM text
   stadiumBpm.innerText = Number(currentBpm).toFixed(1);
 
-  // Trainer status
-  stadiumStatus.innerText = trainerEnable.checked
-    ? `Trainer Running (${trainerCurve.value})`
-    : 'Trainer Off';
+  updateStadiumStatus();
 
-  // BPM display glow pulse
-  gsap.killTweensOf(stadiumBpm);
-  gsap.fromTo(stadiumBpm,
-    { textShadow: '0 0 60px rgba(57,255,20,0.9)' },
-    { textShadow: '0 0 30px rgba(57,255,20,0.4)', duration: 0.4, ease: 'power2.out' }
-  );
+  // Beat clock (ticks still in flight after stop must not restart it)
+  if (state.isPlaying) {
+    const { timeSignature } = state.activePreset;
+    const measureLength = state.activePreset.measureLength || 16;
+    const beats = getBeatsPerMeasure(timeSignature, measureLength);
+    const stepDuration = 60 / Number(currentBpm) / 4; // Engine runs 4 steps per BPM beat
+    highlightBeat(getBeatForStep(beatIndex, measureLength, beats));
+    gsap.killTweensOf(clockHand);
+    gsap.fromTo(clockHand,
+      { rotation: (beatIndex / measureLength) * 360, svgOrigin: '0 0' },
+      { rotation: ((beatIndex + 1) / measureLength) * 360, duration: stepDuration, ease: 'none' }
+    );
+  }
 
-  // Orb pulses for each active track
+  // Orbs keep a steady color and only nudge in size, avoiding luminance flashes
   const ids: number[] = activeTrackIds ?? [];
   ids.forEach((trackId: number) => {
     const orb = orbs[trackId];
-    const color = TRACK_COLORS[trackId];
-    if (!orb || !color) return;
+    if (!orb) return;
     gsap.killTweensOf(orb);
-    gsap.to(orb, {
-      scale: 1.8,
-      backgroundColor: color,
-      boxShadow: `0 0 40px ${color}, 0 0 80px ${color}`,
-      duration: 0.05,
-      ease: 'none',
-      onComplete: () => {
-        gsap.to(orb, {
-          scale: 1.0,
-          backgroundColor: `${color}1A`,
-          boxShadow: 'none',
-          duration: 0.35,
-          ease: 'power2.out',
-        });
-      }
-    });
-  });
-
-  // Background flash
-  if (ids.length > 0) {
-    // Filter out Click (0) if there are other drum hits active on this beat, to prevent click dominance
-    const nonClickIds = ids.filter(id => id > 0);
-    const dominantId = nonClickIds.length > 0 ? Math.min(...nonClickIds) : 0;
-    const dominantColor = TRACK_COLORS[dominantId];
-    gsap.set(bgFlash, { backgroundColor: dominantColor });
-    gsap.fromTo(bgFlash,
-      { opacity: 0.05 },
-      { opacity: 0, duration: 0.35, ease: 'power2.out' }
+    gsap.fromTo(orb,
+      { scale: 1.15 },
+      { scale: 1.0, duration: 0.2, ease: 'power2.out' }
     );
-  }
+  });
 });
 
 // Handle Preset Dropdown Selection Change
 presetSelector.onchange = () => {
   const val = presetSelector.value;
   let targetPreset: Preset | undefined;
+  syncStadiumPresetSelector();
 
   if (val.startsWith('factory:')) {
     const pid = val.replace('factory:', '');
-    targetPreset = FACTORY_PRESETS.find(p => p.id === pid);
+    targetPreset = [...FACTORY_PRESETS, ...SPEED_TRAINER_PRESETS].find(p => p.id === pid);
     if (targetPreset) {
       loadPresetIntoUI(targetPreset);
     }
@@ -451,6 +585,12 @@ presetSelector.onchange = () => {
       if (p) loadPresetIntoUI(p);
     });
   }
+};
+
+stadiumPresetSelector.onchange = () => {
+  if (!stadiumPresetSelector.value) return;
+  presetSelector.value = stadiumPresetSelector.value;
+  presetSelector.dispatchEvent(new Event('change'));
 };
 
 function measureLengthToTimeSig(len: number): string {
@@ -524,6 +664,9 @@ function loadPresetIntoUI(preset: Preset) {
   const bpm = state.activePreset.bpm;
   const timeSig = measureLengthToTimeSig(state.activePreset.measureLength || 16);
   panelHeaderText.textContent = `${state.activePreset.name}  ·  ${timeSig}  ·  ${bpm} BPM`;
+
+  stadiumBpm.innerText = bpm.toFixed(1);
+  updateStadiumStatus();
 }
 
 btnSave.onclick = () => {
@@ -695,4 +838,5 @@ clickSoundSelector.value = storedClickSound;
 // Initial draw and population
 populatePresetsDropdown();
 populateGroovesDropdown();
+drawFigurePalette();
 drawGrid();
