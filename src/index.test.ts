@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 import { MetronomeNode } from './audio/MetronomeNode';
@@ -7,19 +7,33 @@ const mockInit = vi.fn().mockResolvedValue(undefined);
 const mockLoadSample = vi.fn().mockResolvedValue(undefined);
 const mockSetClickMode = vi.fn();
 
+// Every message the page sends the audio node, in order
+const audioCalls: { method: string; args: any[] }[] = [];
+const recorded = (method: string) => vi.fn((...args: any[]) => {
+  audioCalls.push({ method, args });
+});
+let mockNode: any;
+let mockVisualDelay = 0;
+
 vi.mock('./audio/MetronomeNode', () => {
   return {
     MetronomeNode: class MockMetronomeNode extends EventTarget {
       init = mockInit;
       resumeContext = vi.fn().mockResolvedValue(undefined);
-      start = vi.fn();
-      stop = vi.fn();
-      setBpm = vi.fn();
-      setMeasureLength = vi.fn();
-      updateGrid = vi.fn();
-      setTrainer = vi.fn();
+      start = recorded('start');
+      stop = recorded('stop');
+      setBpm = recorded('setBpm');
+      setMeasureLength = recorded('setMeasureLength');
+      updateGrid = recorded('updateGrid');
+      setTrainer = recorded('setTrainer');
       loadSample = mockLoadSample;
       setClickMode = mockSetClickMode;
+      visualDelayMs = () => mockVisualDelay;
+
+      constructor() {
+        super();
+        mockNode = this;
+      }
     }
   };
 });
@@ -248,5 +262,97 @@ describe('StateManager IndexedDB Upgrade', () => {
     // Get all grooves
     const grooves = await manager.getAllGrooves();
     expect(Array.isArray(grooves)).toBe(true);
+  });
+});
+
+// In-memory stand-in for the browser database, so the real StateManager reads and writes it
+function fakeIndexedDB(presets: any[]) {
+  const stores: Record<string, Map<string, any>> = {
+    presets: new Map(presets.map(preset => [preset.id, preset])),
+    grooves: new Map(),
+  };
+  const request = (result?: any) => {
+    const req: any = { result };
+    queueMicrotask(() => req.onsuccess?.());
+    return req;
+  };
+  const db = {
+    transaction: () => ({
+      objectStore: (name: string) => ({
+        getAll: () => request([...stores[name].values()]),
+        put: (record: any) => {
+          stores[name].set(record.id, structuredClone(record));
+          return request();
+        },
+      }),
+    }),
+  };
+  (globalThis as any).indexedDB = { open: () => request(db) };
+  return stores;
+}
+
+const flush = async () => {
+  for (let i = 0; i < 20; i++) await new Promise(process.nextTick);
+};
+
+function storedPreset(overrides: Record<string, unknown> = {}) {
+  return {
+    id: 'stored',
+    name: 'Stored',
+    bpm: 100,
+    timeSignature: '4/4',
+    measureLength: 16,
+    swing: 50,
+    gridData: {
+      0: [2, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
+      1: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+      2: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+      3: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+    },
+    trainerSettings: { enabled: false, startBpm: 80, targetBpm: 160, increment: 5, stepType: 'measures', stepValue: 4, curve: 'stepped' },
+    ...overrides,
+  };
+}
+
+async function openPage(presets: any[] = []) {
+  vi.resetModules();
+  const html = fs.readFileSync(path.resolve(__dirname, '../index.html'), 'utf8');
+  document.documentElement.innerHTML = html.replace(/<link[^>]*stylesheet[^>]*>/g, '');
+  const stores = fakeIndexedDB(presets);
+  audioCalls.length = 0;
+  mockVisualDelay = 0;
+  await import('./main');
+  await flush();
+  return stores;
+}
+
+const byId = <T extends HTMLElement = HTMLInputElement>(id: string) => document.getElementById(id) as unknown as T;
+
+async function selectPreset(value: string) {
+  const selector = byId<HTMLSelectElement>('preset-selector');
+  selector.value = value;
+  selector.dispatchEvent(new Event('change'));
+  await flush();
+}
+
+describe('Precise page', () => {
+  afterEach(() => {
+    delete (globalThis as any).indexedDB;
+  });
+
+  it('swing_04 save omits swing', async () => {
+    const stores = await openPage([storedPreset()]);
+    await selectPreset('user:stored');
+
+    byId('preset-name').value = 'Saved again';
+    byId<HTMLButtonElement>('btn-save').click();
+    await flush();
+
+    const saved = [...stores.presets.values()].find(preset => preset.name === 'Saved again');
+    const { swing: _swing, id: _id, name: _name, ...expected } = storedPreset();
+    expect(saved).toMatchObject(expected);
+    expect(saved).not.toHaveProperty('swing');
+    // Loading and saving a copy leaves the original record as it was
+    expect(stores.presets.get('stored')).toEqual(storedPreset());
   });
 });

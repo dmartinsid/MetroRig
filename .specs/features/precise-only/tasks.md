@@ -379,8 +379,8 @@ T14 → T15 → T16 → T17 → T18 → T19 → T20
 
 **Done when**:
 
-- [ ] Saving a loaded preset stores no swing field
-- [ ] Gate passes with 40 JavaScript tests
+- [x] Saving a loaded preset stores no swing field
+- [x] Gate passes with 40 JavaScript tests
 
 **Tests**: integration
 **Gate**: full
