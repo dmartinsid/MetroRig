@@ -482,8 +482,8 @@ T14 → T15 → T16 → T17 → T18 → T19 → T20
 
 **Done when**:
 
-- [ ] `tests/wasm.test.ts` finds no `engine_set_swing` export
-- [ ] Gate passes with 51 JavaScript tests
+- [x] `tests/wasm.test.ts` finds no `engine_set_swing` export
+- [x] Gate passes with 51 JavaScript tests
 
 **Tests**: integration
 **Gate**: build
