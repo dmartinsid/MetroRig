@@ -393,12 +393,13 @@ export const FACTORY_PRESETS: Preset[] = [
   }
 ];
 
-export const FACTORY_GROOVES: { id: string; name: string; length: number; tracks: Record<number, number[]> }[] = [
-  { id: 'rock', name: 'Rock Groove', length: 16, tracks: { 1: [1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0], 2: [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], 3: [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0] } },
-  { id: 'metal', name: 'Metal Groove', length: 16, tracks: { 1: [1,0,1,0,0,0,1,0,1,0,1,0,0,0,1,0], 2: [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], 3: [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1] } },
-  { id: 'blues', name: 'Blues Shuffle', length: 24, tracks: { 1: [1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0], 2: [0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0], 3: [1,0,0,0,1,0,1,0,0,0,1,0,1,0,0,0,1,0,1,0,0,0,1,0] } },
-  { id: 'jazz', name: 'Jazz Swing', length: 24, tracks: { 1: [1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0], 2: [0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0], 3: [1,0,0,0,1,0,1,0,0,0,1,0,1,0,0,0,1,0,1,0,0,0,1,0] } }
-];
+// Each factory groove is the drum part of the preset with the same id
+export const FACTORY_GROOVES: { id: string; name: string; length: number; tracks: Record<number, number[]> }[] =
+  ['rock', 'metal', 'blues', 'jazz'].map(id => {
+    const { name, measureLength, gridData } = FACTORY_PRESETS.find(preset => preset.id === id)!;
+    const drumTrack = (trackId: number) => gridData[trackId].slice(0, measureLength);
+    return { id, name, length: measureLength, tracks: { 1: drumTrack(1), 2: drumTrack(2), 3: drumTrack(3) } };
+  });
 
 // Imported from indiebubbler/metro: kick on 1-2-3, snare on 4, hi-hat on every beat
 function speedTrainer(id: string, name: string, startBpm: number, targetBpm: number, increment: number, bars: number): Preset {
