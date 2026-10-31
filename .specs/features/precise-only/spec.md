@@ -254,8 +254,8 @@ MetroRig's audio engine already keeps exact time: a measured hour stayed within 
 | VIS-01 | P2: Visual sync | Tasks | Implementing |
 | VIS-02 | P2: Visual sync | Tasks | Implementing |
 | VIS-03 | P2: Visual sync | Tasks | Implementing |
-| RT-01 | P2: Quiet audio thread | Tasks | Pending |
-| RT-02 | P2: Quiet audio thread | Tasks | Pending |
+| RT-01 | P2: Quiet audio thread | Tasks | Implementing |
+| RT-02 | P2: Quiet audio thread | Tasks | Implementing |
 
 **ID format:** `[CATEGORY]-[NUMBER]`
 

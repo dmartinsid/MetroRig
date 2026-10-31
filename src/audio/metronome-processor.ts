@@ -7,7 +7,6 @@ interface WasmEngineExports {
   engine_stop(ptr: number): void;
   engine_set_bpm(ptr: number, bpm: number): void;
   engine_set_measure_length(ptr: number, length: number): void;
-  engine_set_swing(ptr: number, swing: number): void;
   engine_load_sample(ptr: number, sampleId: number, leftPtr: number, rightPtr: number, length: number): void;
   engine_update_grid(ptr: number, sampleId: number, stepsPtr: number, length: number): void;
   engine_set_trainer(
@@ -37,6 +36,12 @@ class MetronomeProcessor extends AudioWorkletProcessor {
   private bpmPtr: number = 0;
   private bufferLength: number = 128; // Standard AudioWorklet block size
 
+  // Heap views reused across audio blocks, valid while heapBuffer is the WASM buffer
+  private heapBuffer?: ArrayBufferLike;
+  private outLView = new Float32Array(0);
+  private outRView = new Float32Array(0);
+  private heapDouble = new Float64Array(0);
+
   // Local mirror of the grid data for computing activeTrackIds on tick
   private gridMirror: number[][] = [
     new Array(32).fill(0),
@@ -53,12 +58,9 @@ class MetronomeProcessor extends AudioWorkletProcessor {
 
   private handleMessage(event: MessageEvent) {
     const msg = event.data;
-    console.log("MetronomeProcessor: handleMessage received type:", msg.type);
     if (msg.type === 'INIT_WASM') {
-      console.log("MetronomeProcessor: starting WebAssembly.instantiate with ArrayBuffer...");
       WebAssembly.instantiate(msg.wasmBuffer, {})
         .then((result) => {
-          console.log("MetronomeProcessor: WebAssembly instantiated successfully!");
           this.wasmExports = result.instance.exports as unknown as WasmEngineExports;
           this.initializeEngine();
         })
@@ -68,8 +70,6 @@ class MetronomeProcessor extends AudioWorkletProcessor {
         });
     } else if (this.wasmExports && this.enginePtr !== 0) {
       this.processCommand(msg);
-    } else {
-      console.log("MetronomeProcessor: message ignored because engine is not initialized yet:", msg.type);
     }
   }
 
@@ -79,10 +79,8 @@ class MetronomeProcessor extends AudioWorkletProcessor {
       return;
     }
     
-    console.log("MetronomeProcessor: initializing Rust engine...");
     // Instantiate engine in Rust
     this.enginePtr = this.wasmExports.engine_new(sampleRate);
-    console.log("MetronomeProcessor: Rust engine created at pointer:", this.enginePtr);
     
     // Allocate outputs and state buffers
     const floatSize = 4;
@@ -90,10 +88,8 @@ class MetronomeProcessor extends AudioWorkletProcessor {
     this.outLBufferPtr = this.wasmExports.engine_alloc(bytesNeeded);
     this.outRBufferPtr = this.wasmExports.engine_alloc(bytesNeeded);
     this.bpmPtr = this.wasmExports.engine_alloc(8); // f64 is 8 bytes
-    console.log("MetronomeProcessor: engine buffers allocated.");
 
     // Notify main thread that engine is initialized
-    console.log("MetronomeProcessor: sending WASM_READY...");
     this.port.postMessage({ type: 'WASM_READY' });
   }
 
@@ -114,10 +110,6 @@ class MetronomeProcessor extends AudioWorkletProcessor {
       case 'SET_MEASURE_LENGTH':
         exports.engine_set_measure_length(this.enginePtr, msg.length);
         break;
-      case 'SET_SWING': {
-        exports.engine_set_swing(this.enginePtr, msg.swing);
-        break;
-      }
       case 'UPDATE_GRID': {
         const { trackId, steps } = msg;
         const length = 32;
@@ -176,6 +168,14 @@ class MetronomeProcessor extends AudioWorkletProcessor {
     }
   }
 
+  private rebuildHeapViews(buffer: ArrayBufferLike) {
+    this.heapBuffer = buffer;
+    const heapFloat = new Float32Array(buffer);
+    this.outLView = heapFloat.subarray(this.outLBufferPtr / 4, (this.outLBufferPtr / 4) + this.bufferLength);
+    this.outRView = heapFloat.subarray(this.outRBufferPtr / 4, (this.outRBufferPtr / 4) + this.bufferLength);
+    this.heapDouble = new Float64Array(buffer);
+  }
+
   override process(inputs: Float32Array[][], outputs: Float32Array[][], parameters: Record<string, Float32Array>): boolean {
     if (!this.wasmExports || this.enginePtr === 0) return true;
 
@@ -184,23 +184,22 @@ class MetronomeProcessor extends AudioWorkletProcessor {
     // Process audio through Rust engine
     exports.engine_process(this.enginePtr, this.outLBufferPtr, this.outRBufferPtr, this.bufferLength);
 
-    // Read audio data from WASM heap
-    const heapFloat = new Float32Array(exports.memory.buffer);
-    const outL = heapFloat.subarray(this.outLBufferPtr / 4, (this.outLBufferPtr / 4) + this.bufferLength);
-    const outR = heapFloat.subarray(this.outRBufferPtr / 4, (this.outRBufferPtr / 4) + this.bufferLength);
+    // Read audio data from WASM heap. Growing the memory replaces its buffer
+    if (exports.memory.buffer !== this.heapBuffer) {
+      this.rebuildHeapViews(exports.memory.buffer);
+    }
 
     // Copy outputs to the browser sound card channel outputs
     const output = outputs[0];
     if (output && output[0] && output[1]) {
-      output[0].set(outL);
-      output[1].set(outR);
+      output[0].set(this.outLView);
+      output[1].set(this.outRView);
     }
 
     // Check for timing tick event
     const tickIndex = exports.engine_get_tick(this.enginePtr, this.bpmPtr);
     if (tickIndex >= 0) {
-      const heapDouble = new Float64Array(exports.memory.buffer);
-      const bpm = heapDouble[this.bpmPtr / 8];
+      const bpm = this.heapDouble[this.bpmPtr / 8];
 
       // Determine which tracks have a step active at this beat
       const activeTrackIds: number[] = [];
