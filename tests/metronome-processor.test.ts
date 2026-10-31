@@ -105,16 +105,16 @@ describe('Worklet', () => {
     vi.unstubAllGlobals();
   });
 
-  it('sends a replacing Trainer message to engine_replace_trainer', async () => {
+  it('sends each Trainer message to its engine export', async () => {
     const engine = fakeEngine();
     const { send } = await startProcessor(engine);
     const settings = { enabled: true, startBpm: 100, targetBpm: 160, increment: 5, stepType: 'measures', stepValue: 1, curve: 'stepped' };
 
-    send({ type: 'SET_TRAINER', ...settings, replace: true });
+    send({ type: 'REPLACE_TRAINER', ...settings });
     expect(engine.exports.engine_replace_trainer).toHaveBeenCalledWith(1, 1, 100, 160, 5, 0, 1, 0);
     expect(engine.exports.engine_set_trainer).not.toHaveBeenCalled();
 
-    send({ type: 'SET_TRAINER', ...settings, replace: false });
+    send({ type: 'SET_TRAINER', ...settings });
     expect(engine.exports.engine_set_trainer).toHaveBeenCalledWith(1, 1, 100, 160, 5, 0, 1, 0);
     expect(engine.exports.engine_replace_trainer).toHaveBeenCalledOnce();
   });

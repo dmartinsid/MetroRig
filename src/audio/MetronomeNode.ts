@@ -122,12 +122,12 @@ export class MetronomeNode extends EventTarget {
     this.workletNode?.port.postMessage({ type: 'UPDATE_GRID', trackId, steps });
   }
 
-  setTrainer(settings: TrainerSettings, replace: boolean = false) {
-    this.workletNode?.port.postMessage({
-      type: 'SET_TRAINER',
-      ...settings,
-      replace
-    });
+  setTrainer(settings: TrainerSettings) {
+    this.workletNode?.port.postMessage({ type: 'SET_TRAINER', ...settings });
+  }
+
+  replaceTrainer(settings: TrainerSettings) {
+    this.workletNode?.port.postMessage({ type: 'REPLACE_TRAINER', ...settings });
   }
 
   async loadSample(sampleId: number, audioUrl: string) {

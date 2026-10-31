@@ -26,6 +26,7 @@ vi.mock('./audio/MetronomeNode', () => {
       setMeasureLength = recorded('setMeasureLength');
       updateGrid = recorded('updateGrid');
       setTrainer = recorded('setTrainer');
+      replaceTrainer = recorded('replaceTrainer');
       loadSample = mockLoadSample;
       setClickMode = mockSetClickMode;
       visualDelayMs = () => mockVisualDelay;
@@ -483,13 +484,15 @@ describe('Precise page', () => {
     audioCalls.length = 0;
 
     await selectPreset('user:stored');
-    expect(lastCall('setTrainer')[1]).toBe(true);
+    expect(lastCall('replaceTrainer')[0]).toMatchObject({ enabled: true });
+    expect(audioCalls.some(call => call.method === 'setTrainer')).toBe(false);
 
+    audioCalls.length = 0;
     const increment = document.getElementById('trainer-inc') as HTMLInputElement;
     increment.value = '9';
     increment.onchange?.(new Event('change'));
     expect(lastCall('setTrainer')[0]).toMatchObject({ increment: 9 });
-    expect(lastCall('setTrainer')[1]).toBe(false);
+    expect(audioCalls.some(call => call.method === 'replaceTrainer')).toBe(false);
   });
 
   it('preset start bpm applies on load and play', async () => {

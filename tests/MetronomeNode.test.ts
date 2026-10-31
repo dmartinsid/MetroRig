@@ -40,17 +40,17 @@ describe('MetronomeNode', () => {
     });
   });
 
-  it('tells the worklet whether Trainer settings replace the active ones', () => {
+  it('sends replacing and deferred Trainer settings as separate messages', () => {
     const node = new MetronomeNode();
     const mockWorkletNode = new MockAudioWorkletNode();
     (node as any).workletNode = mockWorkletNode;
     const settings = { enabled: true, startBpm: 100, targetBpm: 160, increment: 5, stepType: 'measures' as const, stepValue: 1, curve: 'stepped' as const };
 
-    node.setTrainer(settings, true);
-    expect(mockWorkletNode.port.postMessage).toHaveBeenLastCalledWith({ type: 'SET_TRAINER', ...settings, replace: true });
+    node.replaceTrainer(settings);
+    expect(mockWorkletNode.port.postMessage).toHaveBeenLastCalledWith({ type: 'REPLACE_TRAINER', ...settings });
 
     node.setTrainer(settings);
-    expect(mockWorkletNode.port.postMessage).toHaveBeenLastCalledWith({ type: 'SET_TRAINER', ...settings, replace: false });
+    expect(mockWorkletNode.port.postMessage).toHaveBeenLastCalledWith({ type: 'SET_TRAINER', ...settings });
   });
 
   it('should post message to worklet when setClickMode is called', () => {
