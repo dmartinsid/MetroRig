@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { StateManager, FACTORY_PRESETS, SPEED_TRAINER_PRESETS, FIGURES, getBeatsPerMeasure, getBeatForStep, isSustainedStep, applyFigure } from '../src/state';
+import { StateManager, FACTORY_PRESETS, SPEED_TRAINER_PRESETS, FIGURES, getBeatsPerMeasure, getBeatForStep, isSustainedStep, applyFigure, measureLengthFor } from '../src/state';
 
 describe('StateManager Tests', () => {
   let stateManager: StateManager;
@@ -100,5 +100,48 @@ describe('Rhythmic figures', () => {
     expect(isSustainedStep(steps, 1, 16, 4)).toBe(true);
     expect(isSustainedStep(steps, 5, 16, 4)).toBe(false);
     expect(isSustainedStep(steps, 2, 16, 4)).toBe(false);
+  });
+});
+
+const hitsOf = (steps: number[]) => steps.flatMap((value, step) => (value > 0 ? [step] : []));
+
+describe('Meter rules', () => {
+  it('bpm_02 steps per note value', () => {
+    expect(measureLengthFor(4, 4)).toBe(16);
+    expect(measureLengthFor(3, 4)).toBe(12);
+    expect(measureLengthFor(6, 8)).toBe(12);
+    expect(measureLengthFor(12, 8)).toBe(24);
+    expect(measureLengthFor(7, 8)).toBe(14);
+    expect(measureLengthFor(16, 16)).toBe(16);
+    expect(measureLengthFor(5, 16)).toBe(5);
+  });
+
+  it('bpm_03 blues shuffle preset', () => {
+    const blues = FACTORY_PRESETS.find(p => p.id === 'blues')!;
+    expect(blues.timeSignature).toBe('12/8');
+    expect(blues.measureLength).toBe(24);
+    expect(blues.bpm).toBe(135);
+    [0, 1, 2, 3].forEach(track => expect(blues.gridData[track]).toHaveLength(24));
+    expect(hitsOf(blues.gridData[0])).toEqual([0, 6, 12, 18]);
+    expect(blues.gridData[0][0]).toBe(2);
+    expect(hitsOf(blues.gridData[1])).toEqual([0, 12]);
+    expect(hitsOf(blues.gridData[2])).toEqual([6, 18]);
+    expect(hitsOf(blues.gridData[3])).toEqual([0, 4, 6, 10, 12, 16, 18, 22]);
+    // Four steps per quarter and a click every 6 steps
+    expect((blues.bpm * 4) / 6).toBe(90);
+  });
+
+  it('bpm_04 jazz swing preset', () => {
+    const jazz = FACTORY_PRESETS.find(p => p.id === 'jazz')!;
+    expect(jazz.timeSignature).toBe('12/8');
+    expect(jazz.measureLength).toBe(24);
+    expect(jazz.bpm).toBe(195);
+    [0, 1, 2, 3].forEach(track => expect(jazz.gridData[track]).toHaveLength(24));
+    expect(hitsOf(jazz.gridData[0])).toEqual([0, 6, 12, 18]);
+    expect(jazz.gridData[0][0]).toBe(2);
+    expect(hitsOf(jazz.gridData[1])).toEqual([0, 12]);
+    expect(hitsOf(jazz.gridData[2])).toEqual([10]);
+    expect(hitsOf(jazz.gridData[3])).toEqual([0, 4, 6, 10, 12, 16, 18, 22]);
+    expect((jazz.bpm * 4) / 6).toBe(130);
   });
 });

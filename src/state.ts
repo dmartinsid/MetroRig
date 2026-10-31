@@ -38,6 +38,13 @@ export function getBeatsPerMeasure(timeSignature: string | undefined, measureLen
   return beats > 0 ? beats : Math.max(1, Math.round(measureLength / 4));
 }
 
+// A step is a sixteenth: 4 per quarter, 2 per eighth and 1 per sixteenth
+export function measureLengthFor(numerator: number, denominator: number): number {
+  if (denominator === 4) return numerator * 4;
+  if (denominator === 8) return numerator * 2;
+  return numerator;
+}
+
 // Maps a sequencer step to its zero-based beat within the bar
 export function getBeatForStep(step: number, measureLength: number, beatsPerMeasure: number): number {
   return Math.floor((step * beatsPerMeasure) / measureLength);
@@ -324,28 +331,28 @@ export const FACTORY_PRESETS: Preset[] = [
   {
     id: 'blues',
     name: 'Blues Shuffle',
-    bpm: 90,
+    bpm: 135,
     timeSignature: '12/8',
-    measureLength: 12,
+    measureLength: 24,
     gridData: {
-      0: [2, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0],
-      1: [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-      2: [0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
-      3: [1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0],
+      0: [2, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+      1: [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      2: [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+      3: [1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0],
     },
     trainerSettings: { enabled: false, startBpm: 120, targetBpm: 160, increment: 5, stepType: 'measures', stepValue: 4, curve: 'stepped' }
   },
   {
     id: 'jazz',
     name: 'Jazz Swing',
-    bpm: 130,
+    bpm: 195,
     timeSignature: '12/8',
-    measureLength: 12,
+    measureLength: 24,
     gridData: {
-      0: [2, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0],
-      1: [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-      2: [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-      3: [1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 0, 0, 0],
+      0: [2, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+      1: [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      2: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      3: [1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0],
     },
     trainerSettings: { enabled: false, startBpm: 120, targetBpm: 160, increment: 5, stepType: 'measures', stepValue: 4, curve: 'stepped' }
   },
