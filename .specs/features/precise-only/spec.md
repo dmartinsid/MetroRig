@@ -228,17 +228,17 @@ MetroRig's audio engine already keeps exact time: a measured hour stayed within 
 | BPM-06 | P1: BPM matches what plays | Tasks | Pending |
 | BPM-07 | P1: BPM matches what plays | Tasks | Pending |
 | BPM-08 | P1: BPM matches what plays | Tasks | Pending |
-| TRAIN-01 | P1: Precise Trainer | Tasks | Pending |
+| TRAIN-01 | P1: Precise Trainer | Tasks | Implementing |
 | TRAIN-02 | P1: Precise Trainer | Tasks | Implementing |
 | TRAIN-03 | P1: Precise Trainer | Tasks | Implementing |
 | TRAIN-04 | P1: Precise Trainer | Tasks | Implementing |
-| TRAIN-05 | P1: Precise Trainer | Tasks | Pending |
-| TRAIN-06 | P1: Precise Trainer | Tasks | Pending |
-| TRAIN-07 | P1: Precise Trainer | Tasks | Pending |
-| TRAIN-08 | P1: Precise Trainer | Tasks | Pending |
-| TRAIN-09 | P1: Precise Trainer | Tasks | Pending |
+| TRAIN-05 | P1: Precise Trainer | Tasks | Implementing |
+| TRAIN-06 | P1: Precise Trainer | Tasks | Implementing |
+| TRAIN-07 | P1: Precise Trainer | Tasks | Implementing |
+| TRAIN-08 | P1: Precise Trainer | Tasks | Implementing |
+| TRAIN-09 | P1: Precise Trainer | Tasks | Implementing |
 | TRAIN-10 | P1: Precise Trainer | Tasks | Pending |
-| TRAIN-11 | P1: Precise Trainer | Tasks | Pending |
+| TRAIN-11 | P1: Precise Trainer | Tasks | Implementing |
 | TRAIN-12 | P1: Precise Trainer | Tasks | Pending |
 | TRAIN-13 | P1: Precise Trainer | Tasks | Pending |
 | TRAIN-14 | P1: Precise Trainer | Tasks | Pending |

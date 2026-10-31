@@ -13,6 +13,17 @@ struct SequencerTrack {
     steps: [u8; STEPS_COUNT], // 0 = Off, 1 = Low, 2 = High
 }
 
+#[derive(Clone, Copy, PartialEq)]
+struct TrainerSettings {
+    enabled: bool,
+    start_bpm: f64,
+    target_bpm: f64,
+    increment: f64,
+    step_type: u32,
+    step_value: f64,
+    curve: u32,
+}
+
 pub struct Engine {
     sample_rate: f32,
     bpm: f64,
@@ -47,6 +58,7 @@ pub struct Engine {
     trainer_accumulated_measures: u64,
     trainer_accumulated_samples: u64,
     first_hit: bool, // The next hit opens a run, so no measure has finished
+    pending_trainer: Option<TrainerSettings>, // Received during playback, waits for beat 1
     
     // Events queued for Javascript
     last_tick_index: i32, // -1 if no tick in last process
@@ -98,6 +110,7 @@ impl Engine {
             trainer_accumulated_measures: 0,
             trainer_accumulated_samples: 0,
             first_hit: false,
+            pending_trainer: None,
             last_tick_index: -1,
             last_tick_bpm: 120.0,
             measure_length: 16,
@@ -110,6 +123,14 @@ impl Engine {
     }
 
     pub fn start(&mut self) {
+        self.apply_pending_trainer();
+        self.trainer_accumulated_measures = 0;
+        self.trainer_accumulated_samples = 0;
+        if self.trainer_enabled {
+            self.bpm = self.trainer_start_bpm;
+            self.recalc_tempo();
+        }
+
         self.playback_active = [false; MAX_SAMPLES];
         self.playback_offsets = [0; MAX_SAMPLES];
         self.active_click_amp = 0.0;
@@ -142,6 +163,7 @@ impl Engine {
                 self.first_hit = false;
                 self.trainer_accumulated_samples = 0; // Seconds count from this hit
             } else {
+                self.apply_pending_trainer();
                 self.on_measure_complete();
             }
         }
@@ -175,6 +197,37 @@ impl Engine {
 
         // Update step index
         self.step_index = (self.step_index + 1) % self.measure_length;
+    }
+
+    fn apply_pending_trainer(&mut self) {
+        if let Some(settings) = self.pending_trainer.take() {
+            self.apply_trainer(settings);
+        }
+    }
+
+    // Settings equal to the active ones leave the bar and seconds counters running.
+    fn apply_trainer(&mut self, settings: TrainerSettings) {
+        let active = TrainerSettings {
+            enabled: self.trainer_enabled,
+            start_bpm: self.trainer_start_bpm,
+            target_bpm: self.trainer_target_bpm,
+            increment: self.trainer_increment,
+            step_type: self.trainer_step_type,
+            step_value: self.trainer_step_value,
+            curve: self.trainer_curve,
+        };
+        if settings == active {
+            return;
+        }
+        self.trainer_enabled = settings.enabled;
+        self.trainer_start_bpm = settings.start_bpm;
+        self.trainer_target_bpm = settings.target_bpm;
+        self.trainer_increment = settings.increment;
+        self.trainer_step_type = settings.step_type;
+        self.trainer_step_value = settings.step_value;
+        self.trainer_curve = settings.curve;
+        self.trainer_accumulated_measures = 0;
+        self.trainer_accumulated_samples = 0;
     }
 
     fn on_measure_complete(&mut self) {
@@ -414,15 +467,22 @@ pub extern "C" fn engine_set_trainer(
     if step_value <= 0.0 || !step_value.is_finite() { return; }
 
     let engine = unsafe { &mut *ptr };
-    engine.trainer_enabled = enabled;
-    engine.trainer_start_bpm = start_bpm;
-    engine.trainer_target_bpm = target_bpm;
-    engine.trainer_increment = increment;
-    engine.trainer_step_type = step_type;
-    engine.trainer_step_value = step_value;
-    engine.trainer_curve = curve_type;
-    engine.trainer_accumulated_measures = 0;
-    engine.trainer_accumulated_samples = 0;
+    let settings = TrainerSettings {
+        enabled,
+        start_bpm,
+        target_bpm,
+        increment,
+        step_type,
+        step_value,
+        curve: curve_type,
+    };
+    if engine.is_playing && enabled {
+        engine.pending_trainer = Some(settings);
+    } else {
+        // Stopped, or a disable: it applies now and replaces anything still waiting.
+        engine.pending_trainer = None;
+        engine.apply_trainer(settings);
+    }
 }
 
 #[no_mangle]
@@ -1043,7 +1103,7 @@ mod tests {
     fn train_16_holds_start_at_target() {
         for (start, target) in [(120.0, 120.0), (150.0, 120.0)] {
             for curve in [STEPPED, SMOOTH] {
-                let mut run = Run::new(start, &[1; 16]);
+                let mut run = Run::new(100.0, &[1; 16]);
                 engine_set_trainer(run.ptr, true, start, target, 5.0, BY_BARS, 1.0, curve);
                 run.play();
                 run.render_hits(16 * 4);
@@ -1052,6 +1112,206 @@ mod tests {
                 assert_intervals_at(&run, 0..16 * 4 - 1, start);
             }
         }
+    }
+
+    // 80 BPM at Start, +5 every bar, stopped at the given hit with live BPM 85 from hit 16 on.
+    fn run_to_hit(hit: usize) -> Run {
+        let mut run = Run::new(100.0, &[1; 16]);
+        engine_set_trainer(run.ptr, true, 80.0, 160.0, 5.0, BY_BARS, 1.0, STEPPED);
+        run.play();
+        run.render_hits(hit + 1);
+        run
+    }
+
+    #[test]
+    fn train_01_first_hit_at_start_bpm() {
+        let mut run = Run::new(100.0, &[1; 16]);
+        engine_set_trainer(run.ptr, true, 80.0, 160.0, 5.0, BY_BARS, 1.0, STEPPED);
+        run.play();
+        run.render_hits(33);
+        assert_eq!(run.hits[0].pos, 0);
+        assert_hits_at(&run, 0..16, 80.0);
+        assert_hits_at(&run, 16..32, 85.0);
+        assert_hits_at(&run, 32..33, 90.0);
+        assert_intervals_at(&run, 0..16, 80.0);
+        assert_intervals_at(&run, 16..32, 85.0);
+
+        // Each Play starts from Start BPM again, with the bar count back at zero.
+        engine_stop(run.ptr);
+        run.play();
+        run.render_hits(17);
+        assert_hits_at(&run, 0..16, 80.0);
+        assert_intervals_at(&run, 0..16, 80.0);
+        assert_hits_at(&run, 16..17, 85.0);
+
+        // A bar counted before Stop does not carry into the next run.
+        let mut run = Run::new(100.0, &[1; 16]);
+        engine_set_trainer(run.ptr, true, 80.0, 160.0, 5.0, BY_BARS, 2.0, STEPPED);
+        run.play();
+        run.render_hits(20);
+        engine_stop(run.ptr);
+        run.play();
+        run.render_hits(33);
+        assert_hits_at(&run, 0..32, 80.0);
+        assert_hits_at(&run, 32..33, 85.0);
+
+        // A Trainer that is off leaves the BPM alone.
+        let mut run = Run::new(100.0, &[1; 16]);
+        engine_set_trainer(run.ptr, false, 80.0, 160.0, 5.0, BY_BARS, 1.0, STEPPED);
+        run.play();
+        run.render_hits(2);
+        assert_hits_at(&run, 0..2, 100.0);
+        assert_intervals_at(&run, 0..1, 100.0);
+    }
+
+    // Each edit from the running settings: (target, increment, step type, step value, curve).
+    const TRAINER_EDITS: [(f64, f64, u32, f64, u32); 5] = [
+        (88.0, 5.0, BY_BARS, 1.0, STEPPED),
+        (160.0, 10.0, BY_BARS, 1.0, STEPPED),
+        (160.0, 5.0, BY_SECONDS, 1.0, STEPPED),
+        (160.0, 5.0, BY_BARS, 2.0, STEPPED),
+        (160.0, 5.0, BY_BARS, 1.0, SMOOTH),
+    ];
+
+    fn run_with_edit_at_hit_20(edit: (f64, f64, u32, f64, u32)) -> Run {
+        let (target, increment, step_type, step_value, curve) = edit;
+        let run = run_to_hit(20);
+        engine_set_trainer(run.ptr, true, 80.0, target, increment, step_type, step_value, curve);
+        run
+    }
+
+    #[test]
+    fn train_05_edit_keeps_live_bpm() {
+        for edit in TRAINER_EDITS {
+            let mut run = run_with_edit_at_hit_20(edit);
+            run.render_hits(32);
+            assert_hits_at(&run, 16..32, 85.0);
+            assert_intervals_at(&run, 16..31, 85.0);
+        }
+    }
+
+    #[test]
+    fn train_06_edit_applies_on_beat_one() {
+        let [target, increment, step_type, step_value, curve] = TRAINER_EDITS;
+
+        // Target 88 stops the +5 from 85 at 88, and it stays there.
+        let mut run = run_with_edit_at_hit_20(target);
+        run.render_hits(49);
+        assert_hits_at(&run, 32..49, 88.0);
+
+        // Increment 10.
+        let mut run = run_with_edit_at_hit_20(increment);
+        run.render_hits(49);
+        assert_hits_at(&run, 32..48, 95.0);
+        assert_hits_at(&run, 48..49, 105.0);
+
+        // Bars to seconds: the seconds start on the beat 1 that applies the edit.
+        let mut run = run_with_edit_at_hit_20(step_type);
+        run.render_hits(49);
+        assert_hits_at(&run, 32..48, 85.0);
+        assert_hits_at(&run, 48..49, 90.0);
+
+        // Every 2 bars: the applying beat 1 ends the first of the two.
+        let mut run = run_with_edit_at_hit_20(step_value);
+        run.render_hits(81);
+        assert_hits_at(&run, 32..48, 85.0);
+        assert_hits_at(&run, 48..80, 90.0);
+        assert_hits_at(&run, 80..81, 95.0);
+
+        // Stepped to Smooth: flat up to beat 1, rising after it.
+        let mut run = run_with_edit_at_hit_20(curve);
+        run.render_hits(36);
+        assert_hits_at(&run, 21..33, 85.0);
+        assert!(run.hits[33].bpm > 85.0);
+        assert!(run.hits[34].bpm > run.hits[33].bpm);
+    }
+
+    #[test]
+    fn train_07_start_edit_waits_for_play() {
+        let mut run = run_to_hit(20);
+        engine_set_trainer(run.ptr, true, 70.0, 160.0, 5.0, BY_BARS, 1.0, STEPPED);
+        run.render_hits(33);
+        assert_hits_at(&run, 16..32, 85.0);
+        assert_hits_at(&run, 32..33, 90.0); // Still counting from the live BPM
+
+        engine_stop(run.ptr);
+        run.play();
+        run.render_hits(2);
+        assert_hits_at(&run, 0..2, 70.0);
+        assert_intervals_at(&run, 0..1, 70.0);
+    }
+
+    #[test]
+    fn train_08_disable_holds_live_bpm() {
+        let mut run = run_to_hit(20);
+        engine_set_trainer(run.ptr, false, 80.0, 160.0, 5.0, BY_BARS, 1.0, STEPPED);
+        run.render_hits(16 * 5);
+        assert_hits_at(&run, 16..16 * 5, 85.0);
+        assert_intervals_at(&run, 16..16 * 5 - 1, 85.0);
+
+        // A disable also drops an edit still waiting for beat 1.
+        let mut run = run_to_hit(20);
+        engine_set_trainer(run.ptr, true, 80.0, 160.0, 20.0, BY_BARS, 1.0, STEPPED);
+        engine_set_trainer(run.ptr, false, 80.0, 160.0, 20.0, BY_BARS, 1.0, STEPPED);
+        run.render_hits(16 * 3);
+        assert_hits_at(&run, 16..16 * 3, 85.0);
+
+        // Smooth stops rising at once, without waiting for beat 1.
+        let mut run = Run::new(100.0, &[1; 16]);
+        engine_set_trainer(run.ptr, true, 100.0, 200.0, 5.0, BY_SECONDS, 1.0, SMOOTH);
+        run.play();
+        run.render_hits(5);
+        engine_set_trainer(run.ptr, false, 100.0, 200.0, 5.0, BY_SECONDS, 1.0, SMOOTH);
+        run.render_hits(7);
+        assert!(run.hits[4].bpm > 100.0);
+        assert_eq!(run.hits[5].bpm, run.hits[6].bpm);
+    }
+
+    #[test]
+    fn train_09_enable_continues_from_live_bpm() {
+        let mut run = Run::new(100.0, &[1; 16]);
+        engine_set_trainer(run.ptr, false, 80.0, 160.0, 5.0, BY_BARS, 2.0, STEPPED);
+        run.play();
+        run.render_hits(5);
+
+        engine_set_trainer(run.ptr, true, 80.0, 160.0, 5.0, BY_BARS, 2.0, STEPPED);
+        run.render_hits(33);
+        assert_hits_at(&run, 0..32, 100.0); // Never Start BPM
+        assert_intervals_at(&run, 0..32, 100.0);
+        assert_hits_at(&run, 32..33, 105.0);
+    }
+
+    #[test]
+    fn train_11_continues_from_slider_value() {
+        let mut run = run_to_hit(8);
+        engine_set_bpm(run.ptr, 120.0);
+        run.render_hits(33);
+        assert_hits_at(&run, 9..16, 120.0);
+        assert_intervals_at(&run, 9..16, 120.0);
+        assert_hits_at(&run, 16..32, 125.0);
+        assert_hits_at(&run, 32..33, 130.0);
+    }
+
+    #[test]
+    fn train_unchanged_settings_keep_counters() {
+        // Sent in bar 2, the same settings must not delay the increment that ends it.
+        let mut run = Run::new(120.0, &[1; 16]);
+        engine_set_trainer(run.ptr, true, 120.0, 160.0, 5.0, BY_BARS, 2.0, STEPPED);
+        run.play();
+        run.render_hits(21);
+        engine_set_trainer(run.ptr, true, 120.0, 160.0, 5.0, BY_BARS, 2.0, STEPPED);
+        run.render_hits(33);
+        assert_hits_at(&run, 0..32, 120.0);
+        assert_hits_at(&run, 32..33, 125.0);
+
+        let mut run = Run::new(120.0, &[1; 16]);
+        engine_set_trainer(run.ptr, true, 120.0, 160.0, 5.0, BY_SECONDS, 3.0, STEPPED);
+        run.play();
+        run.render_hits(21);
+        engine_set_trainer(run.ptr, true, 120.0, 160.0, 5.0, BY_SECONDS, 3.0, STEPPED);
+        run.render_hits(33);
+        assert_hits_at(&run, 0..32, 120.0);
+        assert_hits_at(&run, 32..33, 125.0);
     }
 
     #[test]
