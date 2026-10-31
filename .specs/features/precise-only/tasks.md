@@ -171,8 +171,8 @@ T14 → T15 → T16 → T17 → T18 → T19 → T20
 
 **Done when**:
 
-- [ ] A kick stopped halfway leaves no sound in the next run
-- [ ] Gate passes with 19 Rust tests
+- [x] A kick stopped halfway leaves no sound in the next run
+- [x] Gate passes with 19 Rust tests
 
 **Tests**: unit
 **Gate**: quick

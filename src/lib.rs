@@ -108,6 +108,12 @@ impl Engine {
     }
 
     pub fn start(&mut self) {
+        self.playback_active = [false; MAX_SAMPLES];
+        self.playback_offsets = [0; MAX_SAMPLES];
+        self.active_click_amp = 0.0;
+        self.click_phase = 0.0;
+        self.click_accent = false;
+
         self.is_playing = true;
         self.step_index = 0;
         self.samples_in_current_step = self.current_step_limit - 1.0; // Trigger first beat immediately
@@ -674,6 +680,75 @@ mod tests {
         let (left, right) = stereo_output(run.ptr, bar);
         let sounding = sounding_frames(&left, &right);
         assert!(*sounding.last().unwrap() < 14000, "sound at {:?}", sounding.last());
+    }
+
+    // Sound sources for the Stop and Play tests: (track, click mode). Slot 0 uses mode 1 for
+    // its sample and mode 0 for the synth click; slots 1 to 3 are the drums.
+    const SOUND_SOURCES: [(u32, u32); 5] = [(0, 0), (0, 1), (1, 1), (2, 1), (3, 1)];
+    const LONG_SAMPLE_FRAMES: usize = 50000;
+
+    fn sounding_run(track: u32, click_mode: u32) -> Run {
+        let run = Run::new(120.0, &[0; 16]);
+        engine_set_click_mode(run.ptr, click_mode);
+        let sample = vec![0.5f32; LONG_SAMPLE_FRAMES];
+        engine_load_sample(run.ptr, track, sample.as_ptr(), sample.as_ptr(), sample.len());
+        let mut grid = [0u8; 16];
+        grid[0] = 1;
+        engine_update_grid(run.ptr, track, grid.as_ptr(), 16);
+        run
+    }
+
+    #[test]
+    fn play_01_stop_is_silent() {
+        for (track, click_mode) in SOUND_SOURCES {
+            let run = sounding_run(track, click_mode);
+            engine_start(run.ptr);
+            let (left, right) = stereo_output(run.ptr, 1000);
+            assert!(!sounding_frames(&left, &right).is_empty());
+
+            engine_stop(run.ptr);
+            let (left, right) = stereo_output(run.ptr, 1000);
+            assert_eq!(sounding_frames(&left, &right), Vec::<usize>::new());
+        }
+    }
+
+    #[test]
+    fn play_02_restart_has_no_leftovers() {
+        for (track, click_mode) in SOUND_SOURCES {
+            let run = sounding_run(track, click_mode);
+            engine_start(run.ptr);
+            let (left, right) = stereo_output(run.ptr, 1000);
+            assert!(!sounding_frames(&left, &right).is_empty());
+            engine_stop(run.ptr);
+
+            // Play again with step 0 empty and the first enabled step at step 4.
+            let mut grid = [0u8; 16];
+            grid[4] = 1;
+            engine_update_grid(run.ptr, track, grid.as_ptr(), 16);
+            engine_start(run.ptr);
+
+            let first_enabled = 4.0 * step_samples(SR, 120.0);
+            let (left, right) = stereo_output(run.ptr, first_enabled as usize + 10);
+            let first_sound = sounding_frames(&left, &right)[0];
+            let what = format!("track {} mode {}", track, click_mode);
+            assert_within_one_sample(first_sound as f64, first_enabled, &what);
+        }
+    }
+
+    #[test]
+    fn play_03_fires_step_zero_first() {
+        let mut run = Run::new(120.0, &[1; 16]);
+        run.play();
+        run.render(30000);
+        assert_ne!(run.hits.last().unwrap().step, 0);
+        engine_stop(run.ptr);
+
+        run.play();
+        run.render_hits(2);
+        assert_eq!(run.hits[0].pos, 0);
+        assert_eq!(run.hits[0].step, 0);
+        assert_eq!(run.hits[1].step, 1);
+        assert_within_one_sample(run.interval(0), step_samples(SR, 120.0), "first step");
     }
 
     #[test]
