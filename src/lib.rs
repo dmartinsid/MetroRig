@@ -163,8 +163,12 @@ impl Engine {
                 self.first_hit = false;
                 self.trainer_accumulated_samples = 0; // Seconds count from this hit
             } else {
+                // A Trainer enabled here counts its first interval from this beat 1
+                let was_enabled = self.trainer_enabled;
                 self.apply_pending_trainer();
-                self.on_measure_complete();
+                if was_enabled {
+                    self.on_measure_complete();
+                }
             }
         }
 
@@ -205,7 +209,8 @@ impl Engine {
         }
     }
 
-    // Settings equal to the active ones leave the bar and seconds counters running.
+    // An unchanged schedule leaves the bar and seconds counters running. Start BPM is not
+    // part of the schedule, since it only applies at Play.
     fn apply_trainer(&mut self, settings: TrainerSettings) {
         let active = TrainerSettings {
             enabled: self.trainer_enabled,
@@ -216,11 +221,12 @@ impl Engine {
             step_value: self.trainer_step_value,
             curve: self.trainer_curve,
         };
-        if settings == active {
+        let schedule_changed = settings != TrainerSettings { start_bpm: settings.start_bpm, ..active };
+        self.trainer_start_bpm = settings.start_bpm;
+        if !schedule_changed {
             return;
         }
         self.trainer_enabled = settings.enabled;
-        self.trainer_start_bpm = settings.start_bpm;
         self.trainer_target_bpm = settings.target_bpm;
         self.trainer_increment = settings.increment;
         self.trainer_step_type = settings.step_type;
@@ -1275,10 +1281,34 @@ mod tests {
         run.render_hits(5);
 
         engine_set_trainer(run.ptr, true, 80.0, 160.0, 5.0, BY_BARS, 2.0, STEPPED);
+        run.render_hits(49);
+        assert_hits_at(&run, 0..48, 100.0); // Never Start BPM
+        assert_intervals_at(&run, 0..48, 100.0);
+        assert_hits_at(&run, 48..49, 105.0); // Two full bars after the settings applied on hit 16
+    }
+
+    #[test]
+    fn train_enable_counts_a_full_interval() {
+        let mut run = Run::new(100.0, &[1; 16]);
+        engine_set_trainer(run.ptr, false, 100.0, 160.0, 5.0, BY_BARS, 1.0, STEPPED);
+        run.play();
+        run.render_hits(5);
+        engine_set_trainer(run.ptr, true, 100.0, 160.0, 5.0, BY_BARS, 1.0, STEPPED);
         run.render_hits(33);
-        assert_hits_at(&run, 0..32, 100.0); // Never Start BPM
-        assert_intervals_at(&run, 0..32, 100.0);
+        assert_hits_at(&run, 0..32, 100.0);
         assert_hits_at(&run, 32..33, 105.0);
+    }
+
+    #[test]
+    fn train_start_edit_keeps_counters() {
+        let mut run = Run::new(120.0, &[1; 16]);
+        engine_set_trainer(run.ptr, true, 120.0, 160.0, 5.0, BY_BARS, 2.0, STEPPED);
+        run.play();
+        run.render_hits(21);
+        engine_set_trainer(run.ptr, true, 90.0, 160.0, 5.0, BY_BARS, 2.0, STEPPED);
+        run.render_hits(33);
+        assert_hits_at(&run, 0..32, 120.0);
+        assert_hits_at(&run, 32..33, 125.0);
     }
 
     #[test]
@@ -1573,8 +1603,7 @@ mod tests {
         
         engine.fill_buffers(&mut buf_l, &mut buf_r);
         
-        // Accent volume is 1.0, and since reverb only outputs the wet (which is initially 0),
-        // the parallel mix output is simply the dry click sample.
+        // Accent volume is 1.0, so the output is simply the dry click sample.
         assert_eq!(buf_l[0], 0.2);
         assert_eq!(buf_r[0], -0.2);
         assert_eq!(buf_l[1], 0.4);

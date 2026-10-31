@@ -631,7 +631,7 @@ Proof: run js | ✓ tests/metronome-processor.test.ts > Worklet > rt_02 reuses h
 ## Handoff
 
 **Settled mid-build:** The user approved with "aprovado" after being told batch sub-agents are the default unless they say "inline".
-**Dispatched:** batch 1 (phases 1-2, T1-T8) from HEAD of feat/precise-only - sent
+**Dispatched:** batch 1 (phases 1-2, T1-T8) - returned, last commit 3de3eee; batch 2 (phases 3-4, T9-T14) - sent
 **Walked:** none
 
 ---
