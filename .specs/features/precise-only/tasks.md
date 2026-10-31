@@ -441,9 +441,9 @@ T14 → T15 → T16 → T17 → T18 → T19 → T20
 
 **Done when**:
 
-- [ ] With 200 ms latency, the clock hand starts 200 ms after the tick
-- [ ] Stop cancels a pending render
-- [ ] Gate passes with 48 JavaScript tests
+- [x] With 200 ms latency, the clock hand starts 200 ms after the tick
+- [x] Stop cancels a pending render
+- [x] Gate passes with 48 JavaScript tests
 
 **Tests**: integration
 **Gate**: full

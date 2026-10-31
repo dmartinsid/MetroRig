@@ -347,8 +347,17 @@ const tick = (detail: { currentBpm: number; beatIndex?: number; activeTrackIds?:
   mockNode.dispatchEvent(new CustomEvent('tick', { detail: { beatIndex: 0, activeTrackIds: [], ...detail } }));
 };
 
+function expectNoBeatRendered() {
+  expect(byId('bpm-number').innerText).toBe('120');
+  expect(byId('stadium-bpm').innerText).toBe('120.0');
+  expect(byId('stadium-status').innerText).toBe('Trainer Off');
+  expect(document.querySelector('.clock-label.active')).toBeNull();
+  expect(mockGsap.fromTo).not.toHaveBeenCalled();
+}
+
 describe('Precise page', () => {
   afterEach(() => {
+    vi.useRealTimers();
     delete (globalThis as any).indexedDB;
   });
 
@@ -518,5 +527,53 @@ describe('Precise page', () => {
     // A tick still in flight after Stop must not bring the live BPM back
     tick({ currentBpm: 140 });
     expect(byId('bpm-number').innerText).toBe('100');
+  });
+
+  it('vis_01 render waits for latency', async () => {
+    vi.useFakeTimers();
+    await openPage();
+    mockVisualDelay = 200;
+    byId('trainer-enable').checked = true;
+    byId('trainer-enable').dispatchEvent(new Event('change'));
+    await clickPlay();
+    mockGsap.fromTo.mockClear();
+
+    tick({ currentBpm: 125, beatIndex: 4, activeTrackIds: [1] });
+
+    vi.advanceTimersByTime(199);
+    expectNoBeatRendered();
+
+    vi.advanceTimersByTime(1);
+    expect(byId('bpm-number').innerText).toBe('125');
+    expect(byId('stadium-bpm').innerText).toBe('125.0');
+    expect(byId('stadium-status').innerText).toContain('Trainer 120');
+    expect(document.querySelector('.clock-label.active')?.textContent).toBe('2');
+
+    const tweenFor = (target: Element) => mockGsap.fromTo.mock.calls.find(call => call[0] === target);
+    const [, from, to] = tweenFor(byId('clock-hand'))!;
+    expect(from).toMatchObject({ rotation: 90 });
+    expect(to).toMatchObject({ rotation: 112.5, duration: 0.12 });
+    expect(tweenFor(byId('orb-1'))).toBeDefined();
+  });
+
+  it('vis_03 stop cancels pending render', async () => {
+    vi.useFakeTimers();
+    await openPage();
+    mockVisualDelay = 200;
+    await clickPlay();
+    mockGsap.fromTo.mockClear();
+    tick({ currentBpm: 125, beatIndex: 4, activeTrackIds: [1] });
+
+    await clickPlay(); // Stop
+    tick({ currentBpm: 125, beatIndex: 5, activeTrackIds: [1] }); // Still in flight
+    vi.advanceTimersByTime(300);
+    expectNoBeatRendered();
+
+    await clickPlay();
+    tick({ currentBpm: 125, beatIndex: 4, activeTrackIds: [1] });
+    await clickPlay(); // Stop
+    await clickPlay(); // Play again, so only the cancel can stop the old tick
+    vi.advanceTimersByTime(300);
+    expectNoBeatRendered();
   });
 });
