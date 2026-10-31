@@ -631,8 +631,8 @@ Proof: run js | ✓ tests/metronome-processor.test.ts > Worklet > rt_02 reuses h
 ## Handoff
 
 **Settled mid-build:** The user approved with "aprovado" after being told batch sub-agents are the default unless they say "inline".
-**Dispatched:** batch 1 (phases 1-2, T1-T8) - returned, last commit 3de3eee; batch 2 (phases 3-4, T9-T14) - returned at T13; T14 closed by the orchestrator; batch 3 (phase 5, T15-T20) - sent
-**Walked:** none
+**Dispatched:** batch 1 (phases 1-2, T1-T8) - returned, last commit 3de3eee; batch 2 (phases 3-4, T9-T14) - returned at T13; T14 closed by the orchestrator; batch 3 (phase 5, T15-T20) - returned, last commit 31136ea
+**Walked:** At http://localhost:3001 with a real click on Play. Editor: no swing control, card titled MEASURE. Blues Shuffle: header `12/8 · 135 BPM`, 24 steps, clicks on steps 0, 6, 12, 18. 4/4 at 120 BPM on the audio clock: 124.8 ms per step, 16 steps per bar. Ligados Trainer: 70 to 72 to 74 every 16 steps; 208.25 ms per step at 72 (ideal 208.33) and 202.93 ms at 74 (ideal 202.70); Editor followed the live BPM and returned to 70 after Stop. No console errors. Chrome reported 10.7 ms base and 56 ms output latency. Audible sound was not judged: the walk measured ticks, not speaker output.
 
 ---
 
