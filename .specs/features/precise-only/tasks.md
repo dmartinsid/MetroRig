@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/precise-only/design.md`
-**Status**: Approved
+**Status**: Done
 **Approved**: 2026-10-31 - user: "aprovado"
 **Build**: `npm run build:wasm; npx vite build`
 **Run rust**: `cargo test`
