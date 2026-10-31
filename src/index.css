@@ -696,10 +696,6 @@ input[type="checkbox"] {
   color: var(--text-muted);
   margin-bottom: 0.25rem;
 }
-#swing-display {
-  color: var(--primary);
-  font-weight: 600;
-}
 
 .groove-library-group {
   display: flex;

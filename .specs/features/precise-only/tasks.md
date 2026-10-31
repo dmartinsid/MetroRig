@@ -462,8 +462,8 @@ T14 → T15 → T16 → T17 → T18 → T19 → T20
 
 **Done when**:
 
-- [ ] `src/index.test.ts` finds no `#swing-slider` and reads the title "Measure"
-- [ ] Gate passes with 50 JavaScript tests
+- [x] `src/index.test.ts` finds no `#swing-slider` and reads the title "Measure"
+- [x] Gate passes with 50 JavaScript tests
 
 **Tests**: integration
 **Gate**: full
