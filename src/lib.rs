@@ -188,6 +188,8 @@ impl Engine {
         if self.step_index == 0 {
             if self.first_hit {
                 self.first_hit = false;
+                self.apply_pending_trainer();
+                self.trainer_schedule_restarted = false; // No bar has ended yet
                 self.trainer_accumulated_samples = 0; // Seconds count from this hit
             } else {
                 self.apply_pending_trainer();
@@ -1415,6 +1417,28 @@ mod tests {
         run.render_hits(33);
         assert_hits_at(&run, 0..32, 100.0);
         assert_hits_at(&run, 32..33, 110.0);
+    }
+
+    #[test]
+    fn train_21_settings_before_first_hit_apply_on_it() {
+        // A replacement must not make beat 1 of bar 2 skip the finished first bar.
+        let mut run = Run::new(100.0, &[1; 16]);
+        engine_set_trainer(run.ptr, true, 100.0, 160.0, 5.0, BY_SECONDS, 60.0, STEPPED);
+        run.play();
+        engine_replace_trainer(run.ptr, true, 100.0, 160.0, 5.0, BY_BARS, 1.0, STEPPED);
+        run.render_hits(33);
+        assert_hits_at(&run, 0..16, 100.0);
+        assert_hits_at(&run, 16..32, 105.0);
+        assert_hits_at(&run, 32..33, 110.0);
+
+        // Pending settings apply on the first hit, not a bar late.
+        let mut run = Run::new(100.0, &[1; 16]);
+        engine_set_trainer(run.ptr, true, 100.0, 160.0, 5.0, BY_BARS, 1.0, STEPPED);
+        run.play();
+        engine_set_trainer(run.ptr, true, 100.0, 160.0, 10.0, BY_BARS, 1.0, STEPPED);
+        run.render_hits(17);
+        assert_hits_at(&run, 0..16, 100.0);
+        assert_hits_at(&run, 16..17, 110.0);
     }
 
     #[test]
