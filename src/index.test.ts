@@ -343,6 +343,10 @@ const clickPlay = async () => {
 const calls = (method: string) => audioCalls.filter(call => call.method === method).map(call => call.args);
 const lastCall = (method: string) => calls(method).at(-1) as any[];
 
+const tick = (detail: { currentBpm: number; beatIndex?: number; activeTrackIds?: number[] }) => {
+  mockNode.dispatchEvent(new CustomEvent('tick', { detail: { beatIndex: 0, activeTrackIds: [], ...detail } }));
+};
+
 describe('Precise page', () => {
   afterEach(() => {
     delete (globalThis as any).indexedDB;
@@ -468,6 +472,51 @@ describe('Precise page', () => {
     const order = audioCalls.map(call => call.method);
     expect(order.indexOf('setBpm')).toBeLessThan(order.indexOf('start'));
     expect(lastCall('setBpm')).toEqual([80]);
+    expect(byId('bpm-number').innerText).toBe('100');
+  });
+
+  it('train_10 slider sends bpm immediately', async () => {
+    await openPage();
+    byId('trainer-enable').checked = true;
+    byId('trainer-enable').dispatchEvent(new Event('change'));
+    await clickPlay();
+    audioCalls.length = 0;
+
+    byId('bpm-slider').value = '150';
+    byId('bpm-slider').dispatchEvent(new Event('input'));
+
+    expect(calls('setBpm')).toEqual([[150]]);
+    expect(byId('bpm-number').innerText).toBe('150');
+  });
+
+  it('train_13 editor shows live bpm', async () => {
+    await openPage();
+    await clickPlay();
+
+    tick({ currentBpm: 125 });
+    expect(byId('bpm-number').innerText).toBe('125');
+
+    tick({ currentBpm: 127.34 });
+    expect(byId('bpm-number').innerText).toBe('127.3');
+
+    byId('trainer-enable').checked = true;
+    byId('trainer-enable').dispatchEvent(new Event('change'));
+    tick({ currentBpm: 130 });
+    expect(byId('bpm-number').innerText).toBe('130');
+  });
+
+  it('train_14 stop shows preset bpm', async () => {
+    await openPage([storedPreset()]);
+    await selectPreset('user:stored');
+    await clickPlay();
+    tick({ currentBpm: 135 });
+    expect(byId('bpm-number').innerText).toBe('135');
+
+    await clickPlay();
+    expect(byId('bpm-number').innerText).toBe('100');
+
+    // A tick still in flight after Stop must not bring the live BPM back
+    tick({ currentBpm: 140 });
     expect(byId('bpm-number').innerText).toBe('100');
   });
 });

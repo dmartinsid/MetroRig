@@ -420,9 +420,9 @@ T14 → T15 → T16 → T17 → T18 → T19 → T20
 
 **Done when**:
 
-- [ ] A slider move during a run sends `setBpm` immediately
-- [ ] Tick and Stop update the Editor number
-- [ ] Gate passes with 46 JavaScript tests
+- [x] A slider move during a run sends `setBpm` immediately
+- [x] Tick and Stop update the Editor number
+- [x] Gate passes with 46 JavaScript tests
 
 **Tests**: integration
 **Gate**: full

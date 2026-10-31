@@ -370,6 +370,7 @@ function togglePlay() {
       btnStadiumPlay.classList.remove('playing');
       clearInterval(timerInterval);
       resetBeatClock();
+      bpmNumber.innerText = String(state.activePreset.bpm);
     } else {
       syncAudioSettings();
       audioNode.start();
@@ -518,6 +519,11 @@ function updateStadiumStatus() {
     : 'Trainer Off';
 }
 
+// Stepped runs read as integers; Smooth runs show their real value
+function formatLiveBpm(bpm: number): string {
+  return Number.isInteger(bpm) ? String(bpm) : bpm.toFixed(1);
+}
+
 // Handle Tick triggers from audio worklet thread
 audioNode.addEventListener('tick', (e: any) => {
   const { beatIndex, currentBpm, activeTrackIds } = e.detail;
@@ -527,8 +533,10 @@ audioNode.addEventListener('tick', (e: any) => {
 
   updateStadiumStatus();
 
-  // Beat clock (ticks still in flight after stop must not restart it)
+  // Beat clock and Editor BPM (ticks still in flight after stop must not restart them)
   if (state.isPlaying) {
+    bpmNumber.innerText = formatLiveBpm(Number(currentBpm));
+
     const { timeSignature } = state.activePreset;
     const measureLength = state.activePreset.measureLength || 16;
     const beats = getBeatsPerMeasure(timeSignature, measureLength);
