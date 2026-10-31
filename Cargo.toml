@@ -8,3 +8,6 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 # No external crates needed for pure DSP math
+
+[profile.test]
+opt-level = 3

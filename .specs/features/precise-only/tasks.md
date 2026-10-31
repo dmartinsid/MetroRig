@@ -90,7 +90,7 @@ T14 → T15 → T16 → T17 → T18 → T19 → T20
 
 **Done when**:
 
-- [ ] `cargo test` runs all 14 existing tests with the new profile
+- [x] `cargo test` runs all 14 existing tests with the new profile
 
 **Tests**: none
 **Gate**: build
