@@ -224,7 +224,7 @@ MetroRig's audio engine already keeps exact time: a measured hour stayed within 
 | BPM-02 | P1: BPM matches what plays | Tasks | Implementing |
 | BPM-03 | P1: BPM matches what plays | Tasks | Implementing |
 | BPM-04 | P1: BPM matches what plays | Tasks | Implementing |
-| BPM-05 | P1: BPM matches what plays | Tasks | Pending |
+| BPM-05 | P1: BPM matches what plays | Tasks | Implementing |
 | BPM-06 | P1: BPM matches what plays | Tasks | Implementing |
 | BPM-07 | P1: BPM matches what plays | Tasks | Implementing |
 | BPM-08 | P1: BPM matches what plays | Tasks | Implementing |

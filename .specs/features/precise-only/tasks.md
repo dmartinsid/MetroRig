@@ -296,8 +296,8 @@ T14 → T15 → T16 → T17 → T18 → T19 → T20
 
 **Done when**:
 
-- [ ] Both grooves hold 24 steps on all three tracks
-- [ ] Gate passes with 28 JavaScript tests
+- [x] Both grooves hold 24 steps on all three tracks
+- [x] Gate passes with 28 JavaScript tests
 
 **Tests**: unit
 **Gate**: quick
