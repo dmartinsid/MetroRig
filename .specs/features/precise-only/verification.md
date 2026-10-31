@@ -54,6 +54,8 @@
 | C44 | `tests/metronome-processor.test.ts` `rt_02 reuses heap views` | yes |
 | C45 | `src/lib.rs` `train_17_preset_load_replaces_trainer` | yes - added by the fix in round 2, not judged by the Verifier; fails when the replace is routed to the pending slot (mutation) |
 | C46 | `src/lib.rs` `train_18_preset_counts_a_full_bar` | yes - added by the fix in round 2, not judged by the Verifier; fails when the partial bar is counted (mutation) |
+| C47 | `src/lib.rs` `train_19_new_schedule_counts_from_beat_one` | yes - added after PR review, not judged by the Verifier; failed before the fix |
+| C48 | `src/lib.rs` `train_20_value_edit_keeps_interval_progress` | yes - added after PR review, not judged by the Verifier; failed before the fix |
 
 ## Findings
 
