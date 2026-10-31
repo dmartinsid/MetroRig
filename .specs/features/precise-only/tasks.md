@@ -399,9 +399,9 @@ T14 → T15 → T16 → T17 → T18 → T19 → T20
 
 **Done when**:
 
-- [ ] Time signature, groove and Trainer changes send no `setBpm`
-- [ ] A preset loaded during playback sends `startBpmFor`
-- [ ] Gate passes with 43 JavaScript tests
+- [x] Time signature, groove and Trainer changes send no `setBpm`
+- [x] A preset loaded during playback sends `startBpmFor`
+- [x] Gate passes with 43 JavaScript tests
 
 **Tests**: integration
 **Gate**: full

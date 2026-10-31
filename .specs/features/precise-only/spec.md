@@ -239,7 +239,7 @@ MetroRig's audio engine already keeps exact time: a measured hour stayed within 
 | TRAIN-09 | P1: Precise Trainer | Tasks | Implementing |
 | TRAIN-10 | P1: Precise Trainer | Tasks | Pending |
 | TRAIN-11 | P1: Precise Trainer | Tasks | Implementing |
-| TRAIN-12 | P1: Precise Trainer | Tasks | Pending |
+| TRAIN-12 | P1: Precise Trainer | Tasks | Implementing |
 | TRAIN-13 | P1: Precise Trainer | Tasks | Pending |
 | TRAIN-14 | P1: Precise Trainer | Tasks | Pending |
 | TRAIN-15 | P1: Precise Trainer | Tasks | Implementing |
