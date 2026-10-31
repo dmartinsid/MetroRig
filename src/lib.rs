@@ -58,7 +58,7 @@ pub struct Engine {
     trainer_accumulated_measures: u64,
     trainer_accumulated_samples: u64,
     first_hit: bool, // The next hit opens a run, so no measure has finished
-    trainer_replaced: bool, // A preset load replaced the Trainer during the current bar
+    trainer_schedule_restarted: bool, // Its first interval counts from the next beat 1
     pending_trainer: Option<TrainerSettings>, // Received during playback, waits for beat 1
     
     // Events queued for Javascript
@@ -111,7 +111,7 @@ impl Engine {
             trainer_accumulated_measures: 0,
             trainer_accumulated_samples: 0,
             first_hit: false,
-            trainer_replaced: false,
+            trainer_schedule_restarted: false,
             pending_trainer: None,
             last_tick_index: -1,
             last_tick_bpm: 120.0,
@@ -142,7 +142,7 @@ impl Engine {
         self.is_playing = true;
         self.step_index = 0;
         self.first_hit = true;
-        self.trainer_replaced = false;
+        self.trainer_schedule_restarted = false;
         self.samples_in_current_step = self.current_step_limit - 1.0; // Trigger first beat immediately
     }
 
@@ -166,12 +166,10 @@ impl Engine {
                 self.first_hit = false;
                 self.trainer_accumulated_samples = 0; // Seconds count from this hit
             } else {
-                // A Trainer enabled here counts its first interval from this beat 1
-                let was_enabled = self.trainer_enabled;
                 self.apply_pending_trainer();
-                // A replaced Trainer's partial bar is not a finished bar
-                let replaced = std::mem::take(&mut self.trainer_replaced);
-                if was_enabled && !(replaced && self.trainer_step_type == 0) {
+                // The bar that just ended does not count toward a restarted schedule
+                let restarted = std::mem::take(&mut self.trainer_schedule_restarted);
+                if !(restarted && self.trainer_step_type == 0) {
                     self.on_measure_complete();
                 }
             }
@@ -214,8 +212,8 @@ impl Engine {
         }
     }
 
-    // An unchanged schedule leaves the bar and seconds counters running. Start BPM is not
-    // part of the schedule, since it only applies at Play.
+    // Enabling the Trainer, or changing when it steps, restarts its schedule. Target,
+    // Increment and Start BPM do not, so their edits keep the progress of the interval.
     fn apply_trainer(&mut self, settings: TrainerSettings) {
         let active = TrainerSettings {
             enabled: self.trainer_enabled,
@@ -226,19 +224,22 @@ impl Engine {
             step_value: self.trainer_step_value,
             curve: self.trainer_curve,
         };
-        let schedule_changed = settings != TrainerSettings { start_bpm: settings.start_bpm, ..active };
-        self.trainer_start_bpm = settings.start_bpm;
-        if !schedule_changed {
-            return;
-        }
+        let schedule_restarted = (settings.enabled && !active.enabled)
+            || settings.step_type != active.step_type
+            || settings.step_value != active.step_value
+            || settings.curve != active.curve;
         self.trainer_enabled = settings.enabled;
+        self.trainer_start_bpm = settings.start_bpm;
         self.trainer_target_bpm = settings.target_bpm;
         self.trainer_increment = settings.increment;
         self.trainer_step_type = settings.step_type;
         self.trainer_step_value = settings.step_value;
         self.trainer_curve = settings.curve;
-        self.trainer_accumulated_measures = 0;
-        self.trainer_accumulated_samples = 0;
+        if schedule_restarted {
+            self.trainer_accumulated_measures = 0;
+            self.trainer_accumulated_samples = 0;
+            self.trainer_schedule_restarted = self.is_playing;
+        }
     }
 
     fn on_measure_complete(&mut self) {
@@ -503,7 +504,7 @@ pub extern "C" fn engine_replace_trainer(
     engine.apply_trainer(settings);
     engine.trainer_accumulated_measures = 0;
     engine.trainer_accumulated_samples = 0;
-    engine.trainer_replaced = engine.is_playing;
+    engine.trainer_schedule_restarted = engine.is_playing;
 }
 
 #[no_mangle]
@@ -1255,12 +1256,12 @@ mod tests {
         assert_hits_at(&run, 32..48, 85.0);
         assert_hits_at(&run, 48..49, 90.0);
 
-        // Every 2 bars: the applying beat 1 ends the first of the two.
+        // Every 2 bars: the two bars count from the beat 1 that applies the edit.
         let mut run = run_with_edit_at_hit_20(step_value);
-        run.render_hits(81);
-        assert_hits_at(&run, 32..48, 85.0);
-        assert_hits_at(&run, 48..80, 90.0);
-        assert_hits_at(&run, 80..81, 95.0);
+        run.render_hits(97);
+        assert_hits_at(&run, 32..64, 85.0);
+        assert_hits_at(&run, 64..96, 90.0);
+        assert_hits_at(&run, 96..97, 95.0);
 
         // Stepped to Smooth: flat up to beat 1, rising after it.
         let mut run = run_with_edit_at_hit_20(curve);
@@ -1364,6 +1365,46 @@ mod tests {
         assert_hits_at(&run, 15..32, 100.0);
         assert_intervals_at(&run, 15..31, 100.0);
         assert_hits_at(&run, 32..33, 105.0);
+    }
+
+    fn live_bpm(run: &Run) -> f64 {
+        unsafe { (*run.ptr).bpm }
+    }
+
+    #[test]
+    fn train_19_new_schedule_counts_from_beat_one() {
+        // Seconds to bars: the finished bar belongs to the old schedule.
+        let mut run = Run::new(100.0, &[1; 16]);
+        engine_set_trainer(run.ptr, true, 100.0, 160.0, 5.0, BY_SECONDS, 60.0, STEPPED);
+        run.play();
+        run.render_hits(21);
+        engine_set_trainer(run.ptr, true, 100.0, 160.0, 5.0, BY_BARS, 1.0, STEPPED);
+        run.render_hits(49);
+        assert_hits_at(&run, 0..48, 100.0);
+        assert_hits_at(&run, 48..49, 105.0);
+
+        // Smooth to Stepped: beat 1 must not add a full increment.
+        let mut run = Run::new(100.0, &[1; 16]);
+        engine_set_trainer(run.ptr, true, 100.0, 160.0, 5.0, BY_SECONDS, 3600.0, SMOOTH);
+        run.play();
+        run.render_hits(21);
+        engine_set_trainer(run.ptr, true, 100.0, 160.0, 5.0, BY_BARS, 1.0, STEPPED);
+        run.render_hits(33);
+        assert!(live_bpm(&run) < 100.1, "live BPM {}", live_bpm(&run));
+        run.render_hits(49);
+        assert!(live_bpm(&run) > 104.9 && live_bpm(&run) < 105.1, "live BPM {}", live_bpm(&run));
+    }
+
+    #[test]
+    fn train_20_value_edit_keeps_interval_progress() {
+        let mut run = Run::new(100.0, &[1; 16]);
+        engine_set_trainer(run.ptr, true, 100.0, 160.0, 5.0, BY_BARS, 2.0, STEPPED);
+        run.play();
+        run.render_hits(21);
+        engine_set_trainer(run.ptr, true, 100.0, 160.0, 10.0, BY_BARS, 2.0, STEPPED);
+        run.render_hits(33);
+        assert_hits_at(&run, 0..32, 100.0);
+        assert_hits_at(&run, 32..33, 110.0);
     }
 
     #[test]
