@@ -576,4 +576,23 @@ describe('Precise page', () => {
     vi.advanceTimersByTime(300);
     expectNoBeatRendered();
   });
+
+  it('swing_01 no swing control', async () => {
+    await openPage();
+    await selectPreset('factory:jazz');
+
+    expect(document.querySelector('#swing-slider')).toBeNull();
+    expect(document.querySelector('#swing-display')).toBeNull();
+    expect(document.querySelector('label[for="swing-slider"]')).toBeNull();
+    const labels = [...document.querySelectorAll('#editor-view label, #editor-view .card-section-title')];
+    expect(labels.length).toBeGreaterThan(0);
+    labels.forEach(label => expect(label.textContent).not.toMatch(/swing/i));
+  });
+
+  it('swing_02 card title is Measure', async () => {
+    await openPage();
+
+    const card = byId('time-sig-num').closest('.card');
+    expect(card?.querySelector('.card-section-title')?.textContent).toBe('Measure');
+  });
 });
