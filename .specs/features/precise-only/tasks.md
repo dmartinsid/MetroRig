@@ -337,9 +337,9 @@ T14 → T15 → T16 → T17 → T18 → T19 → T20
 
 **Done when**:
 
-- [ ] A stubbed processor runs 100 blocks with no logs and one heap view
-- [ ] Memory growth rebuilds the views
-- [ ] Gate passes with 36 JavaScript tests
+- [x] A stubbed processor runs 100 blocks with no logs and one heap view
+- [x] Memory growth rebuilds the views
+- [x] Gate passes with 36 JavaScript tests
 
 **Tests**: unit
 **Gate**: quick
