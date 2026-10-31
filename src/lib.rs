@@ -93,8 +93,7 @@ pub struct Engine {
     // Dynamic measure length looping
     measure_length: usize,
 
-    // Swing and step limit timing
-    swing: f64,
+    // Step limit timing
     current_step_limit: f64,
 
     // Sound selection
@@ -140,7 +139,6 @@ impl Engine {
             last_tick_index: -1,
             last_tick_bpm: 120.0,
             measure_length: 16,
-            swing: 0.0,
             current_step_limit: 0.0,
             click_mode: 0,
             click_accent: false,
@@ -150,23 +148,9 @@ impl Engine {
         eng
     }
 
-    fn get_step_limit(&self, next_step_idx: usize) -> f64 {
-        if next_step_idx % 2 == 1 {
-            self.samples_per_step * (1.0 + self.swing)
-        } else {
-            let current_step_idx = (next_step_idx + self.measure_length - 1) % self.measure_length;
-            if current_step_idx % 2 == 1 {
-                self.samples_per_step * (1.0 - self.swing)
-            } else {
-                self.samples_per_step
-            }
-        }
-    }
-
     pub fn start(&mut self) {
         self.is_playing = true;
         self.step_index = 0;
-        self.current_step_limit = self.get_step_limit(self.step_index);
         self.samples_in_current_step = self.current_step_limit - 1.0; // Trigger first beat immediately
     }
 
@@ -181,7 +165,7 @@ impl Engine {
         // Samples per step = sample_rate / steps_per_second
         let steps_per_second = (self.bpm / 60.0) * 4.0;
         self.samples_per_step = self.sample_rate as f64 / steps_per_second;
-        self.current_step_limit = self.get_step_limit(self.step_index);
+        self.current_step_limit = self.samples_per_step;
     }
 
     fn trigger_step(&mut self) {
@@ -218,9 +202,6 @@ impl Engine {
             // End of a measure
             self.on_measure_complete();
         }
-
-        // Recalculate limit for new step_index
-        self.current_step_limit = self.get_step_limit(self.step_index);
     }
 
     fn on_measure_complete(&mut self) {
@@ -400,14 +381,6 @@ pub extern "C" fn engine_set_bpm(ptr: *mut Engine, bpm: f64) {
     if ptr.is_null() || bpm <= 0.0 || !bpm.is_finite() { return; }
     let engine = unsafe { &mut *ptr };
     engine.bpm = bpm;
-    engine.recalc_tempo();
-}
-
-#[no_mangle]
-pub extern "C" fn engine_set_swing(ptr: *mut Engine, swing: f64) {
-    if ptr.is_null() || swing < 0.0 || swing > 0.5 || !swing.is_finite() { return; }
-    let engine = unsafe { &mut *ptr };
-    engine.swing = swing;
     engine.recalc_tempo();
 }
 
@@ -914,53 +887,10 @@ mod tests {
     }
 
     #[test]
-    fn test_swing_timings() {
-        let mut engine = Engine::new(44100.0);
-        engine.swing = 0.2; // 20% swing
-        engine.bpm = 120.0;
-        engine.recalc_tempo(); // samples_per_step = 5512.5
-        
-        engine.start(); // triggers step 0 immediately
-        assert_eq!(engine.step_index, 0);
-        
-        // Step 0 triggers on the very first sample of this buffer.
-        // So last_tick_index is 0, and step_index becomes 1.
-        // The next transition (to step 2) will happen after get_step_limit(1) = 6615 samples.
-        // So the next transition happens at sample 6615.
-        // Buffer of 6615 samples:
-        let mut buf_l = vec![0.0f32; 6615];
-        let mut buf_r = vec![0.0f32; 6615];
-        engine.fill_buffers(&mut buf_l, &mut buf_r);
-        assert_eq!(engine.last_tick_index, 0); // step 0 triggered at sample 0
-        assert_eq!(engine.step_index, 1);
-        
-        // At the 6616th sample (index 6615), step 1 triggers.
-        // Let's verify by filling 1 sample.
-        let mut single_l = vec![0.0f32; 1];
-        let mut single_r = vec![0.0f32; 1];
-        engine.fill_buffers(&mut single_l, &mut single_r);
-        assert_eq!(engine.last_tick_index, 1); // step 1 triggered
-        assert_eq!(engine.step_index, 2);
-        
-        // Step 2 is active, next is step 3. Limit is get_step_limit(2) = 5512.5 * 0.8 = 4410 samples.
-        // We fill 4409 samples first.
-        let mut buf_l2 = vec![0.0f32; 4409];
-        let mut buf_r2 = vec![0.0f32; 4409];
-        engine.fill_buffers(&mut buf_l2, &mut buf_r2);
-        assert_eq!(engine.last_tick_index, -1); // no new trigger
-        
-        // The 4410th sample of step 2 (index 4409 of this transition) triggers step 2.
-        engine.fill_buffers(&mut single_l, &mut single_r);
-        assert_eq!(engine.last_tick_index, 2); // step 2 triggered
-        assert_eq!(engine.step_index, 3);
-    }
-
-    #[test]
     fn test_measure_total_duration_no_drift() {
         // Test both even and odd lengths
         for length in [12, 15, 16, 20] {
             let mut engine = Engine::new(44100.0);
-            engine.swing = 0.25;
             engine.measure_length = length;
             engine.start();
             

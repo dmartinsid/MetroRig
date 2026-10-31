@@ -130,9 +130,9 @@ T14 → T15 → T16 → T17 → T18 → T19 → T20
 
 **Done when**:
 
-- [ ] Every step lasts `samples_per_step`
-- [ ] `test_measure_total_duration_no_drift` keeps running without its swing line
-- [ ] Gate passes with 17 Rust tests, the only removal being `test_swing_timings`
+- [x] Every step lasts `samples_per_step`
+- [x] `test_measure_total_duration_no_drift` keeps running without its swing line
+- [x] Gate passes with 17 Rust tests, the only removal being `test_swing_timings`
 
 **Tests**: unit
 **Gate**: quick
