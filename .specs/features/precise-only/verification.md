@@ -1,6 +1,7 @@
 # Precise-Only Metronome verification
 
-**Verdict**: FAIL
+**Verdict**: PASS
+**Round 1 verdict**: FAIL with one finding, closed by 37696ab
 **Proofs**: proofs.md at fee8fc7
 **Verifier**: independent sub-agent (author != verifier)
 
@@ -56,6 +57,8 @@
 | C46 | `src/lib.rs` `train_18_preset_counts_a_full_bar` | yes - added by the fix in round 2, not judged by the Verifier; fails when the partial bar is counted (mutation) |
 | C47 | `src/lib.rs` `train_19_new_schedule_counts_from_beat_one` | yes - added after PR review, not judged by the Verifier; failed before the fix |
 | C48 | `src/lib.rs` `train_20_value_edit_keeps_interval_progress` | yes - added after PR review, not judged by the Verifier; failed before the fix |
+| C49 | `src/lib.rs` `train_21_settings_before_first_hit_apply_on_it` | yes - added after PR review, not judged by the Verifier; failed before the fix |
+| C50 | `src/index.test.ts` `train_22 preset load shows its start bpm during playback` | yes - added after PR review, not judged by the Verifier; failed before the fix |
 
 ## Findings
 

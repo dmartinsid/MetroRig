@@ -602,6 +602,12 @@ Proof: run rust | test tests::train_19_new_schedule_counts_from_beat_one ... ok
 **C48** - Target and Increment edits keep the progress of the current interval (TRAIN-20, AC 20)
 Proof: run rust | test tests::train_20_value_edit_keeps_interval_progress ... ok
 
+**C49** - Settings sent between Play and the first hit apply on that hit, and the first bar counts from it (TRAIN-21, AC 21)
+Proof: run rust | test tests::train_21_settings_before_first_hit_apply_on_it ... ok
+
+**C50** - A preset loaded during playback shows the tempo sent to the engine (TRAIN-22, AC 22)
+Proof: run js | ✓ src/index.test.ts > Precise page > train_22 preset load shows its start bpm during playback
+
 **C33** - Loading discards frames before 1% of peak in either channel (ONSET-01, AC 1)
 Proof: run rust | test tests::onset_01_trims_before_one_percent ... ok
 

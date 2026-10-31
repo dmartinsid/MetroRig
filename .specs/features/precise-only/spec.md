@@ -8,11 +8,11 @@ MetroRig's audio engine already keeps exact time: a measured hour stayed within 
 
 ## Goals
 
-- [ ] Every hit lands within 1 sample of the ideal grid, with no accumulated drift over 1 hour
-- [ ] MetroRig has no way to play off the grid
-- [ ] The displayed BPM matches what plays in every meter and during Trainer runs
-- [ ] Each click sound starts on the beat and leaves no echo
-- [ ] Visuals follow the sound by the output latency the browser reports
+- [x] Every hit lands within 1 sample of the ideal grid, with no accumulated drift over 1 hour
+- [x] MetroRig has no way to play off the grid
+- [x] The displayed BPM matches what plays in every meter and during Trainer runs
+- [x] Each click sound starts on the beat and leaves no echo
+- [x] Visuals follow the sound by the output latency the browser reports
 
 ## Out of Scope
 
@@ -45,6 +45,7 @@ MetroRig's audio engine already keeps exact time: a measured hour stayed within 
 | Trainer enabled during playback | Continue from the live BPM | Start BPM applies only at Play, so the tempo does not jump | n - agent default |
 | Preset loaded during playback | Apply its Start BPM if its Trainer is on, otherwise its BPM | The preset's own start rule applies | n - agent default |
 | Superpowers removal and agent skills | Included in this PR, replacing the Git row above for those files | The user asked for it: "pode adicionar essa mudancas que nao fazem parte da tarefa na PR, porque eu to removendo o superpowers do projeto" | y - user asked |
+| Python bytecode from the skill scripts | Untrack it and add `__pycache__/` to `.gitignore` | Without the ignore line, the next script run brings the removed files back | y - from PR review |
 | Saved swing data | Ignore it on load and omit it on the next save | Stored records stay readable | n - agent default |
 
 **Open questions:** none - all resolved or logged above.
@@ -136,6 +137,8 @@ MetroRig's audio engine already keeps exact time: a measured hour stayed within 
 18. TRAIN-18: WHEN a preset loads during playback THEN the engine SHALL count its first bar from the next beat 1.
 19. TRAIN-19: WHEN enabling, interval type, interval value or curve applies on beat 1 THEN the engine SHALL count the first interval from that beat 1.
 20. TRAIN-20: WHEN Target or Increment applies on beat 1 THEN the engine SHALL keep the progress of the current interval.
+21. TRAIN-21: WHEN Trainer settings arrive between Play and the first hit THEN the engine SHALL apply them on that hit and count the first bar from it.
+22. TRAIN-22: WHEN a preset loads during playback THEN the Editor and Stadium SHALL show the tempo sent to the engine.
 
 **Independent Test**: Set BPM 100, Start BPM 80, and +5 every bar, then render 3 bars and check each interval around both downbeats.
 
@@ -253,6 +256,8 @@ MetroRig's audio engine already keeps exact time: a measured hour stayed within 
 | TRAIN-18 | P1: Precise Trainer | Tasks | Verified |
 | TRAIN-19 | P1: Precise Trainer | Tasks | Verified |
 | TRAIN-20 | P1: Precise Trainer | Tasks | Verified |
+| TRAIN-21 | P1: Precise Trainer | Tasks | Verified |
+| TRAIN-22 | P1: Precise Trainer | Tasks | Verified |
 | ONSET-01 | P1: Clean click sounds | Tasks | Verified |
 | ONSET-02 | P1: Clean click sounds | Tasks | Verified |
 | ONSET-03 | P1: Clean click sounds | Tasks | Verified |
@@ -268,7 +273,7 @@ MetroRig's audio engine already keeps exact time: a measured hour stayed within 
 
 **ID format:** `[CATEGORY]-[NUMBER]`
 
-**Coverage:** 48 total, 48 mapped to tasks, 0 unmapped.
+**Coverage:** 50 total, 50 mapped to tasks, 0 unmapped.
 
 ---
 
@@ -280,8 +285,8 @@ MetroRig's audio engine already keeps exact time: a measured hour stayed within 
 
 ## Success Criteria
 
-- [ ] A `cargo test` run proves TIME-01 and TIME-02 at all six BPMs
-- [ ] Woodblock's first audible frame lands within 1 sample of its step
-- [ ] Blues Shuffle plays 90 clicks per minute and Jazz Swing plays 130
-- [ ] A Trainer run from Start BPM changes tempo only at beat 1 when stepped
-- [ ] The shipped WASM exports no swing function
+- [x] A `cargo test` run proves TIME-01 and TIME-02 at all six BPMs
+- [x] Woodblock's first audible frame lands within 1 sample of its step
+- [x] Blues Shuffle plays 90 clicks per minute and Jazz Swing plays 130
+- [x] A Trainer run from Start BPM changes tempo only at beat 1 when stepped
+- [x] The shipped WASM exports no swing function
