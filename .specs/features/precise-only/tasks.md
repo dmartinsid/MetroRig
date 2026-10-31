@@ -151,8 +151,8 @@ T14 → T15 → T16 → T17 → T18 → T19 → T20
 
 **Done when**:
 
-- [ ] An accented impulse produces one non-zero output sample before the next step
-- [ ] Gate passes with 16 Rust tests, the only removals being the two reverb tests
+- [x] An accented impulse produces one non-zero output sample before the next step
+- [x] Gate passes with 16 Rust tests, the only removals being the two reverb tests
 
 **Tests**: unit
 **Gate**: quick

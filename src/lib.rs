@@ -13,45 +13,6 @@ struct SequencerTrack {
     steps: [u8; STEPS_COUNT], // 0 = Off, 1 = Low, 2 = High
 }
 
-struct Reverb {
-    buffer_l: Vec<f32>,
-    buffer_r: Vec<f32>,
-    write_idx_l: usize,
-    write_idx_r: usize,
-    feedback: f32,
-    wet: f32,
-}
-
-impl Reverb {
-    pub fn new(sample_rate: f32) -> Self {
-        let len_l = ((sample_rate * 0.038) as usize).max(1); // ~38ms delay
-        let len_r = ((sample_rate * 0.045) as usize).max(1); // ~45ms delay
-        Reverb {
-            buffer_l: vec![0.0; len_l],
-            buffer_r: vec![0.0; len_r],
-            write_idx_l: 0,
-            write_idx_r: 0,
-            feedback: 0.45,
-            wet: 0.35,
-        }
-    }
-
-    pub fn process(&mut self, in_l: f32, in_r: f32) -> (f32, f32) {
-        let delayed_l = self.buffer_l[self.write_idx_l];
-        let delayed_r = self.buffer_r[self.write_idx_r];
-
-        self.buffer_l[self.write_idx_l] = in_l + delayed_l * self.feedback;
-        self.buffer_r[self.write_idx_r] = in_r + delayed_r * self.feedback;
-
-        self.write_idx_l = (self.write_idx_l + 1) % self.buffer_l.len();
-        self.write_idx_r = (self.write_idx_r + 1) % self.buffer_r.len();
-
-        let out_l = delayed_l * self.wet;
-        let out_r = delayed_r * self.wet;
-        (out_l, out_r)
-    }
-}
-
 pub struct Engine {
     sample_rate: f32,
     bpm: f64,
@@ -99,7 +60,6 @@ pub struct Engine {
     // Sound selection
     click_mode: u32, // 0 = Synth, 1 = Sample
     click_accent: bool,
-    reverb: Reverb,
 }
 
 impl Engine {
@@ -142,7 +102,6 @@ impl Engine {
             current_step_limit: 0.0,
             click_mode: 0,
             click_accent: false,
-            reverb: Reverb::new(sample_rate),
         };
         eng.recalc_tempo();
         eng
@@ -311,18 +270,7 @@ impl Engine {
                 }
             }
 
-            // 3. Process Click Reverb
-            let (rev_out_l, rev_out_r) = if self.click_accent {
-                self.reverb.process(click_out_l, click_out_r)
-            } else {
-                self.reverb.process(0.0, 0.0)
-            };
-
-            // Mix dry click + reverb tail
-            let final_click_l = click_out_l + rev_out_l;
-            let final_click_r = click_out_r + rev_out_r;
-
-            // 4. Play Drum Samples
+            // 3. Play Drum Samples
             let mut drums_l = 0.0;
             let mut drums_r = 0.0;
             
@@ -342,8 +290,8 @@ impl Engine {
             }
 
             // Combine (Left / Right)
-            out_l[i] = final_click_l + drums_l;
-            out_r[i] = final_click_r + drums_r;
+            out_l[i] = click_out_l + drums_l;
+            out_r[i] = click_out_r + drums_r;
         }
     }
 }
@@ -591,6 +539,23 @@ mod tests {
         );
     }
 
+    // Both output channels, block by block as the worklet renders them.
+    fn stereo_output(ptr: *mut Engine, frames: usize) -> (Vec<f32>, Vec<f32>) {
+        let mut left = vec![0.0f32; frames];
+        let mut right = vec![0.0f32; frames];
+        for start in (0..frames).step_by(BLOCK as usize) {
+            let block = (frames - start).min(BLOCK as usize);
+            let l = left[start..].as_mut_ptr();
+            let r = right[start..].as_mut_ptr();
+            engine_process(ptr, l, r, block);
+        }
+        (left, right)
+    }
+
+    fn sounding_frames(left: &[f32], right: &[f32]) -> Vec<usize> {
+        (0..left.len()).filter(|&i| left[i] != 0.0 || right[i] != 0.0).collect()
+    }
+
     fn quarter_grid() -> [u8; 16] {
         let mut grid = [0u8; 16];
         for step in (0..16).step_by(4) {
@@ -687,6 +652,28 @@ mod tests {
             run.render(60 * SR as u64);
             assert_eq!(run.hits.len(), clicks_per_minute);
         }
+    }
+
+    #[test]
+    fn click_01_accent_has_no_echo() {
+        let mut grid = [0u8; 16];
+        grid[0] = 2; // The next hit is one bar away, at frame 88200
+        let bar = 88200;
+
+        // Sample click: one accented impulse stays one sample.
+        let run = Run::new(120.0, &grid);
+        engine_start(run.ptr);
+        let (left, right) = stereo_output(run.ptr, bar);
+        assert_eq!(sounding_frames(&left, &right), vec![0]);
+
+        // Synth click: amplitude decays by 0.9995 per frame to the 0.001 floor, about
+        // 13812 frames. Nothing may sound after that.
+        let run = Run::new(120.0, &grid);
+        engine_set_click_mode(run.ptr, 0);
+        engine_start(run.ptr);
+        let (left, right) = stereo_output(run.ptr, bar);
+        let sounding = sounding_frames(&left, &right);
+        assert!(*sounding.last().unwrap() < 14000, "sound at {:?}", sounding.last());
     }
 
     #[test]
@@ -965,65 +952,5 @@ mod tests {
         assert_eq!(buf_r2[0], -0.2 * 0.5);
         assert_eq!(buf_l2[1], 0.4 * 0.5);
         assert_eq!(buf_r2[1], -0.4 * 0.5);
-    }
-
-    #[test]
-    fn test_reverb_decay() {
-        let mut reverb = Reverb::new(44100.0);
-        let (out_l, out_r) = reverb.process(1.0, 1.0);
-        
-        // Initially, delayed buffer contains 0, so wet component is 0.
-        assert_eq!(out_l, 0.0);
-        assert_eq!(out_r, 0.0);
-
-        // Process silence for enough steps to ring out the delay lines (approx 50ms = 2205 samples)
-        let mut active_output_detected = false;
-        for _ in 0..2500 {
-            let (o_l, _o_r) = reverb.process(0.0, 0.0);
-            if o_l > 0.0 {
-                active_output_detected = true;
-            }
-        }
-        // Reverb tail must have triggered and output non-zero values after input ceased
-        assert!(active_output_detected);
-    }
-
-    #[test]
-    fn test_engine_click_reverb() {
-        let mut engine = Engine::new(44100.0);
-        engine.start();
-
-        // Trigger an accented click on step 0
-        engine.tracks[0].steps[0] = 2; // Accent
-        let mut buf_l_accent = vec![0.0f32; 100];
-        let mut buf_r_accent = vec![0.0f32; 100];
-        engine.fill_buffers(&mut buf_l_accent, &mut buf_r_accent);
-
-        // Verify some signal was processed (accented beep)
-        assert!(buf_l_accent[1] != 0.0);
-
-        // The reverb buffer should contain non-zero samples (fed by the accented click)
-        assert!(engine.reverb.buffer_l.iter().any(|&x| x != 0.0));
-
-        // Now set step 0 to normal click (value 1) and reset engine to trigger it
-        engine.stop();
-        engine.start();
-        engine.tracks[0].steps[0] = 1; // Normal click (non-accented)
-
-        // Reset reverb state to silence to verify it isn't fed by normal click
-        engine.reverb.buffer_l.fill(0.0);
-        engine.reverb.buffer_r.fill(0.0);
-
-        let mut buf_l_normal = vec![0.0f32; 100];
-        let mut buf_r_normal = vec![0.0f32; 100];
-        engine.fill_buffers(&mut buf_l_normal, &mut buf_r_normal);
-
-        // Output should differ from the accented one because the accented version goes through reverb (attenuated dry component + delayed wet)
-        // Whereas normal click goes dry directly
-        assert_ne!(buf_l_accent[1], buf_l_normal[1]);
-
-        // Reverb buffer should still be completely silent since normal click does not feed it
-        assert!(engine.reverb.buffer_l.iter().all(|&x| x == 0.0));
-        assert!(engine.reverb.buffer_r.iter().all(|&x| x == 0.0));
     }
 }
