@@ -1,11 +1,13 @@
 import { MetronomeNode } from './audio/MetronomeNode';
 import { StateManager, FACTORY_PRESETS, FACTORY_GROOVES, SPEED_TRAINER_PRESETS, Preset, StoredPreset, CustomGroove, FIGURES, getBeatsPerMeasure, getBeatForStep, isSustainedStep, applyFigure, measureLengthFor, normalizePreset, startBpmFor } from './state';
+import { VisualScheduler } from './visualSync';
 import workletUrl from './audio/metronome-processor?url';
 
 declare const gsap: any;
 
 const state = new StateManager();
 const audioNode = new MetronomeNode();
+const visualScheduler = new VisualScheduler();
 
 // Elements
 const btnToggleView = document.getElementById('btn-toggle-view') as HTMLButtonElement;
@@ -369,6 +371,7 @@ function togglePlay() {
       btnPlay.classList.remove('playing');
       btnStadiumPlay.classList.remove('playing');
       clearInterval(timerInterval);
+      visualScheduler.cancelAll();
       resetBeatClock();
       bpmNumber.innerText = String(state.activePreset.bpm);
     } else {
@@ -524,30 +527,28 @@ function formatLiveBpm(bpm: number): string {
   return Number.isInteger(bpm) ? String(bpm) : bpm.toFixed(1);
 }
 
-// Handle Tick triggers from audio worklet thread
-audioNode.addEventListener('tick', (e: any) => {
-  const { beatIndex, currentBpm, activeTrackIds } = e.detail;
+// Draws one tick once its sound has left the device
+function renderTick({ beatIndex, currentBpm, activeTrackIds }: any) {
+  // Ticks still in flight after stop must not restart anything
+  if (!state.isPlaying) return;
 
   // Update BPM text
+  bpmNumber.innerText = formatLiveBpm(Number(currentBpm));
   stadiumBpm.innerText = Number(currentBpm).toFixed(1);
 
   updateStadiumStatus();
 
-  // Beat clock and Editor BPM (ticks still in flight after stop must not restart them)
-  if (state.isPlaying) {
-    bpmNumber.innerText = formatLiveBpm(Number(currentBpm));
-
-    const { timeSignature } = state.activePreset;
-    const measureLength = state.activePreset.measureLength || 16;
-    const beats = getBeatsPerMeasure(timeSignature, measureLength);
-    const stepDuration = 60 / Number(currentBpm) / 4; // Engine runs 4 steps per BPM beat
-    highlightBeat(getBeatForStep(beatIndex, measureLength, beats));
-    gsap.killTweensOf(clockHand);
-    gsap.fromTo(clockHand,
-      { rotation: (beatIndex / measureLength) * 360, svgOrigin: '0 0' },
-      { rotation: ((beatIndex + 1) / measureLength) * 360, duration: stepDuration, ease: 'none' }
-    );
-  }
+  // Beat clock
+  const { timeSignature } = state.activePreset;
+  const measureLength = state.activePreset.measureLength || 16;
+  const beats = getBeatsPerMeasure(timeSignature, measureLength);
+  const stepDuration = 60 / Number(currentBpm) / 4; // Engine runs 4 steps per BPM beat
+  highlightBeat(getBeatForStep(beatIndex, measureLength, beats));
+  gsap.killTweensOf(clockHand);
+  gsap.fromTo(clockHand,
+    { rotation: (beatIndex / measureLength) * 360, svgOrigin: '0 0' },
+    { rotation: ((beatIndex + 1) / measureLength) * 360, duration: stepDuration, ease: 'none' }
+  );
 
   // Orbs keep a steady color and only nudge in size, avoiding luminance flashes
   const ids: number[] = activeTrackIds ?? [];
@@ -560,6 +561,11 @@ audioNode.addEventListener('tick', (e: any) => {
       { scale: 1.0, duration: 0.2, ease: 'power2.out' }
     );
   });
+}
+
+// Handle Tick triggers from audio worklet thread
+audioNode.addEventListener('tick', (e: any) => {
+  visualScheduler.schedule(() => renderTick(e.detail), audioNode.visualDelayMs());
 });
 
 // Handle Preset Dropdown Selection Change
