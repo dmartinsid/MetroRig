@@ -1,9 +1,9 @@
 # precise-only proofs
 
-**HEAD**: 3ccb3cc
+**HEAD**: 58b4e1a
 **Tree**: clean
 **Shell**: /bin/sh
-**Result**: 48 pass, 0 fail
+**Result**: 50 pass, 0 fail
 
 | Check | Proof | Result |
 | --- | --- | --- |
@@ -41,6 +41,8 @@
 | C32 | `run rust / test tests::train_16_holds_start_at_target ... ok` | pass |
 | C45 | `run rust / test tests::train_17_preset_load_replaces_trainer ... ok` | pass |
 | C46 | `run rust / test tests::train_18_preset_counts_a_full_bar ... ok` | pass |
+| C47 | `run rust / test tests::train_19_new_schedule_counts_from_beat_one ... ok` | pass |
+| C48 | `run rust / test tests::train_20_value_edit_keeps_interval_progress ... ok` | pass |
 | C33 | `run rust / test tests::onset_01_trims_before_one_percent ... ok` | pass |
 | C34 | `run rust / test tests::onset_02_woodblock_on_the_step ... ok` | pass |
 | C35 | `run rust / test tests::onset_03_silent_sample_unchanged ... ok` | pass |
@@ -65,7 +67,7 @@ test tests::bpm_01_quarter_note_in_every_meter ... ok
 test tests::time_01_hits_within_one_sample ... ok
 test tests::time_02_one_hour_no_drift ... ok
 
-test result: ok. 39 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.56s
+test result: ok. 42 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.57s
 
 
 running 0 tests
@@ -73,7 +75,7 @@ running 0 tests
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
    Compiling metrorig_audio v1.0.0 (/tmp/claude-1000/-home-deivid-Projects-Github-MetroRig/fe59fed3-a65f-4e7d-a9e0-3710c751221f/scratchpad/verify)
-    Finished `test` profile [optimized + debuginfo] target(s) in 1.36s
+    Finished `test` profile [optimized + debuginfo] target(s) in 1.32s
      Running unittests src/lib.rs (target/debug/deps/metrorig_audio-e3c84ac815f4f448)
    Doc-tests metrorig_audio
 ```
@@ -81,8 +83,8 @@ test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 `Run js` - exit 0
 
 ```
-   Start at  14:07:24
-   Duration  1.06s (transform 284ms, setup 0ms, collect 336ms, tests 803ms, environment 1.52s, prepare 439ms)
+   Start at  14:47:39
+   Duration  1.10s (transform 293ms, setup 0ms, collect 318ms, tests 849ms, environment 1.48s, prepare 462ms)
 
 stderr | src/index.test.ts > Integration Test > should handle click sound variation selector changes, race conditions and fetch rejections
 Failed to load click sample, falling back to digital synth: Error: Fetch failed
