@@ -1,5 +1,5 @@
 import { MetronomeNode } from './audio/MetronomeNode';
-import { StateManager, FACTORY_PRESETS, SPEED_TRAINER_PRESETS, Preset, CustomGroove, FIGURES, getBeatsPerMeasure, getBeatForStep, isSustainedStep, applyFigure } from './state';
+import { StateManager, FACTORY_PRESETS, FACTORY_GROOVES, SPEED_TRAINER_PRESETS, Preset, CustomGroove, FIGURES, getBeatsPerMeasure, getBeatForStep, isSustainedStep, applyFigure, measureLengthFor } from './state';
 import workletUrl from './audio/metronome-processor?url';
 
 declare const gsap: any;
@@ -54,8 +54,6 @@ const clickSoundSelector = document.getElementById('click-sound-selector') as HT
 
 const timeSigNum = document.getElementById('time-sig-num') as HTMLInputElement;
 const timeSigDen = document.getElementById('time-sig-den') as HTMLSelectElement;
-const swingSlider = document.getElementById('swing-slider') as HTMLInputElement;
-const swingDisplay = document.getElementById('swing-display') as HTMLElement;
 
 const grooveSelector = document.getElementById('groove-selector') as HTMLSelectElement;
 const btnSaveGroove = document.getElementById('btn-save-groove') as HTMLButtonElement;
@@ -425,11 +423,8 @@ function updateTimeSignature() {
   const den = Number(timeSigDen.value);
   const sigStr = `${num}/${den}`;
   
-  // Calculate measure length
-  let measureLength = num;
-  if (den === 4) measureLength = num * 4;
-  else if (den === 8) measureLength = num * 2;
-  
+  const measureLength = measureLengthFor(num, den);
+
   // Clamp to 32 steps max
   if (measureLength > 32) {
     alert("Time signature exceeds the maximum limit of 32 steps!");
@@ -466,13 +461,6 @@ function updateTimeSignature() {
 
 timeSigNum.onchange = updateTimeSignature;
 timeSigDen.onchange = updateTimeSignature;
-
-swingSlider.oninput = () => {
-  const val = Number(swingSlider.value);
-  swingDisplay.innerText = `${val}%`;
-  state.activePreset.swing = val;
-  markPresetAsModified();
-};
 
 btnPlay.onclick = togglePlay;
 btnStadiumPlay.onclick = togglePlay;
@@ -603,9 +591,6 @@ function loadPresetIntoUI(preset: Preset) {
   bpmSlider.value = String(state.activePreset.bpm);
   bpmNumber.innerText = String(state.activePreset.bpm);
   
-  swingSlider.value = String(state.activePreset.swing || 0);
-  swingDisplay.innerText = `${state.activePreset.swing || 0}%`;
-
   // parse timeSignature
   if (preset.timeSignature && preset.timeSignature.includes('/')) {
     const parts = preset.timeSignature.split('/');
@@ -673,7 +658,6 @@ btnSave.onclick = () => {
     bpm: state.activePreset.bpm,
     timeSignature: state.activePreset.timeSignature,
     measureLength: state.activePreset.measureLength || 16,
-    swing: state.activePreset.swing || 0,
     gridData: JSON.parse(JSON.stringify(state.activePreset.gridData)),
     trainerSettings: JSON.parse(JSON.stringify(state.activePreset.trainerSettings))
   };
@@ -695,13 +679,6 @@ btnSave.onclick = () => {
     });
   });
 };
-
-const FACTORY_GROOVES = [
-  { id: 'rock', name: 'Rock Groove', length: 16, tracks: { 1: [1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0], 2: [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], 3: [1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0] } },
-  { id: 'metal', name: 'Metal Groove', length: 16, tracks: { 1: [1,0,1,0,0,0,1,0,1,0,1,0,0,0,1,0], 2: [0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0], 3: [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1] } },
-  { id: 'blues', name: 'Blues Shuffle', length: 12, tracks: { 1: [1,0,0,0,0,0,1,0,0,0,0,0], 2: [0,0,0,1,0,0,0,0,0,1,0,0], 3: [1,0,1,1,0,1,1,0,1,1,0,1] } },
-  { id: 'jazz', name: 'Jazz Swing', length: 12, tracks: { 1: [1,0,0,0,0,0,1,0,0,0,0,0], 2: [0,0,0,0,0,1,0,0,0,0,0,0], 3: [1,0,1,1,0,1,1,0,1,1,0,1] } }
-];
 
 function populateGroovesDropdown() {
   grooveSelector.innerHTML = '<option value="">-- Choose a Groove --</option>';
