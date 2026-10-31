@@ -460,6 +460,21 @@ describe('Precise page', () => {
     expect(stores.presets.get('stored')).toEqual(legacy);
   });
 
+  it('train_22 preset load shows its start bpm during playback', async () => {
+    const trainerOn = storedPreset();
+    (trainerOn.trainerSettings as any).enabled = true;
+    await openPage([trainerOn]);
+    mockVisualDelay = 20;
+    await clickPlay();
+    tick({ currentBpm: 125, beatIndex: 4, activeTrackIds: [] }); // From the old preset, still delayed
+
+    await selectPreset('user:stored');
+    await new Promise(resolve => setTimeout(resolve, 40));
+    expect(document.getElementById('bpm-number')!.innerText).toBe('80');
+    expect(document.getElementById('stadium-bpm')!.innerText).toBe('80.0');
+    expect((document.getElementById('bpm-slider') as HTMLInputElement).value).toBe('100');
+  });
+
   it('train_17 preset load replaces trainer immediately', async () => {
     const trainerOn = storedPreset();
     (trainerOn.trainerSettings as any).enabled = true;
