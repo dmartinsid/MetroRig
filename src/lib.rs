@@ -524,6 +524,198 @@ pub extern "C" fn engine_free_buf(ptr: *mut u8, size: usize) {
 mod tests {
     use super::*;
 
+    // --- Black-box harness: a one-sample click read back through the exports ---
+
+    const SR: f32 = 44100.0;
+    const BLOCK: u64 = 128; // The size the AudioWorklet renders
+    const ROUNDING: f64 = 1e-6;
+
+    #[derive(Clone, Copy)]
+    struct Hit {
+        pos: u64,
+        step: i32,
+        bpm: f64,
+    }
+
+    struct Run {
+        ptr: *mut Engine,
+        pos: u64,
+        hits: Vec<Hit>,
+    }
+
+    impl Run {
+        fn new(bpm: f64, grid: &[u8]) -> Run {
+            Run::at_rate(SR, bpm, grid)
+        }
+
+        // A stopped engine with a one-sample click on every grid step that is set.
+        // The grid length sets the measure length.
+        fn at_rate(sample_rate: f32, bpm: f64, grid: &[u8]) -> Run {
+            let ptr = engine_new(sample_rate);
+            engine_set_bpm(ptr, bpm);
+            engine_set_click_mode(ptr, 1);
+            let impulse = [1.0f32];
+            engine_load_sample(ptr, 0, impulse.as_ptr(), impulse.as_ptr(), 1);
+            engine_set_measure_length(ptr, grid.len() as u32);
+            engine_update_grid(ptr, 0, grid.as_ptr(), grid.len());
+            Run { ptr, pos: 0, hits: Vec::new() }
+        }
+
+        fn play(&mut self) {
+            self.pos = 0;
+            self.hits.clear();
+            engine_start(self.ptr);
+        }
+
+        fn render(&mut self, frames: u64) {
+            let mut left = [0.0f32; BLOCK as usize];
+            let mut right = [0.0f32; BLOCK as usize];
+            let mut remaining = frames;
+            while remaining > 0 {
+                let block = remaining.min(BLOCK) as usize;
+                engine_process(self.ptr, left.as_mut_ptr(), right.as_mut_ptr(), block);
+                let mut bpm = 0.0f64;
+                let step = engine_get_tick(self.ptr, &mut bpm);
+                for i in 0..block {
+                    if left[i] != 0.0 {
+                        self.hits.push(Hit { pos: self.pos + i as u64, step, bpm });
+                    }
+                }
+                self.pos += block as u64;
+                remaining -= block as u64;
+            }
+        }
+
+        fn render_hits(&mut self, count: usize) {
+            while self.hits.len() < count {
+                self.render(BLOCK);
+            }
+        }
+
+        // Samples between hit `k` and the next one.
+        fn interval(&self, k: usize) -> f64 {
+            (self.hits[k + 1].pos - self.hits[k].pos) as f64
+        }
+    }
+
+    impl Drop for Run {
+        fn drop(&mut self) {
+            engine_free(self.ptr);
+        }
+    }
+
+    fn step_samples(sample_rate: f32, bpm: f64) -> f64 {
+        sample_rate as f64 * 60.0 / (bpm * 4.0)
+    }
+
+    fn assert_within_one_sample(actual: f64, ideal: f64, what: &str) {
+        assert!(
+            (actual - ideal).abs() <= 1.0 + ROUNDING,
+            "{}: got {}, ideal {}",
+            what,
+            actual,
+            ideal
+        );
+    }
+
+    fn quarter_grid() -> [u8; 16] {
+        let mut grid = [0u8; 16];
+        for step in (0..16).step_by(4) {
+            grid[step] = 1;
+        }
+        grid
+    }
+
+    #[test]
+    fn time_01_hits_within_one_sample() {
+        let integer_bpms = (40..=240).map(|bpm| bpm as f64);
+        let fractional_bpms = [97.5, 133.3, 187.7].into_iter();
+        for bpm in integer_bpms.chain(fractional_bpms) {
+            let frames = 30 * SR as u64;
+            let mut run = Run::new(bpm, &[1; 16]);
+            run.play();
+            run.render(frames);
+
+            let ideal = step_samples(SR, bpm);
+            for (k, hit) in run.hits.iter().enumerate() {
+                let what = format!("{} BPM, hit {}", bpm, k);
+                assert_within_one_sample(hit.pos as f64, k as f64 * ideal, &what);
+            }
+            let expected_hits = frames as f64 / ideal;
+            assert_within_one_sample(run.hits.len() as f64, expected_hits, "hit count");
+        }
+    }
+
+    #[test]
+    fn time_02_one_hour_no_drift() {
+        for bpm in [40.0, 97.0, 120.0, 133.0, 187.0, 240.0] {
+            let mut run = Run::new(bpm, &quarter_grid());
+            run.play();
+            run.render(3600 * SR as u64);
+
+            let ideal = step_samples(SR, bpm) * 4.0;
+            assert_eq!(run.hits.len() as u64, 60 * bpm as u64, "hit count at {} BPM", bpm);
+            for (k, hit) in run.hits.iter().enumerate() {
+                let what = format!("{} BPM, hit {}", bpm, k);
+                assert_within_one_sample(hit.pos as f64, k as f64 * ideal, &what);
+            }
+            let last = run.hits.len() - 1;
+            let what = format!("{} BPM, final hit", bpm);
+            assert_within_one_sample(run.hits[last].pos as f64, last as f64 * ideal, &what);
+        }
+    }
+
+    #[test]
+    fn time_03_every_step_same_duration() {
+        for sample_rate in [44100.0, 48000.0] {
+            for bpm in [40.0, 97.0, 133.3, 187.0, 240.0] {
+                for length in [15usize, 16] {
+                    let grid = vec![1u8; length];
+                    let mut run = Run::at_rate(sample_rate, bpm, &grid);
+                    run.play();
+                    run.render(20 * sample_rate as u64);
+
+                    let ideal = step_samples(sample_rate, bpm);
+                    for k in 0..run.hits.len() - 1 {
+                        assert_eq!(run.hits[k].step as usize, k % length);
+                        assert_within_one_sample(run.interval(k), ideal, "step duration");
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn bpm_01_quarter_note_in_every_meter() {
+        // Steps per measure for 2/4, 3/4, 4/4, 5/4, 6/8, 7/8 and 12/8.
+        for length in [8usize, 12, 16, 20, 12, 14, 24] {
+            for bpm in [60.0, 97.0, 135.0, 195.0] {
+                let grid = vec![1u8; length];
+                let mut run = Run::new(bpm, &grid);
+                run.play();
+                run.render(30 * SR as u64);
+
+                let quarter = SR as f64 * 60.0 / bpm;
+                for (k, hit) in run.hits.iter().step_by(4).enumerate() {
+                    let what = format!("{} steps at {} BPM, quarter {}", length, bpm, k);
+                    assert_within_one_sample(hit.pos as f64, k as f64 * quarter, &what);
+                }
+            }
+        }
+
+        // A 12/8 click every 6 steps lands every dotted quarter: 2/3 of the BPM per minute.
+        for (bpm, clicks_per_minute) in [(135.0, 90), (195.0, 130)] {
+            let mut grid = [0u8; 24];
+            for step in (0..24).step_by(6) {
+                grid[step] = 1;
+            }
+            let mut run = Run::new(bpm, &grid);
+            run.play();
+            run.render(60 * SR as u64);
+            assert_eq!(run.hits.len(), clicks_per_minute);
+        }
+    }
+
     #[test]
     fn test_engine_init() {
         let engine = Engine::new(44100.0);

@@ -212,15 +212,15 @@ MetroRig's audio engine already keeps exact time: a measured hour stayed within 
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| TIME-01 | P1: Exact timing | Tasks | Pending |
-| TIME-02 | P1: Exact timing | Tasks | Pending |
+| TIME-01 | P1: Exact timing | Tasks | Implementing |
+| TIME-02 | P1: Exact timing | Tasks | Implementing |
 | TIME-03 | P1: Exact timing | Tasks | Pending |
 | SWING-01 | P1: Swing removal | Tasks | Pending |
 | SWING-02 | P1: Swing removal | Tasks | Pending |
 | SWING-03 | P1: Swing removal | Tasks | Pending |
 | SWING-04 | P1: Swing removal | Tasks | Pending |
 | SWING-05 | P1: Swing removal | Tasks | Pending |
-| BPM-01 | P1: BPM matches what plays | Tasks | Pending |
+| BPM-01 | P1: BPM matches what plays | Tasks | Implementing |
 | BPM-02 | P1: BPM matches what plays | Tasks | Pending |
 | BPM-03 | P1: BPM matches what plays | Tasks | Pending |
 | BPM-04 | P1: BPM matches what plays | Tasks | Pending |

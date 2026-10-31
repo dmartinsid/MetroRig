@@ -109,9 +109,9 @@ T14 → T15 → T16 → T17 → T18 → T19 → T20
 
 **Done when**:
 
-- [ ] Tests cover the 40 to 240 BPM range, including 97, 133 and 187
-- [ ] 1-hour tests cover all six BPMs from TIME-02
-- [ ] Gate passes with 18 Rust tests
+- [x] Tests cover the 40 to 240 BPM range, including 97, 133 and 187
+- [x] 1-hour tests cover all six BPMs from TIME-02
+- [x] Gate passes with 18 Rust tests
 
 **Tests**: unit
 **Gate**: quick
