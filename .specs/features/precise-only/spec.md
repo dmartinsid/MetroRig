@@ -214,52 +214,52 @@ MetroRig's audio engine already keeps exact time: a measured hour stayed within 
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| TIME-01 | P1: Exact timing | Tasks | Implementing |
-| TIME-02 | P1: Exact timing | Tasks | Implementing |
-| TIME-03 | P1: Exact timing | Tasks | Implementing |
-| SWING-01 | P1: Swing removal | Tasks | Implementing |
-| SWING-02 | P1: Swing removal | Tasks | Implementing |
-| SWING-03 | P1: Swing removal | Tasks | Implementing |
-| SWING-04 | P1: Swing removal | Tasks | Implementing |
-| SWING-05 | P1: Swing removal | Tasks | Implementing |
-| BPM-01 | P1: BPM matches what plays | Tasks | Implementing |
-| BPM-02 | P1: BPM matches what plays | Tasks | Implementing |
-| BPM-03 | P1: BPM matches what plays | Tasks | Implementing |
-| BPM-04 | P1: BPM matches what plays | Tasks | Implementing |
-| BPM-05 | P1: BPM matches what plays | Tasks | Implementing |
-| BPM-06 | P1: BPM matches what plays | Tasks | Implementing |
-| BPM-07 | P1: BPM matches what plays | Tasks | Implementing |
-| BPM-08 | P1: BPM matches what plays | Tasks | Implementing |
-| TRAIN-01 | P1: Precise Trainer | Tasks | Implementing |
-| TRAIN-02 | P1: Precise Trainer | Tasks | Implementing |
-| TRAIN-03 | P1: Precise Trainer | Tasks | Implementing |
-| TRAIN-04 | P1: Precise Trainer | Tasks | Implementing |
-| TRAIN-05 | P1: Precise Trainer | Tasks | Implementing |
-| TRAIN-06 | P1: Precise Trainer | Tasks | Implementing |
-| TRAIN-07 | P1: Precise Trainer | Tasks | Implementing |
-| TRAIN-08 | P1: Precise Trainer | Tasks | Implementing |
-| TRAIN-09 | P1: Precise Trainer | Tasks | Implementing |
-| TRAIN-10 | P1: Precise Trainer | Tasks | Implementing |
-| TRAIN-11 | P1: Precise Trainer | Tasks | Implementing |
-| TRAIN-12 | P1: Precise Trainer | Tasks | Implementing |
-| TRAIN-13 | P1: Precise Trainer | Tasks | Implementing |
-| TRAIN-14 | P1: Precise Trainer | Tasks | Implementing |
-| TRAIN-15 | P1: Precise Trainer | Tasks | Implementing |
-| TRAIN-16 | P1: Precise Trainer | Tasks | Implementing |
-| TRAIN-17 | P1: Precise Trainer | Tasks | Implementing |
-| TRAIN-18 | P1: Precise Trainer | Tasks | Implementing |
-| ONSET-01 | P1: Clean click sounds | Tasks | Implementing |
-| ONSET-02 | P1: Clean click sounds | Tasks | Implementing |
-| ONSET-03 | P1: Clean click sounds | Tasks | Implementing |
-| CLICK-01 | P1: Clean click sounds | Tasks | Implementing |
-| PLAY-01 | P1: Clean Stop and Play | Tasks | Implementing |
-| PLAY-02 | P1: Clean Stop and Play | Tasks | Implementing |
-| PLAY-03 | P1: Clean Stop and Play | Tasks | Implementing |
-| VIS-01 | P2: Visual sync | Tasks | Implementing |
-| VIS-02 | P2: Visual sync | Tasks | Implementing |
-| VIS-03 | P2: Visual sync | Tasks | Implementing |
-| RT-01 | P2: Quiet audio thread | Tasks | Implementing |
-| RT-02 | P2: Quiet audio thread | Tasks | Implementing |
+| TIME-01 | P1: Exact timing | Tasks | Verified |
+| TIME-02 | P1: Exact timing | Tasks | Verified |
+| TIME-03 | P1: Exact timing | Tasks | Verified |
+| SWING-01 | P1: Swing removal | Tasks | Verified |
+| SWING-02 | P1: Swing removal | Tasks | Verified |
+| SWING-03 | P1: Swing removal | Tasks | Verified |
+| SWING-04 | P1: Swing removal | Tasks | Verified |
+| SWING-05 | P1: Swing removal | Tasks | Verified |
+| BPM-01 | P1: BPM matches what plays | Tasks | Verified |
+| BPM-02 | P1: BPM matches what plays | Tasks | Verified |
+| BPM-03 | P1: BPM matches what plays | Tasks | Verified |
+| BPM-04 | P1: BPM matches what plays | Tasks | Verified |
+| BPM-05 | P1: BPM matches what plays | Tasks | Verified |
+| BPM-06 | P1: BPM matches what plays | Tasks | Verified |
+| BPM-07 | P1: BPM matches what plays | Tasks | Verified |
+| BPM-08 | P1: BPM matches what plays | Tasks | Verified |
+| TRAIN-01 | P1: Precise Trainer | Tasks | Verified |
+| TRAIN-02 | P1: Precise Trainer | Tasks | Verified |
+| TRAIN-03 | P1: Precise Trainer | Tasks | Verified |
+| TRAIN-04 | P1: Precise Trainer | Tasks | Verified |
+| TRAIN-05 | P1: Precise Trainer | Tasks | Verified |
+| TRAIN-06 | P1: Precise Trainer | Tasks | Verified |
+| TRAIN-07 | P1: Precise Trainer | Tasks | Verified |
+| TRAIN-08 | P1: Precise Trainer | Tasks | Verified |
+| TRAIN-09 | P1: Precise Trainer | Tasks | Verified |
+| TRAIN-10 | P1: Precise Trainer | Tasks | Verified |
+| TRAIN-11 | P1: Precise Trainer | Tasks | Verified |
+| TRAIN-12 | P1: Precise Trainer | Tasks | Verified |
+| TRAIN-13 | P1: Precise Trainer | Tasks | Verified |
+| TRAIN-14 | P1: Precise Trainer | Tasks | Verified |
+| TRAIN-15 | P1: Precise Trainer | Tasks | Verified |
+| TRAIN-16 | P1: Precise Trainer | Tasks | Verified |
+| TRAIN-17 | P1: Precise Trainer | Tasks | Verified |
+| TRAIN-18 | P1: Precise Trainer | Tasks | Verified |
+| ONSET-01 | P1: Clean click sounds | Tasks | Verified |
+| ONSET-02 | P1: Clean click sounds | Tasks | Verified |
+| ONSET-03 | P1: Clean click sounds | Tasks | Verified |
+| CLICK-01 | P1: Clean click sounds | Tasks | Verified |
+| PLAY-01 | P1: Clean Stop and Play | Tasks | Verified |
+| PLAY-02 | P1: Clean Stop and Play | Tasks | Verified |
+| PLAY-03 | P1: Clean Stop and Play | Tasks | Verified |
+| VIS-01 | P2: Visual sync | Tasks | Verified |
+| VIS-02 | P2: Visual sync | Tasks | Verified |
+| VIS-03 | P2: Visual sync | Tasks | Verified |
+| RT-01 | P2: Quiet audio thread | Tasks | Verified |
+| RT-02 | P2: Quiet audio thread | Tasks | Verified |
 
 **ID format:** `[CATEGORY]-[NUMBER]`
 
