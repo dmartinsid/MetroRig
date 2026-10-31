@@ -234,9 +234,9 @@ T14 → T15 → T16 → T17 → T18 → T19 → T20
 
 **Done when**:
 
-- [ ] Each requirement has its own test
-- [ ] Sending unchanged settings during a run leaves the Trainer counters running
-- [ ] Gate passes with 35 Rust tests
+- [x] Each requirement has its own test
+- [x] Sending unchanged settings during a run leaves the Trainer counters running
+- [x] Gate passes with 35 Rust tests
 
 **Tests**: unit
 **Gate**: quick
