@@ -248,9 +248,9 @@ MetroRig's audio engine already keeps exact time: a measured hour stayed within 
 | ONSET-02 | P1: Clean click sounds | Tasks | Pending |
 | ONSET-03 | P1: Clean click sounds | Tasks | Pending |
 | CLICK-01 | P1: Clean click sounds | Tasks | Implementing |
-| PLAY-01 | P1: Clean Stop and Play | Tasks | Pending |
-| PLAY-02 | P1: Clean Stop and Play | Tasks | Pending |
-| PLAY-03 | P1: Clean Stop and Play | Tasks | Pending |
+| PLAY-01 | P1: Clean Stop and Play | Tasks | Implementing |
+| PLAY-02 | P1: Clean Stop and Play | Tasks | Implementing |
+| PLAY-03 | P1: Clean Stop and Play | Tasks | Implementing |
 | VIS-01 | P2: Visual sync | Tasks | Pending |
 | VIS-02 | P2: Visual sync | Tasks | Pending |
 | VIS-03 | P2: Visual sync | Tasks | Pending |
