@@ -229,9 +229,9 @@ MetroRig's audio engine already keeps exact time: a measured hour stayed within 
 | BPM-07 | P1: BPM matches what plays | Tasks | Pending |
 | BPM-08 | P1: BPM matches what plays | Tasks | Pending |
 | TRAIN-01 | P1: Precise Trainer | Tasks | Pending |
-| TRAIN-02 | P1: Precise Trainer | Tasks | Pending |
-| TRAIN-03 | P1: Precise Trainer | Tasks | Pending |
-| TRAIN-04 | P1: Precise Trainer | Tasks | Pending |
+| TRAIN-02 | P1: Precise Trainer | Tasks | Implementing |
+| TRAIN-03 | P1: Precise Trainer | Tasks | Implementing |
+| TRAIN-04 | P1: Precise Trainer | Tasks | Implementing |
 | TRAIN-05 | P1: Precise Trainer | Tasks | Pending |
 | TRAIN-06 | P1: Precise Trainer | Tasks | Pending |
 | TRAIN-07 | P1: Precise Trainer | Tasks | Pending |
@@ -242,8 +242,8 @@ MetroRig's audio engine already keeps exact time: a measured hour stayed within 
 | TRAIN-12 | P1: Precise Trainer | Tasks | Pending |
 | TRAIN-13 | P1: Precise Trainer | Tasks | Pending |
 | TRAIN-14 | P1: Precise Trainer | Tasks | Pending |
-| TRAIN-15 | P1: Precise Trainer | Tasks | Pending |
-| TRAIN-16 | P1: Precise Trainer | Tasks | Pending |
+| TRAIN-15 | P1: Precise Trainer | Tasks | Implementing |
+| TRAIN-16 | P1: Precise Trainer | Tasks | Implementing |
 | ONSET-01 | P1: Clean click sounds | Tasks | Implementing |
 | ONSET-02 | P1: Clean click sounds | Tasks | Implementing |
 | ONSET-03 | P1: Clean click sounds | Tasks | Implementing |
