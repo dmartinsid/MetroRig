@@ -168,7 +168,7 @@ impl Engine {
         self.step_index = 0;
         self.first_hit = true;
         self.trainer_schedule_restarted = false;
-        self.samples_in_current_step = self.samples_per_step - 1.0; // Trigger first beat immediately
+        self.samples_in_current_step = 0.0;
     }
 
     pub fn stop(&mut self) {
@@ -189,6 +189,10 @@ impl Engine {
             if self.first_hit {
                 self.first_hit = false;
                 self.apply_pending_trainer();
+                if self.trainer.enabled {
+                    self.bpm = self.trainer.start_bpm; // Settings may have arrived after Play
+                    self.recalc_tempo();
+                }
                 self.trainer_schedule_restarted = false; // No bar has ended yet
                 self.trainer_accumulated_samples = 0; // Seconds count from this hit
             } else {
@@ -323,12 +327,16 @@ impl Engine {
         let len = out_l.len();
         for i in 0..len {
             // 1. Process timing
-            self.process_tick_samples();
+            if self.first_hit {
+                self.trigger_step(); // No time has passed yet, whatever the tempo
+            } else {
+                self.process_tick_samples();
 
-            self.samples_in_current_step += 1.0;
-            if self.samples_in_current_step >= self.samples_per_step {
-                self.samples_in_current_step -= self.samples_per_step;
-                self.trigger_step();
+                self.samples_in_current_step += 1.0;
+                if self.samples_in_current_step >= self.samples_per_step {
+                    self.samples_in_current_step -= self.samples_per_step;
+                    self.trigger_step();
+                }
             }
 
             // 2. Synthesize Click (decaying sine wave) or Play Sample
@@ -886,6 +894,27 @@ mod tests {
         assert_within_one_sample(run.interval(0), step_samples(SR, 120.0), "first step");
     }
 
+    #[test]
+    fn play_04_settings_before_first_hit_keep_it_on_sample_zero() {
+        // A slower tempo, as a preset load sends it.
+        let mut run = Run::new(120.0, &[1; 16]);
+        run.play();
+        engine_set_bpm(run.ptr, 60.0);
+        engine_replace_trainer(run.ptr, false, 60.0, 160.0, 5.0, BY_BARS, 1.0, STEPPED);
+        run.render_hits(2);
+        assert_eq!(run.hits[0].pos, 0);
+        assert_hits_at(&run, 0..2, 60.0);
+        assert_intervals_at(&run, 0..1, 60.0);
+
+        // A faster one.
+        let mut run = Run::new(60.0, &[1; 16]);
+        run.play();
+        engine_set_bpm(run.ptr, 120.0);
+        run.render_hits(2);
+        assert_eq!(run.hits[0].pos, 0);
+        assert_intervals_at(&run, 0..1, 120.0);
+    }
+
     // Interleaved WAV frames as (left, right). Mono files return the same channel twice.
     fn read_wav(path: &str) -> (Vec<f32>, Vec<f32>) {
         let bytes = std::fs::read(path).unwrap();
@@ -1219,6 +1248,14 @@ mod tests {
         run.render_hits(2);
         assert_hits_at(&run, 0..2, 100.0);
         assert_intervals_at(&run, 0..1, 100.0);
+
+        // Smooth has not started ramping on the first hit.
+        let mut run = Run::new(100.0, &[1; 16]);
+        engine_set_trainer(run.ptr, true, 80.0, 160.0, 5.0, BY_SECONDS, 1.0, SMOOTH);
+        run.play();
+        run.render_hits(1);
+        assert_eq!(run.hits[0].pos, 0);
+        assert_eq!(run.hits[0].bpm, 80.0);
     }
 
     // Each edit from the running settings: (target, increment, step type, step value, curve).
@@ -1439,6 +1476,27 @@ mod tests {
         run.render_hits(17);
         assert_hits_at(&run, 0..16, 100.0);
         assert_hits_at(&run, 16..17, 110.0);
+
+        // An enabled Trainer plays that hit at Start BPM, set by a new value or by the enable.
+        for was_enabled in [true, false] {
+            let mut run = Run::new(100.0, &[1; 16]);
+            engine_set_trainer(run.ptr, was_enabled, 100.0, 160.0, 5.0, BY_BARS, 1.0, STEPPED);
+            run.play();
+            engine_set_trainer(run.ptr, true, 80.0, 160.0, 5.0, BY_BARS, 1.0, STEPPED);
+            run.render_hits(17);
+            assert_eq!(run.hits[0].pos, 0);
+            assert_hits_at(&run, 0..16, 80.0);
+            assert_intervals_at(&run, 0..16, 80.0);
+            assert_hits_at(&run, 16..17, 85.0);
+        }
+
+        // A Smooth Trainer on the way out does not ramp before that hit.
+        let mut run = Run::new(100.0, &[1; 16]);
+        engine_set_trainer(run.ptr, true, 100.0, 200.0, 5.0, BY_SECONDS, 1.0, SMOOTH);
+        run.play();
+        engine_set_trainer(run.ptr, true, 100.0, 200.0, 5.0, BY_BARS, 1.0, STEPPED);
+        run.render_hits(1);
+        assert_eq!(run.hits[0].bpm, 100.0);
     }
 
     #[test]
