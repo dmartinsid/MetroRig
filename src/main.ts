@@ -606,12 +606,15 @@ function measureLengthToTimeSig(len: number): string {
 }
 
 function loadPresetIntoUI(storedPreset: StoredPreset) {
+  visualScheduler.cancelAll(); // Ticks of the previous preset must not overwrite this one
   const preset = normalizePreset(storedPreset);
   state.activePreset = preset;
   const ts = preset.trainerSettings;
   
   bpmSlider.value = String(state.activePreset.bpm);
-  bpmNumber.innerText = String(state.activePreset.bpm);
+  // During playback the engine jumps to the preset's start tempo
+  const shownBpm = state.isPlaying ? startBpmFor(preset) : preset.bpm;
+  bpmNumber.innerText = String(shownBpm);
   
   // parse timeSignature
   if (preset.timeSignature && preset.timeSignature.includes('/')) {
@@ -666,7 +669,7 @@ function loadPresetIntoUI(storedPreset: StoredPreset) {
   const timeSig = measureLengthToTimeSig(state.activePreset.measureLength || 16);
   panelHeaderText.textContent = `${state.activePreset.name}  ·  ${timeSig}  ·  ${bpm} BPM`;
 
-  stadiumBpm.innerText = bpm.toFixed(1);
+  stadiumBpm.innerText = shownBpm.toFixed(1);
   updateStadiumStatus();
 }
 
