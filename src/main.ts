@@ -1,5 +1,5 @@
 import { MetronomeNode } from './audio/MetronomeNode';
-import { StateManager, FACTORY_PRESETS, FACTORY_GROOVES, SPEED_TRAINER_PRESETS, Preset, CustomGroove, FIGURES, getBeatsPerMeasure, getBeatForStep, isSustainedStep, applyFigure, measureLengthFor } from './state';
+import { StateManager, FACTORY_PRESETS, FACTORY_GROOVES, SPEED_TRAINER_PRESETS, Preset, StoredPreset, CustomGroove, FIGURES, getBeatsPerMeasure, getBeatForStep, isSustainedStep, applyFigure, measureLengthFor, normalizePreset, startBpmFor } from './state';
 import workletUrl from './audio/metronome-processor?url';
 
 declare const gsap: any;
@@ -149,12 +149,18 @@ async function initAudio() {
   syncAudioSettings();
 }
 
+// Sends the start tempo, so it runs only on Play and preset load
 function syncAudioSettings() {
   if (!isAudioInit) return;
-  
-  // Set active BPM
-  audioNode.setBpm(state.activePreset.bpm);
-  
+
+  audioNode.setBpm(startBpmFor(state.activePreset));
+  syncPlaybackSettings();
+}
+
+// Sends everything but BPM, so a change during playback keeps the live tempo
+function syncPlaybackSettings() {
+  if (!isAudioInit) return;
+
   // Set measure length
   audioNode.setMeasureLength(state.activePreset.measureLength || 16);
   
@@ -452,7 +458,7 @@ function updateTimeSignature() {
   }
 
   drawGrid();
-  syncAudioSettings();
+  syncPlaybackSettings();
   markPresetAsModified();
 
   const bpm = state.activePreset.bpm;
@@ -479,7 +485,7 @@ formInputs.forEach(el => {
       stepValue: Number(trainerVal.value),
       curve: trainerCurve.value as 'stepped' | 'smooth'
     };
-    syncAudioSettings();
+    syncPlaybackSettings();
     markPresetAsModified();
   };
 });
@@ -584,9 +590,10 @@ function measureLengthToTimeSig(len: number): string {
   return map[len] ?? `${len} steps`;
 }
 
-function loadPresetIntoUI(preset: Preset) {
-  state.activePreset = JSON.parse(JSON.stringify(preset));
-  const ts = state.activePreset.trainerSettings;
+function loadPresetIntoUI(storedPreset: StoredPreset) {
+  const preset = normalizePreset(storedPreset);
+  state.activePreset = preset;
+  const ts = preset.trainerSettings;
   
   bpmSlider.value = String(state.activePreset.bpm);
   bpmNumber.innerText = String(state.activePreset.bpm);
@@ -724,7 +731,7 @@ grooveSelector.onchange = () => {
       state.activePreset.gridData[trackId] = destPattern;
     }
     drawGrid();
-    syncAudioSettings();
+    syncPlaybackSettings();
     markPresetAsModified();
   };
 

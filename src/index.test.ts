@@ -335,6 +335,14 @@ async function selectPreset(value: string) {
   await flush();
 }
 
+const clickPlay = async () => {
+  byId<HTMLButtonElement>('btn-play').click();
+  await flush();
+};
+
+const calls = (method: string) => audioCalls.filter(call => call.method === method).map(call => call.args);
+const lastCall = (method: string) => calls(method).at(-1) as any[];
+
 describe('Precise page', () => {
   afterEach(() => {
     delete (globalThis as any).indexedDB;
@@ -354,5 +362,112 @@ describe('Precise page', () => {
     expect(saved).not.toHaveProperty('swing');
     // Loading and saving a copy leaves the original record as it was
     expect(stores.presets.get('stored')).toEqual(storedPreset());
+  });
+
+  it('train_12 settings keep live bpm', async () => {
+    await openPage();
+    await clickPlay();
+    audioCalls.length = 0;
+
+    byId('time-sig-num').value = '3';
+    byId('time-sig-num').dispatchEvent(new Event('change'));
+    expect(lastCall('setMeasureLength')).toEqual([12]);
+
+    document.querySelector<HTMLElement>('.step-cell[data-track="1"]')!.click();
+    expect(lastCall('updateGrid')[0]).toBe(1);
+    expect([...lastCall('updateGrid')[1]].slice(0, 2)).toEqual([1, 0]);
+
+    const grooves = byId<HTMLSelectElement>('groove-selector');
+    grooves.value = 'factory:metal';
+    grooves.dispatchEvent(new Event('change'));
+    expect(lastCall('updateGrid')[0]).toBe(3);
+    expect([...lastCall('updateGrid')[1]]).toEqual(new Array(12).fill(1));
+
+    const trainerEdits: [string, string, Record<string, unknown>][] = [
+      ['trainer-start', '90', { startBpm: 90 }],
+      ['trainer-target', '150', { targetBpm: 150 }],
+      ['trainer-inc', '3', { increment: 3 }],
+      ['trainer-val', '2', { stepValue: 2 }],
+      ['trainer-type', 'seconds', { stepType: 'seconds' }],
+      ['trainer-curve', 'smooth', { curve: 'smooth' }],
+    ];
+    trainerEdits.forEach(([id, value, sent]) => {
+      byId(id).value = value;
+      byId(id).dispatchEvent(new Event('change'));
+      expect(lastCall('setTrainer')[0]).toMatchObject(sent);
+    });
+    byId('trainer-enable').checked = true;
+    byId('trainer-enable').dispatchEvent(new Event('change'));
+    expect(lastCall('setTrainer')[0]).toMatchObject({ enabled: true });
+
+    expect(calls('setBpm')).toEqual([]);
+  });
+
+  it('swing_03 stored swing sends nothing', async () => {
+    await openPage([storedPreset()]);
+    await clickPlay();
+    audioCalls.length = 0;
+
+    await selectPreset('user:stored');
+
+    expect(lastCall('setBpm')).toEqual([100]);
+    expect(lastCall('setMeasureLength')).toEqual([16]);
+    expect(JSON.stringify(audioCalls)).not.toMatch(/swing/i);
+  });
+
+  it('legacy 12/8 preset loads expanded', async () => {
+    const legacy = storedPreset({
+      bpm: 100,
+      timeSignature: '12/8',
+      measureLength: 12,
+      gridData: { 0: [2, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0], 1: [], 2: [], 3: [] },
+    });
+    const stores = await openPage([legacy]);
+    await clickPlay();
+    audioCalls.length = 0;
+
+    await selectPreset('user:stored');
+
+    expect(byId('bpm-slider').value).toBe('150');
+    expect(byId('bpm-number').innerText).toBe('150');
+    expect(byId('panel-header-text').textContent).toContain('12/8  ·  150 BPM');
+    expect(byId('stadium-bpm').innerText).toBe('150.0');
+    expect(byId('time-sig-num').value).toBe('12');
+    expect(byId('time-sig-den').value).toBe('8');
+
+    const clickCells = [...document.querySelectorAll<HTMLElement>('.step-cell[data-track="0"]')];
+    expect(clickCells).toHaveLength(24);
+    const hitSteps = clickCells.flatMap((cell, step) =>
+      cell.classList.contains('active') || cell.classList.contains('accent') ? [step] : []);
+    expect(hitSteps).toEqual([0, 6, 12, 18]);
+
+    expect(lastCall('setBpm')).toEqual([150]);
+    expect(lastCall('setMeasureLength')).toEqual([24]);
+    // Loading converts in memory; the stored record changes only on save
+    expect(stores.presets.get('stored')).toEqual(legacy);
+  });
+
+  it('preset start bpm applies on load and play', async () => {
+    const trainerOn = storedPreset();
+    (trainerOn.trainerSettings as any).enabled = true;
+    await openPage([trainerOn]);
+    await clickPlay();
+    audioCalls.length = 0;
+
+    await selectPreset('user:stored');
+    expect(lastCall('setBpm')).toEqual([80]);
+
+    await selectPreset('factory:metal');
+    expect(lastCall('setBpm')).toEqual([140]);
+
+    await selectPreset('user:stored');
+    await clickPlay(); // Stop
+    audioCalls.length = 0;
+    await clickPlay();
+
+    const order = audioCalls.map(call => call.method);
+    expect(order.indexOf('setBpm')).toBeLessThan(order.indexOf('start'));
+    expect(lastCall('setBpm')).toEqual([80]);
+    expect(byId('bpm-number').innerText).toBe('100');
   });
 });
