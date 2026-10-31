@@ -58,6 +58,7 @@ pub struct Engine {
     trainer_accumulated_measures: u64,
     trainer_accumulated_samples: u64,
     first_hit: bool, // The next hit opens a run, so no measure has finished
+    trainer_replaced: bool, // A preset load replaced the Trainer during the current bar
     pending_trainer: Option<TrainerSettings>, // Received during playback, waits for beat 1
     
     // Events queued for Javascript
@@ -110,6 +111,7 @@ impl Engine {
             trainer_accumulated_measures: 0,
             trainer_accumulated_samples: 0,
             first_hit: false,
+            trainer_replaced: false,
             pending_trainer: None,
             last_tick_index: -1,
             last_tick_bpm: 120.0,
@@ -140,6 +142,7 @@ impl Engine {
         self.is_playing = true;
         self.step_index = 0;
         self.first_hit = true;
+        self.trainer_replaced = false;
         self.samples_in_current_step = self.current_step_limit - 1.0; // Trigger first beat immediately
     }
 
@@ -166,7 +169,9 @@ impl Engine {
                 // A Trainer enabled here counts its first interval from this beat 1
                 let was_enabled = self.trainer_enabled;
                 self.apply_pending_trainer();
-                if was_enabled {
+                // A replaced Trainer's partial bar is not a finished bar
+                let replaced = std::mem::take(&mut self.trainer_replaced);
+                if was_enabled && !(replaced && self.trainer_step_type == 0) {
                     self.on_measure_complete();
                 }
             }
@@ -455,6 +460,52 @@ pub extern "C" fn engine_set_measure_length(ptr: *mut Engine, length: u32) {
     }
 }
 
+fn valid_trainer_settings(
+    enabled: bool,
+    start_bpm: f64,
+    target_bpm: f64,
+    increment: f64,
+    step_type: u32,
+    step_value: f64,
+    curve_type: u32
+) -> Option<TrainerSettings> {
+    if start_bpm <= 0.0 || !start_bpm.is_finite() { return None; }
+    if target_bpm <= 0.0 || !target_bpm.is_finite() { return None; }
+    if increment < 0.0 || !increment.is_finite() { return None; }
+    if step_value <= 0.0 || !step_value.is_finite() { return None; }
+    Some(TrainerSettings {
+        enabled,
+        start_bpm,
+        target_bpm,
+        increment,
+        step_type,
+        step_value,
+        curve: curve_type,
+    })
+}
+
+// A preset load: the old Trainer stops now, and its counters go with it.
+#[no_mangle]
+pub extern "C" fn engine_replace_trainer(
+    ptr: *mut Engine,
+    enabled: bool,
+    start_bpm: f64,
+    target_bpm: f64,
+    increment: f64,
+    step_type: u32,
+    step_value: f64,
+    curve_type: u32
+) {
+    if ptr.is_null() { return; }
+    let Some(settings) = valid_trainer_settings(enabled, start_bpm, target_bpm, increment, step_type, step_value, curve_type) else { return };
+    let engine = unsafe { &mut *ptr };
+    engine.pending_trainer = None;
+    engine.apply_trainer(settings);
+    engine.trainer_accumulated_measures = 0;
+    engine.trainer_accumulated_samples = 0;
+    engine.trainer_replaced = engine.is_playing;
+}
+
 #[no_mangle]
 pub extern "C" fn engine_set_trainer(
     ptr: *mut Engine,
@@ -467,21 +518,8 @@ pub extern "C" fn engine_set_trainer(
     curve_type: u32
 ) {
     if ptr.is_null() { return; }
-    if start_bpm <= 0.0 || !start_bpm.is_finite() { return; }
-    if target_bpm <= 0.0 || !target_bpm.is_finite() { return; }
-    if increment < 0.0 || !increment.is_finite() { return; }
-    if step_value <= 0.0 || !step_value.is_finite() { return; }
-
+    let Some(settings) = valid_trainer_settings(enabled, start_bpm, target_bpm, increment, step_type, step_value, curve_type) else { return };
     let engine = unsafe { &mut *ptr };
-    let settings = TrainerSettings {
-        enabled,
-        start_bpm,
-        target_bpm,
-        increment,
-        step_type,
-        step_value,
-        curve: curve_type,
-    };
     if engine.is_playing && enabled {
         engine.pending_trainer = Some(settings);
     } else {
@@ -1285,6 +1323,47 @@ mod tests {
         assert_hits_at(&run, 0..48, 100.0); // Never Start BPM
         assert_intervals_at(&run, 0..48, 100.0);
         assert_hits_at(&run, 48..49, 105.0); // Two full bars after the settings applied on hit 16
+    }
+
+    fn load_preset(run: &Run, start: f64, step_type: u32, curve: u32) {
+        engine_replace_trainer(run.ptr, true, start, 160.0, 5.0, step_type, 1.0, curve);
+        engine_set_bpm(run.ptr, start);
+    }
+
+    #[test]
+    fn train_17_preset_load_replaces_trainer() {
+        // Loaded one step before beat 1 of a stepped run: 100 must be heard on beat 1.
+        let mut run = run_to_hit(14);
+        load_preset(&run, 100.0, BY_BARS, STEPPED);
+        run.render_hits(17);
+        assert_hits_at(&run, 15..17, 100.0);
+
+        // A running Smooth ramp must stop at once.
+        let mut run = Run::new(100.0, &[1; 16]);
+        engine_set_trainer(run.ptr, true, 90.0, 160.0, 20.0, BY_SECONDS, 1.0, SMOOTH);
+        run.play();
+        run.render_hits(7);
+        load_preset(&run, 100.0, BY_BARS, STEPPED);
+        run.render_hits(17);
+        assert_hits_at(&run, 7..17, 100.0);
+
+        // Settings still waiting for beat 1 are dropped with the old Trainer.
+        let mut run = run_to_hit(5);
+        engine_set_trainer(run.ptr, true, 80.0, 160.0, 40.0, BY_BARS, 1.0, STEPPED);
+        load_preset(&run, 100.0, BY_BARS, STEPPED);
+        run.render_hits(33);
+        assert_hits_at(&run, 6..32, 100.0);
+        assert_hits_at(&run, 32..33, 105.0);
+    }
+
+    #[test]
+    fn train_18_preset_counts_a_full_bar() {
+        let mut run = run_to_hit(14);
+        load_preset(&run, 100.0, BY_BARS, STEPPED);
+        run.render_hits(33);
+        assert_hits_at(&run, 15..32, 100.0);
+        assert_intervals_at(&run, 15..31, 100.0);
+        assert_hits_at(&run, 32..33, 105.0);
     }
 
     #[test]

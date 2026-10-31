@@ -156,11 +156,12 @@ function syncAudioSettings() {
   if (!isAudioInit) return;
 
   audioNode.setBpm(startBpmFor(state.activePreset));
-  syncPlaybackSettings();
+  syncPlaybackSettings(true);
 }
 
-// Sends everything but BPM, so a change during playback keeps the live tempo
-function syncPlaybackSettings() {
+// Sends everything but BPM, so a change during playback keeps the live tempo.
+// A replaced Trainer applies now; otherwise a running one takes the change on beat 1.
+function syncPlaybackSettings(replaceTrainer = false) {
   if (!isAudioInit) return;
 
   // Set measure length
@@ -181,7 +182,7 @@ function syncPlaybackSettings() {
     stepType: trainerType.value as 'measures' | 'seconds',
     stepValue: Number(trainerVal.value),
     curve: trainerCurve.value as 'stepped' | 'smooth'
-  });
+  }, replaceTrainer);
 }
 
 // Draw Sequencer Grid

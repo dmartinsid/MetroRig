@@ -28,6 +28,8 @@ function fakeEngine() {
       },
       engine_start: vi.fn(),
       engine_set_bpm: vi.fn(),
+      engine_set_trainer: vi.fn(),
+      engine_replace_trainer: vi.fn(),
       engine_process: (_ptr: number, outL: number, outR: number, length: number) => {
         engine.block++;
         if (engine.growDuringNextBlock) {
@@ -101,6 +103,20 @@ describe('Worklet', () => {
 
   afterAll(() => {
     vi.unstubAllGlobals();
+  });
+
+  it('sends a replacing Trainer message to engine_replace_trainer', async () => {
+    const engine = fakeEngine();
+    const { send } = await startProcessor(engine);
+    const settings = { enabled: true, startBpm: 100, targetBpm: 160, increment: 5, stepType: 'measures', stepValue: 1, curve: 'stepped' };
+
+    send({ type: 'SET_TRAINER', ...settings, replace: true });
+    expect(engine.exports.engine_replace_trainer).toHaveBeenCalledWith(1, 1, 100, 160, 5, 0, 1, 0);
+    expect(engine.exports.engine_set_trainer).not.toHaveBeenCalled();
+
+    send({ type: 'SET_TRAINER', ...settings, replace: false });
+    expect(engine.exports.engine_set_trainer).toHaveBeenCalledWith(1, 1, 100, 160, 5, 0, 1, 0);
+    expect(engine.exports.engine_replace_trainer).toHaveBeenCalledOnce();
   });
 
   it('rt_01 no logs on messages or ticks', async () => {

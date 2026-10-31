@@ -590,6 +590,12 @@ Proof: run rust | test tests::train_15_never_passes_target ... ok
 **C32** - Start BPM holds when it is at or above Target (TRAIN-16, AC 16)
 Proof: run rust | test tests::train_16_holds_start_at_target ... ok
 
+**C45** - A preset load replaces the active Trainer immediately, from stepped and Smooth runs (TRAIN-17, AC 17)
+Proof: run rust | test tests::train_17_preset_load_replaces_trainer ... ok
+
+**C46** - A preset's first bar counts from the next beat 1 (TRAIN-18, AC 18)
+Proof: run rust | test tests::train_18_preset_counts_a_full_bar ... ok
+
 **C33** - Loading discards frames before 1% of peak in either channel (ONSET-01, AC 1)
 Proof: run rust | test tests::onset_01_trims_before_one_percent ... ok
 
@@ -631,7 +637,7 @@ Proof: run js | ✓ tests/metronome-processor.test.ts > Worklet > rt_02 reuses h
 ## Handoff
 
 **Settled mid-build:** The user approved with "aprovado" after being told batch sub-agents are the default unless they say "inline".
-**Dispatched:** batch 1 (phases 1-2, T1-T8) - returned, last commit 3de3eee; batch 2 (phases 3-4, T9-T14) - returned at T13; T14 closed by the orchestrator; batch 3 (phase 5, T15-T20) - returned, last commit 31136ea
+**Dispatched:** batch 1 (phases 1-2, T1-T8) - returned, last commit 3de3eee; batch 2 (phases 3-4, T9-T14) - returned at T13; T14 closed by the orchestrator; batch 3 (phase 5, T15-T20) - returned, last commit 31136ea; Verifier at fee8fc7 - returned FAIL with 1 finding
 **Walked:** At http://localhost:3001 with a real click on Play. Editor: no swing control, card titled MEASURE. Blues Shuffle: header `12/8 · 135 BPM`, 24 steps, clicks on steps 0, 6, 12, 18. 4/4 at 120 BPM on the audio clock: 124.8 ms per step, 16 steps per bar. Ligados Trainer: 70 to 72 to 74 every 16 steps; 208.25 ms per step at 72 (ideal 208.33) and 202.93 ms at 74 (ideal 202.70); Editor followed the live BPM and returned to 70 after Stop. No console errors. Chrome reported 10.7 ms base and 56 ms output latency. Audible sound was not judged: the walk measured ticks, not speaker output.
 
 ---

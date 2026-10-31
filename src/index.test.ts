@@ -460,6 +460,23 @@ describe('Precise page', () => {
     expect(stores.presets.get('stored')).toEqual(legacy);
   });
 
+  it('train_17 preset load replaces trainer immediately', async () => {
+    const trainerOn = storedPreset();
+    (trainerOn.trainerSettings as any).enabled = true;
+    await openPage([trainerOn]);
+    await clickPlay();
+    audioCalls.length = 0;
+
+    await selectPreset('user:stored');
+    expect(lastCall('setTrainer')[1]).toBe(true);
+
+    const increment = document.getElementById('trainer-inc') as HTMLInputElement;
+    increment.value = '9';
+    increment.onchange?.(new Event('change'));
+    expect(lastCall('setTrainer')[0]).toMatchObject({ increment: 9 });
+    expect(lastCall('setTrainer')[1]).toBe(false);
+  });
+
   it('preset start bpm applies on load and play', async () => {
     const trainerOn = storedPreset();
     (trainerOn.trainerSettings as any).enabled = true;

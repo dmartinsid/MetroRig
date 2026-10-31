@@ -131,6 +131,8 @@ MetroRig's audio engine already keeps exact time: a measured hour stayed within 
 14. TRAIN-14: WHEN the user presses Stop THEN the Editor SHALL show the preset BPM.
 15. TRAIN-15: The Trainer SHALL never raise BPM above Target BPM.
 16. TRAIN-16: IF Start BPM is at or above Target BPM THEN the engine SHALL hold Start BPM.
+17. TRAIN-17: WHEN a preset loads during playback THEN the engine SHALL replace the active Trainer settings immediately.
+18. TRAIN-18: WHEN a preset loads during playback THEN the engine SHALL count its first bar from the next beat 1.
 
 **Independent Test**: Set BPM 100, Start BPM 80, and +5 every bar, then render 3 bars and check each interval around both downbeats.
 
@@ -244,6 +246,8 @@ MetroRig's audio engine already keeps exact time: a measured hour stayed within 
 | TRAIN-14 | P1: Precise Trainer | Tasks | Implementing |
 | TRAIN-15 | P1: Precise Trainer | Tasks | Implementing |
 | TRAIN-16 | P1: Precise Trainer | Tasks | Implementing |
+| TRAIN-17 | P1: Precise Trainer | Tasks | Implementing |
+| TRAIN-18 | P1: Precise Trainer | Tasks | Implementing |
 | ONSET-01 | P1: Clean click sounds | Tasks | Implementing |
 | ONSET-02 | P1: Clean click sounds | Tasks | Implementing |
 | ONSET-03 | P1: Clean click sounds | Tasks | Implementing |
@@ -259,7 +263,7 @@ MetroRig's audio engine already keeps exact time: a measured hour stayed within 
 
 **ID format:** `[CATEGORY]-[NUMBER]`
 
-**Coverage:** 44 total, 0 mapped to tasks, 44 unmapped until the Tasks phase.
+**Coverage:** 46 total, 46 mapped to tasks, 0 unmapped.
 
 ---
 
