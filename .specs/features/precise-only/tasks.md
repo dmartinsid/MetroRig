@@ -212,10 +212,10 @@ T14 → T15 → T16 → T17 → T18 → T19 → T20
 
 **Done when**:
 
-- [ ] The interval into beat 1 keeps the old BPM, and the next uses the new BPM
-- [ ] A seconds increment waits for the first beat 1 after the time elapses
-- [ ] Smooth still changes between downbeats, and BPM never passes Target
-- [ ] Gate passes with 27 Rust tests
+- [x] The interval into beat 1 keeps the old BPM, and the next uses the new BPM
+- [x] A seconds increment waits for the first beat 1 after the time elapses
+- [x] Smooth still changes between downbeats, and BPM never passes Target
+- [x] Gate passes with 27 Rust tests
 
 **Tests**: unit
 **Gate**: quick

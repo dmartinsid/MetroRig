@@ -46,6 +46,7 @@ pub struct Engine {
     trainer_curve: u32,      // 0 = Stepped, 1 = Smooth
     trainer_accumulated_measures: u64,
     trainer_accumulated_samples: u64,
+    first_hit: bool, // The next hit opens a run, so no measure has finished
     
     // Events queued for Javascript
     last_tick_index: i32, // -1 if no tick in last process
@@ -96,6 +97,7 @@ impl Engine {
             trainer_curve: 0,
             trainer_accumulated_measures: 0,
             trainer_accumulated_samples: 0,
+            first_hit: false,
             last_tick_index: -1,
             last_tick_bpm: 120.0,
             measure_length: 16,
@@ -116,6 +118,7 @@ impl Engine {
 
         self.is_playing = true;
         self.step_index = 0;
+        self.first_hit = true;
         self.samples_in_current_step = self.current_step_limit - 1.0; // Trigger first beat immediately
     }
 
@@ -134,6 +137,15 @@ impl Engine {
     }
 
     fn trigger_step(&mut self) {
+        if self.step_index == 0 {
+            if self.first_hit {
+                self.first_hit = false;
+                self.trainer_accumulated_samples = 0; // Seconds count from this hit
+            } else {
+                self.on_measure_complete();
+            }
+        }
+
         self.last_tick_index = self.step_index as i32;
         self.last_tick_bpm = self.bpm;
 
@@ -163,19 +175,23 @@ impl Engine {
 
         // Update step index
         self.step_index = (self.step_index + 1) % self.measure_length;
-        if self.step_index == 0 {
-            // End of a measure
-            self.on_measure_complete();
-        }
     }
 
     fn on_measure_complete(&mut self) {
-        if self.trainer_enabled && self.trainer_step_type == 0 && self.trainer_curve == 0 {
+        if !self.trainer_enabled || self.trainer_curve != 0 {
+            return;
+        }
+        let due = if self.trainer_step_type == 0 {
             self.trainer_accumulated_measures += 1;
-            if self.trainer_accumulated_measures >= self.trainer_step_value as u64 {
-                self.trainer_accumulated_measures = 0;
-                self.increment_bpm();
-            }
+            self.trainer_accumulated_measures >= self.trainer_step_value as u64
+        } else {
+            let samples_limit = (self.trainer_step_value * self.sample_rate as f64) as u64;
+            self.trainer_accumulated_samples >= samples_limit
+        };
+        if due {
+            self.trainer_accumulated_measures = 0;
+            self.trainer_accumulated_samples = 0;
+            self.increment_bpm();
         }
     }
 
@@ -214,13 +230,8 @@ impl Engine {
             // Smooth update per frame
             self.update_trainer_smooth(1);
         } else if self.trainer_enabled && self.trainer_step_type == 1 {
-            // Stepped by time
+            // Stepped by time: the increment waits for beat 1
             self.trainer_accumulated_samples += 1;
-            let samples_limit = (self.trainer_step_value * self.sample_rate as f64) as u64;
-            if self.trainer_accumulated_samples >= samples_limit {
-                self.trainer_accumulated_samples = 0;
-                self.increment_bpm();
-            }
         }
     }
 
@@ -897,6 +908,152 @@ mod tests {
         assert_eq!(stored.right_channel, silence);
     }
 
+    const STEPPED: u32 = 0;
+    const SMOOTH: u32 = 1;
+    const BY_BARS: u32 = 0;
+    const BY_SECONDS: u32 = 1;
+
+    fn assert_intervals_at(run: &Run, intervals: std::ops::Range<usize>, bpm: f64) {
+        let ideal = step_samples(SR, bpm);
+        for k in intervals {
+            let what = format!("interval after hit {}", k);
+            assert_within_one_sample(run.interval(k), ideal, &what);
+        }
+    }
+
+    fn assert_hits_at(run: &Run, hits: std::ops::Range<usize>, bpm: f64) {
+        for k in hits {
+            assert_eq!(run.hits[k].bpm, bpm, "hit {}", k);
+        }
+    }
+
+    #[test]
+    fn train_02_bars_change_on_beat_one() {
+        // +5 every bar: the interval into each beat 1 keeps the old BPM.
+        let mut run = Run::new(80.0, &[1; 16]);
+        engine_set_trainer(run.ptr, true, 80.0, 160.0, 5.0, BY_BARS, 1.0, STEPPED);
+        run.play();
+        run.render_hits(34);
+
+        assert_hits_at(&run, 0..16, 80.0);
+        assert_hits_at(&run, 16..32, 85.0);
+        assert_hits_at(&run, 32..34, 90.0);
+        assert_intervals_at(&run, 0..16, 80.0);
+        assert_intervals_at(&run, 16..32, 85.0);
+        assert_intervals_at(&run, 32..33, 90.0);
+
+        // +5 every 2 bars: the first beat 1 changes nothing.
+        let mut run = Run::new(80.0, &[1; 16]);
+        engine_set_trainer(run.ptr, true, 80.0, 160.0, 5.0, BY_BARS, 2.0, STEPPED);
+        run.play();
+        run.render_hits(34);
+
+        assert_hits_at(&run, 0..32, 80.0);
+        assert_hits_at(&run, 32..34, 85.0);
+        assert_intervals_at(&run, 0..32, 80.0);
+        assert_intervals_at(&run, 32..33, 85.0);
+    }
+
+    #[test]
+    fn train_03_seconds_change_on_beat_one() {
+        // A bar lasts 2 s at 120 BPM, so 3 s elapse inside the second bar.
+        let mut run = Run::new(120.0, &[1; 16]);
+        engine_set_trainer(run.ptr, true, 120.0, 160.0, 5.0, BY_SECONDS, 3.0, STEPPED);
+        run.play();
+        run.render_hits(66);
+
+        assert_hits_at(&run, 0..32, 120.0);
+        assert_intervals_at(&run, 0..32, 120.0);
+        assert_hits_at(&run, 32..33, 125.0);
+
+        // The time restarts on the increment: a bar lasts 1.92 s at 125 BPM, so the next 3 s
+        // end after the beat 1 at hit 48 and before the one at hit 64.
+        assert_hits_at(&run, 32..64, 125.0);
+        assert_intervals_at(&run, 32..64, 125.0);
+        assert_hits_at(&run, 64..66, 130.0);
+        assert_intervals_at(&run, 64..65, 130.0);
+
+        // The configured time ending exactly on a beat 1 counts for that beat 1.
+        let mut run = Run::new(120.0, &[1; 16]);
+        engine_set_trainer(run.ptr, true, 120.0, 160.0, 5.0, BY_SECONDS, 2.0, STEPPED);
+        run.play();
+        run.render_hits(17);
+        assert_hits_at(&run, 16..17, 125.0);
+
+        // One sample later it does not, so it waits a whole bar.
+        let one_sample_past_the_bar = 2.0 + 1.5 / SR as f64;
+        let mut run = Run::new(120.0, &[1; 16]);
+        engine_set_trainer(
+            run.ptr, true, 120.0, 160.0, 5.0, BY_SECONDS, one_sample_past_the_bar, STEPPED,
+        );
+        run.play();
+        run.render_hits(33);
+        assert_hits_at(&run, 0..32, 120.0);
+        assert_hits_at(&run, 32..33, 125.0);
+    }
+
+    #[test]
+    fn train_04_smooth_is_continuous() {
+        // +5 per second.
+        let mut run = Run::new(100.0, &[1; 16]);
+        engine_set_trainer(run.ptr, true, 100.0, 200.0, 5.0, BY_SECONDS, 1.0, SMOOTH);
+        run.play();
+        run.render_hits(16);
+        for k in 1..16 {
+            assert!(run.hits[k].bpm > run.hits[k - 1].bpm, "hit {} did not rise", k);
+            let elapsed_seconds = run.hits[k].pos as f64 / SR as f64;
+            assert!((run.hits[k].bpm - (100.0 + 5.0 * elapsed_seconds)).abs() < 0.1);
+        }
+
+        // +4 per bar.
+        let mut run = Run::new(100.0, &[1; 16]);
+        engine_set_trainer(run.ptr, true, 100.0, 200.0, 4.0, BY_BARS, 1.0, SMOOTH);
+        run.play();
+        run.render_hits(17);
+        for k in 1..16 {
+            assert!(run.hits[k].bpm > run.hits[k - 1].bpm, "hit {} did not rise", k);
+        }
+        assert!((run.hits[16].bpm - 104.0).abs() < 0.1, "got {}", run.hits[16].bpm);
+    }
+
+    #[test]
+    fn train_15_never_passes_target() {
+        let modes = [
+            (STEPPED, BY_BARS, 1.0),
+            (STEPPED, BY_SECONDS, 0.5),
+            (SMOOTH, BY_BARS, 1.0),
+            (SMOOTH, BY_SECONDS, 0.5),
+        ];
+        for (curve, step_type, step_value) in modes {
+            let mut run = Run::new(100.0, &[1; 16]);
+            engine_set_trainer(run.ptr, true, 100.0, 112.0, 5.0, step_type, step_value, curve);
+            run.play();
+            run.render_hits(16 * 12);
+
+            for hit in &run.hits {
+                assert!(hit.bpm <= 112.0, "curve {} reached {}", curve, hit.bpm);
+            }
+            let last = run.hits.len() - 1;
+            assert_eq!(run.hits[last].bpm, 112.0, "curve {}", curve);
+            assert_intervals_at(&run, last - 16..last, 112.0);
+        }
+    }
+
+    #[test]
+    fn train_16_holds_start_at_target() {
+        for (start, target) in [(120.0, 120.0), (150.0, 120.0)] {
+            for curve in [STEPPED, SMOOTH] {
+                let mut run = Run::new(start, &[1; 16]);
+                engine_set_trainer(run.ptr, true, start, target, 5.0, BY_BARS, 1.0, curve);
+                run.play();
+                run.render_hits(16 * 4);
+
+                assert_hits_at(&run, 0..16 * 4, start);
+                assert_intervals_at(&run, 0..16 * 4 - 1, start);
+            }
+        }
+    }
+
     #[test]
     fn test_engine_init() {
         let engine = Engine::new(44100.0);
@@ -965,26 +1122,25 @@ mod tests {
         engine.trainer_step_value = 2.0;
         engine.trainer_curve = 0; // Stepped
 
-        // Let's manually trigger complete measures to check the trainer.
-        // 1 measure has 16 steps.
-        // 2 measures have 32 steps.
-        // Let's call trigger_step 32 times.
-        // Note: engine.start() sets step_index to 0, but trigger_step increments it and runs end-of-measure logic.
-        // So 32 triggers will cover step_index going 0 -> 15 (end of 1st measure, trigger_step does on_measure_complete, step_index becomes 0)
-        // Then step_index goes 0 -> 15 (end of 2nd measure, trigger_step does on_measure_complete, step_index becomes 0)
-        for _ in 0..31 {
+        // 1 measure has 16 steps, so 2 measures have 32 steps.
+        // The first hit of a run finishes no measure. The next step 0 is trigger 17, and the
+        // one after it, trigger 33, is the beat 1 that ends the second measure.
+        for _ in 0..32 {
             engine.trigger_step();
             assert_eq!(engine.bpm, 120.0); // Not incremented yet
         }
         
-        // The 32nd trigger completes the second measure
+        // Trigger 33 fires beat 1 at the new BPM
         engine.trigger_step();
         assert_eq!(engine.bpm, 125.0); // Incremented by 5.0
+        assert_eq!(engine.last_tick_bpm, 125.0);
 
         // Complete another 2 measures (32 more triggers)
-        for _ in 0..32 {
+        for _ in 0..31 {
             engine.trigger_step();
+            assert_eq!(engine.bpm, 125.0);
         }
+        engine.trigger_step();
         assert_eq!(engine.bpm, 130.0); // Incremented to target
 
         // Complete another 2 measures: should clamp at target (130)
@@ -1008,17 +1164,24 @@ mod tests {
         engine.trainer_step_value = 0.01;
         engine.trainer_curve = 0; // Stepped
 
-        let mut buf_l = vec![0.0f32; 440];
-        let mut buf_r = vec![0.0f32; 440];
-
+        // The first hit starts the run, so the 441 samples pass with BPM unchanged.
+        let mut buf_l = vec![0.0f32; 441];
+        let mut buf_r = vec![0.0f32; 441];
         engine.fill_buffers(&mut buf_l, &mut buf_r);
-        assert_eq!(engine.bpm, 120.0); // Not incremented yet (only 440 samples processed)
+        assert_eq!(engine.bpm, 120.0);
 
-        // Process 1 more sample to reach 441
+        // The increment still waits for beat 1, 88200 samples in (2 s at 120 BPM).
+        let mut rest_l = vec![0.0f32; 88200 - 441];
+        let mut rest_r = vec![0.0f32; 88200 - 441];
+        engine.fill_buffers(&mut rest_l, &mut rest_r);
+        assert_eq!(engine.bpm, 120.0);
+
+        // Process 1 more sample to reach beat 1
         let mut single_l = vec![0.0f32; 1];
         let mut single_r = vec![0.0f32; 1];
         engine.fill_buffers(&mut single_l, &mut single_r);
         assert_eq!(engine.bpm, 125.0); // Incremented by 5.0
+        assert_eq!(engine.last_tick_index, 0);
     }
 
     #[test]
