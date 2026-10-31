@@ -221,9 +221,9 @@ MetroRig's audio engine already keeps exact time: a measured hour stayed within 
 | SWING-04 | P1: Swing removal | Tasks | Pending |
 | SWING-05 | P1: Swing removal | Tasks | Pending |
 | BPM-01 | P1: BPM matches what plays | Tasks | Implementing |
-| BPM-02 | P1: BPM matches what plays | Tasks | Pending |
-| BPM-03 | P1: BPM matches what plays | Tasks | Pending |
-| BPM-04 | P1: BPM matches what plays | Tasks | Pending |
+| BPM-02 | P1: BPM matches what plays | Tasks | Implementing |
+| BPM-03 | P1: BPM matches what plays | Tasks | Implementing |
+| BPM-04 | P1: BPM matches what plays | Tasks | Implementing |
 | BPM-05 | P1: BPM matches what plays | Tasks | Pending |
 | BPM-06 | P1: BPM matches what plays | Tasks | Pending |
 | BPM-07 | P1: BPM matches what plays | Tasks | Pending |

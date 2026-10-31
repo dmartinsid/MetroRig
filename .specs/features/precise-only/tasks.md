@@ -255,8 +255,8 @@ T14 → T15 → T16 → T17 → T18 → T19 → T20
 
 **Done when**:
 
-- [ ] Both presets have 24 steps with a click every 6, at 135 and 195 BPM
-- [ ] Gate passes with 20 JavaScript tests
+- [x] Both presets have 24 steps with a click every 6, at 135 and 195 BPM
+- [x] Gate passes with 20 JavaScript tests
 
 **Tests**: unit
 **Gate**: quick
