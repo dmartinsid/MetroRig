@@ -9,7 +9,7 @@ MetroRig is a modern, high-fidelity Web-based 16-step sequencer, metronome, and 
 - **Tempo Trainer**: Increase BPM automatically dynamically over time, supporting both stepped and smooth acceleration models.
 - **Dual Mode Views**:
   - **Editor Mode**: Set presets, configure Sequencer grids, and adjust speed details.
-  - **Practice Stadium Mode**: Full-screen layout with elapsed timer, current tempo gauge, and clean beat pulse visualizer.
+  - **Practice Stadium Mode**: Full-screen layout with elapsed timer, current tempo gauge, and rotating beat clock.
 
 ## Prerequisites
 
