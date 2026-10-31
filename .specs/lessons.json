@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "promote_threshold": 2,
+  "window_days": 45,
+  "quarantine_threshold": 2,
+  "next_id": 2,
+  "lessons": [
+    {
+      "id": "L-001",
+      "key": "ac_gap::when edits are deferred to a boundary give context replacing actions such as a preset load their own immediate path and test it from a running state",
+      "text": "When edits are deferred to a boundary, give context-replacing actions such as a preset load their own immediate path and test it from a running state.",
+      "signal": "ac_gap",
+      "scope": "src/lib.rs",
+      "status": "candidate",
+      "features": [
+        "precise-only"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "TRAIN-17 (src/lib.rs)"
+      ],
+      "created": "2026-10-31T17:07:39Z",
+      "last_seen": "2026-10-31T17:07:39Z"
+    }
+  ]
+}
