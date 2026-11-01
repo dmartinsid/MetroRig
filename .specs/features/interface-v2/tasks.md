@@ -91,11 +91,11 @@ T17
 
 **Done when**:
 
-- [ ] All 6 functions in `design.md` exported
-- [ ] `STEPS`, `POS`, clock and latency strings covered, 5 extra tests beside the checks
-- [ ] The tests of the checks for TIME-01, TIME-05 pass
-- [ ] Gate check passes: `npx vitest run`
-- [ ] Test count: 63 tests pass (no silent deletions)
+- [x] All 6 functions in `design.md` exported
+- [x] `STEPS`, `POS`, clock and latency strings covered, 5 extra tests beside the checks
+- [x] The tests of the checks for TIME-01, TIME-05 pass
+- [x] Gate check passes: `npx vitest run`
+- [x] Test count: 63 tests pass (no silent deletions)
 
 **Tests**: unit
 **Gate**: quick
