@@ -422,11 +422,11 @@ T24 → T25 → T26 → T27 → T28
 
 **Done when**:
 
-- [ ] The empty Grooves `main` exists in `index.html`
-- [ ] The old toggle tests are replaced by the link tests of the same behaviour
-- [ ] The tests of the checks for NAV-01 that this task reaches pass
-- [ ] Gate check passes: `npx vitest run && npx vite build`
-- [ ] Test count: at least the previous task's count (no silent deletions)
+- [x] The empty Grooves `main` exists in `index.html`
+- [x] The old toggle tests are replaced by the link tests of the same behaviour
+- [x] The tests of the checks for NAV-01 that this task reaches pass
+- [x] Gate check passes: `npx vitest run && npx vite build`
+- [x] Test count: at least the previous task's count (no silent deletions)
 
 **Tests**: integration
 **Gate**: full

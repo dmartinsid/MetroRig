@@ -651,7 +651,7 @@ describe('Interface V2', () => {
     expect(header.closest('main')).toBeNull();
     expect(header.querySelector('.logo')?.firstChild?.textContent).toBe('METRORIG');
     expect(header.querySelector('.badge')?.textContent).toBe('PRO');
-    ['click-sound-selector', 'preset-selector', 'btn-toggle-view'].forEach(id => {
+    ['click-sound-selector', 'preset-selector', 'nav-editor', 'nav-stadium', 'nav-grooves'].forEach(id => {
       expect(header.contains(byId(id))).toBe(true);
     });
   });
@@ -660,9 +660,9 @@ describe('Interface V2', () => {
     await openPage();
 
     const header = document.querySelector('header')!;
-    expect(header.querySelectorAll('a, nav')).toHaveLength(0);
-    expect(header.querySelectorAll('button')).toHaveLength(1);
-    ['Grooves', 'Presets', 'tune', 'settings'].forEach(word => {
+    expect(header.querySelectorAll('a')).toHaveLength(0);
+    expect(header.querySelectorAll('button')).toHaveLength(3);
+    ['Presets', 'tune', 'settings'].forEach(word => {
       const visible = [...header.childNodes].map(node => node.nodeName === 'DIV' ? '' : node.textContent).join(' ');
       expect(visible).not.toContain(word);
     });
@@ -758,22 +758,6 @@ describe('Interface V2', () => {
     expect(byId('stadium-timer').textContent).toBe('00:00:00');
   });
 
-  it('shell_04 editor toggle text', async () => {
-    localStorage.removeItem('metrorig_view_mode');
-    await openPage();
-    expect(byId('btn-toggle-view').innerText).toBe('GO TO STADIUM MODE');
-  });
-
-  it('shell_05 stadium toggle text', async () => {
-    localStorage.removeItem('metrorig_view_mode');
-    await openPage();
-
-    byId<HTMLButtonElement>('btn-toggle-view').click();
-    expect(byId('btn-toggle-view').innerText).toBe('GO TO EDITOR MODE');
-    expect(byId('stadium-view').classList.contains('hidden')).toBe(false);
-    localStorage.removeItem('metrorig_view_mode');
-  });
-
   it('shell_06 footer clock', async () => {
     await openPage();
     expect(byId('footer-clock').textContent).toBe('AUDIO CLOCK: 44.1 kHz 128 SPLS (2.9ms)');
@@ -828,7 +812,7 @@ describe('Interface V2', () => {
     await clickPlay();
     vi.advanceTimersByTime(2000);
 
-    byId<HTMLButtonElement>('btn-toggle-view').click();
+    byId<HTMLButtonElement>('nav-stadium').click();
     vi.advanceTimersByTime(1000);
     expect(byId('stadium-timer').innerText).toBe('00:00:03');
     expect(byId('editor-timer').innerText).toBe('00:00:03');
@@ -1338,7 +1322,7 @@ describe('Interface V2', () => {
     await selectPreset('factory:default'); // Off, then turned on by hand in the Editor
     byId('trainer-enable').checked = true;
     byId('trainer-enable').dispatchEvent(new Event('change'));
-    byId<HTMLButtonElement>('btn-toggle-view').click();
+    byId<HTMLButtonElement>('nav-stadium').click();
     expect(byId('stadium-status').innerText).toBe('Trainer 120 → 160 BPM · +5 every 4 bars');
     localStorage.removeItem('metrorig_view_mode');
   });
@@ -1656,6 +1640,74 @@ describe('Grooves Library', () => {
     tick({ currentBpm: 120, activeTrackIds: [2, 9, 10, 3, 7] }); // Already in flight
     expect(orbPulsed(2)).toBe(false);
     expect(orbPulsed(3)).toBe(true); // Crash is still audible, so its group pulses
+    await clickPlay();
+  });
+
+  const openScreen = (name: 'editor' | 'stadium' | 'grooves') => byId<HTMLButtonElement>(`nav-${name}`).click();
+  const shownScreens = () => ['editor-view', 'stadium-view', 'grooves-view'].filter(id => !byId(id).classList.contains('hidden'));
+
+  it('nav_01 header links', async () => {
+    await openPage();
+    expect([...document.querySelectorAll('header nav button')].map(link => link.textContent)).toEqual(['Editor', 'Stadium', 'Grooves']);
+  });
+
+  it('nav_02 editor link', async () => {
+    await openPage();
+    openScreen('grooves');
+    openScreen('editor');
+    expect(shownScreens()).toEqual(['editor-view']);
+  });
+
+  it('nav_03 stadium link', async () => {
+    await openPage();
+    openScreen('stadium');
+    expect(shownScreens()).toEqual(['stadium-view']);
+  });
+
+  it('nav_04 grooves link', async () => {
+    await openPage();
+    openScreen('grooves');
+    expect(shownScreens()).toEqual(['grooves-view']);
+  });
+
+  it('nav_05 aria current', async () => {
+    await openPage();
+    const current = () => [...document.querySelectorAll('[aria-current]')].map(link => [link.textContent, link.getAttribute('aria-current')]);
+
+    expect(current()).toEqual([['Editor', 'page']]);
+    openScreen('grooves');
+    expect(current()).toEqual([['Grooves', 'page']]);
+    openScreen('stadium');
+    expect(current()).toEqual([['Stadium', 'page']]);
+  });
+
+  it('nav_06 no toggle no presets', async () => {
+    await openPage();
+    const header = document.querySelector('header')!;
+    expect(byId('btn-toggle-view')).toBeNull();
+    expect(header.textContent).not.toContain('GO TO');
+    expect([...header.querySelectorAll('nav button')].map(link => link.textContent)).not.toContain('Presets');
+  });
+
+  it('nav_07 reload opens the last screen', async () => {
+    await openPage();
+    openScreen('grooves');
+    await openPage();
+    expect(shownScreens()).toEqual(['grooves-view']);
+    expect(byId('nav-grooves').getAttribute('aria-current')).toBe('page');
+  });
+
+  it('nav_08 playback survives screen change', async () => {
+    await openPage();
+    await clickPlay();
+    audioCalls.length = 0;
+
+    openScreen('grooves');
+    openScreen('stadium');
+    openScreen('editor');
+
+    expect(audioCalls).toEqual([]);
+    expect(byId('btn-play').classList.contains('playing')).toBe(true);
     await clickPlay();
   });
 });

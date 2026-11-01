@@ -1,5 +1,5 @@
 import { MetronomeNode, TickDetail } from './audio/MetronomeNode';
-import { StateManager, FACTORY_PRESETS, FACTORY_GROOVES, SPEED_TRAINER_PRESETS, Preset, StoredPreset, TrainerSettings, CustomGroove, FIGURES, getBeatsPerMeasure, getBeatForStep, isSustainedStep, applyFigure, measureLengthFor, normalizePreset, completeKit, startBpmFor } from './state';
+import { StateManager, FACTORY_PRESETS, FACTORY_GROOVES, SPEED_TRAINER_PRESETS, Preset, StoredPreset, TrainerSettings, ViewMode, FIGURES, getBeatsPerMeasure, getBeatForStep, isSustainedStep, applyFigure, measureLengthFor, normalizePreset, completeKit, startBpmFor } from './state';
 import { STADIUM_GROUPS, STEP_ACCENT, STEP_GHOST, STEP_NORMAL, TRACKS, groupHit, nextStepValue } from './kit';
 import { VisualScheduler } from './visualSync';
 import { audibleSteps, createTrackMix, isAudible, toggleMute, toggleSolo } from './trackMix';
@@ -14,9 +14,12 @@ const visualScheduler = new VisualScheduler();
 const trackMix = createTrackMix();
 
 // Elements
-const btnToggleView = document.getElementById('btn-toggle-view') as HTMLButtonElement;
-const editorView = document.getElementById('editor-view') as HTMLElement;
-const stadiumView = document.getElementById('stadium-view') as HTMLElement;
+const viewLinks = [...document.querySelectorAll<HTMLButtonElement>('.view-link')];
+const views: Record<ViewMode, HTMLElement> = {
+  editor: document.getElementById('editor-view') as HTMLElement,
+  stadium: document.getElementById('stadium-view') as HTMLElement,
+  grooves: document.getElementById('grooves-view') as HTMLElement,
+};
 
 const bpmSlider = document.getElementById('bpm-slider') as HTMLInputElement;
 const bpmNumber = document.getElementById('bpm-number') as HTMLElement;
@@ -477,22 +480,20 @@ function updateTimers(seconds: number) {
 // Subscriptions & Events
 state.subscribe((s) => {
   // Sync View Mode
-  if (s.activeViewMode === 'editor') {
-    editorView.classList.remove('hidden');
-    stadiumView.classList.add('hidden');
-    btnToggleView.innerText = 'GO TO STADIUM MODE';
-  } else {
-    editorView.classList.add('hidden');
-    stadiumView.classList.remove('hidden');
-    btnToggleView.innerText = 'GO TO EDITOR MODE';
-    updateStadiumStatus(); // The Trainer form lives in the Editor
-  }
+  (Object.keys(views) as ViewMode[]).forEach(mode => {
+    views[mode].classList.toggle('hidden', mode !== s.activeViewMode);
+  });
+  viewLinks.forEach(link => {
+    if (link.dataset.view === s.activeViewMode) link.setAttribute('aria-current', 'page');
+    else link.removeAttribute('aria-current');
+  });
+  if (s.activeViewMode === 'stadium') updateStadiumStatus(); // The Trainer form lives in the Editor
 });
 
 // UI Event Bindings
-btnToggleView.onclick = () => {
-  state.setViewMode(state.activeViewMode === 'editor' ? 'stadium' : 'editor');
-};
+viewLinks.forEach(link => {
+  link.onclick = () => state.setViewMode(link.dataset.view as ViewMode);
+});
 
 bpmSlider.oninput = () => {
   const bpm = Number(bpmSlider.value);
