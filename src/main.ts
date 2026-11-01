@@ -54,6 +54,7 @@ const trainerType = document.getElementById('trainer-type') as HTMLSelectElement
 const trainerVal = document.getElementById('trainer-val') as HTMLInputElement;
 const trainerCurve = document.getElementById('trainer-curve') as HTMLSelectElement;
 
+const trackMixCards = document.getElementById('track-mix') as HTMLElement;
 const figurePalette = document.getElementById('figure-palette') as HTMLElement;
 const gridContainer = document.getElementById('grid-container') as HTMLElement;
 
@@ -335,7 +336,7 @@ function drawGrid() {
 }
 
 function applyTrackMix() {
-  for (let trackId = 0; trackId < 4; trackId++) {
+  for (const { id: trackId } of TRACKS) {
     document.getElementById(`mute-${trackId}`)!.setAttribute('aria-pressed', String(trackMix.muted.has(trackId)));
     document.getElementById(`solo-${trackId}`)!.setAttribute('aria-pressed', String(trackMix.soloed.has(trackId)));
     if (isAudioInit) sendTrack(trackId);
@@ -939,20 +940,41 @@ clickSoundSelector.onchange = async () => {
 const storedClickSound = localStorage.getItem('metrorig_click_sound') || 'digital';
 clickSoundSelector.value = storedClickSound;
 
-[0, 1, 2, 3].forEach(trackId => {
-  document.getElementById(`mute-${trackId}`)!.onclick = () => {
-    toggleMute(trackMix, trackId);
+function mixButton(id: string, text: string, title: string, onPress: () => void) {
+  const button = document.createElement('button');
+  button.className = 'mix-btn';
+  button.id = id;
+  button.innerText = text;
+  button.title = title;
+  button.setAttribute('aria-pressed', 'false');
+  button.onclick = () => {
+    onPress();
     applyTrackMix();
   };
-  document.getElementById(`solo-${trackId}`)!.onclick = () => {
-    toggleSolo(trackMix, trackId);
-    applyTrackMix();
-  };
-});
+  return button;
+}
+
+function drawMixCards() {
+  TRACKS.forEach(({ id, name, label }) => {
+    const card = document.createElement('div');
+    card.className = 'track-mix-card card';
+    card.setAttribute('data-track', String(id));
+    const trackName = document.createElement('span');
+    trackName.className = 'track-mix-name';
+    trackName.innerText = label;
+    card.append(
+      trackName,
+      mixButton(`mute-${id}`, 'M', `Mute ${name}`, () => toggleMute(trackMix, id)),
+      mixButton(`solo-${id}`, 'S', `Solo ${name}`, () => toggleSolo(trackMix, id)),
+    );
+    trackMixCards.appendChild(card);
+  });
+}
 
 // Initial draw and population
 footerClock.textContent = formatClock(audioNode.sampleRate());
 populatePresetsDropdown();
 populateGroovesDropdown();
+drawMixCards();
 drawFigurePalette();
 drawGrid();

@@ -334,10 +334,10 @@ T24 → T25 → T26 → T27 → T28
 
 **Done when**:
 
-- [ ] Ids `mute-N` and `solo-N` hold for 0 to 10
-- [ ] The tests of the checks for EDT-01 that this task reaches pass
-- [ ] Gate check passes: `npx vitest run`
-- [ ] Test count: at least the previous task's count (no silent deletions)
+- [x] Ids `mute-N` and `solo-N` hold for 0 to 10
+- [x] The tests of the checks for EDT-01 that this task reaches pass
+- [x] Gate check passes: `npx vitest run`
+- [x] Test count: at least the previous task's count (no silent deletions)
 
 **Tests**: integration
 **Gate**: quick
