@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 use std::slice;
 
-const MAX_SAMPLES: usize = 11; // 0: Click, then the kit in src/kit.ts
+const MAX_SAMPLES: usize = 13; // 0: Click, then the kit in src/kit.ts
 const HI_HAT_TRACK: usize = 3;
 const OPEN_HAT_TRACK: usize = 4;
 const GAIN_NORMAL: f32 = 0.7;
@@ -162,7 +162,7 @@ impl Engine {
             samples: std::array::from_fn(|_| None),
             playback_offsets: [0; MAX_SAMPLES],
             playback_active: [false; MAX_SAMPLES],
-            playback_volume: [0.8, 1.0, 0.9, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.9, 0.9],
+            playback_volume: [0.8, 1.0, 0.9, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.9, 0.9, 0.9, 0.9],
             playback_gain: [GAIN_NORMAL; MAX_SAMPLES],
             tracks,
             trainer: TrainerSettings {
@@ -1703,6 +1703,12 @@ mod tests {
             let expected = levels[track as usize - 1] * GAIN_ACCENT;
             assert_eq!(drum_peak(track, 2), expected, "track {}", track);
         }
+    }
+
+    #[test]
+    fn kit_02_tracks_11_and_12_play_their_samples() {
+        assert_eq!(drum_peak(11, 2), 0.9 * GAIN_ACCENT);
+        assert_eq!(drum_peak(12, 2), 0.9 * GAIN_ACCENT);
     }
 
     #[test]
