@@ -1,3 +1,4 @@
+import { patternLength } from './bars';
 import { STEP_ACCENT, STEP_GHOST, STEP_NORMAL, TRACKS } from './kit';
 import { getBeatsPerMeasure } from './state';
 import type { Preset } from './state';
@@ -15,19 +16,20 @@ export interface Song {
   section: string;
   bpm: number;
   timeSignature: string;
-  measureLength: number;
-  gridData: Record<number, number[]>; // Drum tracks only; a track left out is empty
-  source: { url: string; revisionId: number; measure: number }; // The measure counts from 0
+  measureLength: number; // The steps of one bar
+  bars: number;
+  gridData: Record<number, number[]>; // Drum tracks only, every bar in a row; a track left out is empty
+  source: { url: string; revisionId: number; measure: number }; // The first bar, counting from 0
 }
 
-// One bar as text: . empty, x normal, X accent, g ghost
-function steps(bar: string): number[] {
+// Bars as text: . empty, x normal, X accent, g ghost
+function bars(...text: string[]): number[] {
   const values: Record<string, number> = { x: STEP_NORMAL, X: STEP_ACCENT, g: STEP_GHOST };
-  return [...bar].map(step => values[step] ?? 0);
+  return [...text.join('')].map(step => values[step] ?? 0);
 }
 
-// Each bar is the song's most repeated bar in its section, read from its Songsterr drum tab
-// with scripts/tab_to_grid.js. The BPM is the tab's tempo at that measure.
+// Four consecutive measures of the song's Songsterr drum tab, fills included, read with
+// scripts/tab_to_grid.js. The BPM is the tab's tempo at the first one.
 export const SONGS: Song[] = [
   {
     id: 'song_back_in_black',
@@ -38,12 +40,15 @@ export const SONGS: Song[] = [
     bpm: 94,
     timeSignature: '4/4',
     measureLength: 16,
+    bars: 4,
     gridData: {
-      1: steps('x.......x.......'),
-      2: steps('....x.......x...'),
-      3: steps('x.x.x.x.x.x.x.x.'),
+      1: bars('x.......x.......', 'x.......x.......', 'x.......x.......', 'x....x..x..x....'),
+      2: bars('....x.......x...', '....x.......x...', '....x.......x...', '....x..x..x..xx.'),
+      3: bars('..x.x.x.x.x.x.x.', 'x.x.x.x.x.x.x.x.', 'x.x.x.x.x.x.x.x.', 'x.x.............'),
+      4: bars('................', '................', '................', '.....x..x..x....'),
+      7: bars('x...............', '................', '................', '................'),
     },
-    source: { url: 'https://www.songsterr.com/a/wsa/ac-dc-back-in-black-drum-tab-s1024', revisionId: 9880696, measure: 3 },
+    source: { url: 'https://www.songsterr.com/a/wsa/ac-dc-back-in-black-drum-tab-s1024', revisionId: 9880696, measure: 10 },
   },
   {
     id: 'song_highway_to_hell',
@@ -54,13 +59,16 @@ export const SONGS: Song[] = [
     bpm: 116,
     timeSignature: '4/4',
     measureLength: 16,
+    bars: 4,
     gridData: {
-      1: steps('x.......x.....x.'),
-      2: steps('....x.......x...'),
-      3: steps('..g...g...g...g.'),
-      4: steps('x...x...x...x...'),
+      1: bars('x.......x.....x.', 'x.......x.....x.', 'x.......x.......', '....x...x...x...'),
+      2: bars('....x.......x...', '....x.......x...', '....x.......x...', 'x...x.x.x.x.x.x.'),
+      3: bars('..g...g...g...g.', '..g...g...g...g.', '..g...g...g...g.', '................'),
+      4: bars('x...x...x...x...', 'x...x...x...x...', 'x...x...x...x...', '................'),
+      7: bars('................', '................', '................', 'x...............'),
+      10: bars('................', '................', '................', '....x.x.x.x.x.x.'),
     },
-    source: { url: 'https://www.songsterr.com/a/wsa/ac-dc-highway-to-hell-drum-tab-s289', revisionId: 10066396, measure: 7 },
+    source: { url: 'https://www.songsterr.com/a/wsa/ac-dc-highway-to-hell-drum-tab-s289', revisionId: 10066396, measure: 21 },
   },
   {
     id: 'song_the_trooper',
@@ -71,11 +79,14 @@ export const SONGS: Song[] = [
     bpm: 162,
     timeSignature: '4/4',
     measureLength: 16,
+    bars: 4,
     gridData: {
-      1: steps('..x.....x.xx....'),
-      2: steps('....x.......x...'),
-      3: steps('x...x...x...x...'),
-      5: steps('....x...x...x...'),
+      1: bars('..x.....x.xx....', 'x.x.....x.x...x.', '..x.....x.x.....', 'x.xx....x.x...x.'),
+      2: bars('....x.......x...', '....x.......x...', '....x.......x...', '....x.......x...'),
+      3: bars('x...x...x...x...', 'x...x...x...x...', 'x...x...x...x...', 'x...x...x...x...'),
+      5: bars('....x...x...x...', 'x...x...x.x.....', '........x...x...', 'x...x.x.x.g.....'),
+      7: bars('................', '..............x.', '................', '..............x.'),
+      8: bars('................', '................', '....x...........', '................'),
     },
     source: { url: 'https://www.songsterr.com/a/wsa/iron-maiden-the-trooper-drum-tab-s338', revisionId: 8957174, measure: 64 },
   },
@@ -88,12 +99,14 @@ export const SONGS: Song[] = [
     bpm: 173,
     timeSignature: '4/4',
     measureLength: 16,
+    bars: 4,
     gridData: {
-      1: steps('x.......x.......'),
-      2: steps('....x.......x...'),
-      3: steps('xxxxxxxxxxxxxxxx'),
+      1: bars('x.......x.......', 'x.......x.......', 'x.......x.......', 'x.......x.......'),
+      2: bars('....x.......x...', '....x.......x...', '....x.......x...', '....x.......x...'),
+      3: bars('.xxxxxxxxxxxxxxx', 'xxxxxxxxxxxxxxxx', '.xxxxxxxxxxxxxxx', 'xxxxxxxxxxxxxxxx'),
+      7: bars('x...............', '................', 'x...............', '................'),
     },
-    source: { url: 'https://www.songsterr.com/a/wsa/iron-maiden-run-to-the-hills-drum-tab-s453', revisionId: 9719551, measure: 24 },
+    source: { url: 'https://www.songsterr.com/a/wsa/iron-maiden-run-to-the-hills-drum-tab-s453', revisionId: 9719551, measure: 26 },
   },
   {
     id: 'song_enter_sandman',
@@ -104,28 +117,32 @@ export const SONGS: Song[] = [
     bpm: 123,
     timeSignature: '4/4',
     measureLength: 16,
+    bars: 4,
     gridData: {
-      1: steps('x.......x.......'),
-      2: steps('....x.......x...'),
-      4: steps('X.g.X.g.X.g.X.g.'),
+      1: bars('........x.......', 'x.......x.......', 'x.......x.......', 'x.......x.....x.'),
+      2: bars('....x.......x...', '....x.......x...', '....x.......x...', '....x.......x...'),
+      4: bars('..g.X.g.X.g.X.g.', 'X.g.X.g.X.g.X.g.', 'X.g.X.g.X.g.X.g.', 'X.g.X.g.X.g.X...'),
+      7: bars('................', '................', '................', '..............x.'),
     },
-    source: { url: 'https://www.songsterr.com/a/wsa/metallica-enter-sandman-drum-tab-s19', revisionId: 9970441, measure: 30 },
+    source: { url: 'https://www.songsterr.com/a/wsa/metallica-enter-sandman-drum-tab-s19', revisionId: 9970441, measure: 37 },
   },
   {
     id: 'song_master_of_puppets',
     title: 'Master of Puppets',
     artist: 'Metallica',
     genre: 'Metal',
-    section: 'Verse',
+    section: 'Main Riff',
     bpm: 212,
     timeSignature: '4/4',
     measureLength: 16,
+    bars: 4,
     gridData: {
-      1: steps('x.......x.x.....'),
-      2: steps('....x.......x...'),
-      4: steps('x...x...x...x...'),
+      1: bars('x.........x...x.', '..x...x...x.....', 'x.x...x...x...x.', '..x.......xx....'),
+      2: bars('....x.......x...', '....x.......x...', '....x.......x...', '....x.......x...'),
+      4: bars('....x...x...x...', 'x...x...x...x...', 'x...x...x...x...', 'x...x...x.......'),
+      7: bars('x...............', '................', '................', '............x...'),
     },
-    source: { url: 'https://www.songsterr.com/a/wsa/metallica-master-of-puppets-drum-tab-s455118', revisionId: 10085272, measure: 47 },
+    source: { url: 'https://www.songsterr.com/a/wsa/metallica-master-of-puppets-drum-tab-s455118', revisionId: 10085272, measure: 27 },
   },
   {
     id: 'song_battery',
@@ -136,12 +153,15 @@ export const SONGS: Song[] = [
     bpm: 194,
     timeSignature: '4/4',
     measureLength: 16,
+    bars: 4,
     gridData: {
-      1: steps('x...xx..x...xx..'),
-      2: steps('..x...x...x...x.'),
-      4: steps('x.x.x.x.x.x.x.x.'),
+      1: bars('x...xx..x....x..', 'x...xx..x....x..', 'x...xx..x...xx..', 'x...xx..x...xx..'),
+      2: bars('..x...x...x...x.', '..x...x...x...x.', '..x...x...x...x.', '..x...x.........'),
+      4: bars('..x.x.x.x.x.x.x.', 'x.x.x.x.x.x.x.x.', 'x.x.x.x.x.x.x.x.', 'x...x...x.x.x.x.'),
+      7: bars('x...............', '................', '................', '..x...x.........'),
+      10: bars('................', '................', '................', '..........x...x.'),
     },
-    source: { url: 'https://www.songsterr.com/a/wsa/metallica-battery-drum-tab-s13313', revisionId: 10083283, measure: 42 },
+    source: { url: 'https://www.songsterr.com/a/wsa/metallica-battery-drum-tab-s13313', revisionId: 10083283, measure: 40 },
   },
   {
     id: 'song_tears_dont_fall',
@@ -152,12 +172,13 @@ export const SONGS: Song[] = [
     bpm: 162,
     timeSignature: '4/4',
     measureLength: 16,
+    bars: 4,
     gridData: {
-      1: steps('x.x.x.x.x.x.x.x.'),
-      2: steps('........x.......'),
-      7: steps('x...x...x...x...'),
+      1: bars('x.x.x.x.x.x.x.x.', 'x.x.x.x.x.x.x.x.', 'x.x.x.x.x.x.x.x.', 'x.x.x.x.xxxxxxxx'),
+      2: bars('........x.......', '........x.......', '........x.......', '........x.......'),
+      7: bars('x...x...x...x...', 'x...x...x...x...', 'x...x...x...x...', 'x...x...x...x...'),
     },
-    source: { url: 'https://www.songsterr.com/a/wsa/bullet-for-my-valentine-tears-dont-fall-drum-tab-s23498', revisionId: 9692689, measure: 16 },
+    source: { url: 'https://www.songsterr.com/a/wsa/bullet-for-my-valentine-tears-dont-fall-drum-tab-s23498', revisionId: 9692689, measure: 58 },
   },
   {
     id: 'song_scream_aim_fire',
@@ -168,12 +189,14 @@ export const SONGS: Song[] = [
     bpm: 200,
     timeSignature: '4/4',
     measureLength: 16,
+    bars: 4,
     gridData: {
-      1: steps('x...x...x...x...'),
-      2: steps('..x...x...x...x.'),
-      4: steps('x...x...x...x...'),
+      1: bars('x...x...x...x...', 'x...x...x...x...', 'x...x...x...x...', 'x...x...x...x...'),
+      2: bars('..x...x...x...x.', '..x...x...x...x.', '..x...x...x...x.', '..x...x...x...x.'),
+      4: bars('....x...x...x...', 'x...x...x...x...', '....x...x...x...', '................'),
+      7: bars('x...............', '................', 'x...............', 'x...x...x...x...'),
     },
-    source: { url: 'https://www.songsterr.com/a/wsa/bullet-for-my-valentine-scream-aim-fire-drum-tab-s23212', revisionId: 9326532, measure: 3 },
+    source: { url: 'https://www.songsterr.com/a/wsa/bullet-for-my-valentine-scream-aim-fire-drum-tab-s23212', revisionId: 9326532, measure: 26 },
   },
   {
     id: 'song_dont_need_you',
@@ -184,12 +207,14 @@ export const SONGS: Song[] = [
     bpm: 154,
     timeSignature: '4/4',
     measureLength: 16,
+    bars: 4,
     gridData: {
-      1: steps('x..x..x...x...x.'),
-      2: steps('x...x...x...x...'),
-      4: steps('x...x...x...x...'),
+      1: bars('x..x..x...x...x.', 'x..x..x...x...x.', 'x..x..x.xxx...x.', 'x..x..x...x...x.'),
+      2: bars('x...x...x...x...', 'x...x...x...x...', 'x...x...x...x...', 'x...x...x...x...'),
+      4: bars('....x...x...x...', 'x...x...x...x...', '....x...x...x...', 'x...x...x...x...'),
+      7: bars('x...............', '................', 'x...............', '................'),
     },
-    source: { url: 'https://www.songsterr.com/a/wsa/bullet-for-my-valentine-dont-need-you-drum-tab-s424443', revisionId: 8488354, measure: 50 },
+    source: { url: 'https://www.songsterr.com/a/wsa/bullet-for-my-valentine-dont-need-you-drum-tab-s424443', revisionId: 8488354, measure: 49 },
   },
   {
     id: 'song_cocaine',
@@ -200,12 +225,15 @@ export const SONGS: Song[] = [
     bpm: 105,
     timeSignature: '4/4',
     measureLength: 16,
+    bars: 4,
     gridData: {
-      1: steps('x.....x.x.......'),
-      2: steps('....x....g..x...'),
-      3: steps('x.xxx.xxx.xxx.xx'),
+      1: bars('x.....x.x.......', 'x.......x.......', 'x.......x.......', 'x.......x.......'),
+      2: bars('....x.......x...', '.g..x....g..xg..', '.g..x....g..x...', '.g..x....g..x..g'),
+      3: bars('....x...x.xxx.xx', 'x.xxx.xxx.xxx.xx', 'x.xxx.xxx.xxx.xx', 'x.xxx.xxx.xxx...'),
+      4: bars('..x.............', '................', '................', '..............x.'),
+      7: bars('x...............', '................', '................', '................'),
     },
-    source: { url: 'https://www.songsterr.com/a/wsa/eric-clapton-cocaine-drum-tab-s374', revisionId: 8150705, measure: 28 },
+    source: { url: 'https://www.songsterr.com/a/wsa/eric-clapton-cocaine-drum-tab-s374', revisionId: 8150705, measure: 22 },
   },
   {
     id: 'song_crossroads',
@@ -216,13 +244,14 @@ export const SONGS: Song[] = [
     bpm: 132,
     timeSignature: '4/4',
     measureLength: 16,
+    bars: 4,
     gridData: {
-      1: steps('..x...x.......x.'),
-      2: steps('....x...x...x...'),
-      3: steps('......x.......x.'),
-      10: steps('x...............'),
+      1: bars('..x...x.......x.', '..x...x.......x.', '..x...x.......x.', '..x...x.........'),
+      2: bars('....x...x...x...', '....x...x...x...', '....x...x...x...', '....x...x...xxxx'),
+      3: bars('......x.......x.', '......x.......x.', '......x.......x.', '................'),
+      10: bars('x...............', 'x...............', 'x...............', 'x...............'),
     },
-    source: { url: 'https://www.songsterr.com/a/wsa/cream-crossroads-live-drum-tab-s242', revisionId: 7699510, measure: 12 },
+    source: { url: 'https://www.songsterr.com/a/wsa/cream-crossroads-live-drum-tab-s242', revisionId: 7699510, measure: 20 },
   },
   {
     id: 'song_thrill_is_gone',
@@ -233,12 +262,15 @@ export const SONGS: Song[] = [
     bpm: 91,
     timeSignature: '4/4',
     measureLength: 16,
+    bars: 4,
     gridData: {
-      1: steps('X......X..X.....'),
-      2: steps('....X.......X...'),
-      3: steps('x.x.x.x.x.x.x.x.'),
+      1: bars('X......X..X.....', 'X......X..X.....', 'X......X..X.....', 'X......X..X.....'),
+      2: bars('....X.......X...', '....X....g..X...', '....X.......X...', '....X....g..X...'),
+      3: bars('x.x.x.x.x.x.x.x.', 'x.x.x.x.x.x.x...', 'x.x.x.x.x.x.x.x.', 'x.x.x.x.x.x.x...'),
+      4: bars('................', '..............x.', '................', '..............x.'),
+      7: bars('g...............', '................', '................', '................'),
     },
-    source: { url: 'https://www.songsterr.com/a/wsa/b-b-king-the-thrill-is-gone-drum-tab-s2316', revisionId: 9249769, measure: 15 },
+    source: { url: 'https://www.songsterr.com/a/wsa/b-b-king-the-thrill-is-gone-drum-tab-s2316', revisionId: 9249769, measure: 13 },
   },
   {
     id: 'song_every_day',
@@ -249,12 +281,13 @@ export const SONGS: Song[] = [
     bpm: 200,
     timeSignature: '4/4',
     measureLength: 16,
+    bars: 4,
     gridData: {
-      1: steps('x...x...x...x...'),
-      2: steps('..x...x...x...x.'),
-      5: steps('x.x.x.x.x.x.x.x.'),
+      1: bars('x...x...x...x...', 'x...x...x...x...', 'x...x...x...x...', 'x...x...x...x...'),
+      2: bars('..x.x.x.x.x.x.x.', '..x.x.x.x.x.x.x.', '..x...x...x...x.', '..x...x...x...x.'),
+      5: bars('x.x.x.x.x.x.x.x.', 'x.x.x.x.x.x.x.x.', 'x.x.x.x.x.x.x.x.', 'x.x.x.x.x.x.x.x.'),
     },
-    source: { url: 'https://www.songsterr.com/a/wsa/b-b-king-every-day-i-have-the-blues-cook-county-drum-tab-s3882248', revisionId: 5093818, measure: 0 },
+    source: { url: 'https://www.songsterr.com/a/wsa/b-b-king-every-day-i-have-the-blues-cook-county-drum-tab-s3882248', revisionId: 5093818, measure: 14 },
   },
 ];
 
@@ -264,15 +297,16 @@ export function songsForGenre(genre: GenreTab): Song[] {
 
 // A song is an ordinary preset, so every load, save and playback path serves it
 export function songToPreset(song: Song): Preset {
-  const { id, title, bpm, timeSignature, measureLength } = song;
+  const { id, title, bpm, timeSignature, measureLength, bars } = song;
+  const length = patternLength(song);
   const beats = getBeatsPerMeasure(timeSignature, measureLength);
   const stepsPerBeat = measureLength / beats;
 
   const gridData: Record<number, number[]> = {};
   TRACKS.forEach(track => {
-    gridData[track.id] = [...(song.gridData[track.id] ?? new Array(measureLength).fill(0))];
+    gridData[track.id] = [...(song.gridData[track.id] ?? new Array(length).fill(0))];
   });
-  gridData[0] = Array.from({ length: measureLength }, (_, step) => {
+  gridData[0] = Array.from({ length }, (_, step) => {
     if (step % stepsPerBeat !== 0) return 0;
     return step === 0 ? STEP_ACCENT : STEP_NORMAL;
   });
@@ -283,6 +317,7 @@ export function songToPreset(song: Song): Preset {
     bpm,
     timeSignature,
     measureLength,
+    bars,
     gridData,
     trainerSettings: { enabled: false, startBpm: bpm, targetBpm: Math.min(240, bpm + 40), increment: 5, stepType: 'measures', stepValue: 4, curve: 'stepped' },
   };
