@@ -27,6 +27,7 @@ vi.mock('./audio/MetronomeNode', () => {
       setBpm = recorded('setBpm');
       setMeasureLength = recorded('setMeasureLength');
       setBars = recorded('setBars');
+      restartPattern = recorded('restartPattern');
       updateGrid = recorded('updateGrid');
       setTrainer = recorded('setTrainer');
       replaceTrainer = recorded('replaceTrainer');
@@ -2076,6 +2077,34 @@ describe('Song Bars', () => {
     expect(pressedBars()).toEqual(['1']);
     await selectPreset('song:song_battery');
     expect(shown(1)).toEqual(barOf(1, 1));
+  });
+
+  it('edit_04 a song loaded during playback starts on bar one', async () => {
+    await openSong();
+    await clickPlay();
+    tick({ currentBpm: 194, beatIndex: 32 });
+    expect(pressedBars()).toEqual(['3']);
+
+    await selectPreset('song:song_cocaine');
+    expect(pressedBars()).toEqual(['1']);
+    expect(calls('restartPattern')).toHaveLength(1);
+    expect(calls('start')).toHaveLength(1); // The pulse goes on
+    expect(calls('stop')).toHaveLength(0);
+    // After the new song's grids, or the old steps would play on bar 1
+    const methods = audioCalls.map(call => call.method);
+    expect(methods.lastIndexOf('restartPattern')).toBeGreaterThan(methods.lastIndexOf('updateGrid'));
+    await clickPlay();
+  });
+
+  it('edit_04 a stopped load and a 1-bar load leave the engine alone', async () => {
+    await openSong();
+    await selectPreset('song:song_cocaine');
+    expect(calls('restartPattern')).toHaveLength(0);
+
+    await clickPlay();
+    await selectPreset('factory:default');
+    expect(calls('restartPattern')).toHaveLength(0);
+    await clickPlay();
   });
 
   it('edit_07 cell changes one bar', async () => {

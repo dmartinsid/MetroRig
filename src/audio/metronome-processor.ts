@@ -8,6 +8,7 @@ interface WasmEngineExports {
   engine_set_bpm(ptr: number, bpm: number): void;
   engine_set_measure_length(ptr: number, length: number): void;
   engine_set_bars(ptr: number, bars: number): void;
+  engine_restart_pattern(ptr: number): void;
   engine_load_sample(ptr: number, sampleId: number, leftPtr: number, rightPtr: number, length: number): void;
   engine_update_grid(ptr: number, sampleId: number, stepsPtr: number, length: number): void;
   engine_set_trainer(
@@ -110,6 +111,9 @@ class MetronomeProcessor extends AudioWorkletProcessor {
         break;
       case 'SET_MEASURE_LENGTH':
         exports.engine_set_measure_length(this.enginePtr, msg.length);
+        break;
+      case 'RESTART_PATTERN':
+        exports.engine_restart_pattern(this.enginePtr);
         break;
       case 'SET_BARS':
         exports.engine_set_bars(this.enginePtr, msg.bars);

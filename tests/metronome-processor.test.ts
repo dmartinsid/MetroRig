@@ -32,6 +32,7 @@ function fakeEngine() {
       engine_start: vi.fn(),
       engine_set_bpm: vi.fn(),
       engine_set_bars: vi.fn(),
+      engine_restart_pattern: vi.fn(),
       engine_set_trainer: vi.fn(),
       engine_replace_trainer: vi.fn(),
       engine_process: (_ptr: number, outL: number, outR: number, length: number) => {
@@ -173,6 +174,13 @@ describe('Worklet', () => {
     const tick = processor.port.postMessage.mock.calls.find(([msg]) => msg.type === 'TICK')!;
     expect(tick[0].beatIndex).toBe(63);
     expect(tick[0].activeTrackIds).toEqual([2]);
+  });
+
+  it('restarts the pattern in the engine', async () => {
+    const engine = fakeEngine();
+    const { send } = await startProcessor(engine);
+    send({ type: 'RESTART_PATTERN' });
+    expect(engine.exports.engine_restart_pattern).toHaveBeenCalledWith(1);
   });
 
   it('passes the bar count to the engine', async () => {
