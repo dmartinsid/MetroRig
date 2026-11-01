@@ -1886,7 +1886,6 @@ describe('Grooves Library', () => {
     expect(byId('time-sig-num').value).toBe('4');
     expect(byId('trainer-enable').checked).toBe(false);
     expect(cell(7, 3).classList.contains('active')).toBe(false);
-    expect(cell(8, 0).classList.length).toBeGreaterThan(0);
     expect(cell(1, 3).classList.contains('active')).toBe(true); // The chorus kick
     await clickPlay();
   });

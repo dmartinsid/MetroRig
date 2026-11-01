@@ -5,11 +5,13 @@ MetroRig is a modern, high-fidelity Web-based 16-step sequencer, metronome, and 
 ## Features
 
 - **High-Accuracy Audio**: WebAssembly-powered DSP core rendering samples directly inside Web Audio's process loop.
-- **16-Step Sequencer**: A fully editable matrix with 4 tracks (Click, Kick, Snare, Hi-hat).
+- **Step Sequencer**: A fully editable grid of up to 32 steps with 11 tracks (Click, Kick, Snare, Hi-hat, Open Hat, Ride, Ride Bell, Crash, China, High Tom, Floor Tom), each hit at ghost, normal or accent.
+- **Grooves**: Transcribed drum parts of famous rock, metal, metalcore and blues songs, loaded with their tempo in one click. Each song cites its Songsterr tab.
 - **Tempo Trainer**: Increase BPM automatically dynamically over time, supporting both stepped and smooth acceleration models.
-- **Dual Mode Views**:
+- **Three Screens**:
   - **Editor Mode**: Set presets, configure Sequencer grids, and adjust speed details.
   - **Practice Stadium Mode**: Full-screen layout with elapsed timer, current tempo gauge, and rotating beat clock.
+  - **Grooves**: Browse the songs by genre, play one in place, or open it in the Editor.
 
 ## Prerequisites
 
@@ -37,6 +39,10 @@ To run the metronome locally, you need:
 
 4. **Open the App**:
    Open [http://localhost:3000](http://localhost:3000) in your web browser.
+
+## Drum Samples
+
+The kit in `public/kit/` comes from public-domain and CC0 sources, listed file by file in `public/kit/LICENSE.md`.
 
 ## Building for Production
 
