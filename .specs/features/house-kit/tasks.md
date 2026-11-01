@@ -219,10 +219,10 @@ T19 → T20
 
 **Done when**:
 
-- [ ] A retrigger sounds the old hit for 5 ms, falling to silence
-- [ ] A retrigger on a finished voice adds nothing
-- [ ] The open hat cut stays hard
-- [ ] Gate check passes: `cargo test`
+- [x] A retrigger sounds the old hit for 5 ms, falling to silence
+- [x] A retrigger on a finished voice adds nothing
+- [x] The open hat cut stays hard
+- [x] Gate check passes: `cargo test`
 
 **Tests**: unit
 **Gate**: rust
