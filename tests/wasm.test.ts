@@ -11,6 +11,29 @@ describe('Shipped WASM', () => {
     expect(exports).not.toContain('engine_set_swing');
   });
 
+  it('plays a step of the fourth bar', () => {
+    const wasm = fs.readFileSync(path.resolve(__dirname, '../public/pkg/metrorig_audio_bg.wasm'));
+    const engine = new WebAssembly.Instance(new WebAssembly.Module(wasm)).exports as any;
+    const ptr = engine.engine_new(44100);
+
+    const gridPtr = engine.engine_alloc(64);
+    new Uint8Array(engine.memory.buffer, gridPtr, 64).fill(1);
+    engine.engine_update_grid(ptr, 0, gridPtr, 64);
+    engine.engine_set_bars(ptr, 4);
+
+    const size = 128;
+    const left = engine.engine_alloc(size * 4);
+    const right = engine.engine_alloc(size * 4);
+    const bpmPtr = engine.engine_alloc(8);
+    engine.engine_start(ptr);
+    let lastTick = -1;
+    for (let block = 0; block < 3000; block++) {
+      engine.engine_process(ptr, left, right, size);
+      lastTick = Math.max(lastTick, engine.engine_get_tick(ptr, bpmPtr));
+    }
+    expect(lastTick).toBe(63);
+  });
+
   it('kit_02 plays the last track of the kit', () => {
     const wasm = fs.readFileSync(path.resolve(__dirname, '../public/pkg/metrorig_audio_bg.wasm'));
     const engine = new WebAssembly.Instance(new WebAssembly.Module(wasm)).exports as any;
