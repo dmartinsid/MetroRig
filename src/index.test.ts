@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { MetronomeNode } from './audio/MetronomeNode';
 import { SONGS } from './songs';
-import { STADIUM_GROUPS } from './kit';
+import { STADIUM_GROUPS, TRACKS } from './kit';
 
 const mockInit = vi.fn().mockResolvedValue(undefined);
 const mockLoadSample = vi.fn().mockResolvedValue(undefined);
@@ -2578,7 +2578,9 @@ describe('House Kit', () => {
       const own = loads.filter(load => load.trackId === trackId);
       expect(own, `track ${trackId}`).toHaveLength(9);
       expect(new Set(own.map(load => load.url)).size).toBe(9);
-      own.forEach(load => expect(load.trim).toBe(0.7));
+      const trim = TRACKS.find(track => track.id === trackId)!.bank!.trim;
+      expect(trim).toBeGreaterThan(0);
+      own.forEach(load => expect(load.trim).toBe(trim));
     });
     expect(loads.find(load => load.trackId === 2 && load.dynamic === 2 && load.take === 1)!.url).toBe('/kit/house/snare/crack-2.wav');
     expect(loads.find(load => load.trackId === 12 && load.dynamic === 1 && load.take === 0)!.url).toBe('/kit/house/tom-14/med-1.wav');
