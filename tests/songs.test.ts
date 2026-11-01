@@ -3,6 +3,43 @@ import { SONGS, songToPreset, songsForGenre } from '../src/songs';
 import { TRACKS } from '../src/kit';
 
 describe('Songs', () => {
+  // Tempos and artists as the cited tabs state them
+  const expected: [string, string, string, number][] = [
+    ['Back in Black', 'AC/DC', 'Rock', 94],
+    ['Highway to Hell', 'AC/DC', 'Rock', 116],
+    ['The Trooper', 'Iron Maiden', 'Metal', 162],
+    ['Run to the Hills', 'Iron Maiden', 'Metal', 173],
+    ['Enter Sandman', 'Metallica', 'Metal', 123],
+    ['Master of Puppets', 'Metallica', 'Metal', 212],
+    ['Battery', 'Metallica', 'Metal', 194],
+    ["Tears Don't Fall", 'Bullet for My Valentine', 'Metalcore', 162],
+    ['Scream Aim Fire', 'Bullet for My Valentine', 'Metalcore', 200],
+    ["Don't Need You", 'Bullet for My Valentine', 'Metalcore', 154],
+    ['Cocaine', 'Eric Clapton', 'Blues', 105],
+    ['Crossroads', 'Cream (Eric Clapton)', 'Blues', 132],
+    ['The Thrill Is Gone', 'B.B. King', 'Blues', 91],
+    ['Every Day I Have the Blues', 'B.B. King', 'Blues', 200],
+  ];
+
+  it('song_01 fourteen songs with sources', () => {
+    expect(SONGS.map(song => [song.title, song.artist, song.genre, song.bpm])).toEqual(expected);
+    SONGS.forEach(song => {
+      expect(song.section, song.id).not.toBe('');
+      expect(song.timeSignature, song.id).toMatch(/^\d+\/\d+$/);
+      expect(song.source.url, song.id).toMatch(/^https:\/\/www\.songsterr\.com\/a\/wsa\/.+-drum-tab-s\d+$/);
+      expect(song.source.revisionId, song.id).toBeGreaterThan(0);
+    });
+    expect(new Set(SONGS.map(song => song.id)).size).toBe(14);
+  });
+
+  it('song_02 named versions', () => {
+    const song = (title: string) => SONGS.find(entry => entry.title === title)!;
+    expect(song('Crossroads').artist).toBe('Cream (Eric Clapton)');
+    expect(song('Crossroads').source.url).toContain('live');
+    expect(song('Every Day I Have the Blues').source.url).toContain('cook-county');
+    expect(song('Every Day I Have the Blues').source.url).toMatch(/s3882248$/);
+  });
+
   it('song_03 bounds', () => {
     SONGS.forEach(song => {
       expect(song.measureLength, song.id).toBeLessThanOrEqual(32);
