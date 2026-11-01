@@ -49,6 +49,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | Capture icons | Drawn as inline SVG, no Material Symbols font | Same look, no new external dependency | y |
 | Bar count | Counts completed wraps since Play, resets on Stop | No bar counter exists today | y |
 | Docs | `.stitch/DESIGN.md` updated at the end | Its Known Drift list goes stale | y |
+| Legend in STAD-03 | "In track colours" means coloured dots beside muted names | The binding capture draws it so | y |
 
 **Open questions:** none - all resolved or logged above (required before the spec is confirmed).
 
@@ -115,6 +116,8 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 27. EDIT-27: WHILE the Trainer is active its card dot SHALL be shown steady, with no pulsing animation.
 28. EDIT-28: WHEN the user edits the bar THEN the Save Toast SHALL appear as it does today.
 29. EDIT-29: IF nothing has been edited since the last preset load THEN the Save Toast SHALL stay hidden.
+30. EDIT-30: WHEN the user saves a preset THEN the sequencer header SHALL show the saved name.
+31. EDIT-31: WHEN the user clicks a cell right after saving a preset THEN the cell SHALL change and the engine SHALL receive the change.
 
 **Independent Test**: Load Rock Groove, press Play, and compare the screen with `captures/editor.png`.
 
@@ -140,6 +143,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 10. STAD-10: WHEN a hit of an audible track renders THEN its orb SHALL scale from 1.15 to 1.0 in 0.2s without changing colour.
 11. STAD-11: Clicking an orb SHALL change nothing.
 12. STAD-12: Every beat clock and tick behaviour of the current Stadium SHALL keep working: lit slices, sustain slices, active beat numeral, sweeping hand.
+13. STAD-13: WHEN the user moves the BPM slider or stops playback THEN the Stadium tempo SHALL match the Editor's BPM.
 
 **Independent Test**: Load `Calvagada - 148 - 190`, open Stadium, press Play, and compare with `captures/stadium.png`.
 
@@ -276,6 +280,8 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | EDIT-27 | P1: Editor Mode | Tasks | Implementing |
 | EDIT-28 | P1: Editor Mode | Tasks | Implementing |
 | EDIT-29 | P1: Editor Mode | Tasks | Implementing |
+| EDIT-30 | P1: Editor Mode | Tasks | Implementing |
+| EDIT-31 | P1: Editor Mode | Tasks | Implementing |
 | STAD-01 | P1: Stadium Mode | Tasks | Implementing |
 | STAD-02 | P1: Stadium Mode | Tasks | Implementing |
 | STAD-03 | P1: Stadium Mode | Tasks | Implementing |
@@ -288,6 +294,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | STAD-10 | P1: Stadium Mode | Tasks | Implementing |
 | STAD-11 | P1: Stadium Mode | Tasks | Implementing |
 | STAD-12 | P1: Stadium Mode | Tasks | Implementing |
+| STAD-13 | P1: Stadium Mode | Tasks | Implementing |
 | TIME-01 | P1: Shared timer | Tasks | Implementing |
 | TIME-02 | P1: Shared timer | Tasks | Implementing |
 | TIME-03 | P1: Shared timer | Tasks | Implementing |
@@ -327,7 +334,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 
 **Status values:** Pending → In Design → In Tasks → Implementing → Verified
 
-**Coverage:** 84 total, 0 mapped to tasks, 84 unmapped ⚠️ (tasks not written yet)
+**Coverage:** 87 total, 87 mapped to tasks, 0 unmapped
 
 ---
 
@@ -353,6 +360,8 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | `Rock Groove (120)` in the groove library | `Rock Groove` | y - AD-004 |
 | Equal gaps across the grid | Wider gap between beats | y - AD-003 |
 | No sustain state | Sustain state kept | y - AD-003 |
+| `Rock Groove (120)` in the Save Toast | `Rock Groove`, the preset's real name | y - AD-004 |
+| `S` lit on `CLICK` with every other row undimmed | No solo in the Editor state; a solo dims the other rows | y - AD-006 |
 
 ## Sources
 
