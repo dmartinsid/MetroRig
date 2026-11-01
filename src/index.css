@@ -1418,6 +1418,11 @@ select:focus {
     padding: 1rem;
   }
 
+  .track-label {
+    min-width: 88px;
+    padding: 2px 4px;
+  }
+
   .track-mix {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
