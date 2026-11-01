@@ -638,7 +638,7 @@ Proof: walk - no sideways page scroll at the 3 widths, written to Handoff
 The feature's live state, written as it happens - a compaction gives no warning.
 
 **Settled mid-build:** Sub-agents accepted, user: "aprovo e vamos de subagents". 3 batches. Work happens on branch `house-kit`, with no push.
-**Dispatched:** Batch 1 (Phases 1-2, T1-T7) from the commit that adds these specs.
+**Dispatched:** Batch 1 (Phases 1-2, T1-T7) from ef86231, returned at b1e49e0. Batch 2 (Phases 3-4, T8-T13) from b1e49e0.
 **Walked:** none
 
 ---
