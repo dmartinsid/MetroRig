@@ -152,6 +152,10 @@ export class MetronomeNode extends EventTarget {
     this.workletNode?.port.postMessage({ type: 'SET_CLICK_MODE', mode });
   }
 
+  sampleRate(): number {
+    return this.ctx.sampleRate;
+  }
+
   visualDelayMs(): number {
     return visualDelayMs(this.ctx.baseLatency, this.ctx.outputLatency);
   }

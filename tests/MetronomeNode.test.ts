@@ -4,6 +4,7 @@ import { MetronomeNode } from '../src/audio/MetronomeNode';
 // Mock Web Audio API
 class MockAudioContext {
   state = 'suspended';
+  sampleRate = 48000;
   audioWorklet = {
     addModule: vi.fn().mockResolvedValue(undefined),
   };
@@ -27,6 +28,10 @@ vi.stubGlobal('AudioContext', MockAudioContext);
 vi.stubGlobal('AudioWorkletNode', MockAudioWorkletNode);
 
 describe('MetronomeNode', () => {
+  it('reports the sample rate the context really runs at', () => {
+    expect(new MetronomeNode().sampleRate()).toBe(48000);
+  });
+
   it('should post message to worklet when setMeasureLength is called', () => {
     const node = new MetronomeNode();
     const mockWorkletNode = new MockAudioWorkletNode();
