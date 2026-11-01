@@ -95,12 +95,12 @@ T16 → T17 → T18 → T19
 
 **Done when**:
 
-- [ ] `STEPS_COUNT` is 128 and one bar still stops at 32 steps
-- [ ] `engine_set_bars` accepts 1 to 4 and refuses anything else
-- [ ] The step wraps at bars × measure length with no gap
-- [ ] `on_measure_complete` runs at every bar, so stepped Trainer counts real bars
-- [ ] Rust tests cover 1-bar behaviour unchanged, the wrap, each refusal and both Trainer curves
-- [ ] Gate check passes: `cargo test`
+- [x] `STEPS_COUNT` is 128 and one bar still stops at 32 steps
+- [x] `engine_set_bars` accepts 1 to 4 and refuses anything else
+- [x] The step wraps at bars × measure length with no gap
+- [x] `on_measure_complete` runs at every bar, so stepped Trainer counts real bars
+- [x] Rust tests cover 1-bar behaviour unchanged, the wrap, each refusal and both Trainer curves
+- [x] Gate check passes: `cargo test`
 
 **Tests**: unit
 **Gate**: rust
