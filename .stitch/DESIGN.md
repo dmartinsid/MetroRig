@@ -105,7 +105,7 @@ Source of truth: `README.md`, `index.html`, `src/index.css`, `src/main.ts`, `src
 
 ## 1. Visual Theme & Atmosphere
 
-MetroRig is an instrument, not a website. Its own redesign commit names the target: "DAW plugin premium style with glassmorphism and track colors". Picture a rack unit in a dark studio: a near-black, faintly blue room, smoked-glass panels floating on it, and one electric phosphor green that says the machine is alive. Four saturated track colours are the only other voices, and each one always means the same instrument.
+MetroRig is an instrument, not a website. Its own redesign commit names the target: "DAW plugin premium style with glassmorphism and track colors". Picture a rack unit in a dark studio: a near-black, faintly blue room, smoked-glass panels floating on it, and one electric phosphor green that says the machine is alive. Saturated track colours are the only other voices, and each one always means the same instrument.
 
 The density is that of pro audio gear. Controls sit tight, spacing stays under 24px, and labels are small, uppercase and tracked. The contrast comes from scale: a 156px monospaced tempo readout in Stadium sits beside 11px field labels. Numbers are the display; everything else is a label for a number.
 
@@ -113,12 +113,12 @@ The product promise is "rock-solid timing accuracy", so the interface has to fee
 
 ### Product Shape
 
-The native object is **one bar on a loop**: 4 tracks (Click, Kick, Snare, Hi-hat) multiplied by up to 32 steps, where a step is a sixteenth. Each cell holds `0` (off), `1` (hit) or `2` (accent). The product has no pages or feed, only this one matrix shown two ways:
+The native object is **one bar on a loop**: 11 tracks (Click, Kick, Snare, Hi-hat, Open Hat, Ride, Ride Bell, Crash, China, High Tom, Floor Tom) multiplied by up to 32 steps, where a step is a sixteenth. Each cell holds `0` (off), `1` (normal), `2` (accent) or `3` (ghost, drum tracks only). The product has no feed, only this one matrix shown two ways, plus the Grooves screen that loads a song into it:
 
 | View | Projection | Purpose | Lead element |
 |:---|:---|:---|:---|
 | **Editor Mode** | Linear: tracks as rows, steps as columns | "Set presets, configure Sequencer grids, and adjust speed details." | The 16-step sequencer |
-| **Practice Stadium Mode** | Polar: tracks as concentric rings, steps as slices, step 0 at 12 o'clock | "Full-screen layout with elapsed timer, current tempo gauge, and rotating beat clock." | The beat clock and the tempo |
+| **Practice Stadium Mode** | Polar: 4 kit groups as concentric rings, steps as slices, step 0 at 12 o'clock | "Full-screen layout with elapsed timer, current tempo gauge, and rotating beat clock." | The beat clock and the tempo |
 
 Organise every screen around this bar. Never use a generic section template or a dashboard of unrelated widgets.
 
@@ -153,7 +153,7 @@ The `surface-container*` and `outline*` values in the frontmatter are these flat
 
 ### Track Colours
 
-Four fixed identities, bound through `data-track`. Each colour appears on the track label, its step cells, its clock ring and its orb.
+Eleven fixed identities, bound through `data-track`. Each colour appears on the track label, its step cells and its mix card. The Stadium's 4 groups take the first four colours, by position.
 
 | Track | ID | Name | Hex |
 |:---|:---|:---|:---|
@@ -161,6 +161,13 @@ Four fixed identities, bound through `data-track`. Each colour appears on the tr
 | Kick | 1 | **Hot Coral Kick** | `#FF2D55` |
 | Snare | 2 | **Ice Cyan Snare** | `#00D4FF` |
 | Hi-hat | 3 | **Mint Hi-hat** | `#00FF94` |
+| Open Hat | 4 | **Pale Mint Open Hat** | `#7CFFC4` |
+| Ride | 5 | **Violet Ride** | `#B388FF` |
+| Ride Bell | 6 | **Lilac Ride Bell** | `#E0B3FF` |
+| Crash | 7 | **Orange Crash** | `#FF8A3D` |
+| China | 8 | **Pink China** | `#FF5CA8` |
+| High Tom | 9 | **Blue High Tom** | `#4D9DFF` |
+| Floor Tom | 10 | **Periwinkle Floor Tom** | `#7C8CFF` |
 
 Never reassign these to other meanings. Red here is the Kick; it doesn't mean danger.
 
@@ -208,7 +215,6 @@ Line-height is only set where it matters: `1` on tempo readouts, browser default
 ### Buttons
 
 - **Play / Stop** (`▶ PLAY` / `■ STOP`): outlined neon on transparent, 1px border, 8px radius, full width, 0.9rem padding. Hover fills neon with Studio Black text and a 20px green glow over 0.2s. In Stadium it is a 250px rounded rectangle with a 2px border, a hollow triangle and a mono label. It is never a pill.
-- **View toggle** (`GO TO STADIUM MODE` / `GO TO EDITOR MODE`): outlined neon mono pill.
 - **Save**: Dim Green fill, neon text and border, 6px radius; hover fills neon.
 - **Save Groove**: subtle cyan tint, full width, 6px radius, a save icon.
 - **Figure buttons**: glass chips with a 6px radius, all mono. Each shows a name plus a pattern of `●` and `·`. The active one has neon text, a neon border and a faint glow.
@@ -219,7 +225,11 @@ Every panel uses the same recipe: Smoked Glass, 20px backdrop blur, 1px Glass Ed
 
 ### Navigation
 
-There's no navigation beyond a sticky header: glass-black, blurred, with a bottom hairline. Left: `METRORIG` plus a small `PRO` badge. Centre: the click sound selector, with a dim `Click:` label beside a bright value, and the preset selector. Right: the view toggle. The two views swap in place. Don't add links or icons without a function behind them.
+A sticky header: glass-black, blurred, with a bottom hairline. Left: `METRORIG` plus a small `PRO` badge, then the mono links `Editor`, `Stadium` and `Grooves` behind a hairline. Muted links lift on hover, and the open screen's link is neon with a 2px underline. Right: the click sound selector, with a dim `Click:` label beside a bright value, and the preset selector. The three screens swap in place. Don't add links or icons without a function behind them.
+
+### Grooves Screen
+
+Genre tabs (`All`, `Rock`, `Metal`, `Metalcore`, `Blues`) above a grid of glass song cards: title, artist, section, a neon BPM, the time signature, an outlined neon `▶` that turns to `■` while the song plays, and a recessed `Open in Editor`. The grid collapses to one column at phone width.
 
 ### Status Bar
 
@@ -274,7 +284,7 @@ Not a floating notification. It's an inline card in the control column, between 
 
 ### Beat Clock
 
-The hero of Stadium: an SVG up to 700px wide (`min(70vh, 90vw)`). Four concentric rings run outside in as Click, Kick, Snare, Hi-hat, each with one annular slice per step and a small gap between rings. Empty Kick and Snare slices merge into a continuous ring. Slice fills are track colour when on, a 30% mix when sustained, and Dead Slice when empty, separated by thin Studio Black strokes. Faint lines mark each beat, a small bevelled disc fills the centre around a green hub, and mono numerals sit outside the rings, turning neon on the current beat. A thin white hand at 70% opacity sweeps linearly from the hub, step by step, with a small dot at its tip. A dotted legend sits below the clock.
+The hero of Stadium: an SVG up to 700px wide (`min(70vh, 90vw)`). Four concentric rings run outside in as `CLICK`, `KICK`, `SNARE/TOMS` (Snare, High Tom, Floor Tom) and `CYMBALS` (Hi-hat, Open Hat, Ride, Ride Bell, Crash, China), each with one annular slice per step, lit when any track of its group hits, and a small gap between rings. Empty Kick and Snare slices merge into a continuous ring. Slice fills are track colour when on, a 30% mix when sustained, and Dead Slice when empty, separated by thin Studio Black strokes. Faint lines mark each beat, a small bevelled disc fills the centre around a green hub, and mono numerals sit outside the rings, turning neon on the current beat. A thin white hand at 70% opacity sweeps linearly from the hub, step by step, with a small dot at its tip. A dotted legend sits below the clock.
 
 ### Stadium Readout
 
@@ -284,7 +294,7 @@ The pill is Cyber Yellow on a faint tint. It reads `Trainer Off`, or `Trainer 12
 
 ### Instrument Orbs
 
-Four 60px rounded squares in track colours, each with a dark icon and its name below. They are indicators, not buttons. On each hit of an audible track an orb scales from 1.15 to 1.0 in 0.2s (`power2.out`). The colour never changes.
+Four 60px rounded squares in track colours, each with a dark icon and its name below. They are indicators, not buttons. One orb per Stadium group. On each hit of an audible track of its group an orb scales from 1.15 to 1.0 in 0.2s (`power2.out`). The colour never changes.
 
 ## 5. Layout Principles
 

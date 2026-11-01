@@ -733,10 +733,10 @@ T24 → T25 → T26 → T27 → T28
 
 **Done when**:
 
-- [ ] Its check passes
-- [ ] The walk shows the result
-- [ ] Gate check passes: `npx vitest run && npx vite build`
-- [ ] Test count: at least the previous task's count (no silent deletions)
+- [x] Its check passes
+- [x] The walk shows the result
+- [x] Gate check passes: `npx vitest run && npx vite build`
+- [x] Test count: at least the previous task's count (no silent deletions)
 
 **Tests**: none
 **Gate**: full
