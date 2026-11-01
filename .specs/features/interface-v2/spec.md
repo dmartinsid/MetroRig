@@ -295,18 +295,18 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | TIME-05 | P1: Shared timer | Tasks | Implementing |
 | TIME-06 | P1: Shared timer | Tasks | Implementing |
 | MUTE-01 | P2: Mute and Solo | Tasks | Implementing |
-| MUTE-02 | P2: Mute and Solo | Tasks | Pending |
-| MUTE-03 | P2: Mute and Solo | Tasks | Pending |
+| MUTE-02 | P2: Mute and Solo | Tasks | Implementing |
+| MUTE-03 | P2: Mute and Solo | Tasks | Implementing |
 | MUTE-04 | P2: Mute and Solo | Tasks | Implementing |
 | MUTE-05 | P2: Mute and Solo | Tasks | Implementing |
 | MUTE-06 | P2: Mute and Solo | Tasks | Implementing |
-| MUTE-07 | P2: Mute and Solo | Tasks | Pending |
-| MUTE-08 | P2: Mute and Solo | Tasks | Pending |
-| MUTE-09 | P2: Mute and Solo | Tasks | Pending |
-| MUTE-10 | P2: Mute and Solo | Tasks | Pending |
-| MUTE-11 | P2: Mute and Solo | Tasks | Pending |
-| MUTE-12 | P2: Mute and Solo | Tasks | Pending |
-| MUTE-13 | P2: Mute and Solo | Tasks | Pending |
+| MUTE-07 | P2: Mute and Solo | Tasks | Implementing |
+| MUTE-08 | P2: Mute and Solo | Tasks | Implementing |
+| MUTE-09 | P2: Mute and Solo | Tasks | Implementing |
+| MUTE-10 | P2: Mute and Solo | Tasks | Implementing |
+| MUTE-11 | P2: Mute and Solo | Tasks | Implementing |
+| MUTE-12 | P2: Mute and Solo | Tasks | Implementing |
+| MUTE-13 | P2: Mute and Solo | Tasks | Implementing |
 | RESP-01 | P2: Narrow windows | Tasks | Pending |
 | RESP-02 | P2: Narrow windows | Tasks | Pending |
 | RESP-03 | P2: Narrow windows | Tasks | Pending |
@@ -320,8 +320,8 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | EDGE-02 | Edge Cases | Tasks | Implementing |
 | EDGE-03 | Edge Cases | Tasks | Implementing |
 | EDGE-04 | Edge Cases | Tasks | Pending |
-| EDGE-05 | Edge Cases | Tasks | Pending |
-| EDGE-06 | Edge Cases | Tasks | Pending |
+| EDGE-05 | Edge Cases | Tasks | Implementing |
+| EDGE-06 | Edge Cases | Tasks | Implementing |
 
 **ID format:** `[CATEGORY]-[NUMBER]`
 

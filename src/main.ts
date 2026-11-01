@@ -1,6 +1,7 @@
 import { MetronomeNode, TickDetail } from './audio/MetronomeNode';
 import { StateManager, FACTORY_PRESETS, FACTORY_GROOVES, SPEED_TRAINER_PRESETS, Preset, StoredPreset, TrainerSettings, CustomGroove, FIGURES, getBeatsPerMeasure, getBeatForStep, isSustainedStep, applyFigure, measureLengthFor, normalizePreset, startBpmFor } from './state';
 import { VisualScheduler } from './visualSync';
+import { audibleSteps, createTrackMix, isAudible, toggleMute, toggleSolo } from './trackMix';
 import { formatBarStep, formatClock, formatLatency, formatSteps, formatTimer, nextDenominator } from './display';
 import workletUrl from './audio/metronome-processor?url';
 
@@ -9,6 +10,7 @@ declare const gsap: any;
 const state = new StateManager();
 const audioNode = new MetronomeNode();
 const visualScheduler = new VisualScheduler();
+const trackMix = createTrackMix();
 
 // Elements
 const btnToggleView = document.getElementById('btn-toggle-view') as HTMLButtonElement;
@@ -183,10 +185,13 @@ function syncMeterAndGrid() {
   audioNode.setMeasureLength(state.activePreset.measureLength || 16);
   
   // Update active tracks
-  for (let trackId = 0; trackId < 4; trackId++) {
-    const steps = new Uint8Array(state.activePreset.gridData[trackId] || new Array(16).fill(0));
-    audioNode.updateGrid(trackId, steps);
-  }
+  for (let trackId = 0; trackId < 4; trackId++) sendTrack(trackId);
+}
+
+// The one path to the engine: silenced tracks play an empty grid, the preset keeps its steps
+function sendTrack(trackId: number) {
+  const steps = state.activePreset.gridData[trackId] || new Array(16).fill(0);
+  audioNode.updateGrid(trackId, audibleSteps(trackMix, trackId, steps));
 }
 
 function readTrainerInputs(): TrainerSettings {
@@ -273,6 +278,8 @@ function drawGrid() {
     label.className = 'track-label';
     label.setAttribute('data-track', String(trackId));
     label.innerText = trackNames[trackId];
+    const silenced = !isAudible(trackMix, trackId);
+    label.classList.toggle('silenced', silenced);
     label.style.gridRow = String(trackId + 2);
     label.style.gridColumn = '1';
     gridContainer.appendChild(label);
@@ -281,7 +288,7 @@ function drawGrid() {
 
     for (let step = 0; step < measureLength; step++) {
       const cell = document.createElement('div');
-      cell.className = 'step-cell';
+      cell.className = silenced ? 'step-cell silenced' : 'step-cell';
       cell.setAttribute('data-track', String(trackId));
       cell.style.gridRow = String(trackId + 2);
       cell.style.gridColumn = String(stepColumns[step]);
@@ -305,9 +312,7 @@ function drawGrid() {
           trackSteps[step] = trackSteps[step] === 1 ? 0 : 1;
         }
 
-        if (isAudioInit) {
-          audioNode.updateGrid(trackId, new Uint8Array(trackSteps));
-        }
+        if (isAudioInit) sendTrack(trackId);
         drawGrid();
         markPresetAsModified();
       };
@@ -318,6 +323,15 @@ function drawGrid() {
 
   updatePatternBar();
   drawBeatClock();
+}
+
+function applyTrackMix() {
+  for (let trackId = 0; trackId < 4; trackId++) {
+    document.getElementById(`mute-${trackId}`)!.setAttribute('aria-pressed', String(trackMix.muted.has(trackId)));
+    document.getElementById(`solo-${trackId}`)!.setAttribute('aria-pressed', String(trackMix.soloed.has(trackId)));
+    if (isAudioInit) sendTrack(trackId);
+  }
+  drawGrid();
 }
 
 function updatePatternBar() {
@@ -620,7 +634,7 @@ function renderTick({ beatIndex, currentBpm, activeTrackIds }: TickDetail) {
 
   // Orbs keep a steady color and only nudge in size, avoiding luminance flashes
   const ids: number[] = activeTrackIds ?? [];
-  ids.forEach((trackId: number) => {
+  ids.filter(trackId => isAudible(trackMix, trackId)).forEach((trackId: number) => {
     const orb = orbs[trackId];
     if (!orb) return;
     gsap.killTweensOf(orb);
@@ -900,6 +914,17 @@ clickSoundSelector.onchange = async () => {
 // Initialize dropdown value from localStorage
 const storedClickSound = localStorage.getItem('metrorig_click_sound') || 'digital';
 clickSoundSelector.value = storedClickSound;
+
+[0, 1, 2, 3].forEach(trackId => {
+  document.getElementById(`mute-${trackId}`)!.onclick = () => {
+    toggleMute(trackMix, trackId);
+    applyTrackMix();
+  };
+  document.getElementById(`solo-${trackId}`)!.onclick = () => {
+    toggleSolo(trackMix, trackId);
+    applyTrackMix();
+  };
+});
 
 // Initial draw and population
 footerClock.textContent = formatClock(audioNode.sampleRate());

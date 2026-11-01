@@ -313,10 +313,10 @@ T17
 
 **Done when**:
 
-- [ ] `sendTrack` is the only caller of `updateGrid`
-- [ ] The tests of the checks for MUTE-02, MUTE-03, MUTE-07, MUTE-08, MUTE-09, MUTE-10, MUTE-11, MUTE-12, MUTE-13, EDGE-05, EDGE-06 pass
-- [ ] Gate check passes: `npx vitest run && npx vite build`
-- [ ] Test count: 128 tests pass (no silent deletions)
+- [x] `sendTrack` is the only caller of `updateGrid`
+- [x] The tests of the checks for MUTE-02, MUTE-03, MUTE-07, MUTE-08, MUTE-09, MUTE-10, MUTE-11, MUTE-12, MUTE-13, EDGE-05, EDGE-06 pass
+- [x] Gate check passes: `npx vitest run && npx vite build`
+- [x] Test count: 128 tests pass (no silent deletions)
 
 **Tests**: integration
 **Gate**: full
