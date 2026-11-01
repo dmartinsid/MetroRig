@@ -445,9 +445,9 @@ T16 → T17 → T18 → T19
 
 **Done when**:
 
-- [ ] The selector matches the figure chips, with the current bar lit
-- [ ] No sideways page scroll at 1024px and 390px
-- [ ] Gate check passes: `npx vitest run && npx vite build`
+- [x] The selector matches the figure chips, with the current bar lit
+- [x] No sideways page scroll at 1024px and 390px
+- [x] Gate check passes: `npx vitest run && npx vite build`
 
 **Tests**: none
 **Gate**: full

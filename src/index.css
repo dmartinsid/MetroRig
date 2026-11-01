@@ -459,6 +459,48 @@ header {
   letter-spacing: 0.05em;
 }
 
+/* Bar selector */
+.bar-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.bar-selector[hidden] {
+  display: none;
+}
+
+.bar-selector-label {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  letter-spacing: 0.1em;
+}
+
+.bar-btn {
+  min-width: 2rem;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-cell);
+  padding: 0.35rem 0.6rem;
+  cursor: pointer;
+}
+
+.bar-btn:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.bar-btn[aria-pressed="true"] {
+  color: var(--neon-green);
+  border-color: var(--neon-green);
+  box-shadow: 0 0 8px rgba(57, 255, 20, 0.25);
+}
+
 /* Beat count row */
 .step-count-label {
   font-family: var(--mono);
