@@ -1121,4 +1121,153 @@ describe('Interface V2', () => {
     expect(byId('time-sig-num').value).toBe('8');
     expect(document.querySelectorAll('.step-cell[data-track="0"]')).toHaveLength(32);
   });
+
+  const sentTo = (trackId: number) => [...calls('updateGrid').filter(call => call[0] === trackId).at(-1)![1]];
+  const realKick = [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0];
+  const silence = new Array(16).fill(0);
+  const pressMute = (trackId: number) => byId<HTMLButtonElement>(`mute-${trackId}`).click();
+  const orbTweened = (trackId: number) => mockGsap.fromTo.mock.calls.some(call => call[0] === byId(`orb-${trackId}`));
+
+  it('mute_02 mute silences', async () => {
+    await openPage();
+    await selectPreset('factory:rock');
+    await clickPlay();
+
+    pressMute(1);
+    expect(sentTo(1)).toEqual(silence);
+    expect(sentTo(3)).not.toEqual(silence);
+    expect(byId('mute-1').getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('mute_03 unmute restores', async () => {
+    await openPage();
+    await selectPreset('factory:rock');
+    await clickPlay();
+
+    pressMute(1);
+    pressMute(1);
+    expect(sentTo(1)).toEqual(realKick);
+    expect(byId('mute-1').getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('mute_07 row dimmed', async () => {
+    await openPage();
+
+    pressMute(1);
+    const silencedTracks = (selector: string) => [...document.querySelectorAll<HTMLElement>(selector)]
+      .filter(element => element.classList.contains('silenced')).map(element => element.dataset.track);
+    expect(new Set(silencedTracks('.step-cell'))).toEqual(new Set(['1']));
+    expect(silencedTracks('.track-label')).toEqual(['1']);
+    expect(document.querySelectorAll('.step-cell.silenced')).toHaveLength(16);
+
+    byId<HTMLButtonElement>('solo-2').click(); // Solo silences every other track
+    expect(new Set(silencedTracks('.step-cell'))).toEqual(new Set(['0', '1', '3']));
+  });
+
+  it('mute_08 orb still', async () => {
+    await openPage();
+    await clickPlay();
+    pressMute(1);
+    mockGsap.fromTo.mockClear();
+
+    tick({ currentBpm: 120, beatIndex: 0, activeTrackIds: [1, 2] }); // Already in flight
+    expect(orbTweened(1)).toBe(false);
+    expect(orbTweened(2)).toBe(true);
+  });
+
+  it('mute_09 edit kept silent', async () => {
+    await openPage();
+    await selectPreset('factory:rock');
+    await clickPlay();
+    pressMute(1);
+
+    document.querySelectorAll<HTMLElement>('.step-cell[data-track="1"]')[2].click();
+    expect(sentTo(1)).toEqual(silence);
+
+    pressMute(1);
+    expect(sentTo(1)).toEqual([1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0]);
+  });
+
+  it('mute_10 saves real grid', async () => {
+    const stores = await openPage();
+    await selectPreset('factory:rock');
+    await clickPlay();
+    pressMute(1);
+
+    byId('preset-name').value = 'Muted take';
+    byId<HTMLButtonElement>('btn-save').click();
+    await flush();
+    const saved = [...stores.presets.values()].find(preset => preset.name === 'Muted take');
+    expect(saved.gridData[1]).toEqual(realKick);
+
+    vi.stubGlobal('prompt', () => 'Muted groove');
+    vi.stubGlobal('alert', vi.fn());
+    byId<HTMLButtonElement>('btn-save-groove').click();
+    await flush();
+    const groove = [...stores.grooves.values()].find(item => item.name === 'Muted groove');
+    expect(groove.gridData[1]).toEqual(realKick);
+  });
+
+  it('mute_11 survives load', async () => {
+    await openPage();
+    await clickPlay();
+    pressMute(1);
+
+    await selectPreset('factory:metal');
+    expect(byId('mute-1').getAttribute('aria-pressed')).toBe('true');
+    expect(sentTo(1)).toEqual(silence);
+    expect(document.querySelector('.track-label[data-track="1"]')?.classList.contains('silenced')).toBe(true);
+  });
+
+  it('mute_12 play sends empty', async () => {
+    await openPage();
+    await selectPreset('factory:rock');
+    pressMute(1);
+
+    await clickPlay();
+    expect(sentTo(1)).toEqual(silence);
+    expect(sentTo(3)).toEqual([1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]);
+  });
+
+  it('mute_13 reload clears', async () => {
+    await openPage();
+    pressMute(1);
+    byId<HTMLButtonElement>('solo-2').click();
+
+    await openPage();
+    await selectPreset('factory:rock');
+    await clickPlay();
+    expect(byId('mute-1').getAttribute('aria-pressed')).toBe('false');
+    expect(byId('solo-2').getAttribute('aria-pressed')).toBe('false');
+    expect(sentTo(1)).toEqual(realKick);
+  });
+
+  it('edge_05 all muted continues', async () => {
+    await openPage();
+    vi.useFakeTimers();
+    await clickPlay();
+    [0, 1, 2, 3].forEach(pressMute);
+    mockGsap.fromTo.mockClear();
+
+    tick({ currentBpm: 120, beatIndex: 3 });
+    vi.advanceTimersByTime(1000);
+    expect(document.querySelector('.pattern-pos')?.textContent).toBe('POS: BAR 01 · STEP 04');
+    expect(mockGsap.fromTo.mock.calls.some(call => call[0] === byId('clock-hand'))).toBe(true);
+    expect(byId('editor-timer').innerText).toBe('00:00:01');
+    expect(lastCall('stop')).toBeUndefined();
+  });
+
+  it('edge_06 groove stays silent', async () => {
+    await openPage();
+    await clickPlay();
+    pressMute(1);
+
+    const grooves = byId<HTMLSelectElement>('groove-selector');
+    grooves.value = 'factory:rock';
+    grooves.dispatchEvent(new Event('change'));
+    expect(sentTo(1)).toEqual(silence);
+
+    pressMute(1);
+    expect(sentTo(1)).toEqual(realKick);
+  });
 });
