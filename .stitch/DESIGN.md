@@ -185,8 +185,9 @@ The repo defines no success, warning or error colours, and this file deliberatel
 |:---|:---|:---|:---|:---|:---|
 | Stadium tempo | Mono | 8rem | 900 | -0.05em | Neon, 30px glow, line-height 1 |
 | Editor tempo | Mono | 4rem | 700 | default | Neon, 30px glow, line-height 1 |
-| Logo | Mono | 1.5rem | 700 | default | Neon, 20px glow |
-| Stadium timer | Mono | 1.2rem | 400 | 0.15em | Muted |
+| Logo | Mono | 1.5rem | 700 | 0.08em | Neon, 12px glow |
+| Stadium timer | Mono | 1.5rem | 400 | 0.15em | Bright Fog |
+| Editor timer | Mono | 1.2rem | 400 | 0.15em | Neon |
 | Play button | Inter | 1rem, Stadium 1.2rem | 700 | 0.1em | |
 | Stadium status | Inter | 1rem | 400 | 0.05em | Cyber Yellow |
 | Card title | Inter | 0.85rem | 600–700 | 0.05–0.08em | Uppercase, muted |
@@ -196,7 +197,7 @@ The repo defines no success, warning or error colours, and this file deliberatel
 | Track pill | Inter | 0.75rem | 600 | 0.05em | Uppercase, track colour |
 | Form label | Inter | 0.7rem | 600 | 0.06em | Uppercase, muted |
 | Count row | Mono | 0.7rem | 400, beat start 700 | default | 60% opacity, beat start 100% |
-| PRO badge | Mono | 0.6rem | 700 | 0.1em | Outlined neon, 70% opacity |
+| PRO badge | Mono | 0.6rem | 700 | 0.1em | Neon on a 10% tint, hairline border |
 
 ### Spacing Principles
 
@@ -206,11 +207,11 @@ Line-height is only set where it matters: `1` on tempo readouts, browser default
 
 ### Buttons
 
-- **Play / Stop** (`▶ PLAY` / `■ STOP`): outlined neon on transparent, 1px border, 8px radius, full width, 0.9rem padding. Hover fills neon with Studio Black text and a 20px green glow over 0.2s. In Stadium it becomes a 200px pill.
-- **View toggle** (`GO TO STADIUM MODE` / `GO TO EDITOR MODE`): the same outlined neon treatment as a compact pill.
+- **Play / Stop** (`▶ PLAY` / `■ STOP`): outlined neon on transparent, 1px border, 8px radius, full width, 0.9rem padding. Hover fills neon with Studio Black text and a 20px green glow over 0.2s. In Stadium it is a 250px rounded rectangle with a 2px border. It is never a pill.
+- **View toggle** (`GO TO STADIUM MODE` / `GO TO EDITOR MODE`): outlined neon mono pill.
 - **Save**: Dim Green fill, neon text and border, 6px radius; hover fills neon.
-- **Save Groove**: subtle cyan tint, 4px radius.
-- **Figure buttons**: glass chips with a 6px radius. Each shows a name plus a mono pattern of `●` and `·`. The active one has neon text and border, with no fill.
+- **Save Groove**: subtle cyan tint, full width, 6px radius.
+- **Figure buttons**: glass chips with a 6px radius, all mono. Each shows a name plus a pattern of `●` and `·`. The active one has neon text, a neon border and a faint glow.
 
 ### Cards & Panels
 
@@ -218,28 +219,42 @@ Every panel uses the same recipe: Smoked Glass, 20px backdrop blur, 1px Glass Ed
 
 ### Navigation
 
-There's no navigation beyond a sticky header: glass-black, blurred, with a bottom hairline. Left: `MetroRig` plus a small outlined `PRO` badge. Centre: the click sound and preset selectors. Right: the view toggle. The two views swap in place.
+There's no navigation beyond a sticky header: glass-black, blurred, with a bottom hairline. Left: `METRORIG` plus a small `PRO` badge. Centre: the click sound and preset selectors. Right: the view toggle. The two views swap in place. Don't add links or icons without a function behind them.
+
+### Status Bar
+
+A hairline-topped footer in both modes, mono and small. Left: a lit dot and `AUDIO CLOCK: 44.1 kHz 128 SPLS (2.9ms)`. Right: `LATENCY: --` until the first tick, then the value the browser reports. It shows real values only.
 
 ### Inputs & Forms
 
-- **Selects and number inputs**: Recessed Field, hairline border, 0.4rem × 0.6rem padding, 6px radius. Focus turns the border neon. Header selectors use a custom chevron and add a soft green glow on focus.
-- **BPM slider**: 4px Glass Edge track and an 18px neon thumb with an 8px glow. Range 40–240.
-- **Checkbox**: 16px, neon accent.
+- **Selects and number inputs**: Recessed Field, hairline border, 0.4rem × 0.6rem padding, 6px radius. Focus turns the border neon. Header selectors use 8px, a custom chevron and a soft green glow on focus.
+- **Stepper fields** (Numerator, Denominator): a recessed block with a tiny label, a 1.5rem mono value and small `▲` `▼` buttons.
+- **BPM slider**: 4px Glass Edge track and an 18px neon thumb with an 8px glow. Range 40–240, with `40`, the current BPM and `240` above it.
+- **Switch**: `Trainer Active` is a 36×20px switch that turns neon when on.
 - **Labels**: always above the field, uppercase and small.
 
 ### Sequencer Grid (hero)
 
-Row 1 is the count: `1 e & a 2 e & a 3 e & a 4 e & a`, or `1 & 2 &` when a beat has two steps. Below it are four rows, each starting with an outlined track pill on a dark tint. Columns are `auto` then equal `1fr` steps with a 0.4rem gap, and a 0.5rem spacer between beats makes the pulse readable at a glance. Cells are square with a 6px radius and 0.15s transitions.
+Row 1 starts with `BEAT/SUB`, then the count: `1 e & a 2 e & a 3 e & a 4 e & a`, or `1 & 2 &` when a beat has two steps. Beat numbers sit on a slightly raised background. Below are four rows, each starting with a rectangular outlined track label on a faint tint. Columns are `auto` then equal `1fr` steps with a 0.4rem gap, and a 0.5rem spacer between beats makes the pulse readable at a glance. Cells are 44px tall, at least 14px wide, with a 6px radius and 0.15s transitions.
 
 | Cell state | Value | Treatment |
 |:---|:---|:---|
 | Empty | `0` | Empty Cell fill, hairline border |
 | Sustain | `0`, following a hit in a beat with 2+ hits | 12% track fill, 25% track border |
-| Hit | `1` | 25% track fill, solid track border, 8px glow at 40% |
-| Accent | `2` | Solid track fill, 16px full-colour glow |
+| Hit | `1` | 25% track fill, solid track border, 8px glow at 40%, a `●` mark |
+| Accent | `2` | Solid track fill, 16px full-colour glow, a `▲` mark |
 | Hover | any | Lighter fill, border at 50% track colour |
+| Silenced | any | 35% opacity on the whole row |
 
 Click cycles off, hit, accent. Drum tracks toggle off and hit. With a figure selected, one click stamps the whole quarter note. Grid length follows the meter: 16 steps in 4/4, 12 in 3/4 and 6/8, 14 in 7/8, 24 in 12/8, 32 at most.
+
+### Pattern Bar
+
+A mono line under the grid: `PAT: <preset name>`, `STEPS: 16/32`, `RESOLUTION: 1/16th`, and at the right `POS: BAR 01 · STEP 01`, with the position in neon. Bars count from Play and reset on Stop.
+
+### Track Mix
+
+Four small cards under the sequencer, one per track: a track dot, the name, then `M` and `S`. A pressed button takes the track colour. Several tracks can be soloed, Solo wins over Mute, and the state lasts until the page reloads. It is never saved in a preset.
 
 ### Figure Palette
 
@@ -247,11 +262,11 @@ A wrapping row above the grid: `Step`, `Quarter ●···`, `Eighths ●·●·`
 
 ### BPM Card
 
-The first card in the control column: the giant neon number with a small muted `BPM` unit on its baseline, then the slider, then Play.
+The first card in the control column, titled `TEMPO BUS`: the giant neon number with a small muted `BPM` unit on its baseline, then the slider scale, the slider and Play.
 
 ### Tempo Trainer Card
 
-A collapsible card, closed by default. Its header is an uppercase title with a chevron that rotates 180°, plus a 7px glowing neon dot while active. The body is a two-column form: `Trainer Active`, `Start BPM`, `Target BPM`, `Increment`, `Step Value`, `Step Type` (`Measures`, `Seconds`), `Curve` (`Stepped`, `Smooth Ramp`).
+A collapsible card, open on load. Its header is an uppercase title with a chevron that rotates 180°, plus a steady 7px glowing neon dot while active. The body is a two-column form of recessed blocks: `Trainer Active`, `Start BPM`, `Target BPM`, `Increment`, `Step Value`, `Step Type` (`Measures`, `Seconds`), `Curve` (`Stepped`, `Smooth Ramp`).
 
 ### Save Toast
 
@@ -259,24 +274,24 @@ Not a floating notification. It's an inline card in the control column, between 
 
 ### Beat Clock
 
-The hero of Stadium: an SVG up to 560px wide (`min(70vh, 90vw)`). Four concentric rings run outside in as Click, Kick, Snare, Hi-hat, each with one slice per step. Slice fills are track colour when on, a 30% mix when sustained, and Dead Slice when empty, separated by thin Studio Black strokes. Muted lines mark each beat, a Studio Black disc fills the centre, and mono numerals sit outside the rings, turning neon on the current beat. A rounded white hand at 70% opacity sweeps linearly from a white hub, step by step.
+The hero of Stadium: an SVG up to 700px wide (`min(70vh, 90vw)`). Four concentric rings run outside in as Click, Kick, Snare, Hi-hat, each with one annular slice per step and a small gap between rings. Slice fills are track colour when on, a 30% mix when sustained, and Dead Slice when empty, separated by thin Studio Black strokes. Faint lines mark each beat, a dark disc fills the centre around a green hub, and mono numerals sit outside the rings, turning neon on the current beat. A thin white hand at 70% opacity sweeps linearly from the hub, step by step, with a small dot at its tip. A dotted legend sits below the clock.
 
 ### Stadium Readout
 
-A centred stack: speed trainer selector (280px, `Choose a speed trainer`), timer `00:00`, tempo `120.0` with one decimal, status line, orbs, Play.
+A glass panel beside the clock, up to 576px wide: `SPEED TRAINER ROUTINE` selector (`Choose a speed trainer`), `ELAPSED REHEARSAL` timer `00:00:00`, tempo `120.0 BPM` with one decimal, status pill, orbs, Play.
 
-Status reads `Trainer Off` or `Trainer 120 → 160 BPM · +5 every 4 bars`.
+The pill is Cyber Yellow on a faint tint. It reads `Trainer Off`, or `Trainer 120 → 160 BPM · +5 every 4 bars` with a steady neon dot.
 
 ### Instrument Orbs
 
-Four solid 48px circles in track order, 2rem apart. On each hit an orb scales from 1.15 to 1.0 in 0.2s (`power2.out`). The colour never changes.
+Four 60px rounded squares in track colours, each with a dark icon and its name below. They are indicators, not buttons. On each hit of an audible track an orb scales from 1.15 to 1.0 in 0.2s (`power2.out`). The colour never changes.
 
 ## 5. Layout Principles
 
 ### Grid & Structure
 
 - **Editor**: full-width two-column grid, `2fr 1fr`, with a 1.5rem gap and padding. No max-width. The sequencer takes the left two-thirds; the right column stacks BPM, Save Toast, Measure and Tempo Trainer with a 1rem gap.
-- **Stadium**: a centred flex row of beat clock and readout, wrapping when narrow (2rem × 4rem gap), on a barely visible radial green glow (3% opacity). The header stays visible.
+- **Stadium**: a two-column grid with the beat clock on the left and the readout panel on the right, on a barely visible radial green glow. The header and status bar stay visible.
 
 ### Whitespace Strategy
 
@@ -300,7 +315,12 @@ All beat-driven visuals are delayed by the device's reported output latency, so 
 
 ### Responsive Behavior & Touch
 
-The CSS has no media queries, and this is the largest open gap. Only the Stadium wraps; the Editor keeps its two columns and the grid keeps every step on one line. When designing narrower layouts, keep the step grid intact and stack the control column beneath it, rather than shrinking cells into illegibility. Orbs are 48px; step cells have no minimum size today.
+- **1024px and up**: two columns in both modes.
+- **Under 1024px**: the Editor stacks the controls under the sequencer, and the Stadium stacks the clock above the readout.
+- **Under 768px**: the header wraps, the track mix becomes two columns, and the Stadium tempo drops to 5rem.
+- **The grid**: step cells never go under 14px. If the grid doesn't fit, only the grid scrolls sideways.
+
+Orbs are 60px. Step cells are 44px tall.
 
 ## 6. Design System Notes for Stitch Generation
 
@@ -322,11 +342,11 @@ Studio Black `#080810`, Smoked Glass (white at 4%), Glass Edge (white at 8%), Ne
 - **Drum Grooves**: Rock Groove (120), Metal Groove (140), Blues Shuffle (135), Jazz Swing (195), Metalcore Breakdown (160).
 - **Speed Trainer**: 69 - 110 - 4/4, 110-135 - 4/4, 134-180- 4/4, 179-220 - 4/4, Calvagada - 148 - 190, Calvagada - 189 - 215, 134-162 -4/4, 180 to 195, 130 to 140, Ligados, Gallop. Keep these strings verbatim, spacing included.
 - **User Presets**: empty state "No custom presets".
-- **Measure card**: Numerator (1–16), Denominator (/4, /8, /16), Drum Grooves, `-- Choose a Groove --`, `Save Groove`.
+- **Measure card**: Numerator (1–16), Denominator (/4, /8, /16), Groove Library, `-- Choose a Groove --`, `Save Groove`.
 - **Panel header**: `4/4 Metronome  ·  4/4  ·  120 BPM`.
 - **Default state**: 120 BPM, 4/4, Click grid `2 0 0 0 1 0 0 0 1 0 0 0 1 0 0 0`, trainer 120 → 160, +5 every 4 measures, Stepped.
 
-Don't add a Swing control. It was removed on purpose: MetroRig plays only exact time, and the card is called "Measure". Blues Shuffle and Jazz Swing keep their names.
+Don't add a Swing control, a CPU monitor, an engine version or a sync source. Swing was removed on purpose: MetroRig plays only exact time, and the card is called "Measure". The others have no real data behind them. Blues Shuffle and Jazz Swing keep their names.
 
 Don't invent copy, stats, session history, accounts or genres. Practice logs are stored in `practice_logs` but have no UI, so there's no history screen to design from the repo.
 
@@ -334,15 +354,15 @@ Don't invent copy, stats, session history, accounts or genres. Practice logs are
 
 **Editor Mode**
 
-> A dark desktop audio plugin called MetroRig on a near-black #080810 background. Sticky glass header: neon green #39FF14 monospaced logo with a small outlined PRO badge, two dark selectors reading "Click: Digital" and "4/4 Metronome", and an outlined pill reading "GO TO STADIUM MODE". Below, two columns at 2:1. The left glass panel dominates: a muted mono header "4/4 Metronome · 4/4 · 120 BPM", a row of small figure chips (Step, Quarter ●···, Eighths ●·●·, Gallop ●·●●, Rev. Gallop ●●·●, 16ths ●●●●, Rest ····), then a 16-step sequencer with a count row "1 e & a 2 e & a…" and four rows with pill labels CLICK amber #FFB800, KICK coral #FF2D55, SNARE cyan #00D4FF, HI-HAT mint #00FF94. Square cells with 6px corners, small gaps grouping them in fours. Show Rock Groove: hits as tinted glowing cells, the first Click as a solid accent. The right column stacks glass cards: a huge 64px neon "120 BPM", a thin slider, an outlined "▶ PLAY" button; a "MEASURE" card; a collapsed "TEMPO TRAINER" card. Smoked glass cards with 12px corners and 1px white-at-8% borders.
+> A dark desktop audio plugin called MetroRig on a near-black #080810 background. Sticky glass header: neon green #39FF14 monospaced logo with a small outlined PRO badge, two dark selectors reading "Click: Digital" and "4/4 Metronome", and an outlined pill reading "GO TO STADIUM MODE". Below, two columns at 2:1. The left glass panel dominates: a muted mono header "4/4 Metronome · 4/4 · 120 BPM", a row of small figure chips (Step, Quarter ●···, Eighths ●·●·, Gallop ●·●●, Rev. Gallop ●●·●, 16ths ●●●●, Rest ····), then a 16-step sequencer with a count row "BEAT/SUB 1 e & a 2 e & a…" and four rows with rectangular labels CLICK amber #FFB800, KICK coral #FF2D55, SNARE cyan #00D4FF, HI-HAT mint #00FF94. Portrait cells with 6px corners, small gaps grouping them in fours. Show Rock Groove: hits as tinted glowing cells with a dot, the first Click as a solid accent with ▲. Under the grid, a mono line "PAT: Rock Groove STEPS: 16/32 RESOLUTION: 1/16th POS: BAR 01 · STEP 01", then four small cards with M and S buttons, one per track. The right column stacks glass cards: "TEMPO BUS" with a huge 64px neon "120 BPM", a thin slider, an outlined "▶ PLAY" button; a "MEASURE" card; an open "TEMPO TRAINER" card. A thin mono footer reads "AUDIO CLOCK: 44.1 kHz 128 SPLS (2.9ms)" and "LATENCY: --". Smoked glass cards with 12px corners and 1px white-at-8% borders.
 
 **Practice Stadium Mode**
 
-> The same dark instrument in a practice view, centred with a barely visible green radial glow. Left: a large circular beat clock with four concentric rings, amber outermost, then coral, cyan and mint innermost, divided into 16 slices with lit slices in the track colour and unlit ones #16161F. A black centre disc, a rounded white hand sweeping from 12 o'clock, and mono numerals 1 2 3 4 outside the rings with the current one neon. Right: a centred stack with a dark selector, a muted mono timer "00:00", a giant 128px neon "120.0" in JetBrains Mono Black, a yellow line "Trainer 120 → 160 BPM · +5 every 4 bars", four 48px solid orbs in track colours, and a neon outlined pill "▶ PLAY".
+> The same dark instrument in a practice view, centred with a barely visible green radial glow. Left: a large circular beat clock with four concentric rings, amber outermost, then coral, cyan and mint innermost, divided into 16 slices with lit slices in the track colour and unlit ones #16161F. A black centre disc, a rounded white hand sweeping from 12 o'clock, and mono numerals 1 2 3 4 outside the rings with the current one neon. Right: a smoked glass panel with a dark selector labelled "SPEED TRAINER ROUTINE", a mono timer "00:00:00" labelled "ELAPSED REHEARSAL", a giant 128px neon "120.0 BPM" in JetBrains Mono Black, a yellow pill "Trainer 120 → 160 BPM · +5 every 4 bars", four 60px rounded squares in track colours with dark icons and names, and a neon outlined rounded rectangle "▶ PLAY".
 
 **Tempo Trainer Card**
 
-> A smoked glass card with 12px corners in a dark audio plugin. Header: small uppercase muted "TEMPO TRAINER", a 7px glowing neon dot, and a chevron at the right. Two-column compact form with tiny uppercase labels above recessed dark fields: checkbox "Trainer Active" across both columns, Start BPM 120, Target BPM 160, Increment 5, Step Value 4, Step Type Measures, Curve Stepped.
+> A smoked glass card with 12px corners in a dark audio plugin. Header: small uppercase muted "TEMPO TRAINER", a 7px glowing neon dot, and a chevron at the right. Two-column compact form with tiny uppercase labels in recessed dark blocks: a "Trainer Active" switch across both columns, Start BPM 120, Target BPM 160, Increment 5, Step Value 4, Step Type Measures, Curve Stepped.
 
 ### Incremental Iteration
 
@@ -353,13 +373,9 @@ Don't invent copy, stats, session history, accounts or genres. Practice logs are
 
 ### Known Drift From This System
 
-The code has these inconsistencies. Follow this document, not the drift:
+These gaps remain in the code. Follow this document, not the drift:
 
-- Field radii vary between 4, 6 and 8px, and the Measure card uses a lighter field style. Use 6px and Recessed Field for fields, 8px for header selectors.
-- `.groove-settings-card` has no padding, so its content touches the card edge. Use 1.25rem.
-- Save Groove and its hover hard-code `#00d4ff`; some fields hard-code `#fff` instead of Bright Fog.
-- `index.html` says "⚡ Stadium Mode" and "Default · 4/4 · 120 BPM", but runtime replaces the button text and any preset load replaces the header. This file uses runtime copy.
-- The README calls Stadium "full-screen", but the header stays visible.
+- The README calls Stadium "full-screen", but the header and status bar stay visible.
 - Keyboard focus styling exists only on form fields, and step cells are not focusable.
-- Editor Mode has no moving playhead on the grid. Don't draw one as if it were an existing feature.
+- Editor Mode has no moving playhead on the grid; `POS` shows the position. Don't draw one as if it were an existing feature.
 - The groove prompt, its confirmation and the 32-step limit message are native browser dialogs with no designed equivalent.

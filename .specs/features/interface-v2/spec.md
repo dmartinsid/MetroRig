@@ -314,8 +314,8 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | RESP-05 | P2: Narrow windows | Tasks | Implementing |
 | RESP-06 | P2: Narrow windows | Tasks | Implementing |
 | RESP-07 | P2: Narrow windows | Tasks | Implementing |
-| DOCS-01 | P3: Design document | Tasks | Pending |
-| DOCS-02 | P3: Design document | Tasks | Pending |
+| DOCS-01 | P3: Design document | Tasks | Implementing |
+| DOCS-02 | P3: Design document | Tasks | Implementing |
 | EDGE-01 | Edge Cases | Tasks | Implementing |
 | EDGE-02 | Edge Cases | Tasks | Implementing |
 | EDGE-03 | Edge Cases | Tasks | Implementing |
