@@ -161,9 +161,9 @@ T16 → T17 → T18 → T19
 
 **Done when**:
 
-- [ ] `npm run build:wasm` output is committed
-- [ ] `tests/wasm.test.ts` asserts `engine_set_bars` is exported
-- [ ] Gate check passes: `cargo test && npx vitest run && npx vite build`
+- [x] `npm run build:wasm` output is committed
+- [x] `tests/wasm.test.ts` asserts `engine_set_bars` is exported
+- [x] Gate check passes: `cargo test && npx vitest run && npx vite build`
 
 **Tests**: unit
 **Gate**: build
