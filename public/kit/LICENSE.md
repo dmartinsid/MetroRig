@@ -2,7 +2,15 @@
 
 Each file in this folder is one hit, trimmed, faded and peak-normalized to -1 dBFS, at 44.1 kHz, 16-bit, stereo.
 
-`/kick.wav`, `/snare.wav` and `/hihat.wav`, in `public/`, are this project's own, written by `scripts/generate_samples.js`.
+## Earlier samples
+
+`/kick.wav`, `/snare.wav` and `/hihat.wav` sit in `public/`, and are not processed like the files above.
+
+| File | Source | License |
+| ---- | ------ | ------- |
+| `kick.wav` | "Classic Heavy Metal Drums" by Hellforge Studio, added by hand | Unconfirmed: no terms on record |
+| `snare.wav` | "Classic Heavy Metal Drums" by Hellforge Studio, added by hand | Unconfirmed: no terms on record |
+| `hihat.wav` | `hihat-close.wav` from https://github.com/ArunMichaelDsouza/javascript-30-course | That repository is MIT; the sample's own origin is not stated |
 
 SM Drums was the first choice. Its package, checked on 2026-11-01, holds no license terms and its author's site states none, so it is not shipped.
 

@@ -11,7 +11,7 @@ MetroRig's header has no navigation, its only factory grooves are generic patter
 - [ ] The header links open all three screens at 1440, 1024 and 390px wide
 - [ ] The 14 songs of `context.md` load and play at their source tempo
 - [ ] Every song cites a Songsterr link and revision
-- [ ] Every drum piece has a license that allows redistribution, recorded in the repository
+- [ ] Every drum piece has a license that allows redistribution, recorded in the repository. Not met since 2026-11-01: the user brought back the earlier Kick, Snare and Hi-hat, whose terms are unconfirmed; `public/kit/LICENSE.md` records them
 - [ ] Every saved preset and groove keeps working, and every existing test not changed by this spec still passes
 
 ## Out of Scope
@@ -85,7 +85,7 @@ MetroRig's header has no navigation, its only factory grooves are generic patter
 
 1. The system SHALL hold 11 tracks in this order: `Click`, `Kick`, `Snare`, `Hi-hat`, `Open Hat`, `Ride`, `Ride Bell`, `Crash`, `China`, `High Tom`, `Floor Tom`.
 2. WHEN a step of a drum track is active THEN the engine SHALL play that track's sample on that step.
-3. `Kick`, `Snare` and `Hi-hat` SHALL keep the samples of `scripts/generate_samples.js`, and the other 7 drum samples SHALL come from the Open Source Drumkit with one CC0 China hit, with each origin recorded in the repository.
+3. `Kick`, `Snare` and `Hi-hat` SHALL keep the earlier samples, and the other 7 drum samples SHALL come from the Open Source Drumkit with one CC0 China hit, with each origin recorded in the repository.
 4. WHEN a `Hi-hat` step plays while `Open Hat` rings THEN the engine SHALL stop `Open Hat`.
 5. IF every track sounds on one step THEN the engine SHALL keep each output sample within -1.0 to 1.0.
 6. IF a drum sample fails to load THEN the system SHALL log the failure, keep that track silent and keep the other tracks playing.
