@@ -1839,6 +1839,23 @@ describe('Grooves Library', () => {
     await clickPlay();
   });
 
+  it('grv_08 switch while the kit still loads', async () => {
+    await openPage();
+    let kitReady = () => {};
+    mockInit.mockImplementationOnce(() => new Promise<void>(resolve => { kitReady = resolve; }));
+
+    await pressPlay('Back in Black');
+    await pressPlay('Battery');
+    kitReady();
+    await flush();
+
+    expect(calls('start')).toHaveLength(1);
+    expect(calls('stop')).toHaveLength(0);
+    expect(byId('pattern-name').textContent).toBe('PAT: Battery');
+    expect(songButton('Battery', '.song-play').textContent).toBe('■');
+    await clickPlay();
+  });
+
   it('grv_11 asks before replacing edits', async () => {
     const asked = vi.fn(() => true);
     vi.stubGlobal('confirm', asked);
@@ -1851,6 +1868,11 @@ describe('Grooves Library', () => {
     await pressPlay('Cocaine');
     expect(asked).toHaveBeenCalledOnce();
     expect(byId('pattern-name').textContent).toBe('PAT: Cocaine');
+
+    cell(1, 1).click();
+    await selectPreset('song:song_enter_sandman'); // The preset selector loads songs too
+    expect(asked).toHaveBeenCalledTimes(2);
+    expect(byId('pattern-name').textContent).toBe('PAT: Enter Sandman');
     await clickPlay();
   });
 
@@ -1870,6 +1892,11 @@ describe('Grooves Library', () => {
     expect(audioCalls).toEqual([]);
     expect(byId('btn-play').classList.contains('playing')).toBe(true);
     expect(shownScreens()).toEqual(['grooves-view']);
+
+    await selectPreset('song:song_cocaine'); // Declined in the preset selector as well
+    expect(byId('pattern-name').textContent).toBe('PAT: Battery');
+    expect(byId('preset-selector').value).toBe('song:song_battery');
+    expect(cell(8, 1).classList.contains('active')).toBe(true);
     await clickPlay();
   });
 

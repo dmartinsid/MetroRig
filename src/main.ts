@@ -82,6 +82,7 @@ const grooveSelector = document.getElementById('groove-selector') as HTMLSelectE
 const btnSaveGroove = document.getElementById('btn-save-groove') as HTMLButtonElement;
 
 let hasUnsavedEdits = false;
+let selectedPresetValue = 'factory:default'; // Where the selector returns when a load is declined
 
 // Helper to show save button when preset is modified
 function markPresetAsModified() {
@@ -453,7 +454,11 @@ function resetPosition() {
   patternPosValue.textContent = formatBarStep(1, 1);
 }
 
+// The first Play waits for the kit to load, and a song pressed meanwhile must not stop it
+let isStarting = false;
+
 function togglePlay() {
+  isStarting = !state.isPlaying;
   initAudio().then(() => {
     if (state.isPlaying) {
       audioNode.stop();
@@ -481,6 +486,8 @@ function togglePlay() {
       timerInterval = setInterval(updatePracticeTimer, 1000);
       updateSongCards();
     }
+  }).finally(() => {
+    isStarting = false;
   });
 }
 
@@ -705,7 +712,10 @@ presetSelector.onchange = () => {
     }
   } else if (val.startsWith('song:')) {
     const song = SONGS.find(s => s.id === val.replace('song:', ''));
-    if (song) loadPresetIntoUI(songToPreset(song));
+    if (song && !useSong(song)) {
+      presetSelector.value = selectedPresetValue;
+      syncStadiumPresetSelector();
+    }
   } else if (val.startsWith('user:')) {
     const pid = val.replace('user:', '');
     state.getAllPresets().then(userPresets => {
@@ -801,6 +811,7 @@ function loadPresetIntoUI(storedPreset: StoredPreset) {
   stadiumBpm.innerText = shownBpm.toFixed(1);
   updateStadiumStatus();
   hasUnsavedEdits = false;
+  selectedPresetValue = presetSelector.value;
   updateSongCards();
 }
 
@@ -825,6 +836,7 @@ btnSave.onclick = () => {
     populatePresetsDropdown(`user:${id}`);
     presetNameInput.value = '';
     hasUnsavedEdits = false;
+    selectedPresetValue = `user:${id}`;
     updateSongCards();
     gsap.killTweensOf(saveToast);
     gsap.to(saveToast, {
@@ -1067,7 +1079,7 @@ function useSong(song: Song): boolean {
 function playSong(song: Song) {
   const loaded = isSongLoaded(song);
   if (!useSong(song)) return;
-  if (loaded || !state.isPlaying) togglePlay(); // Playing another song carries on at its tempo
+  if (loaded || !(state.isPlaying || isStarting)) togglePlay(); // Playing another song carries on at its tempo
 }
 
 function updateSongCards() {
