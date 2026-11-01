@@ -27,7 +27,7 @@ colors:
 typography:
   stadium-bpm:
     fontFamily: JetBrains Mono
-    fontSize: 128px
+    fontSize: 156px
     fontWeight: '900'
     lineHeight: '1'
     letterSpacing: -0.05em
@@ -107,7 +107,7 @@ Source of truth: `README.md`, `index.html`, `src/index.css`, `src/main.ts`, `src
 
 MetroRig is an instrument, not a website. Its own redesign commit names the target: "DAW plugin premium style with glassmorphism and track colors". Picture a rack unit in a dark studio: a near-black, faintly blue room, smoked-glass panels floating on it, and one electric phosphor green that says the machine is alive. Four saturated track colours are the only other voices, and each one always means the same instrument.
 
-The density is that of pro audio gear. Controls sit tight, spacing stays under 24px, and labels are small, uppercase and tracked. The contrast comes from scale: a 128px monospaced tempo readout in Stadium sits beside 11px field labels. Numbers are the display; everything else is a label for a number.
+The density is that of pro audio gear. Controls sit tight, spacing stays under 24px, and labels are small, uppercase and tracked. The contrast comes from scale: a 156px monospaced tempo readout in Stadium sits beside 11px field labels. Numbers are the display; everything else is a label for a number.
 
 The product promise is "rock-solid timing accuracy", so the interface has to feel exact. Motion follows the audio clock, not decoration. Nothing flashes: a code comment says the orbs "keep a steady color and only nudge in size, avoiding luminance flashes", and the Stadium background flash was deliberately replaced by the rotating beat clock.
 
@@ -183,7 +183,7 @@ The repo defines no success, warning or error colours, and this file deliberatel
 
 | Role | Font | Size | Weight | Tracking | Other |
 |:---|:---|:---|:---|:---|:---|
-| Stadium tempo | Mono | 8rem | 900 | -0.05em | Neon, 30px glow, line-height 1 |
+| Stadium tempo | Mono | 9.75rem | 900 | -0.05em | Neon, 30px glow, line-height 1 |
 | Editor tempo | Mono | 4rem | 700 | default | Neon, 30px glow, line-height 1 |
 | Logo | Mono | 1.5rem | 700 | 0.08em | Neon, 12px glow |
 | Stadium timer | Mono | 1.5rem | 400 | 0.15em | Bright Fog |
@@ -207,10 +207,10 @@ Line-height is only set where it matters: `1` on tempo readouts, browser default
 
 ### Buttons
 
-- **Play / Stop** (`▶ PLAY` / `■ STOP`): outlined neon on transparent, 1px border, 8px radius, full width, 0.9rem padding. Hover fills neon with Studio Black text and a 20px green glow over 0.2s. In Stadium it is a 250px rounded rectangle with a 2px border. It is never a pill.
+- **Play / Stop** (`▶ PLAY` / `■ STOP`): outlined neon on transparent, 1px border, 8px radius, full width, 0.9rem padding. Hover fills neon with Studio Black text and a 20px green glow over 0.2s. In Stadium it is a 250px rounded rectangle with a 2px border, a hollow triangle and a mono label. It is never a pill.
 - **View toggle** (`GO TO STADIUM MODE` / `GO TO EDITOR MODE`): outlined neon mono pill.
 - **Save**: Dim Green fill, neon text and border, 6px radius; hover fills neon.
-- **Save Groove**: subtle cyan tint, full width, 6px radius.
+- **Save Groove**: subtle cyan tint, full width, 6px radius, a save icon.
 - **Figure buttons**: glass chips with a 6px radius, all mono. Each shows a name plus a pattern of `●` and `·`. The active one has neon text, a neon border and a faint glow.
 
 ### Cards & Panels
@@ -219,7 +219,7 @@ Every panel uses the same recipe: Smoked Glass, 20px backdrop blur, 1px Glass Ed
 
 ### Navigation
 
-There's no navigation beyond a sticky header: glass-black, blurred, with a bottom hairline. Left: `METRORIG` plus a small `PRO` badge. Centre: the click sound and preset selectors. Right: the view toggle. The two views swap in place. Don't add links or icons without a function behind them.
+There's no navigation beyond a sticky header: glass-black, blurred, with a bottom hairline. Left: `METRORIG` plus a small `PRO` badge. Centre: the click sound selector, with a dim `Click:` label beside a bright value, and the preset selector. Right: the view toggle. The two views swap in place. Don't add links or icons without a function behind them.
 
 ### Status Bar
 
@@ -235,7 +235,7 @@ A hairline-topped footer in both modes, mono and small. Left: a lit dot and `AUD
 
 ### Sequencer Grid (hero)
 
-Row 1 starts with `BEAT/SUB`, then the count: `1 e & a 2 e & a 3 e & a 4 e & a`, or `1 & 2 &` when a beat has two steps. Beat numbers sit on a slightly raised background. Below are four rows, each starting with a rectangular outlined track label on a faint tint. Columns are `auto` then equal `1fr` steps with a 0.4rem gap, and a 0.5rem spacer between beats makes the pulse readable at a glance. Cells are 44px tall, at least 14px wide, with a 6px radius and 0.15s transitions.
+Row 1 starts with `BEAT/SUB`, then the count: `1 e & a 2 e & a 3 e & a 4 e & a`, or `1 & 2 &` when a beat has two steps. Beat numbers are bold at full opacity. Below are four rows, each starting with a rectangular outlined track label on a faint tint. Columns are `auto` then equal `1fr` steps with a 0.4rem gap, and a 0.5rem spacer between beats makes the pulse readable at a glance. Cells are 44px tall, at least 14px wide, with a 6px radius and 0.15s transitions.
 
 | Cell state | Value | Treatment |
 |:---|:---|:---|
@@ -274,7 +274,7 @@ Not a floating notification. It's an inline card in the control column, between 
 
 ### Beat Clock
 
-The hero of Stadium: an SVG up to 700px wide (`min(70vh, 90vw)`). Four concentric rings run outside in as Click, Kick, Snare, Hi-hat, each with one annular slice per step and a small gap between rings. Slice fills are track colour when on, a 30% mix when sustained, and Dead Slice when empty, separated by thin Studio Black strokes. Faint lines mark each beat, a dark disc fills the centre around a green hub, and mono numerals sit outside the rings, turning neon on the current beat. A thin white hand at 70% opacity sweeps linearly from the hub, step by step, with a small dot at its tip. A dotted legend sits below the clock.
+The hero of Stadium: an SVG up to 700px wide (`min(70vh, 90vw)`). Four concentric rings run outside in as Click, Kick, Snare, Hi-hat, each with one annular slice per step and a small gap between rings. Empty Kick and Snare slices merge into a continuous ring. Slice fills are track colour when on, a 30% mix when sustained, and Dead Slice when empty, separated by thin Studio Black strokes. Faint lines mark each beat, a small bevelled disc fills the centre around a green hub, and mono numerals sit outside the rings, turning neon on the current beat. A thin white hand at 70% opacity sweeps linearly from the hub, step by step, with a small dot at its tip. A dotted legend sits below the clock.
 
 ### Stadium Readout
 
@@ -358,7 +358,7 @@ Don't invent copy, stats, session history, accounts or genres. Practice logs are
 
 **Practice Stadium Mode**
 
-> The same dark instrument in a practice view, centred with a barely visible green radial glow. Left: a large circular beat clock with four concentric rings, amber outermost, then coral, cyan and mint innermost, divided into 16 slices with lit slices in the track colour and unlit ones #16161F. A black centre disc, a rounded white hand sweeping from 12 o'clock, and mono numerals 1 2 3 4 outside the rings with the current one neon. Right: a smoked glass panel with a dark selector labelled "SPEED TRAINER ROUTINE", a mono timer "00:00:00" labelled "ELAPSED REHEARSAL", a giant 128px neon "120.0 BPM" in JetBrains Mono Black, a yellow pill "Trainer 120 → 160 BPM · +5 every 4 bars", four 60px rounded squares in track colours with dark icons and names, and a neon outlined rounded rectangle "▶ PLAY".
+> The same dark instrument in a practice view, centred with a barely visible green radial glow. Left: a large circular beat clock with four concentric rings, amber outermost, then coral, cyan and mint innermost, divided into 16 slices with lit slices in the track colour and unlit ones #16161F. A black centre disc, a rounded white hand sweeping from 12 o'clock, and mono numerals 1 2 3 4 outside the rings with the current one neon. Right: a smoked glass panel with a dark selector labelled "SPEED TRAINER ROUTINE", a mono timer "00:00:00" labelled "ELAPSED REHEARSAL", a giant 156px neon "120.0 BPM" in JetBrains Mono Black, a yellow pill "Trainer 120 → 160 BPM · +5 every 4 bars", four 60px rounded squares in track colours with dark icons and names, and a neon outlined rounded rectangle "▶ PLAY".
 
 **Tempo Trainer Card**
 

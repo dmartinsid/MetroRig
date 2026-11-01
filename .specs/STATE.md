@@ -41,3 +41,11 @@
 - **Scope**: interface-v2, header
 - **Date**: 2026-10-31
 - **Status**: active (AD-005)
+
+### AD-006
+- **Decision**: A solo dims every silenced row, although `editor.png` draws a lit `S` beside undimmed rows.
+- **Reason**: Q15: "A trilha silenciada fica esmaecida na grade, e seu orb não reage." The user answered "Recomendacoes". The capture's `S` is sample state, and the rule the user approved wins.
+- **Trade-off**: The Editor picture is taken with no solo, so it shows no lit `S`.
+- **Scope**: interface-v2, Mute and Solo
+- **Date**: 2026-10-31
+- **Status**: active (AD-006)
