@@ -307,13 +307,13 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | MUTE-11 | P2: Mute and Solo | Tasks | Implementing |
 | MUTE-12 | P2: Mute and Solo | Tasks | Implementing |
 | MUTE-13 | P2: Mute and Solo | Tasks | Implementing |
-| RESP-01 | P2: Narrow windows | Tasks | Pending |
-| RESP-02 | P2: Narrow windows | Tasks | Pending |
-| RESP-03 | P2: Narrow windows | Tasks | Pending |
-| RESP-04 | P2: Narrow windows | Tasks | Pending |
-| RESP-05 | P2: Narrow windows | Tasks | Pending |
-| RESP-06 | P2: Narrow windows | Tasks | Pending |
-| RESP-07 | P2: Narrow windows | Tasks | Pending |
+| RESP-01 | P2: Narrow windows | Tasks | Implementing |
+| RESP-02 | P2: Narrow windows | Tasks | Implementing |
+| RESP-03 | P2: Narrow windows | Tasks | Implementing |
+| RESP-04 | P2: Narrow windows | Tasks | Implementing |
+| RESP-05 | P2: Narrow windows | Tasks | Implementing |
+| RESP-06 | P2: Narrow windows | Tasks | Implementing |
+| RESP-07 | P2: Narrow windows | Tasks | Implementing |
 | DOCS-01 | P3: Design document | Tasks | Pending |
 | DOCS-02 | P3: Design document | Tasks | Pending |
 | EDGE-01 | Edge Cases | Tasks | Implementing |

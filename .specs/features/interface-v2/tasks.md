@@ -420,9 +420,9 @@ T17
 
 **Done when**:
 
-- [ ] Checked at 1440, 1024, 1023 and 390px
-- [ ] Gate check passes: `npx vitest run && npx vite build`
-- [ ] Test count: 136 tests pass (no silent deletions)
+- [x] Checked at 1440, 1024, 1023 and 390px
+- [x] Gate check passes: `npx vitest run && npx vite build`
+- [x] Test count: 136 tests pass (no silent deletions)
 
 **Tests**: none
 **Gate**: full
