@@ -5,7 +5,7 @@ MetroRig is a modern, high-fidelity Web-based 16-step sequencer, metronome, and 
 ## Features
 
 - **High-Accuracy Audio**: WebAssembly-powered DSP core rendering samples directly inside Web Audio's process loop.
-- **Step Sequencer**: A fully editable grid of up to 32 steps per bar with 11 tracks (Click, Kick, Snare, Hi-hat, Open Hat, Ride, Ride Bell, Crash, China, High Tom, Floor Tom), each hit at ghost, normal or accent.
+- **Step Sequencer**: A fully editable grid of up to 32 steps per bar with 13 tracks (Click, Kick, Snare, Hi-hat, Open Hat, Ride, Ride Bell, Crash, China, High Tom, Mid Tom, Low Tom, Floor Tom), each hit at ghost, normal or accent.
 - **Grooves**: Transcribed drum parts of famous rock, metal, metalcore and blues songs, loaded with their tempo in one click. Each song plays 4 bars of its Songsterr tab, fills included, and cites that tab.
 - **Tempo Trainer**: Increase BPM automatically dynamically over time, supporting both stepped and smooth acceleration models.
 - **Three Screens**:
@@ -42,7 +42,7 @@ To run the metronome locally, you need:
 
 ## Drum Samples
 
-Kick, Snare and Hi-hat are the samples in `public/`. The other 7 pieces, in `public/kit/`, come from public-domain and CC0 sources. `public/kit/LICENSE.md` lists the origin of every file, and which licenses are unconfirmed.
+Kick, Snare, High Tom, Mid Tom, Low Tom and Floor Tom come from The House Kit by [Better Mixes](https://www.youtube.com/@BetterMixes): three recordings per dynamic, three takes of each, in `public/kit/house/`. Thank you, Better Mixes! The Hi-hat, Open Hat, Ride, Ride Bell, Crash and China are single samples from public-domain and CC0 sources, in `public/` and `public/kit/`. `public/kit/LICENSE.md` lists the origin of every file, and which licenses are unconfirmed.
 
 ## Building for Production
 

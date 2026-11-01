@@ -269,4 +269,11 @@ describe('House Kit', () => {
     const section = license.slice(license.indexOf('## The House Kit'));
     expect(section).toContain("The release for general use is the user's account of the video https://www.youtube.com/watch?v=WFS0_5Qsc1w");
   });
+
+  it('hk_30 readme credit', () => {
+    const readme = fs.readFileSync(path.resolve(__dirname, '../README.md'), 'utf8');
+    expect(readme).toContain('[Better Mixes](https://www.youtube.com/@BetterMixes)');
+    expect(readme).toMatch(/Thank you, Better Mixes/);
+    expect(readme).toContain('13 tracks');
+  });
 });
