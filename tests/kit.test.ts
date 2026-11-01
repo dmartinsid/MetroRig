@@ -241,4 +241,32 @@ describe('House Kit', () => {
     const bytes = samples.map(sample => fs.statSync(path.join(publicDir, sample)).size);
     expect(bytes.reduce((total, size) => total + size)).toBeLessThanOrEqual(20 * 1024 * 1024);
   });
+
+  it('hk_28 license facts', () => {
+    const license = fs.readFileSync(path.join(publicDir, 'kit/LICENSE.md'), 'utf8');
+    const section = license.slice(license.indexOf('## The House Kit'));
+    expect(section.startsWith('## The House Kit')).toBe(true);
+    ['The House Kit', 'Better Mixes', 'https://www.youtube.com/@BetterMixes', 'https://www.bettermixes.com/drumsamples',
+      'No written terms were found', '`Blend`', 'no gain', 'Thank you'].forEach(fact => expect(section, fact).toContain(fact));
+
+    // Every shipped file has its source: its piece, recording and take, in the kit's folder
+    const sources: Record<string, string> = {
+      kick: 'Kick/Blend', snare: 'Snare/Blend', 'tom-10': 'Toms/10/Blend', 'tom-12': 'Toms/12/Blend',
+      'tom-14': 'Toms/14/Blend', 'tom-16': 'Toms/16/Blend',
+    };
+    expect(Object.keys(sources).sort()).toEqual(Object.keys(RECORDINGS).sort());
+    Object.entries(RECORDINGS).forEach(([piece, recordings]) => recordings.forEach(recording => {
+      const recorded = recording[0].toUpperCase() + recording.slice(1);
+      expect(section, `${piece}/${recording}`).toContain(
+        `| \`house/${piece}/${recording}-<take>.wav\` | \`${sources[piece]}/${recorded} <take>.wav\` |`);
+    }));
+    expect(section).toContain('`<take>` is 1, 2 or 3');
+    expect(license).not.toMatch(/^Each file in this folder .*peak-normalized to -1 dBFS, at 44\.1/);
+  });
+
+  it('hk_29 release is the user account', () => {
+    const license = fs.readFileSync(path.join(publicDir, 'kit/LICENSE.md'), 'utf8');
+    const section = license.slice(license.indexOf('## The House Kit'));
+    expect(section).toContain("The release for general use is the user's account of the video https://www.youtube.com/watch?v=WFS0_5Qsc1w");
+  });
 });

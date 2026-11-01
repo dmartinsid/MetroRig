@@ -429,8 +429,8 @@ T19 → T20
 
 **Done when**:
 
-- [ ] A test reads each required fact
-- [ ] Gate check passes: `npx vitest run`
+- [x] A test reads each required fact
+- [x] Gate check passes: `npx vitest run`
 
 **Tests**: unit
 **Gate**: quick
