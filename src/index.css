@@ -782,6 +782,7 @@ select:focus {
 
 .trainer-header {
   display: flex;
+  justify-content: space-between;
   align-items: center;
   padding-bottom: 0.6rem;
   border-bottom: 1px solid var(--glass-border);
