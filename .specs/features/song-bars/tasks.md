@@ -334,11 +334,11 @@ T16 → T17 → T18 → T19
 
 **Done when**:
 
-- [ ] The selector shows on 4 bars only and marks the current bar
-- [ ] `drawGrid` draws the bar on screen
-- [ ] A cell and a figure change only that bar
-- [ ] A song loads on bar 1
-- [ ] Gate check passes: `npx vitest run`
+- [x] The selector shows on 4 bars only and marks the current bar
+- [x] `drawGrid` draws the bar on screen
+- [x] A cell and a figure change only that bar
+- [x] A song loads on bar 1
+- [x] Gate check passes: `npx vitest run`
 
 **Tests**: integration
 **Gate**: quick

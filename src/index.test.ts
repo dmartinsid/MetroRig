@@ -2,6 +2,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 import { MetronomeNode } from './audio/MetronomeNode';
+import { SONGS } from './songs';
 
 const mockInit = vi.fn().mockResolvedValue(undefined);
 const mockLoadSample = vi.fn().mockResolvedValue(undefined);
@@ -2027,6 +2028,83 @@ describe('Song Bars', () => {
   };
 
   const barButtons = () => [...document.querySelectorAll<HTMLButtonElement>('#bar-selector .bar-btn')];
+
+  const pressBar = (bar: number) => barButtons()[bar - 1].click();
+  const pressedBars = () => barButtons().filter(button => button.getAttribute('aria-pressed') === 'true').map(button => button.textContent);
+
+  const cell = (trackId: number, step: number) =>
+    document.querySelectorAll<HTMLElement>(`.step-cell[data-track="${trackId}"]`)[step];
+
+  // What the grid shows for a track, as step values
+  const shown = (trackId: number) => [...document.querySelectorAll<HTMLElement>(`.step-cell[data-track="${trackId}"]`)].map(element => {
+    if (element.classList.contains('active')) return 1;
+    if (element.classList.contains('accent')) return 2;
+    return element.classList.contains('ghost') ? 3 : 0;
+  });
+
+  const battery = SONGS.find(song => song.id === 'song_battery')!;
+  const barOf = (trackId: number, bar: number) => (battery.gridData[trackId] ?? new Array(64).fill(0)).slice((bar - 1) * 16, bar * 16);
+
+  it('edit_01 selector on four bars', async () => {
+    await openSong();
+    expect(byId('bar-selector').hidden).toBe(false);
+    expect(barButtons().map(button => button.textContent)).toEqual(['1', '2', '3', '4']);
+  });
+
+  it('edit_02 no selector on one bar', async () => {
+    await openSong();
+    await selectPreset('factory:default');
+    expect(byId('bar-selector').hidden).toBe(true);
+  });
+
+  it('edit_03 press shows the bar', async () => {
+    await openSong();
+    for (const bar of [3, 2, 4, 1]) {
+      pressBar(bar);
+      expect(pressedBars()).toEqual([String(bar)]);
+      expect(shown(1)).toHaveLength(16);
+      for (const trackId of [1, 2, 3, 4, 5, 7]) expect(shown(trackId), `track ${trackId} bar ${bar}`).toEqual(barOf(trackId, bar));
+    }
+  });
+
+  it('edit_04 song loads on bar one', async () => {
+    await openSong();
+    pressBar(3);
+    await selectPreset('song:song_cocaine');
+    expect(pressedBars()).toEqual(['1']);
+    await selectPreset('song:song_battery');
+    expect(shown(1)).toEqual(barOf(1, 1));
+  });
+
+  it('edit_07 cell changes one bar', async () => {
+    await openSong();
+    await clickPlay();
+    pressBar(3);
+    const before = shown(10);
+    cell(10, 5).click();
+    expect(shown(10)).toEqual(before.map((value, step) => (step === 5 ? 1 : value)));
+
+    for (const bar of [1, 2, 4]) {
+      pressBar(bar);
+      expect(shown(10), `bar ${bar}`).toEqual(barOf(10, bar));
+    }
+    const sent = [...calls('updateGrid').filter(([trackId]) => trackId === 10).at(-1)![1]];
+    expect(sent).toEqual((battery.gridData[10] ?? new Array(64).fill(0)).map((value, step) => (step === 37 ? 1 : value)));
+    await clickPlay();
+  });
+
+  it('edit_08 figure stays in the bar', async () => {
+    await openSong();
+    [...document.querySelectorAll<HTMLElement>('.figure-btn')].find(button => button.innerText.startsWith('16ths'))!.click();
+    pressBar(2);
+    cell(10, 4).click();
+    expect(shown(10)).toEqual(barOf(10, 2).map((value, step) => (step >= 4 && step < 8 ? 1 : value)));
+
+    for (const bar of [1, 3, 4]) {
+      pressBar(bar);
+      expect(shown(10), `bar ${bar}`).toEqual(barOf(10, bar));
+    }
+  });
 
   it('the page holds a hidden selector of 4 bars', async () => {
     await openPage();
