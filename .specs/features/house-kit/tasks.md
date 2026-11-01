@@ -510,9 +510,9 @@ T19 → T20
 
 **Done when**:
 
-- [ ] `tests/kit.test.ts` passes on the remaining files
-- [ ] No code refers to a deleted file
-- [ ] Gate check passes: `cargo test && npx vitest run && npx vite build`
+- [x] `tests/kit.test.ts` passes on the remaining files
+- [x] No code refers to a deleted file
+- [x] Gate check passes: `cargo test && npx vitest run && npx vite build`
 
 **Tests**: unit
 **Gate**: build

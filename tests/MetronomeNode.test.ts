@@ -66,7 +66,7 @@ describe('MetronomeNode', () => {
       getChannelData: () => new Float32Array([1, 0.5]),
     });
 
-    await node.loadTake(1, 0, 0, '/kick.wav', 0.5);
+    await node.loadTake(1, 0, 0, '/kit/house/kick/soft-1.wav', 0.5);
 
     const message = mockWorkletNode.port.postMessage.mock.calls.at(-1)![0];
     expect(Array.from(message.leftChannel)).toEqual([0.5, 0.25]);

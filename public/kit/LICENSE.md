@@ -4,12 +4,10 @@ Each file in this folder is one hit, trimmed and faded, at 44.1 kHz, 16-bit, ste
 
 ## Earlier samples
 
-`/kick.wav`, `/snare.wav` and `/hihat.wav` sit in `public/`, and are not processed like the files above.
+`/hihat.wav` sits in `public/`, and is not processed like the files above.
 
 | File | Source | License |
 | ---- | ------ | ------- |
-| `kick.wav` | "Classic Heavy Metal Drums" by Hellforge Studio, added by hand | Unconfirmed: no terms on record |
-| `snare.wav` | "Classic Heavy Metal Drums" by Hellforge Studio, added by hand | Unconfirmed: no terms on record |
 | `hihat.wav` | `hihat-close.wav` from https://github.com/ArunMichaelDsouza/javascript-30-course | That repository is MIT; the sample's own origin is not stated |
 
 SM Drums was the first choice. Its package, checked on 2026-11-01, holds no license terms and its author's site states none, so it is not shipped.
@@ -27,8 +25,6 @@ By Real Music Media. Its author placed the samples in the public domain: "The sa
 | `ride.wav` | `ride/ride-mid-out11.wav` |
 | `ride-bell.wav` | `ride/ride-bell12.wav` |
 | `crash.wav` | `crash/crash25.wav` |
-| `high-tom.wav` | `toms/small-tom36.wav` |
-| `floor-tom.wav` | `toms/large-tom38.wav` |
 
 ## China
 
