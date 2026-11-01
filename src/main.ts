@@ -22,6 +22,7 @@ const btnStadiumPlay = document.getElementById('btn-stadium-play') as HTMLButton
 
 const stadiumBpm = document.getElementById('stadium-bpm') as HTMLElement;
 const stadiumTimer = document.getElementById('stadium-timer') as HTMLElement;
+const editorTimer = document.getElementById('editor-timer') as HTMLElement;
 const stadiumStatus = document.getElementById('stadium-status') as HTMLElement;
 const footerClock = document.getElementById('footer-clock') as HTMLElement;
 const footerLatency = document.getElementById('footer-latency') as HTMLElement;
@@ -393,16 +394,20 @@ function togglePlay() {
       btnStadiumPlay.classList.add('playing');
       
       startTime = Date.now();
+      updateTimers(0);
       timerInterval = setInterval(updatePracticeTimer, 1000);
     }
   });
 }
 
 function updatePracticeTimer() {
-  const elapsed = Math.floor((Date.now() - startTime) / 1000);
-  const mm = String(Math.floor(elapsed / 60)).padStart(2, '0');
-  const ss = String(elapsed % 60).padStart(2, '0');
-  stadiumTimer.innerText = `${mm}:${ss}`;
+  updateTimers(Math.floor((Date.now() - startTime) / 1000));
+}
+
+function updateTimers(seconds: number) {
+  const time = formatTimer(seconds);
+  editorTimer.innerText = time;
+  stadiumTimer.innerText = time;
 }
 
 // Subscriptions & Events

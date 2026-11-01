@@ -794,4 +794,46 @@ describe('Interface V2', () => {
     await openPage();
     expect(byId('footer-latency').textContent).toBe('LATENCY: --');
   });
+
+  it('time_03 play restarts', async () => {
+    await openPage();
+    vi.useFakeTimers();
+    await clickPlay();
+    vi.advanceTimersByTime(3000);
+    expect(byId('editor-timer').innerText).toBe('00:00:03');
+
+    await clickPlay(); // Stop
+    await clickPlay(); // Play again
+    expect(byId('editor-timer').innerText).toBe('00:00:00');
+    expect(byId('stadium-timer').innerText).toBe('00:00:00');
+    await clickPlay();
+  });
+
+  it('time_04 stop keeps value', async () => {
+    await openPage();
+    vi.useFakeTimers();
+    await clickPlay();
+    vi.advanceTimersByTime(5000);
+
+    await clickPlay(); // Stop
+    vi.advanceTimersByTime(5000);
+    expect(byId('editor-timer').innerText).toBe('00:00:05');
+    expect(byId('stadium-timer').innerText).toBe('00:00:05');
+  });
+
+  it('time_06 same time', async () => {
+    localStorage.removeItem('metrorig_view_mode');
+    await openPage();
+    vi.useFakeTimers();
+    await clickPlay();
+    vi.advanceTimersByTime(2000);
+
+    byId<HTMLButtonElement>('btn-toggle-view').click();
+    vi.advanceTimersByTime(1000);
+    expect(byId('stadium-timer').innerText).toBe('00:00:03');
+    expect(byId('editor-timer').innerText).toBe('00:00:03');
+
+    await clickPlay();
+    localStorage.removeItem('metrorig_view_mode');
+  });
 });
