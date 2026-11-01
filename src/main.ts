@@ -328,7 +328,9 @@ function drawGrid() {
     gridContainer.appendChild(count);
   }
 
-  for (const { id: trackId, name } of TRACKS) {
+  for (const [index, { id: trackId, name }] of TRACKS.entries()) {
+    const row = String(index + 2); // Ids are not in grid order
+
     // Label cell
     const label = document.createElement('div');
     label.className = 'track-label';
@@ -336,7 +338,7 @@ function drawGrid() {
     label.innerText = name;
     const silenced = !isAudible(trackMix, trackId);
     label.classList.toggle('silenced', silenced);
-    label.style.gridRow = String(trackId + 2);
+    label.style.gridRow = row;
     label.style.gridColumn = '1';
     gridContainer.appendChild(label);
 
@@ -347,7 +349,7 @@ function drawGrid() {
       const cell = document.createElement('div');
       cell.className = silenced ? 'step-cell silenced' : 'step-cell';
       cell.setAttribute('data-track', String(trackId));
-      cell.style.gridRow = String(trackId + 2);
+      cell.style.gridRow = row;
       cell.style.gridColumn = String(stepColumns[step]);
 
       if (trackSteps[step] === STEP_NORMAL) {

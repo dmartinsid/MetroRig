@@ -42,7 +42,7 @@ To run the metronome locally, you need:
 
 ## Drum Samples
 
-Kick, Snare, High Tom, Mid Tom, Low Tom and Floor Tom come from The House Kit by [Better Mixes](https://www.youtube.com/@BetterMixes): three recordings per dynamic, three takes of each, in `public/kit/house/`. Thank you, Better Mixes! The Hi-hat, Open Hat, Ride, Ride Bell, Crash and China are single samples from public-domain and CC0 sources, in `public/` and `public/kit/`. `public/kit/LICENSE.md` lists the origin of every file, and which licenses are unconfirmed.
+Kick, Snare, High Tom, Mid Tom, Low Tom and Floor Tom come from The House Kit by [Better Mixes](https://www.youtube.com/@BetterMixes): one recording per dynamic, three takes of each, in `public/kit/house/`. Thank you, Better Mixes! The Hi-hat, Open Hat, Ride, Ride Bell, Crash and China are single samples from public-domain and CC0 sources, in `public/` and `public/kit/`. `public/kit/LICENSE.md` lists the origin of every file, and which licenses are unconfirmed.
 
 ## Building for Production
 

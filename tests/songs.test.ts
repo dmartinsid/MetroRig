@@ -1,3 +1,4 @@
+import { createHash } from 'crypto';
 import { describe, it, expect } from 'vitest';
 import { SONGS, songToPreset, songsForGenre } from '../src/songs';
 import { TRACKS } from '../src/kit';
@@ -117,6 +118,21 @@ describe('Songs', () => {
       expect(tomHits(song.id)[12], song.id).toEqual([]);
     });
     expect(tomHits('song_highway_to_hell')[10]).not.toEqual([]);
+
+    // Every other song keeps the grid it had before the feature, read from main at 73f2011
+    const gridsBefore: Record<string, string> = {
+      song_back_in_black: 'dec0fede03df', song_highway_to_hell: '1e19bfe68080', song_the_trooper: '72cba799eacc',
+      song_run_to_the_hills: '2b6e37ce3948', song_enter_sandman: '04906cab4485', song_master_of_puppets: '0c20e0832065',
+      song_tears_dont_fall: 'db9388aeb013', song_scream_aim_fire: '87fc114e0141', song_dont_need_you: 'b7e6d2cb512a',
+      song_cocaine: '6a8b3b216eb0', song_crossroads: 'a8f2ef2fa182', song_thrill_is_gone: 'b570d0730f82',
+      song_every_day: 'c6c617bd86f7',
+    };
+    const others = SONGS.filter(song => song.id !== 'song_battery');
+    expect(others.map(song => song.id).sort()).toEqual(Object.keys(gridsBefore).sort());
+    others.forEach(song => {
+      const grid = createHash('sha1').update(JSON.stringify(song.gridData)).digest('hex').slice(0, 12);
+      expect(grid, song.id).toBe(gridsBefore[song.id]);
+    });
   });
 
   it('bars_03 two different bars', () => {
