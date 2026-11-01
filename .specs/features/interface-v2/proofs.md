@@ -1,7 +1,7 @@
 # interface-v2 proofs
 
-**HEAD**: 2652510
-**Tree**: dirty - .agents/skills/code-review/, .claude/skills/code-review
+**HEAD**: 7dfa684
+**Tree**: clean
 **Shell**: /bin/sh
 **Result**: 89 pass, 0 fail
 
@@ -102,8 +102,8 @@
 `Run js` - exit 0
 
 ```
-   Start at  00:03:19
-   Duration  2.87s (transform 468ms, setup 1ms, collect 689ms, tests 2.55s, environment 1.95s, prepare 681ms)
+   Start at  00:03:40
+   Duration  2.96s (transform 459ms, setup 1ms, collect 591ms, tests 2.68s, environment 1.90s, prepare 592ms)
 
 stderr | src/index.test.ts > Integration Test > should handle click sound variation selector changes, race conditions and fetch rejections
 Failed to load click sample, falling back to digital synth: Error: Fetch failed
