@@ -7,6 +7,7 @@ interface WasmEngineExports {
   engine_stop(ptr: number): void;
   engine_set_bpm(ptr: number, bpm: number): void;
   engine_set_measure_length(ptr: number, length: number): void;
+  engine_set_bars(ptr: number, bars: number): void;
   engine_load_sample(ptr: number, sampleId: number, leftPtr: number, rightPtr: number, length: number): void;
   engine_update_grid(ptr: number, sampleId: number, stepsPtr: number, length: number): void;
   engine_set_trainer(
@@ -29,6 +30,7 @@ interface WasmEngineExports {
 
 // The worklet is served on its own, so it cannot import src/kit.ts
 const TRACK_COUNT = 11;
+const PATTERN_STEPS = 128; // STEPS_COUNT in src/lib.rs
 
 class MetronomeProcessor extends AudioWorkletProcessor {
   private enginePtr: number = 0;
@@ -47,7 +49,7 @@ class MetronomeProcessor extends AudioWorkletProcessor {
   private heapDouble = new Float64Array(0);
 
   // Local mirror of the grid data for computing activeTrackIds on tick
-  private gridMirror: number[][] = Array.from({ length: TRACK_COUNT }, () => new Array(32).fill(0));
+  private gridMirror: number[][] = Array.from({ length: TRACK_COUNT }, () => new Array(PATTERN_STEPS).fill(0));
 
   constructor() {
     super();
@@ -109,13 +111,16 @@ class MetronomeProcessor extends AudioWorkletProcessor {
       case 'SET_MEASURE_LENGTH':
         exports.engine_set_measure_length(this.enginePtr, msg.length);
         break;
+      case 'SET_BARS':
+        exports.engine_set_bars(this.enginePtr, msg.bars);
+        break;
       case 'UPDATE_GRID': {
         const { trackId, steps } = msg;
-        const length = 32;
-        
-        // Padded to 32 steps for Rust engine compatibility
-        const paddedSteps = new Uint8Array(32);
-        paddedSteps.set(steps.subarray(0, Math.min(steps.length, 32)));
+        const length = PATTERN_STEPS;
+
+        // Padded for Rust engine compatibility
+        const paddedSteps = new Uint8Array(length);
+        paddedSteps.set(steps.subarray(0, Math.min(steps.length, length)));
 
         this.gridMirror[trackId] = Array.from(paddedSteps);
 

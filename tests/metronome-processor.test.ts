@@ -18,6 +18,7 @@ function fakeEngine() {
     block: 0,
     growDuringNextBlock: false,
     tickOnBlocks: new Set<number>(),
+    tickStep: 0,
     exports: {
       memory,
       engine_new: () => 1,
@@ -30,6 +31,7 @@ function fakeEngine() {
       engine_update_grid: vi.fn(),
       engine_start: vi.fn(),
       engine_set_bpm: vi.fn(),
+      engine_set_bars: vi.fn(),
       engine_set_trainer: vi.fn(),
       engine_replace_trainer: vi.fn(),
       engine_process: (_ptr: number, outL: number, outR: number, length: number) => {
@@ -45,7 +47,7 @@ function fakeEngine() {
       engine_get_tick: (_ptr: number, bpmPtr: number) => {
         if (!engine.tickOnBlocks.has(engine.block)) return -1;
         new RealFloat64Array(memory.buffer)[bpmPtr / 8] = 120;
-        return 0;
+        return engine.tickStep;
       },
     },
   };
@@ -154,7 +156,30 @@ describe('Worklet', () => {
 
     const tick = processor.port.postMessage.mock.calls.find(([msg]) => msg.type === 'TICK')!;
     expect(tick[0].activeTrackIds).toEqual([1, 8, 10]);
-    expect(engine.exports.engine_update_grid).toHaveBeenCalledWith(1, 10, expect.any(Number), 32);
+    expect(engine.exports.engine_update_grid).toHaveBeenCalledWith(1, 10, expect.any(Number), 128);
+  });
+
+  it('reports the tracks of a step past 32', async () => {
+    const engine = fakeEngine();
+    engine.tickOnBlocks = new Set([1]);
+    engine.tickStep = 63;
+    const { processor, send, runBlock } = await startProcessor(engine);
+
+    const steps = new Uint8Array(64);
+    steps[63] = 1;
+    send({ type: 'UPDATE_GRID', trackId: 2, steps });
+    runBlock();
+
+    const tick = processor.port.postMessage.mock.calls.find(([msg]) => msg.type === 'TICK')!;
+    expect(tick[0].beatIndex).toBe(63);
+    expect(tick[0].activeTrackIds).toEqual([2]);
+  });
+
+  it('passes the bar count to the engine', async () => {
+    const engine = fakeEngine();
+    const { send } = await startProcessor(engine);
+    send({ type: 'SET_BARS', bars: 4 });
+    expect(engine.exports.engine_set_bars).toHaveBeenCalledWith(1, 4);
   });
 
   it('rt_02 reuses heap views', async () => {
