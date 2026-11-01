@@ -25,7 +25,7 @@
 | C14 | `tests/state.test.ts` `bpm_06 expands legacy steps` | yes |
 | C15 | `tests/state.test.ts` `bpm_07 rounds expanded bpm` | yes |
 | C16 | `tests/state.test.ts` `bpm_08 caps expanded bpm` | yes |
-| C17 | `src/lib.rs` `train_01_first_hit_at_start_bpm` | yes - stepped by bars only; `start()` does not branch on the mode |
+| C17 | `src/lib.rs` `train_01_first_hit_at_start_bpm` | yes - stepped by bars and Smooth; the Smooth case was added after PR review, not judged by the Verifier, and failed before the fix |
 | C18 | `src/lib.rs` `train_02_bars_change_on_beat_one` | yes |
 | C19 | `src/lib.rs` `train_03_seconds_change_on_beat_one` | yes - `>=` mutated to `>` fails it |
 | C20 | `src/lib.rs` `train_04_smooth_is_continuous` | yes |
@@ -57,8 +57,9 @@
 | C46 | `src/lib.rs` `train_18_preset_counts_a_full_bar` | yes - added by the fix in round 2, not judged by the Verifier; fails when the partial bar is counted (mutation) |
 | C47 | `src/lib.rs` `train_19_new_schedule_counts_from_beat_one` | yes - added after PR review, not judged by the Verifier; failed before the fix |
 | C48 | `src/lib.rs` `train_20_value_edit_keeps_interval_progress` | yes - added after PR review, not judged by the Verifier; failed before the fix |
-| C49 | `src/lib.rs` `train_21_settings_before_first_hit_apply_on_it` | yes - added after PR review, not judged by the Verifier; failed before the fix |
+| C49 | `src/lib.rs` `train_21_settings_before_first_hit_apply_on_it` | yes - added after PR review, not judged by the Verifier; failed before the fix, and its Start BPM and Smooth cases failed before 91eb124 |
 | C50 | `src/index.test.ts` `train_22 preset load shows its start bpm during playback` | yes - added after PR review, not judged by the Verifier; failed before the fix |
+| C51 | `src/lib.rs` `play_04_settings_before_first_hit_keep_it_on_sample_zero` | yes - added after PR review, not judged by the Verifier; failed before 91eb124 |
 
 ## Findings
 

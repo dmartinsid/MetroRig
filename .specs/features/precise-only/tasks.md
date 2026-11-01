@@ -167,7 +167,7 @@ T14 → T15 → T16 → T17 → T18 → T19 → T20
 **Where**: `src/lib.rs`
 **Depends on**: T4
 **Reuses**: `playback_active`, `active_click_amp`
-**Requirement**: PLAY-01, PLAY-02, PLAY-03
+**Requirement**: PLAY-01, PLAY-02, PLAY-03, PLAY-04
 
 **Done when**:
 
@@ -629,6 +629,9 @@ Proof: run rust | test tests::play_02_restart_has_no_leftovers ... ok
 **C39** - Play fires step 0 first (PLAY-03, AC 3)
 Proof: run rust | test tests::play_03_fires_step_zero_first ... ok
 
+**C51** - BPM or Trainer settings sent between Play and the first hit leave it on the first rendered sample (PLAY-04, AC 4)
+Proof: run rust | test tests::play_04_settings_before_first_hit_keep_it_on_sample_zero ... ok
+
 **C40** - A tick renders after base plus output latency (VIS-01, AC 1)
 Proof: run js | ✓ src/index.test.ts > Precise page > vis_01 render waits for latency
 
@@ -648,9 +651,9 @@ Proof: run js | ✓ tests/metronome-processor.test.ts > Worklet > rt_02 reuses h
 
 ## Handoff
 
-**Settled mid-build:** The user asked to review the points in PR comment 6546929446; TRAIN-19 and TRAIN-20 close its TRAIN-06 finding, and the user's words on the superpowers removal are in spec.md. The user approved with "aprovado" after being told batch sub-agents are the default unless they say "inline".
+**Settled mid-build:** The user asked to review the points in PR comment 6546929446; TRAIN-19 and TRAIN-20 close its TRAIN-06 finding, and the user's words on the superpowers removal are in spec.md. For PR comment 6550828806 the user said "vamos zerar esses pontos": the first hit now fires before any timing runs, and PLAY-04 records the first-hit delay found while checking it. The seven scalars on the two Trainer exports stay, because the FFI boundary takes scalars. The user approved with "aprovado" after being told batch sub-agents are the default unless they say "inline".
 **Dispatched:** batch 1 (phases 1-2, T1-T8) - returned, last commit 3de3eee; batch 2 (phases 3-4, T9-T14) - returned at T13; T14 closed by the orchestrator; batch 3 (phase 5, T15-T20) - returned, last commit 31136ea; Verifier at fee8fc7 - returned FAIL with 1 finding
-**Walked:** At http://localhost:3001 with a real click on Play. Editor: no swing control, card titled MEASURE. Blues Shuffle: header `12/8 · 135 BPM`, 24 steps, clicks on steps 0, 6, 12, 18. 4/4 at 120 BPM on the audio clock: 124.8 ms per step, 16 steps per bar. Ligados Trainer: 70 to 72 to 74 every 16 steps; 208.25 ms per step at 72 (ideal 208.33) and 202.93 ms at 74 (ideal 202.70); Editor followed the live BPM and returned to 70 after Stop. No console errors. Chrome reported 10.7 ms base and 56 ms output latency. Audible sound was not judged: the walk measured ticks, not speaker output.
+**Walked:** After comment 6550828806, at http://localhost:3019 with a real click on Play: Start 200, +5 per bar stepped 200 to 230 at about 1.2 s per bar. Loading Ligados during playback showed 70 at once, then 72 and 74 one bar of 72 BPM apart. No console errors. Before that, at http://localhost:3001 with a real click on Play. Editor: no swing control, card titled MEASURE. Blues Shuffle: header `12/8 · 135 BPM`, 24 steps, clicks on steps 0, 6, 12, 18. 4/4 at 120 BPM on the audio clock: 124.8 ms per step, 16 steps per bar. Ligados Trainer: 70 to 72 to 74 every 16 steps; 208.25 ms per step at 72 (ideal 208.33) and 202.93 ms at 74 (ideal 202.70); Editor followed the live BPM and returned to 70 after Stop. No console errors. Chrome reported 10.7 ms base and 56 ms output latency. Audible sound was not judged: the walk measured ticks, not speaker output.
 
 ---
 

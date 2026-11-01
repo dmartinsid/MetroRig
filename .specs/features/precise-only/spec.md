@@ -172,6 +172,7 @@ MetroRig's audio engine already keeps exact time: a measured hour stayed within 
 1. PLAY-01: WHEN the user presses Stop THEN the engine SHALL output silence from the next audio block.
 2. PLAY-02: WHEN the user presses Play after Stop THEN the engine SHALL output no sound left from the previous run.
 3. PLAY-03: WHEN the user presses Play THEN the engine SHALL fire step 0 first.
+4. PLAY-04: WHEN BPM or Trainer settings arrive between Play and the first hit THEN the engine SHALL still fire that hit on the first rendered sample.
 
 **Independent Test**: Stop during a kick sample, press Play with an empty step 0, and confirm silence until the first enabled step.
 
@@ -265,6 +266,7 @@ MetroRig's audio engine already keeps exact time: a measured hour stayed within 
 | PLAY-01 | P1: Clean Stop and Play | Tasks | Verified |
 | PLAY-02 | P1: Clean Stop and Play | Tasks | Verified |
 | PLAY-03 | P1: Clean Stop and Play | Tasks | Verified |
+| PLAY-04 | P1: Clean Stop and Play | Tasks | Verified |
 | VIS-01 | P2: Visual sync | Tasks | Verified |
 | VIS-02 | P2: Visual sync | Tasks | Verified |
 | VIS-03 | P2: Visual sync | Tasks | Verified |
@@ -273,7 +275,7 @@ MetroRig's audio engine already keeps exact time: a measured hour stayed within 
 
 **ID format:** `[CATEGORY]-[NUMBER]`
 
-**Coverage:** 50 total, 50 mapped to tasks, 0 unmapped.
+**Coverage:** 51 total, 51 mapped to tasks, 0 unmapped.
 
 ---
 
