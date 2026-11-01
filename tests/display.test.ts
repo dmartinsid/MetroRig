@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatClock, formatLatency, formatPosition, formatSteps, formatTimer, nextDenominator } from '../src/display';
+import { formatClock, formatBarStep, formatLatency, formatSteps, formatTimer, nextDenominator } from '../src/display';
 
 describe('Display rules', () => {
   it('time_01 timer format', () => {
@@ -26,9 +26,9 @@ describe('Display rules', () => {
   });
 
   it('position label pads bar and step', () => {
-    expect(formatPosition(1, 1)).toBe('POS: BAR 01 · STEP 01');
-    expect(formatPosition(12, 32)).toBe('POS: BAR 12 · STEP 32');
-    expect(formatPosition(100, 3)).toBe('POS: BAR 100 · STEP 03');
+    expect(formatBarStep(1, 1)).toBe('BAR 01 · STEP 01');
+    expect(formatBarStep(12, 32)).toBe('BAR 12 · STEP 32');
+    expect(formatBarStep(100, 3)).toBe('BAR 100 · STEP 03');
   });
 
   it('steps label reads the measure over the engine limit', () => {

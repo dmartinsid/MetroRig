@@ -268,10 +268,10 @@ T17
 
 **Done when**:
 
-- [ ] A save refreshes `PAT`
-- [ ] The tests of the checks for EDIT-03, EDIT-04, EDIT-10, EDIT-11, EDIT-12, EDIT-13, EDIT-14, EDIT-15, EDGE-02, EDGE-03 pass
-- [ ] Gate check passes: `npx vitest run && npx vite build`
-- [ ] Test count: 106 tests pass (no silent deletions)
+- [x] A save refreshes `PAT`
+- [x] The tests of the checks for EDIT-03, EDIT-04, EDIT-10, EDIT-11, EDIT-12, EDIT-13, EDIT-14, EDIT-15, EDGE-02, EDGE-03 pass
+- [x] Gate check passes: `npx vitest run && npx vite build`
+- [x] Test count: 106 tests pass (no silent deletions)
 
 **Tests**: integration
 **Gate**: full

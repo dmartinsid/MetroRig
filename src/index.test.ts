@@ -887,4 +887,96 @@ describe('Interface V2', () => {
     expect(cell(1, 1).innerText).toBe('');
     expect(cell(1, 2).classList.contains('sustain')).toBe(false);
   });
+
+  const position = () => document.querySelector('.pattern-pos')?.textContent;
+
+  it('edit_03 dot lit playing', async () => {
+    await openPage();
+    await clickPlay();
+    expect(byId('sequencer-dot').classList.contains('lit')).toBe(true);
+  });
+
+  it('edit_04 dot unlit stopped', async () => {
+    await openPage();
+    expect(byId('sequencer-dot').classList.contains('lit')).toBe(false);
+
+    await clickPlay();
+    await clickPlay();
+    expect(byId('sequencer-dot').classList.contains('lit')).toBe(false);
+  });
+
+  it('edit_10 pattern name', async () => {
+    await openPage();
+    await selectPreset('factory:rock');
+    expect(byId('pattern-name').textContent).toBe('PAT: Rock Groove');
+
+    byId('preset-name').value = 'My take';
+    byId<HTMLButtonElement>('btn-save').click();
+    await flush();
+    expect(byId('pattern-name').textContent).toBe('PAT: My take');
+  });
+
+  it('edit_11 steps label', async () => {
+    await openPage();
+    expect(byId('pattern-steps').textContent).toBe('STEPS: 16/32');
+
+    await selectPreset('factory:blues');
+    expect(byId('pattern-steps').textContent).toBe('STEPS: 24/32');
+  });
+
+  it('edit_12 resolution label', async () => {
+    await openPage();
+    expect(document.querySelector('.pattern-bar')?.textContent).toContain('RESOLUTION: 1/16th');
+  });
+
+  it('edit_13 stopped position', async () => {
+    await openPage();
+    expect(position()).toBe('POS: BAR 01 · STEP 01');
+  });
+
+  it('edit_14 tick position', async () => {
+    await openPage();
+    await clickPlay();
+
+    tick({ currentBpm: 120, beatIndex: 5 });
+    expect(position()).toBe('POS: BAR 01 · STEP 06');
+  });
+
+  it('edit_15 bar count', async () => {
+    await openPage();
+    await clickPlay();
+
+    tick({ currentBpm: 120, beatIndex: 0 });
+    expect(position()).toBe('POS: BAR 01 · STEP 01');
+    tick({ currentBpm: 120, beatIndex: 15 });
+    tick({ currentBpm: 120, beatIndex: 0 });
+    expect(position()).toBe('POS: BAR 02 · STEP 01');
+    tick({ currentBpm: 120, beatIndex: 15 });
+    tick({ currentBpm: 120, beatIndex: 0 });
+    expect(position()).toBe('POS: BAR 03 · STEP 01');
+  });
+
+  it('edge_02 steps follow', async () => {
+    await openPage();
+    await clickPlay();
+
+    byId('time-sig-num').value = '3';
+    byId('time-sig-num').dispatchEvent(new Event('change'));
+    expect(byId('pattern-steps').textContent).toBe('STEPS: 12/32');
+  });
+
+  it('edge_03 stop resets position', async () => {
+    await openPage();
+    await clickPlay();
+    tick({ currentBpm: 120, beatIndex: 15 });
+    tick({ currentBpm: 120, beatIndex: 0 });
+    tick({ currentBpm: 120, beatIndex: 5 });
+
+    await clickPlay(); // Stop
+    expect(position()).toBe('POS: BAR 01 · STEP 01');
+
+    await clickPlay();
+    tick({ currentBpm: 120, beatIndex: 0 });
+    expect(position()).toBe('POS: BAR 01 · STEP 01');
+  });
 });

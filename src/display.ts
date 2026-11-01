@@ -20,8 +20,8 @@ export function formatLatency(ms: number | null): string {
   return ms === null ? 'LATENCY: --' : `LATENCY: ${ms.toFixed(1)}ms`;
 }
 
-export function formatPosition(bar: number, step: number): string {
-  return `POS: BAR ${pad(bar)} · STEP ${pad(step)}`;
+export function formatBarStep(bar: number, step: number): string {
+  return `BAR ${pad(bar)} · STEP ${pad(step)}`;
 }
 
 export function formatSteps(measureLength: number): string {

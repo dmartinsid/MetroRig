@@ -1,7 +1,7 @@
 import { MetronomeNode, TickDetail } from './audio/MetronomeNode';
 import { StateManager, FACTORY_PRESETS, FACTORY_GROOVES, SPEED_TRAINER_PRESETS, Preset, StoredPreset, TrainerSettings, CustomGroove, FIGURES, getBeatsPerMeasure, getBeatForStep, isSustainedStep, applyFigure, measureLengthFor, normalizePreset, startBpmFor } from './state';
 import { VisualScheduler } from './visualSync';
-import { formatClock, formatLatency, formatTimer } from './display';
+import { formatBarStep, formatClock, formatLatency, formatSteps, formatTimer } from './display';
 import workletUrl from './audio/metronome-processor?url';
 
 declare const gsap: any;
@@ -24,6 +24,10 @@ const stadiumBpm = document.getElementById('stadium-bpm') as HTMLElement;
 const stadiumTimer = document.getElementById('stadium-timer') as HTMLElement;
 const editorTimer = document.getElementById('editor-timer') as HTMLElement;
 const stadiumStatus = document.getElementById('stadium-status') as HTMLElement;
+const sequencerDot = document.getElementById('sequencer-dot') as HTMLElement;
+const patternName = document.getElementById('pattern-name') as HTMLElement;
+const patternSteps = document.getElementById('pattern-steps') as HTMLElement;
+const patternPosValue = document.getElementById('pattern-pos-value') as HTMLElement;
 const footerClock = document.getElementById('footer-clock') as HTMLElement;
 const footerLatency = document.getElementById('footer-latency') as HTMLElement;
 
@@ -311,7 +315,13 @@ function drawGrid() {
     }
   }
 
+  updatePatternBar();
   drawBeatClock();
+}
+
+function updatePatternBar() {
+  patternName.textContent = `PAT: ${state.activePreset.name}`;
+  patternSteps.textContent = formatSteps(state.activePreset.measureLength || 16);
 }
 
 // Draw Stadium beat clock: one ring per track, one slice per step, 12 o'clock is step 0
@@ -387,6 +397,14 @@ function resetBeatClock() {
 // Handle Play/Stop state
 let timerInterval: any = null;
 let startTime = 0;
+let currentBar = 1;
+let lastStep = -1;
+
+function resetPosition() {
+  currentBar = 1;
+  lastStep = -1;
+  patternPosValue.textContent = formatBarStep(1, 1);
+}
 
 function togglePlay() {
   initAudio().then(() => {
@@ -398,6 +416,8 @@ function togglePlay() {
       clearInterval(timerInterval);
       visualScheduler.cancelAll();
       resetBeatClock();
+      resetPosition();
+      sequencerDot.classList.remove('lit');
       bpmNumber.innerText = String(state.activePreset.bpm);
     } else {
       syncAudioSettings();
@@ -405,7 +425,8 @@ function togglePlay() {
       state.isPlaying = true;
       btnPlay.classList.add('playing');
       btnStadiumPlay.classList.add('playing');
-      
+      sequencerDot.classList.add('lit');
+
       startTime = Date.now();
       updateTimers(0);
       timerInterval = setInterval(updatePracticeTimer, 1000);
@@ -558,6 +579,11 @@ function renderTick({ beatIndex, currentBpm, activeTrackIds }: TickDetail) {
   stadiumBpm.innerText = Number(currentBpm).toFixed(1);
 
   updateStadiumStatus();
+
+  // Steps only rise within a bar, so anything else is a wrap to the next one
+  if (beatIndex <= lastStep) currentBar++;
+  lastStep = beatIndex;
+  patternPosValue.textContent = formatBarStep(currentBar, beatIndex + 1);
 
   if (beatIndex === 0) footerLatency.textContent = formatLatency(audioNode.visualDelayMs());
 
@@ -712,6 +738,7 @@ btnSave.onclick = () => {
   
   state.savePreset(newPreset).then(() => {
     state.activePreset = newPreset;
+    updatePatternBar();
     populatePresetsDropdown(`user:${id}`);
     presetNameInput.value = '';
     gsap.killTweensOf(saveToast);

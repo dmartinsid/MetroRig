@@ -61,7 +61,7 @@ flowchart TD
   - `formatTimer(seconds: number): string` - `00:00:00`, with hours past 99 kept
   - `formatClock(sampleRate: number): string` - `AUDIO CLOCK: 44.1 kHz 128 SPLS (2.9ms)`
   - `formatLatency(ms: number | null): string` - `LATENCY: 12.3ms` or `LATENCY: --`
-  - `formatPosition(bar: number, step: number): string` - `POS: BAR 01 · STEP 01`
+  - `formatBarStep(bar: number, step: number): string` - `BAR 01 · STEP 01`, the value after the `POS:` label
   - `formatSteps(measureLength: number): string` - `STEPS: 16/32`
   - `nextDenominator(current: number, direction: 1 | -1): number` - stops at `/4` and `/16`
 - **Dependencies**: None

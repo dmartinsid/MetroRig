@@ -249,19 +249,19 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | SHELL-09 | P1: Rack shell | Tasks | Implementing |
 | EDIT-01 | P1: Editor Mode | Tasks | Pending |
 | EDIT-02 | P1: Editor Mode | Tasks | Implementing |
-| EDIT-03 | P1: Editor Mode | Tasks | Pending |
-| EDIT-04 | P1: Editor Mode | Tasks | Pending |
+| EDIT-03 | P1: Editor Mode | Tasks | Implementing |
+| EDIT-04 | P1: Editor Mode | Tasks | Implementing |
 | EDIT-05 | P1: Editor Mode | Tasks | Implementing |
 | EDIT-06 | P1: Editor Mode | Tasks | Implementing |
 | EDIT-07 | P1: Editor Mode | Tasks | Implementing |
 | EDIT-08 | P1: Editor Mode | Tasks | Implementing |
 | EDIT-09 | P1: Editor Mode | Tasks | Implementing |
-| EDIT-10 | P1: Editor Mode | Tasks | Pending |
-| EDIT-11 | P1: Editor Mode | Tasks | Pending |
-| EDIT-12 | P1: Editor Mode | Tasks | Pending |
-| EDIT-13 | P1: Editor Mode | Tasks | Pending |
-| EDIT-14 | P1: Editor Mode | Tasks | Pending |
-| EDIT-15 | P1: Editor Mode | Tasks | Pending |
+| EDIT-10 | P1: Editor Mode | Tasks | Implementing |
+| EDIT-11 | P1: Editor Mode | Tasks | Implementing |
+| EDIT-12 | P1: Editor Mode | Tasks | Implementing |
+| EDIT-13 | P1: Editor Mode | Tasks | Implementing |
+| EDIT-14 | P1: Editor Mode | Tasks | Implementing |
+| EDIT-15 | P1: Editor Mode | Tasks | Implementing |
 | EDIT-16 | P1: Editor Mode | Tasks | Implementing |
 | EDIT-17 | P1: Editor Mode | Tasks | Pending |
 | EDIT-18 | P1: Editor Mode | Tasks | Pending |
@@ -317,8 +317,8 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | DOCS-01 | P3: Design document | Tasks | Pending |
 | DOCS-02 | P3: Design document | Tasks | Pending |
 | EDGE-01 | Edge Cases | Tasks | Pending |
-| EDGE-02 | Edge Cases | Tasks | Pending |
-| EDGE-03 | Edge Cases | Tasks | Pending |
+| EDGE-02 | Edge Cases | Tasks | Implementing |
+| EDGE-03 | Edge Cases | Tasks | Implementing |
 | EDGE-04 | Edge Cases | Tasks | Pending |
 | EDGE-05 | Edge Cases | Tasks | Pending |
 | EDGE-06 | Edge Cases | Tasks | Pending |
