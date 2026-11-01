@@ -117,6 +117,7 @@ pub struct Engine {
     // Drum samples playback state
     samples: [Option<Sample>; MAX_SAMPLES],
     bank: [[[Option<Sample>; TAKES]; DYNAMICS]; MAX_SAMPLES],
+    next_take: [[usize; DYNAMICS]; MAX_SAMPLES],
     playback_source: [Source; MAX_SAMPLES],
     playback_offsets: [usize; MAX_SAMPLES],
     playback_active: [bool; MAX_SAMPLES],
@@ -196,6 +197,7 @@ impl Engine {
             active_click_amp: 0.0,
             samples: std::array::from_fn(|_| None),
             bank: std::array::from_fn(|_| std::array::from_fn(|_| std::array::from_fn(|_| None))),
+            next_take: [[0; DYNAMICS]; MAX_SAMPLES],
             playback_source: [Source::Single; MAX_SAMPLES],
             playback_offsets: [0; MAX_SAMPLES],
             playback_active: [false; MAX_SAMPLES],
@@ -236,6 +238,7 @@ impl Engine {
             self.recalc_tempo();
         }
 
+        self.next_take = [[0; DYNAMICS]; MAX_SAMPLES];
         self.playback_active = [false; MAX_SAMPLES];
         self.playback_offsets = [0; MAX_SAMPLES];
         self.active_click_amp = 0.0;
@@ -325,8 +328,10 @@ impl Engine {
     // A track with a bank plays it. Only a track without one plays its single sample.
     fn next_source(&mut self, track: usize, step: u8) -> Option<Source> {
         let dynamic = step_dynamic(step);
-        if self.bank[track][dynamic][0].is_some() {
-            return Some(Source::Take(dynamic, 0));
+        let take = self.next_take[track][dynamic];
+        if self.bank[track][dynamic][take].is_some() {
+            self.next_take[track][dynamic] = (take + 1) % TAKES;
+            return Some(Source::Take(dynamic, take));
         }
         self.samples[track].is_some().then_some(Source::Single)
     }
@@ -1980,6 +1985,106 @@ mod tests {
         engine_start(run.ptr);
         let (left, _) = stereo_output(run.ptr, 2);
         assert_eq!(left[0], 0.7 * 0.3);
+    }
+
+    #[test]
+    fn hk_04_takes_rotate_per_dynamic() {
+        let takes = |dynamic: u32, order: [u32; 4]| order.map(|take| take_level(dynamic, take));
+
+        // One dynamic plays 1, 2, 3, 1
+        let run = Run::new(120.0, &[0; 16]);
+        load_bank(&run, 2);
+        set_steps(&run, 2, &[1; 16]);
+        engine_start(run.ptr);
+        assert_eq!(played_steps(&run, 4), takes(1, [0, 1, 2, 0]));
+
+        // Two dynamics in turn keep a rotation each
+        let run = Run::new(120.0, &[0; 16]);
+        load_bank(&run, 2);
+        let mut grid = [0u8; 16];
+        for step in 0..8 {
+            grid[step] = if step % 2 == 0 { 3 } else { 2 };
+        }
+        set_steps(&run, 2, &grid);
+        engine_start(run.ptr);
+        let played = played_steps(&run, 8);
+        let of = |first: usize| [played[first], played[first + 2], played[first + 4], played[first + 6]];
+        assert_eq!(of(0), takes(0, [0, 1, 2, 0]));
+        assert_eq!(of(1), takes(2, [0, 1, 2, 0]));
+
+        // Two tracks in turn keep a rotation each
+        let run = Run::new(120.0, &[0; 16]);
+        load_bank(&run, 1);
+        load_bank(&run, 2);
+        let mut kick = [0u8; 16];
+        let mut snare = [0u8; 16];
+        for step in 0..8 {
+            if step % 2 == 0 { kick[step] = 1 } else { snare[step] = 1 }
+        }
+        set_steps(&run, 1, &kick);
+        set_steps(&run, 2, &snare);
+        engine_start(run.ptr);
+        assert_eq!(played_steps(&run, 4), [
+            take_level(1, 0), take_level(1, 0), take_level(1, 1), take_level(1, 1),
+        ]);
+    }
+
+    #[test]
+    fn hk_05_play_restarts_the_takes() {
+        let run = Run::new(120.0, &[0; 16]);
+        load_bank(&run, 1);
+        load_bank(&run, 2);
+        let mut grid = [0u8; 16];
+        grid[..4].copy_from_slice(&[3, 1, 2, 1]);
+        set_steps(&run, 1, &grid);
+        grid[..4].copy_from_slice(&[0, 0, 0, 0]);
+        grid[4..8].copy_from_slice(&[3, 1, 2, 1]);
+        set_steps(&run, 2, &grid);
+
+        let first_takes = [
+            take_level(0, 0), take_level(1, 0), take_level(2, 0), take_level(1, 1),
+            take_level(0, 0), take_level(1, 0), take_level(2, 0), take_level(1, 1),
+        ];
+        engine_start(run.ptr);
+        assert_eq!(played_steps(&run, 8), first_takes);
+        engine_stop(run.ptr);
+
+        // The same 8 steps, from take 1 on both tracks and all 3 dynamics
+        engine_start(run.ptr);
+        assert_eq!(played_steps(&run, 8), first_takes);
+    }
+
+    #[test]
+    fn hk_33_loop_keeps_the_rotation() {
+        let run = Run::new(120.0, &[0; 4]); // A bar of 4 steps
+        load_bank(&run, 1);
+        set_steps(&run, 1, &[1, 0, 0, 1]);
+        engine_start(run.ptr);
+        let played = played_steps(&run, 12);
+        let hits: Vec<f32> = played.into_iter().filter(|&level| level != 0.0).collect();
+        assert_eq!(hits, [0, 1, 2, 0, 1, 2].map(|take| take_level(1, take)));
+    }
+
+    #[test]
+    fn hk_34_changed_dynamic_uses_its_next_take() {
+        let run = Run::new(120.0, &[0; 16]);
+        load_bank(&run, 2);
+        set_steps(&run, 2, &[1; 16]);
+        engine_start(run.ptr);
+        let step = step_samples(SR, 120.0);
+        let (left, _) = stereo_output(run.ptr, (1.5 * step) as usize); // Steps 0 and 1
+        assert_eq!(left[2], take_level(1, 0));
+        assert_eq!(left[step.ceil() as usize + 2], take_level(1, 1));
+
+        // The step's next hit plays the new dynamic's next take: its first
+        set_steps(&run, 2, &[2; 16]);
+        let (left, _) = stereo_output(run.ptr, step as usize);
+        assert_eq!(left.into_iter().find(|&level| level != 0.0), Some(take_level(2, 0)));
+
+        // Back on the old dynamic, its rotation goes on from where it stopped
+        set_steps(&run, 2, &[1; 16]);
+        let (left, _) = stereo_output(run.ptr, step as usize);
+        assert_eq!(left.into_iter().find(|&level| level != 0.0), Some(take_level(1, 2)));
     }
 
     #[test]

@@ -176,11 +176,11 @@ T19 → T20
 
 **Done when**:
 
-- [ ] Takes play 1, 2, 3, 1
-- [ ] Play restarts on take 1
-- [ ] The loop keeps the rotation
-- [ ] A dynamic changed mid-play takes that dynamic's next take
-- [ ] Gate check passes: `cargo test`
+- [x] Takes play 1, 2, 3, 1
+- [x] Play restarts on take 1
+- [x] The loop keeps the rotation
+- [x] A dynamic changed mid-play takes that dynamic's next take
+- [x] Gate check passes: `cargo test`
 
 **Tests**: unit
 **Gate**: rust
