@@ -247,7 +247,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | SHELL-07 | P1: Rack shell | Tasks | Implementing |
 | SHELL-08 | P1: Rack shell | Tasks | Implementing |
 | SHELL-09 | P1: Rack shell | Tasks | Implementing |
-| EDIT-01 | P1: Editor Mode | Tasks | Pending |
+| EDIT-01 | P1: Editor Mode | Tasks | Implementing |
 | EDIT-02 | P1: Editor Mode | Tasks | Implementing |
 | EDIT-03 | P1: Editor Mode | Tasks | Implementing |
 | EDIT-04 | P1: Editor Mode | Tasks | Implementing |
