@@ -292,9 +292,9 @@ T16 → T17 → T18 → T19
 
 **Done when**:
 
-- [ ] `syncMeterAndGrid` sends the bars
-- [ ] `POS` and `STEPS` read the real bar and step
-- [ ] Gate check passes: `npx vitest run`
+- [x] `syncMeterAndGrid` sends the bars
+- [x] `POS` and `STEPS` read the real bar and step
+- [x] Gate check passes: `npx vitest run`
 
 **Tests**: integration
 **Gate**: quick

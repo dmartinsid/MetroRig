@@ -24,6 +24,7 @@ vi.mock('./audio/MetronomeNode', () => {
       stop = recorded('stop');
       setBpm = recorded('setBpm');
       setMeasureLength = recorded('setMeasureLength');
+      setBars = recorded('setBars');
       updateGrid = recorded('updateGrid');
       setTrainer = recorded('setTrainer');
       replaceTrainer = recorded('replaceTrainer');
@@ -2007,5 +2008,74 @@ describe('Grooves Library', () => {
     await flush();
     expect(shownScreens()).toEqual(['grooves-view']);
     expect(byId('pattern-name').textContent).not.toContain('Battery');
+  });
+});
+
+describe('Song Bars', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+    delete (globalThis as any).indexedDB;
+    localStorage.removeItem('metrorig_view_mode');
+    mockGsap.fromTo.mockClear();
+  });
+
+  const openSong = async (id = 'song_battery') => {
+    const stores = await openPage();
+    await selectPreset(`song:${id}`);
+    return stores;
+  };
+
+  it('sends the bar count with every pattern', async () => {
+    await openSong();
+    await clickPlay();
+    expect(lastCall('setMeasureLength')).toEqual([16]);
+    expect(lastCall('setBars')).toEqual([4]);
+    expect(calls('updateGrid').find(([trackId]) => trackId === 1)![1]).toHaveLength(64);
+
+    await selectPreset('factory:default');
+    expect(lastCall('setBars')).toEqual([1]);
+    await clickPlay();
+  });
+
+  it('count_03 position by bar', async () => {
+    await openSong();
+    await clickPlay();
+
+    tick({ currentBpm: 194, beatIndex: 0 });
+    expect(byId('pattern-pos-value').textContent).toBe('BAR 01 · STEP 01');
+    tick({ currentBpm: 194, beatIndex: 15 });
+    expect(byId('pattern-pos-value').textContent).toBe('BAR 01 · STEP 16');
+    tick({ currentBpm: 194, beatIndex: 16 });
+    expect(byId('pattern-pos-value').textContent).toBe('BAR 02 · STEP 01');
+    tick({ currentBpm: 194, beatIndex: 37 });
+    expect(byId('pattern-pos-value').textContent).toBe('BAR 02 · STEP 06');
+    tick({ currentBpm: 194, beatIndex: 48 });
+    tick({ currentBpm: 194, beatIndex: 0 }); // The pattern wraps, the count goes on
+    expect(byId('pattern-pos-value').textContent).toBe('BAR 04 · STEP 01');
+    await clickPlay();
+  });
+
+  it('count_04 steps over the limit', async () => {
+    await openPage();
+    expect(byId('pattern-steps').textContent).toBe('STEPS: 16/128');
+    await selectPreset('song:song_battery');
+    expect(byId('pattern-steps').textContent).toBe('STEPS: 64/128');
+  });
+
+  it('bars_07 saved song keeps four bars', async () => {
+    const stores = await openSong();
+    byId('preset-name').value = 'My Battery';
+    byId<HTMLButtonElement>('btn-save').click();
+    await flush();
+
+    const saved = [...stores.presets.values()].find((preset: any) => preset.name === 'My Battery') as any;
+    expect(saved.bars).toBe(4);
+    expect(saved.gridData[1]).toHaveLength(64);
+
+    await selectPreset('factory:default');
+    await selectPreset(`user:${saved.id}`);
+    expect(byId('pattern-steps').textContent).toBe('STEPS: 64/128');
+    expect(byId('pattern-name').textContent).toBe('PAT: My Battery');
   });
 });
