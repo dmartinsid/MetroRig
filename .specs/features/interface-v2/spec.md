@@ -269,7 +269,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | EDIT-20 | P1: Editor Mode | Tasks | Pending |
 | EDIT-21 | P1: Editor Mode | Tasks | Pending |
 | EDIT-22 | P1: Editor Mode | Tasks | Pending |
-| EDIT-23 | P1: Editor Mode | Tasks | Pending |
+| EDIT-23 | P1: Editor Mode | Tasks | Implementing |
 | EDIT-24 | P1: Editor Mode | Tasks | Pending |
 | EDIT-25 | P1: Editor Mode | Tasks | Pending |
 | EDIT-26 | P1: Editor Mode | Tasks | Pending |

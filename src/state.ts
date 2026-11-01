@@ -397,7 +397,7 @@ export const FACTORY_PRESETS: Preset[] = [
 
 // Each factory groove is the drum part of the preset with the same id
 export const FACTORY_GROOVES: { id: string; name: string; length: number; tracks: Record<number, number[]> }[] =
-  ['rock', 'metal', 'blues', 'jazz'].map(id => {
+  ['rock', 'metal', 'blues', 'jazz', 'metalcore'].map(id => {
     const { name, measureLength, gridData } = FACTORY_PRESETS.find(preset => preset.id === id)!;
     const drumTrack = (trackId: number) => gridData[trackId].slice(0, measureLength);
     return { id, name, length: measureLength, tracks: { 1: drumTrack(1), 2: drumTrack(2), 3: drumTrack(3) } };

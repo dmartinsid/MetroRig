@@ -136,10 +136,10 @@ T17
 
 **Done when**:
 
-- [ ] Existing groove tests still pass
-- [ ] The tests of the checks for EDIT-23 pass
-- [ ] Gate check passes: `npx vitest run`
-- [ ] Test count: 68 tests pass (no silent deletions)
+- [x] Existing groove tests still pass
+- [x] The tests of the checks for EDIT-23 pass
+- [x] Gate check passes: `npx vitest run`
+- [x] Test count: 68 tests pass (no silent deletions)
 
 **Tests**: unit
 **Gate**: quick
