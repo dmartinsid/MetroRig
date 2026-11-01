@@ -134,8 +134,8 @@ T19 → T20
 
 **Done when**:
 
-- [ ] A test plays a sample on track 12
-- [ ] Gate check passes: `cargo test`
+- [x] A test plays a sample on track 12
+- [x] Gate check passes: `cargo test`
 
 **Tests**: unit
 **Gate**: rust
