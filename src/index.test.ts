@@ -395,8 +395,8 @@ describe('Precise page', () => {
     const grooves = byId<HTMLSelectElement>('groove-selector');
     grooves.value = 'factory:metal';
     grooves.dispatchEvent(new Event('change'));
-    expect(lastCall('updateGrid')[0]).toBe(3);
-    expect([...lastCall('updateGrid')[1]]).toEqual(new Array(12).fill(1));
+    const hiHatSent = calls('updateGrid').filter(([trackId]) => trackId === 3).at(-1)!;
+    expect([...hiHatSent[1]]).toEqual(new Array(12).fill(1));
 
     const trainerEdits: [string, string, Record<string, unknown>][] = [
       ['trainer-start', '90', { startBpm: 90 }],
@@ -1182,7 +1182,7 @@ describe('Interface V2', () => {
     expect(document.querySelectorAll('.step-cell.silenced')).toHaveLength(16);
 
     byId<HTMLButtonElement>('solo-2').click(); // Solo silences every other track
-    expect(new Set(silencedTracks('.step-cell'))).toEqual(new Set(['0', '1', '3']));
+    expect(new Set(silencedTracks('.step-cell'))).toEqual(new Set(['0', '1', '3', '4', '5', '6', '7', '8', '9', '10']));
   });
 
   it('mute_08 orb still', async () => {
@@ -1466,5 +1466,79 @@ describe('Grooves Library', () => {
     expect(calls('start')).toHaveLength(1);
     expect(byId('btn-play').classList.contains('playing')).toBe(true);
     await clickPlay();
+  });
+
+  const cell = (trackId: number, step: number) =>
+    document.querySelectorAll<HTMLElement>(`.step-cell[data-track="${trackId}"]`)[step];
+
+  // Clicks a cell and returns what it shows afterwards
+  const stepThrough = (trackId: number) => {
+    const seen = [];
+    for (let i = 0; i < 4; i++) {
+      cell(trackId, 1).click();
+      seen.push([...cell(trackId, 1).classList].filter(name => ['active', 'accent', 'ghost'].includes(name)).join());
+    }
+    return seen;
+  };
+
+  it('edt_01 grid holds every track', async () => {
+    await openPage();
+
+    expect([...document.querySelectorAll('.track-label')].map(label => (label as HTMLElement).innerText)).toEqual([
+      'Click', 'Kick', 'Snare', 'Hi-hat', 'Open Hat', 'Ride', 'Ride Bell', 'Crash', 'China', 'High Tom', 'Floor Tom',
+    ]);
+    expect(document.querySelectorAll('.step-cell')).toHaveLength(11 * 16);
+  });
+
+  it('dyn_02 drum cell cycle', async () => {
+    await openPage();
+    expect(stepThrough(8)).toEqual(['active', 'accent', 'ghost', '']);
+  });
+
+  it('dyn_03 click cell cycle', async () => {
+    await openPage();
+    expect(stepThrough(0)).toEqual(['active', 'accent', '', 'active']);
+  });
+
+  it('dyn_04 cell symbols', async () => {
+    await openPage();
+    const symbols = [];
+    for (let i = 0; i < 3; i++) {
+      cell(2, 1).click();
+      symbols.push(cell(2, 1).innerText);
+    }
+    expect(symbols).toEqual(['●', '▲', '•']);
+  });
+
+  it('dyn_05 figure writes normal', async () => {
+    await openPage();
+    cell(9, 1).click();
+    cell(9, 1).click(); // Accent, so the stamp must overwrite it
+
+    [...document.querySelectorAll<HTMLElement>('.figure-btn')].find(btn => btn.innerText.startsWith('16ths'))!.click();
+    cell(9, 0).click();
+
+    expect([0, 1, 2, 3].map(step => cell(9, step).classList.contains('active'))).toEqual([true, true, true, true]);
+  });
+
+  it('dyn_06 dynamics survive save and load', async () => {
+    const stores = await openPage();
+    cell(1, 0).click();
+    cell(1, 0).click();
+    cell(2, 0).click();
+    cell(2, 0).click();
+    cell(2, 0).click();
+    byId('preset-name').value = 'Dynamics';
+    byId<HTMLButtonElement>('btn-save').click();
+    await flush();
+
+    const saved = [...stores.presets.values()].find(preset => preset.name === 'Dynamics');
+    expect(saved.gridData[1][0]).toBe(2);
+    expect(saved.gridData[2][0]).toBe(3);
+
+    await selectPreset('factory:rock');
+    await selectPreset(`user:${saved.id}`);
+    expect(cell(1, 0).classList.contains('accent')).toBe(true);
+    expect(cell(2, 0).classList.contains('ghost')).toBe(true);
   });
 });
