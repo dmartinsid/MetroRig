@@ -127,11 +127,11 @@ T24 → T25 → T26 → T27 → T28
 
 **Done when**:
 
-- [ ] `TRACKS` and `STADIUM_GROUPS` match `design.md`
-- [ ] `tests/kit.test.ts` holds the tests of their checks
-- [ ] The tests of the checks for KIT-01, DYN-01, STD-01 that this task reaches pass
-- [ ] Gate check passes: `npx vitest run`
-- [ ] Test count: at least the previous task's count (no silent deletions)
+- [x] `TRACKS` and `STADIUM_GROUPS` match `design.md`
+- [x] `tests/kit.test.ts` holds the tests of their checks
+- [x] The tests of the checks for KIT-01, DYN-01, STD-01 that this task reaches pass
+- [x] Gate check passes: `npx vitest run`
+- [x] Test count: at least the previous task's count (no silent deletions)
 
 **Tests**: unit
 **Gate**: quick
