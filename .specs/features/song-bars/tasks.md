@@ -203,11 +203,11 @@ T16 → T17 → T18 → T19
 
 **Done when**:
 
-- [ ] `Preset.bars` is optional
-- [ ] A preset with no `bars` keeps its steps as 1 bar
-- [ ] `bars` that do not fit the steps fall to 1
-- [ ] `completeKit` fills missing tracks to the whole pattern
-- [ ] Gate check passes: `npx vitest run`
+- [x] `Preset.bars` is optional
+- [x] A preset with no `bars` keeps its steps as 1 bar
+- [x] `bars` that do not fit the steps fall to 1
+- [x] `completeKit` fills missing tracks to the whole pattern
+- [x] Gate check passes: `npx vitest run`
 
 **Tests**: unit
 **Gate**: quick
@@ -520,7 +520,7 @@ Proof: run rust | test tests::pattern_wraps_after_four_bars ... ok
 Proof: run js | ✓ src/index.test.ts > Song Bars > bars_07 saved song keeps four bars
 
 **C8** - A stored preset with no `bars` loads as 1 bar with its steps (SNG-01, AC 8)
-Proof: run js | ✓ tests/state.test.ts > bars_08 no bar count is one bar
+Proof: run js | ✓ tests/state.test.ts > Preset normalization > bars_08 no bar count is one bar
 
 **C9** - A 4-bar pattern shows the selector `1 2 3 4` (BAR-01, AC 1)
 Proof: run js | ✓ src/index.test.ts > Song Bars > edit_01 selector on four bars
@@ -619,7 +619,7 @@ Proof: run js | ✓ src/index.test.ts > Song Bars > edge_01 load during bar thre
 Proof: run js | ✓ src/index.test.ts > Song Bars > edge_02 edits in any bar ask
 
 **C41** - Stored `bars` that do not fit the steps load as 1 bar (Edge Cases, 3)
-Proof: run js | ✓ tests/state.test.ts > edge_03 bars that do not fit
+Proof: run js | ✓ tests/state.test.ts > Preset normalization > edge_03 bars that do not fit
 
 **C42** - The user approves all 14 songs by ear, with the Every Day I Have the Blues tempo decided (Success Criteria, item 1)
 Proof: walk - the user played all 14 songs and approved each one, recorded in Handoff
