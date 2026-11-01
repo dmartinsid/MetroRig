@@ -8,11 +8,11 @@ Stitch proposed a new interface for MetroRig: a DAW rack unit for editing and a 
 
 ## Goals
 
-- [ ] The Editor and Stadium screens match `captures/editor.png` and `captures/stadium.png`, apart from the approved differences
-- [ ] Every value on screen is real
-- [ ] Each track can be muted and soloed without touching presets or the engine
-- [ ] The Editor works at 1440, 1024 and 390px wide
-- [ ] Every existing control keeps working, and every existing test still passes
+- [x] The Editor and Stadium screens match `captures/editor.png` and `captures/stadium.png`, apart from the approved differences
+- [x] Every value on screen is real
+- [x] Each track can be muted and soloed without touching presets or the engine
+- [x] The Editor works at 1440, 1024 and 390px wide
+- [x] Every existing control keeps working, and every existing test still passes
 
 ## Out of Scope
 
@@ -242,93 +242,93 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| SHELL-01 | P1: Rack shell | Tasks | Implementing |
-| SHELL-02 | P1: Rack shell | Tasks | Implementing |
-| SHELL-03 | P1: Rack shell | Tasks | Implementing |
-| SHELL-04 | P1: Rack shell | Tasks | Implementing |
-| SHELL-05 | P1: Rack shell | Tasks | Implementing |
-| SHELL-06 | P1: Rack shell | Tasks | Implementing |
-| SHELL-07 | P1: Rack shell | Tasks | Implementing |
-| SHELL-08 | P1: Rack shell | Tasks | Implementing |
-| SHELL-09 | P1: Rack shell | Tasks | Implementing |
-| EDIT-01 | P1: Editor Mode | Tasks | Implementing |
-| EDIT-02 | P1: Editor Mode | Tasks | Implementing |
-| EDIT-03 | P1: Editor Mode | Tasks | Implementing |
-| EDIT-04 | P1: Editor Mode | Tasks | Implementing |
-| EDIT-05 | P1: Editor Mode | Tasks | Implementing |
-| EDIT-06 | P1: Editor Mode | Tasks | Implementing |
-| EDIT-07 | P1: Editor Mode | Tasks | Implementing |
-| EDIT-08 | P1: Editor Mode | Tasks | Implementing |
-| EDIT-09 | P1: Editor Mode | Tasks | Implementing |
-| EDIT-10 | P1: Editor Mode | Tasks | Implementing |
-| EDIT-11 | P1: Editor Mode | Tasks | Implementing |
-| EDIT-12 | P1: Editor Mode | Tasks | Implementing |
-| EDIT-13 | P1: Editor Mode | Tasks | Implementing |
-| EDIT-14 | P1: Editor Mode | Tasks | Implementing |
-| EDIT-15 | P1: Editor Mode | Tasks | Implementing |
-| EDIT-16 | P1: Editor Mode | Tasks | Implementing |
-| EDIT-17 | P1: Editor Mode | Tasks | Implementing |
-| EDIT-18 | P1: Editor Mode | Tasks | Implementing |
-| EDIT-19 | P1: Editor Mode | Tasks | Implementing |
-| EDIT-20 | P1: Editor Mode | Tasks | Implementing |
-| EDIT-21 | P1: Editor Mode | Tasks | Implementing |
-| EDIT-22 | P1: Editor Mode | Tasks | Implementing |
-| EDIT-23 | P1: Editor Mode | Tasks | Implementing |
-| EDIT-24 | P1: Editor Mode | Tasks | Implementing |
-| EDIT-25 | P1: Editor Mode | Tasks | Implementing |
-| EDIT-26 | P1: Editor Mode | Tasks | Implementing |
-| EDIT-27 | P1: Editor Mode | Tasks | Implementing |
-| EDIT-28 | P1: Editor Mode | Tasks | Implementing |
-| EDIT-29 | P1: Editor Mode | Tasks | Implementing |
-| EDIT-30 | P1: Editor Mode | Tasks | Implementing |
-| EDIT-31 | P1: Editor Mode | Tasks | Implementing |
-| STAD-01 | P1: Stadium Mode | Tasks | Implementing |
-| STAD-02 | P1: Stadium Mode | Tasks | Implementing |
-| STAD-03 | P1: Stadium Mode | Tasks | Implementing |
-| STAD-04 | P1: Stadium Mode | Tasks | Implementing |
-| STAD-05 | P1: Stadium Mode | Tasks | Implementing |
-| STAD-06 | P1: Stadium Mode | Tasks | Implementing |
-| STAD-07 | P1: Stadium Mode | Tasks | Implementing |
-| STAD-08 | P1: Stadium Mode | Tasks | Implementing |
-| STAD-09 | P1: Stadium Mode | Tasks | Implementing |
-| STAD-10 | P1: Stadium Mode | Tasks | Implementing |
-| STAD-11 | P1: Stadium Mode | Tasks | Implementing |
-| STAD-12 | P1: Stadium Mode | Tasks | Implementing |
-| STAD-13 | P1: Stadium Mode | Tasks | Implementing |
-| TIME-01 | P1: Shared timer | Tasks | Implementing |
-| TIME-02 | P1: Shared timer | Tasks | Implementing |
-| TIME-03 | P1: Shared timer | Tasks | Implementing |
-| TIME-04 | P1: Shared timer | Tasks | Implementing |
-| TIME-05 | P1: Shared timer | Tasks | Implementing |
-| TIME-06 | P1: Shared timer | Tasks | Implementing |
-| MUTE-01 | P2: Mute and Solo | Tasks | Implementing |
-| MUTE-02 | P2: Mute and Solo | Tasks | Implementing |
-| MUTE-03 | P2: Mute and Solo | Tasks | Implementing |
-| MUTE-04 | P2: Mute and Solo | Tasks | Implementing |
-| MUTE-05 | P2: Mute and Solo | Tasks | Implementing |
-| MUTE-06 | P2: Mute and Solo | Tasks | Implementing |
-| MUTE-07 | P2: Mute and Solo | Tasks | Implementing |
-| MUTE-08 | P2: Mute and Solo | Tasks | Implementing |
-| MUTE-09 | P2: Mute and Solo | Tasks | Implementing |
-| MUTE-10 | P2: Mute and Solo | Tasks | Implementing |
-| MUTE-11 | P2: Mute and Solo | Tasks | Implementing |
-| MUTE-12 | P2: Mute and Solo | Tasks | Implementing |
-| MUTE-13 | P2: Mute and Solo | Tasks | Implementing |
-| RESP-01 | P2: Narrow windows | Tasks | Implementing |
-| RESP-02 | P2: Narrow windows | Tasks | Implementing |
-| RESP-03 | P2: Narrow windows | Tasks | Implementing |
-| RESP-04 | P2: Narrow windows | Tasks | Implementing |
-| RESP-05 | P2: Narrow windows | Tasks | Implementing |
-| RESP-06 | P2: Narrow windows | Tasks | Implementing |
-| RESP-07 | P2: Narrow windows | Tasks | Implementing |
-| DOCS-01 | P3: Design document | Tasks | Implementing |
-| DOCS-02 | P3: Design document | Tasks | Implementing |
-| EDGE-01 | Edge Cases | Tasks | Implementing |
-| EDGE-02 | Edge Cases | Tasks | Implementing |
-| EDGE-03 | Edge Cases | Tasks | Implementing |
-| EDGE-04 | Edge Cases | Tasks | Implementing |
-| EDGE-05 | Edge Cases | Tasks | Implementing |
-| EDGE-06 | Edge Cases | Tasks | Implementing |
+| SHELL-01 | P1: Rack shell | Tasks | Verified |
+| SHELL-02 | P1: Rack shell | Tasks | Verified |
+| SHELL-03 | P1: Rack shell | Tasks | Verified |
+| SHELL-04 | P1: Rack shell | Tasks | Verified |
+| SHELL-05 | P1: Rack shell | Tasks | Verified |
+| SHELL-06 | P1: Rack shell | Tasks | Verified |
+| SHELL-07 | P1: Rack shell | Tasks | Verified |
+| SHELL-08 | P1: Rack shell | Tasks | Verified |
+| SHELL-09 | P1: Rack shell | Tasks | Verified |
+| EDIT-01 | P1: Editor Mode | Tasks | Verified |
+| EDIT-02 | P1: Editor Mode | Tasks | Verified |
+| EDIT-03 | P1: Editor Mode | Tasks | Verified |
+| EDIT-04 | P1: Editor Mode | Tasks | Verified |
+| EDIT-05 | P1: Editor Mode | Tasks | Verified |
+| EDIT-06 | P1: Editor Mode | Tasks | Verified |
+| EDIT-07 | P1: Editor Mode | Tasks | Verified |
+| EDIT-08 | P1: Editor Mode | Tasks | Verified |
+| EDIT-09 | P1: Editor Mode | Tasks | Verified |
+| EDIT-10 | P1: Editor Mode | Tasks | Verified |
+| EDIT-11 | P1: Editor Mode | Tasks | Verified |
+| EDIT-12 | P1: Editor Mode | Tasks | Verified |
+| EDIT-13 | P1: Editor Mode | Tasks | Verified |
+| EDIT-14 | P1: Editor Mode | Tasks | Verified |
+| EDIT-15 | P1: Editor Mode | Tasks | Verified |
+| EDIT-16 | P1: Editor Mode | Tasks | Verified |
+| EDIT-17 | P1: Editor Mode | Tasks | Verified |
+| EDIT-18 | P1: Editor Mode | Tasks | Verified |
+| EDIT-19 | P1: Editor Mode | Tasks | Verified |
+| EDIT-20 | P1: Editor Mode | Tasks | Verified |
+| EDIT-21 | P1: Editor Mode | Tasks | Verified |
+| EDIT-22 | P1: Editor Mode | Tasks | Verified |
+| EDIT-23 | P1: Editor Mode | Tasks | Verified |
+| EDIT-24 | P1: Editor Mode | Tasks | Verified |
+| EDIT-25 | P1: Editor Mode | Tasks | Verified |
+| EDIT-26 | P1: Editor Mode | Tasks | Verified |
+| EDIT-27 | P1: Editor Mode | Tasks | Verified |
+| EDIT-28 | P1: Editor Mode | Tasks | Verified |
+| EDIT-29 | P1: Editor Mode | Tasks | Verified |
+| EDIT-30 | P1: Editor Mode | Tasks | Verified |
+| EDIT-31 | P1: Editor Mode | Tasks | Verified |
+| STAD-01 | P1: Stadium Mode | Tasks | Verified |
+| STAD-02 | P1: Stadium Mode | Tasks | Verified |
+| STAD-03 | P1: Stadium Mode | Tasks | Verified |
+| STAD-04 | P1: Stadium Mode | Tasks | Verified |
+| STAD-05 | P1: Stadium Mode | Tasks | Verified |
+| STAD-06 | P1: Stadium Mode | Tasks | Verified |
+| STAD-07 | P1: Stadium Mode | Tasks | Verified |
+| STAD-08 | P1: Stadium Mode | Tasks | Verified |
+| STAD-09 | P1: Stadium Mode | Tasks | Verified |
+| STAD-10 | P1: Stadium Mode | Tasks | Verified |
+| STAD-11 | P1: Stadium Mode | Tasks | Verified |
+| STAD-12 | P1: Stadium Mode | Tasks | Verified |
+| STAD-13 | P1: Stadium Mode | Tasks | Verified |
+| TIME-01 | P1: Shared timer | Tasks | Verified |
+| TIME-02 | P1: Shared timer | Tasks | Verified |
+| TIME-03 | P1: Shared timer | Tasks | Verified |
+| TIME-04 | P1: Shared timer | Tasks | Verified |
+| TIME-05 | P1: Shared timer | Tasks | Verified |
+| TIME-06 | P1: Shared timer | Tasks | Verified |
+| MUTE-01 | P2: Mute and Solo | Tasks | Verified |
+| MUTE-02 | P2: Mute and Solo | Tasks | Verified |
+| MUTE-03 | P2: Mute and Solo | Tasks | Verified |
+| MUTE-04 | P2: Mute and Solo | Tasks | Verified |
+| MUTE-05 | P2: Mute and Solo | Tasks | Verified |
+| MUTE-06 | P2: Mute and Solo | Tasks | Verified |
+| MUTE-07 | P2: Mute and Solo | Tasks | Verified |
+| MUTE-08 | P2: Mute and Solo | Tasks | Verified |
+| MUTE-09 | P2: Mute and Solo | Tasks | Verified |
+| MUTE-10 | P2: Mute and Solo | Tasks | Verified |
+| MUTE-11 | P2: Mute and Solo | Tasks | Verified |
+| MUTE-12 | P2: Mute and Solo | Tasks | Verified |
+| MUTE-13 | P2: Mute and Solo | Tasks | Verified |
+| RESP-01 | P2: Narrow windows | Tasks | Verified |
+| RESP-02 | P2: Narrow windows | Tasks | Verified |
+| RESP-03 | P2: Narrow windows | Tasks | Verified |
+| RESP-04 | P2: Narrow windows | Tasks | Verified |
+| RESP-05 | P2: Narrow windows | Tasks | Verified |
+| RESP-06 | P2: Narrow windows | Tasks | Verified |
+| RESP-07 | P2: Narrow windows | Tasks | Verified |
+| DOCS-01 | P3: Design document | Tasks | Verified |
+| DOCS-02 | P3: Design document | Tasks | Verified |
+| EDGE-01 | Edge Cases | Tasks | Verified |
+| EDGE-02 | Edge Cases | Tasks | Verified |
+| EDGE-03 | Edge Cases | Tasks | Verified |
+| EDGE-04 | Edge Cases | Tasks | Verified |
+| EDGE-05 | Edge Cases | Tasks | Verified |
+| EDGE-06 | Edge Cases | Tasks | Verified |
 
 **ID format:** `[CATEGORY]-[NUMBER]`
 
@@ -375,6 +375,6 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 
 ## Success Criteria
 
-- [ ] `captures/editor.running.png` and `captures/stadium.running.png` match their captures apart from `## Differences from the source`
-- [ ] `npm run test:js` and `npm run test:rust` pass
-- [ ] `public/pkg/metrorig_audio_bg.wasm` is byte-identical to the current file
+- [x] `captures/editor.running.png` and `captures/stadium.running.png` match their captures apart from `## Differences from the source`
+- [x] `npm run test:js` and `npm run test:rust` pass
+- [x] `public/pkg/metrorig_audio_bg.wasm` is byte-identical to the current file
