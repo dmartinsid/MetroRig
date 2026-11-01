@@ -557,10 +557,10 @@ T24 → T25 → T26 → T27 → T28
 
 **Done when**:
 
-- [ ] Counts come from `songsForGenre`
-- [ ] The tests of the checks for GRV-01 that this task reaches pass
-- [ ] Gate check passes: `npx vitest run`
-- [ ] Test count: at least the previous task's count (no silent deletions)
+- [x] Counts come from `songsForGenre`
+- [x] The tests of the checks for GRV-01 that this task reaches pass
+- [x] Gate check passes: `npx vitest run`
+- [x] Test count: at least the previous task's count (no silent deletions)
 
 **Tests**: integration
 **Gate**: quick

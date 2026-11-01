@@ -1710,4 +1710,45 @@ describe('Grooves Library', () => {
     expect(byId('btn-play').classList.contains('playing')).toBe(true);
     await clickPlay();
   });
+
+  const cards = () => [...document.querySelectorAll<HTMLElement>('.song-card')];
+  const genreTab = (name: string) => [...document.querySelectorAll<HTMLElement>('.genre-tab')].find(tab => tab.innerText === name)!;
+
+  it('grv_01 tabs', async () => {
+    await openPage();
+    expect([...document.querySelectorAll<HTMLElement>('#grooves-view .genre-tab')].map(tab => tab.innerText))
+      .toEqual(['All', 'Rock', 'Metal', 'Metalcore', 'Blues']);
+  });
+
+  it('grv_02 all shows fourteen', async () => {
+    await openPage();
+    openScreen('grooves');
+    expect(genreTab('All').getAttribute('aria-pressed')).toBe('true');
+    expect(cards()).toHaveLength(14);
+  });
+
+  it('grv_03 genre counts', async () => {
+    await openPage();
+    const shown = (name: string) => {
+      genreTab(name).click();
+      expect(genreTab(name).getAttribute('aria-pressed')).toBe('true');
+      return cards().map(card => card.querySelector('.song-artist')?.textContent);
+    };
+    expect(shown('Rock')).toEqual(['AC/DC', 'AC/DC']);
+    expect(shown('Metal')).toHaveLength(5);
+    expect(new Set(shown('Metal'))).toEqual(new Set(['Iron Maiden', 'Metallica']));
+    expect(new Set(shown('Metalcore'))).toEqual(new Set(['Bullet for My Valentine']));
+    expect(shown('Metalcore')).toHaveLength(3);
+    expect(shown('Blues')).toHaveLength(4);
+    expect(new Set(shown('Blues'))).toEqual(new Set(['Eric Clapton', 'Cream (Eric Clapton)', 'B.B. King']));
+    expect(shown('All')).toHaveLength(14);
+  });
+
+  it('grv_04 card fields', async () => {
+    await openPage();
+    const card = cards()[0];
+    const field = (name: string) => card.querySelector(`.song-${name}`)?.textContent;
+    expect([field('title'), field('artist'), field('section'), field('bpm'), field('meter')])
+      .toEqual(['Back in Black', 'AC/DC', 'Verse', '94 BPM', '4/4']);
+  });
 });
