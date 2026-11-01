@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 8,
+  "next_id": 18,
   "lessons": [
     {
       "id": "L-001",
@@ -130,6 +130,186 @@
       ],
       "created": "2026-11-01T03:04:06Z",
       "last_seen": "2026-11-01T03:04:06Z"
+    },
+    {
+      "id": "L-008",
+      "key": "ac_gap::send every entry point of an action through the same guard and test each entry point",
+      "text": "Send every entry point of an action through the same guard, and test each entry point.",
+      "signal": "ac_gap",
+      "scope": "src/main.ts",
+      "status": "candidate",
+      "features": [
+        "grooves-library"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "GRV-01.11 (src/main.ts) (src/main.ts)"
+      ],
+      "created": "2026-11-01T16:19:20Z",
+      "last_seen": "2026-11-01T16:19:20Z"
+    },
+    {
+      "id": "L-009",
+      "key": "ac_gap::make a user intent idempotent across async initialisation and test it with the initialisation held open",
+      "text": "Make a user intent idempotent across async initialisation, and test it with the initialisation held open.",
+      "signal": "ac_gap",
+      "scope": "src/main.ts",
+      "status": "candidate",
+      "features": [
+        "grooves-library"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "GRV-01.5 (src/main.ts) (src/main.ts)"
+      ],
+      "created": "2026-11-01T16:19:20Z",
+      "last_seen": "2026-11-01T16:19:20Z"
+    },
+    {
+      "id": "L-010",
+      "key": "weak_test::reach the state under test through a path that does not set the asserted value itself",
+      "text": "Reach the state under test through a path that does not set the asserted value itself.",
+      "signal": "weak_test",
+      "scope": "tests",
+      "status": "candidate",
+      "features": [
+        "grooves-library"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "C42 (src/index.test.ts) (tests)"
+      ],
+      "created": "2026-11-01T16:19:20Z",
+      "last_seen": "2026-11-01T16:19:20Z"
+    },
+    {
+      "id": "L-011",
+      "key": "weak_test::start a replace test from a state that differs in every field the replacement writes",
+      "text": "Start a replace test from a state that differs in every field the replacement writes.",
+      "signal": "weak_test",
+      "scope": "tests",
+      "status": "candidate",
+      "features": [
+        "grooves-library"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "C40 (src/index.test.ts) (tests)"
+      ],
+      "created": "2026-11-01T16:19:20Z",
+      "last_seen": "2026-11-01T16:19:20Z"
+    },
+    {
+      "id": "L-012",
+      "key": "weak_test::prove a rule over a group on every member of the group not on its last one",
+      "text": "Prove a rule over a group on every member of the group, not on its last one.",
+      "signal": "weak_test",
+      "scope": "tests",
+      "status": "candidate",
+      "features": [
+        "grooves-library"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "C54 (tests/kit.test.ts) (tests)"
+      ],
+      "created": "2026-11-01T16:19:20Z",
+      "last_seen": "2026-11-01T16:19:20Z"
+    },
+    {
+      "id": "L-013",
+      "key": "weak_test::assert what an action must leave alone not only what it must change",
+      "text": "Assert what an action must leave alone, not only what it must change.",
+      "signal": "weak_test",
+      "scope": "tests",
+      "status": "candidate",
+      "features": [
+        "grooves-library"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "C47 (src/index.test.ts) (tests)"
+      ],
+      "created": "2026-11-01T16:19:20Z",
+      "last_seen": "2026-11-01T16:19:20Z"
+    },
+    {
+      "id": "L-014",
+      "key": "weak_test::hold a data cleaning rule through the page path not only through its function",
+      "text": "Hold a data-cleaning rule through the page path, not only through its function.",
+      "signal": "weak_test",
+      "scope": "tests",
+      "status": "candidate",
+      "features": [
+        "grooves-library"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "C62 (src/index.test.ts) (tests)"
+      ],
+      "created": "2026-11-01T16:19:20Z",
+      "last_seen": "2026-11-01T16:19:20Z"
+    },
+    {
+      "id": "L-015",
+      "key": "weak_test::pin the full mapping from each id to its file not one sample entry",
+      "text": "Pin the full mapping from each id to its file, not one sample entry.",
+      "signal": "weak_test",
+      "scope": "tests",
+      "status": "candidate",
+      "features": [
+        "grooves-library"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "KIT-01.2 (tests/kit.test.ts) (tests)"
+      ],
+      "created": "2026-11-01T16:19:20Z",
+      "last_seen": "2026-11-01T16:19:20Z"
+    },
+    {
+      "id": "L-016",
+      "key": "spec_precision_gap::record why a conditional fallback was taken so the condition can be checked",
+      "text": "Record why a conditional fallback was taken, so the condition can be checked.",
+      "signal": "spec_precision_gap",
+      "scope": "specs",
+      "status": "candidate",
+      "features": [
+        "grooves-library"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "C12 (KIT-01.3) (specs)"
+      ],
+      "created": "2026-11-01T16:19:20Z",
+      "last_seen": "2026-11-01T16:19:20Z"
+    },
+    {
+      "id": "L-017",
+      "key": "spec_deviation::check a line drawn in a gap against the strokes of the shapes beside it which can cover the gap",
+      "text": "Check a line drawn in a gap against the strokes of the shapes beside it, which can cover the gap.",
+      "signal": "spec_deviation",
+      "scope": "src/index.css",
+      "status": "candidate",
+      "features": [
+        "grooves-library"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "C3 (src/index.css) (src/index.css)"
+      ],
+      "created": "2026-11-01T16:19:20Z",
+      "last_seen": "2026-11-01T16:19:20Z"
     }
   ]
 }

@@ -1,15 +1,15 @@
 # grooves-library proofs
 
-**HEAD**: 703e287
-**Tree**: dirty - .agents/skills/code-review/, .claude/skills/code-review
+**HEAD**: 0c9f00c
+**Tree**: clean
 **Shell**: /bin/sh
-**Result**: 63 pass, 1 fail
+**Result**: 64 pass, 0 fail
 
 | Check | Proof | Result |
 | --- | --- | --- |
 | C1 | `browser captures/editor.running.png` | pass |
 | C2 | `run js / ✓ src/index.test.ts > Grooves Library > nav_02 editor link` | pass |
-| C3 | `browser captures/stadium.running.png` | **diverges** (screens.md) |
+| C3 | `browser captures/stadium.running.png` | pass |
 | C4 | `run js / ✓ src/index.test.ts > Grooves Library > nav_04 grooves link` | pass |
 | C5 | `run js / ✓ src/index.test.ts > Grooves Library > nav_05 aria current` | pass |
 | C6 | `run js / ✓ src/index.test.ts > Grooves Library > nav_06 no toggle no presets` | pass |
@@ -69,7 +69,7 @@
 | C60 | `walk - at 1024px and 390px both selectors can be used` | pass (Walked) |
 | C61 | `run js / ✓ src/index.test.ts > Grooves Library > edge_02 load keeps the mix` | pass |
 | C62 | `run js / ✓ tests/state.test.ts > completeKit > edge_03 cleans step values` | pass |
-| C63 | `walk - the user played all 14 songs and approved each one, recorded in Handoff` | pass (Walked) |
+| C63 | `walk - the user agreed to move it, recorded in Handoff` | pass (Walked) |
 | Build | `npm run build` | pass |
 
 ## Output
@@ -77,8 +77,8 @@
 `Run js` - exit 0
 
 ```
-   Start at  02:02:16
-   Duration  6.37s (transform 601ms, setup 1ms, collect 872ms, tests 6.19s, environment 2.86s, prepare 800ms)
+   Start at  13:18:52
+   Duration  6.30s (transform 472ms, setup 1ms, collect 539ms, tests 6.04s, environment 2.76s, prepare 829ms)
 
 stderr | src/index.test.ts > Integration Test > should handle click sound variation selector changes, race conditions and fetch rejections
 Failed to load click sample, falling back to digital synth: Error: Fetch failed
@@ -102,14 +102,14 @@ test tests::bpm_01_quarter_note_in_every_meter ... ok
 test tests::time_01_hits_within_one_sample ... ok
 test tests::time_02_one_hour_no_drift ... ok
 
-test result: ok. 52 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.77s
+test result: ok. 52 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.89s
 
 
 running 0 tests
 
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-    Finished `test` profile [optimized + debuginfo] target(s) in 0.01s
+    Finished `test` profile [optimized + debuginfo] target(s) in 0.00s
      Running unittests src/lib.rs (target/debug/deps/metrorig_audio-e3c84ac815f4f448)
    Doc-tests metrorig_audio
 ```
