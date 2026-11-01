@@ -1,15 +1,15 @@
 # grooves-library proofs
 
-**HEAD**: aae0fa3
+**HEAD**: 703e287
 **Tree**: dirty - .agents/skills/code-review/, .claude/skills/code-review
 **Shell**: /bin/sh
-**Result**: 61 pass, 3 fail
+**Result**: 63 pass, 1 fail
 
 | Check | Proof | Result |
 | --- | --- | --- |
-| C1 | `browser captures/editor.running.png` | **not judged** (screens.md) |
+| C1 | `browser captures/editor.running.png` | pass |
 | C2 | `run js / ✓ src/index.test.ts > Grooves Library > nav_02 editor link` | pass |
-| C3 | `browser captures/stadium.running.png` | **not judged** (screens.md) |
+| C3 | `browser captures/stadium.running.png` | **diverges** (screens.md) |
 | C4 | `run js / ✓ src/index.test.ts > Grooves Library > nav_04 grooves link` | pass |
 | C5 | `run js / ✓ src/index.test.ts > Grooves Library > nav_05 aria current` | pass |
 | C6 | `run js / ✓ src/index.test.ts > Grooves Library > nav_06 no toggle no presets` | pass |
@@ -50,7 +50,7 @@
 | C41 | `run js / ✓ src/index.test.ts > Grooves Library > song_06 card matches tempo bus` | pass |
 | C42 | `run js / ✓ src/index.test.ts > Grooves Library > song_07 songs group` | pass |
 | C43 | `run js / ✓ src/index.test.ts > Grooves Library > song_08 save leaves catalog` | pass |
-| C44 | `browser captures/editor.running.png` | **not judged** (screens.md) |
+| C44 | `browser captures/editor.running.png` | pass |
 | C45 | `run js / ✓ src/index.test.ts > Grooves Library > edt_02 eleven mix cards` | pass |
 | C46 | `run js / ✓ src/index.test.ts > Grooves Library > edt_03 new track obeys mix` | pass |
 | C47 | `run js / ✓ src/index.test.ts > Grooves Library > edt_04 groove clears other tracks` | pass |
@@ -77,8 +77,8 @@
 `Run js` - exit 0
 
 ```
-   Start at  01:48:24
-   Duration  6.18s (transform 504ms, setup 1ms, collect 791ms, tests 5.96s, environment 2.68s, prepare 804ms)
+   Start at  02:02:16
+   Duration  6.37s (transform 601ms, setup 1ms, collect 872ms, tests 6.19s, environment 2.86s, prepare 800ms)
 
 stderr | src/index.test.ts > Integration Test > should handle click sound variation selector changes, race conditions and fetch rejections
 Failed to load click sample, falling back to digital synth: Error: Fetch failed
@@ -102,14 +102,14 @@ test tests::bpm_01_quarter_note_in_every_meter ... ok
 test tests::time_01_hits_within_one_sample ... ok
 test tests::time_02_one_hour_no_drift ... ok
 
-test result: ok. 52 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.80s
+test result: ok. 52 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.77s
 
 
 running 0 tests
 
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-    Finished `test` profile [optimized + debuginfo] target(s) in 0.00s
+    Finished `test` profile [optimized + debuginfo] target(s) in 0.01s
      Running unittests src/lib.rs (target/debug/deps/metrorig_audio-e3c84ac815f4f448)
    Doc-tests metrorig_audio
 ```
