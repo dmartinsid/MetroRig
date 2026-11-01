@@ -17,13 +17,16 @@
       <span class="logo">METRORIG<span class="badge">PRO</span></span>
 
       <div class="preset-controls">
-        <select id="click-sound-selector" title="Click Sound">
-          <option value="digital">Click: Digital</option>
-          <option value="mechanical">Click: Mechanical</option>
-          <option value="woodblock">Click: Woodblock</option>
-          <option value="stick">Click: Stick Click</option>
-          <option value="cowbell">Click: Cowbell</option>
-        </select>
+        <div class="click-field">
+          <label for="click-sound-selector">Click:</label>
+          <select id="click-sound-selector" title="Click Sound">
+            <option value="digital">Digital</option>
+            <option value="mechanical">Mechanical</option>
+            <option value="woodblock">Woodblock</option>
+            <option value="stick">Stick Click</option>
+            <option value="cowbell">Cowbell</option>
+          </select>
+        </div>
 
         <select id="preset-selector" title="Preset">
           <optgroup id="group-signatures" label="Time Signatures"></optgroup>
@@ -146,7 +149,10 @@
             <select id="groove-selector">
               <option value="">-- Choose a Groove --</option>
             </select>
-            <button id="btn-save-groove" class="btn-subtle">Save Groove</button>
+            <button id="btn-save-groove" class="btn-subtle">
+              <svg class="btn-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11l3 3v13H5z"></path><path d="M8 4v5h7V4M8 20v-7h8v7"></path></svg>
+              Save Groove
+            </button>
           </div>
         </div>
 
@@ -157,7 +163,7 @@
               <span class="trainer-active-dot" id="trainer-dot"></span>
               Tempo Trainer
             </span>
-            <span class="trainer-chevron" id="trainer-chevron">▾</span>
+            <span class="trainer-chevron" id="trainer-chevron"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5"></path></svg></span>
           </div>
           <div class="trainer-body" id="trainer-body">
             <div class="trainer-form">
@@ -175,7 +181,10 @@
               </div>
               <div class="form-group">
                 <label for="trainer-inc">Increment</label>
-                <input type="number" id="trainer-inc" value="5">
+                <div class="increment-field">
+                  <span>+</span>
+                  <input type="number" id="trainer-inc" value="5">
+                </div>
               </div>
               <div class="form-group">
                 <label for="trainer-val">Step Value</label>
@@ -207,6 +216,13 @@
         <div class="clock-column">
           <!-- Rotating beat clock -->
           <svg class="beat-clock" viewBox="-100 -100 200 200" aria-hidden="true">
+            <defs>
+              <radialGradient id="clock-center-fill">
+                <stop offset="0%" stop-color="#080810"></stop>
+                <stop offset="75%" stop-color="#0d0d16"></stop>
+                <stop offset="100%" stop-color="#1b1b23"></stop>
+              </radialGradient>
+            </defs>
             <circle class="clock-rim-dashed" r="84"></circle>
             <circle class="clock-rim" r="82"></circle>
             <g id="clock-face"></g>
@@ -276,7 +292,7 @@
           </div>
 
           <button id="btn-stadium-play" class="play-btn play-btn-large">
-            <span class="icon-play">▶ PLAY</span>
+            <span class="icon-play"><svg class="play-triangle" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 2l7 4-7 4z"></path></svg>PLAY</span>
             <span class="icon-stop">■ STOP</span>
           </button>
         </section>

@@ -117,7 +117,7 @@ header {
   cursor: pointer;
   outline: none;
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239CA3AF' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none' stroke='%239CA3AF' stroke-width='1.5'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 0.75rem center;
   transition: border-color 0.2s, box-shadow 0.2s;
@@ -126,6 +126,35 @@ header {
 .preset-controls select:focus {
   border-color: var(--neon-green);
   box-shadow: 0 0 8px rgba(57, 255, 20, 0.3);
+}
+
+.click-field {
+  display: flex;
+  align-items: center;
+  padding-left: 0.75rem;
+  background: var(--field-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-control);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.click-field:focus-within {
+  border-color: var(--neon-green);
+  box-shadow: 0 0 8px rgba(57, 255, 20, 0.3);
+}
+
+.click-field label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.preset-controls .click-field select,
+.preset-controls .click-field select:focus {
+  background-color: transparent;
+  border: none;
+  box-shadow: none;
+  padding-left: 0.4rem;
 }
 
 /* ─── View Toggle ────────────────────────────────────────── */
@@ -306,7 +335,6 @@ header {
 .step-count.beat-start {
   font-weight: 700;
   color: var(--text);
-  background: rgba(255, 255, 255, 0.04);
   opacity: 1;
 }
 
@@ -633,8 +661,16 @@ select:focus {
 .trainer-active-dot.visible { display: block; }
 
 .trainer-chevron {
+  display: flex;
   color: var(--text-muted);
-  font-size: 0.75rem;
+}
+
+.trainer-chevron svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
 }
 
 .trainer-body {
@@ -731,6 +767,14 @@ select:focus {
 
 #trainer-start {
   color: var(--neon-green);
+}
+
+.increment-field {
+  display: flex;
+  align-items: baseline;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  font-weight: 700;
 }
 
 /* Save Preset Toast */
@@ -872,7 +916,19 @@ select:focus {
   background-position: right 0.75rem center;
 }
 
+.btn-icon {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+}
+
 .btn-subtle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
   margin-top: 0.5rem;
   background: rgba(0, 212, 255, 0.1);
   border: 1px solid rgba(0, 212, 255, 0.4);
@@ -941,12 +997,20 @@ select:focus {
   stroke-width: 0.6;
 }
 
+/* Empty Kick and Snare slices read as one continuous ring */
+.clock-slice[data-track="1"],
+.clock-slice[data-track="2"] {
+  stroke: #16161f;
+}
+
 .clock-slice.on {
   fill: var(--track-color);
+  stroke: var(--bg);
 }
 
 .clock-slice.sustain {
   fill: color-mix(in srgb, var(--track-color) 30%, #16161f);
+  stroke: var(--bg);
 }
 
 .clock-beat-line {
@@ -955,7 +1019,7 @@ select:focus {
 }
 
 .clock-center {
-  fill: #0d0d16;
+  fill: url(#clock-center-fill);
   stroke: rgba(255, 255, 255, 0.06);
   stroke-width: 0.5;
 }
@@ -1076,7 +1140,7 @@ select:focus {
 
 .stadium-bpm {
   font-family: var(--mono);
-  font-size: 8rem;
+  font-size: 9.75rem;
   font-weight: 900;
   color: var(--neon-green);
   text-shadow: 0 0 30px rgba(57, 255, 20, 0.4);
@@ -1086,7 +1150,7 @@ select:focus {
 
 .stadium-bpm-unit {
   font-family: var(--mono);
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   color: var(--text-muted);
 }
 
@@ -1159,7 +1223,18 @@ select:focus {
   border-width: 2px;
   border-radius: var(--radius-card);
   padding: 1rem 2rem;
+  font-family: var(--mono);
   background: var(--bg);
+}
+
+.play-triangle {
+  width: 16px;
+  height: 16px;
+  margin-right: 0.75rem;
+  vertical-align: -2px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
 }
 
 /* ─── Narrow Windows ─────────────────────────────────────── */
@@ -1201,10 +1276,16 @@ select:focus {
     flex-basis: 100%;
   }
 
-  .preset-controls select {
+  .preset-controls > select,
+  .click-field {
     flex: 1;
     width: 0;
     max-width: none;
+  }
+
+  .click-field select {
+    flex: 1;
+    width: 0;
   }
 
   .stadium-display {

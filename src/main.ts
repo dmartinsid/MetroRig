@@ -343,7 +343,7 @@ function updatePatternBar() {
 // Draw Stadium beat clock: one ring per track, one slice per step, 12 o'clock is step 0
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const CLOCK_RING_OUTER = 80;
-const CLOCK_RING_WIDTH = 12.5;
+const CLOCK_RING_WIDTH = 15;
 const CLOCK_RING_GAP = 1.2;
 const CLOCK_LABEL_RADIUS = 90;
 
