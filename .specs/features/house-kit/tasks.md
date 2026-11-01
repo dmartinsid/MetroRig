@@ -346,8 +346,8 @@ T19 → T20
 
 **Done when**:
 
-- [ ] Each of the 6 notes lands on its track
-- [ ] Gate check passes: `npx vitest run`
+- [x] Each of the 6 notes lands on its track
+- [x] Gate check passes: `npx vitest run`
 
 **Tests**: unit
 **Gate**: quick

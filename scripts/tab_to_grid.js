@@ -3,7 +3,7 @@
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 
-const KICK = 1, SNARE = 2, HI_HAT = 3, OPEN_HAT = 4, RIDE = 5, RIDE_BELL = 6, CRASH = 7, CHINA = 8, HIGH_TOM = 9, FLOOR_TOM = 10;
+const KICK = 1, SNARE = 2, HI_HAT = 3, OPEN_HAT = 4, RIDE = 5, RIDE_BELL = 6, CRASH = 7, CHINA = 8, HIGH_TOM = 9, FLOOR_TOM = 10, MID_TOM = 11, LOW_TOM = 12;
 const TRACK_COUNT = 13;
 const STEPS_MAX = 32;
 const STEPS_PER_WHOLE = 16;
@@ -18,8 +18,10 @@ const PIECES = {
   53: RIDE_BELL,
   49: CRASH, 55: CRASH, 57: CRASH,
   52: CHINA,
-  47: HIGH_TOM, 48: HIGH_TOM, 50: HIGH_TOM,
-  41: FLOOR_TOM, 43: FLOOR_TOM, 45: FLOOR_TOM,
+  50: HIGH_TOM,
+  47: MID_TOM, 48: MID_TOM,
+  45: LOW_TOM,
+  41: FLOOR_TOM, 43: FLOOR_TOM,
 };
 
 const NORMAL = 1, ACCENT = 2, GHOST = 3;
