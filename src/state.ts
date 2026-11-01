@@ -34,7 +34,7 @@ export interface PracticeLog {
 export interface CustomGroove {
   id: string;
   name: string;
-  gridData: Record<number, number[]>; // tracks 1 (Kick), 2 (Snare), 3 (Hi-hat)
+  gridData: Record<number, number[]>; // the drum tracks, without Click
   measureLength: number;
 }
 
