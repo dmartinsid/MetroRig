@@ -327,11 +327,15 @@ impl Engine {
 
     // A track with a bank plays it. Only a track without one plays its single sample.
     fn next_source(&mut self, track: usize, step: u8) -> Option<Source> {
-        let dynamic = step_dynamic(step);
-        let take = self.next_take[track][dynamic];
-        if self.bank[track][dynamic][take].is_some() {
-            self.next_take[track][dynamic] = (take + 1) % TAKES;
-            return Some(Source::Take(dynamic, take));
+        for dynamic in [step_dynamic(step), DYNAMIC_NORMAL, DYNAMIC_ACCENT, DYNAMIC_GHOST] {
+            let first = self.next_take[track][dynamic];
+            for offset in 0..TAKES {
+                let take = (first + offset) % TAKES;
+                if self.bank[track][dynamic][take].is_some() {
+                    self.next_take[track][dynamic] = (take + 1) % TAKES;
+                    return Some(Source::Take(dynamic, take));
+                }
+            }
         }
         self.samples[track].is_some().then_some(Source::Single)
     }
@@ -2085,6 +2089,68 @@ mod tests {
         set_steps(&run, 2, &[1; 16]);
         let (left, _) = stereo_output(run.ptr, step as usize);
         assert_eq!(left.into_iter().find(|&level| level != 0.0), Some(take_level(1, 2)));
+    }
+
+    // What a track plays when only these (dynamic, take) slots loaded, for steps of one value
+    fn played_with(loaded: &[(u32, u32)], step: u8, hits: usize) -> Vec<f32> {
+        let run = Run::new(120.0, &[0; 16]);
+        for &(dynamic, take) in loaded {
+            load_take(&run, 2, dynamic, take);
+        }
+        set_steps(&run, 2, &[step; 16]);
+        engine_start(run.ptr);
+        played_steps(&run, hits)
+    }
+
+    fn levels(takes: &[(u32, u32)]) -> Vec<f32> {
+        takes.iter().map(|&(dynamic, take)| take_level(dynamic, take)).collect()
+    }
+
+    #[test]
+    fn hk_12_missing_take_is_skipped() {
+        // Any one take missing: the next loaded take plays
+        assert_eq!(played_with(&[(1, 1), (1, 2)], 1, 4), levels(&[(1, 1), (1, 2), (1, 1), (1, 2)]));
+        assert_eq!(played_with(&[(1, 0), (1, 2)], 1, 4), levels(&[(1, 0), (1, 2), (1, 0), (1, 2)]));
+        assert_eq!(played_with(&[(1, 0), (1, 1)], 1, 4), levels(&[(1, 0), (1, 1), (1, 0), (1, 1)]));
+
+        // One take left plays every hit
+        assert_eq!(played_with(&[(1, 2)], 1, 3), levels(&[(1, 2), (1, 2), (1, 2)]));
+    }
+
+    #[test]
+    fn hk_13_missing_dynamic_falls_back() {
+        let ghost = 3;
+        let normal = 1;
+        let accent = 2;
+
+        // The other dynamics, in the order Normal, Accent, Ghost
+        let all_but = |missing: u32| -> Vec<(u32, u32)> {
+            (0..3).filter(|&dynamic| dynamic != missing).map(|dynamic| (dynamic, 0)).collect()
+        };
+        assert_eq!(played_with(&all_but(0), ghost, 1), levels(&[(1, 0)]));
+        assert_eq!(played_with(&all_but(2), accent, 1), levels(&[(1, 0)]));
+        assert_eq!(played_with(&all_but(1), normal, 1), levels(&[(2, 0)]));
+        assert_eq!(played_with(&all_but(1), ghost, 1), levels(&[(0, 0)])); // Its own takes come first
+        assert_eq!(played_with(&[(2, 0)], ghost, 1), levels(&[(2, 0)]));
+        assert_eq!(played_with(&[(0, 0)], accent, 1), levels(&[(0, 0)]));
+
+        // The dynamic it falls back to keeps rotating
+        let normals = [(1, 0), (1, 1), (1, 2)];
+        assert_eq!(played_with(&normals, ghost, 4), levels(&[(1, 0), (1, 1), (1, 2), (1, 0)]));
+    }
+
+    #[test]
+    fn hk_14_track_with_no_takes_is_silent() {
+        // The Snare has a step on every hit and nothing loaded
+        assert_eq!(played_with(&[], 1, 3), [0.0, 0.0, 0.0]);
+
+        // The Kick plays on, alone
+        let run = Run::new(120.0, &[0; 16]);
+        load_bank(&run, 1);
+        set_steps(&run, 1, &[1; 16]);
+        set_steps(&run, 2, &[1; 16]);
+        engine_start(run.ptr);
+        assert_eq!(played_steps(&run, 3), levels(&[(1, 0), (1, 1), (1, 2)]));
     }
 
     #[test]
