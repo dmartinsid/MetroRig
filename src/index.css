@@ -1161,3 +1161,66 @@ select:focus {
   padding: 1rem 2rem;
   background: var(--bg);
 }
+
+/* ─── Narrow Windows ─────────────────────────────────────── */
+@media (max-width: 1023px) {
+  #editor-view,
+  .stadium-display {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .stadium-display {
+    justify-items: center;
+  }
+
+  .stadium-panel {
+    width: 100%;
+    max-width: 576px;
+  }
+
+  header {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 767px) {
+  #editor-view {
+    padding: 1rem;
+  }
+
+  .sequencer-container {
+    padding: 1rem;
+  }
+
+  .track-mix {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .preset-controls {
+    order: 3;
+    flex-basis: 100%;
+  }
+
+  .preset-controls select {
+    flex: 1;
+    width: 0;
+    max-width: none;
+  }
+
+  .stadium-display {
+    padding: 1rem;
+  }
+
+  .stadium-panel {
+    padding: 1.25rem;
+  }
+
+  .stadium-bpm {
+    font-size: 5rem;
+  }
+
+  .stadium-trainer-info {
+    font-size: 0.7rem;
+    border-radius: var(--radius-control);
+  }
+}
