@@ -55,12 +55,19 @@
             <div class="editor-timer" id="editor-timer">00:00:00</div>
           </div>
           <div class="figure-palette" id="figure-palette"></div>
+          <div class="bar-selector" id="bar-selector" role="group" aria-label="Bar on screen" hidden>
+            <span class="bar-selector-label">BAR</span>
+            <button type="button" class="bar-btn" data-bar="0" aria-label="Bar 1" aria-pressed="true">1</button>
+            <button type="button" class="bar-btn" data-bar="1" aria-label="Bar 2" aria-pressed="false">2</button>
+            <button type="button" class="bar-btn" data-bar="2" aria-label="Bar 3" aria-pressed="false">3</button>
+            <button type="button" class="bar-btn" data-bar="3" aria-label="Bar 4" aria-pressed="false">4</button>
+          </div>
           <div class="grid-scroller">
             <div class="sequencer-grid" id="grid-container"></div>
           </div>
           <div class="pattern-bar">
             <span id="pattern-name">PAT: 4/4 Metronome</span>
-            <span id="pattern-steps">STEPS: 16/32</span>
+            <span id="pattern-steps">STEPS: 16/128</span>
             <span>RESOLUTION: 1/16th</span>
             <span class="pattern-pos">POS: <span id="pattern-pos-value">BAR 01 · STEP 01</span></span>
           </div>
