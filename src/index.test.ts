@@ -2044,7 +2044,8 @@ describe('Song Bars', () => {
   });
 
   const battery = SONGS.find(song => song.id === 'song_battery')!;
-  const barOf = (trackId: number, bar: number) => (battery.gridData[trackId] ?? new Array(64).fill(0)).slice((bar - 1) * 16, bar * 16);
+  const barOf = (trackId: number, bar: number, song = battery) => (song.gridData[trackId] ?? new Array(64).fill(0)).slice((bar - 1) * 16, bar * 16);
+  const backInBlack = SONGS.find(song => song.id === 'song_back_in_black')!; // Bar 4 is a fill
 
   it('edit_01 selector on four bars', async () => {
     await openSong();
@@ -2138,6 +2139,79 @@ describe('Song Bars', () => {
     await clickPlay();
   });
 
+  it('edit_05 a bar pressed while stopped gives way to Play', async () => {
+    await openSong();
+    pressBar(3);
+    await clickPlay();
+    expect(pressedBars()).toEqual(['1']);
+    tick({ currentBpm: 194, beatIndex: 0 });
+    tick({ currentBpm: 194, beatIndex: 5 });
+    expect(pressedBars()).toEqual(['1']);
+    expect(shown(1)).toEqual(barOf(1, 1));
+    await clickPlay();
+  });
+
+  it('meter_01 the same time signature changes nothing', async () => {
+    await openSong();
+    const confirmSpy = vi.fn();
+    vi.stubGlobal('confirm', confirmSpy);
+    byId('time-sig-num').value = '04';
+    byId('time-sig-num').dispatchEvent(new Event('change'));
+
+    expect(confirmSpy).not.toHaveBeenCalled();
+    expect(byId('pattern-steps').textContent).toBe('STEPS: 64/128');
+    expect(byId('bar-selector').hidden).toBe(false);
+  });
+
+  it('a tick of the old pattern draws nothing after a load', async () => {
+    await openSong();
+    await clickPlay();
+    tick({ currentBpm: 194, beatIndex: 32 });
+    await selectPreset('factory:default');
+    const click = shown(0);
+
+    tick({ currentBpm: 194, beatIndex: 33 });
+    expect(shown(0)).toEqual(click);
+    expect(click.filter(Boolean)).toHaveLength(4);
+    await clickPlay();
+  });
+
+  it('a tick waiting when the time signature changes draws nothing', async () => {
+    await openSong();
+    await clickPlay();
+    vi.stubGlobal('confirm', vi.fn(() => true));
+    vi.useFakeTimers();
+    mockVisualDelay = 100;
+    tick({ currentBpm: 194, beatIndex: 40 });
+    stepNumeratorDown();
+    vi.advanceTimersByTime(150);
+    vi.useRealTimers();
+
+    expect(shown(1)).toEqual(barOf(1, 1).slice(0, 12));
+    await clickPlay();
+  });
+
+  it('the clock leaves the old bar when a preset loads during playback', async () => {
+    await openSong();
+    await clickPlay();
+    tick({ currentBpm: 194, beatIndex: 48 });
+    await selectPreset('song:song_back_in_black');
+    expectClockShows(1, backInBlack);
+    await clickPlay();
+  });
+
+  it('the clock leaves the old bar when the time signature changes during playback', async () => {
+    await openSong('song_back_in_black');
+    await clickPlay();
+    tick({ currentBpm: 94, beatIndex: 48 });
+    vi.stubGlobal('confirm', vi.fn(() => true));
+    stepNumeratorDown();
+
+    const kick = barOf(1, 1, backInBlack).slice(0, 12).map(value => value > 0);
+    expect(ringHits(1)).toEqual(kick);
+    await clickPlay();
+  });
+
   it('edit_11 stop returns to bar one', async () => {
     await openSong();
     await clickPlay();
@@ -2220,6 +2294,16 @@ describe('Song Bars', () => {
     await clickPlay();
   });
 
+  it('meter_02 keeps bar one whatever bar is on screen', async () => {
+    await openSong('song_back_in_black');
+    pressBar(4);
+    expect(barOf(1, 4, backInBlack).slice(0, 12)).not.toEqual(barOf(1, 1, backInBlack).slice(0, 12));
+    vi.stubGlobal('confirm', vi.fn(() => true));
+    stepNumeratorDown();
+
+    for (const trackId of [1, 2, 3, 4, 7]) expect(shown(trackId), `track ${trackId}`).toEqual(barOf(trackId, 1, backInBlack).slice(0, 12));
+  });
+
   it('meter_02 a longer bar still starts from bar one', async () => {
     await openSong();
     vi.stubGlobal('confirm', vi.fn(() => true));
@@ -2297,9 +2381,9 @@ describe('Song Bars', () => {
 
   // The steps each ring lights, against what the song holds in that bar
   const ringHits = (ring: number) => [...document.querySelectorAll(`.clock-slice[data-track="${ring}"]`)].map(slice => slice.classList.contains('on'));
-  const expectClockShows = (bar: number) => {
+  const expectClockShows = (bar: number, song = battery) => {
     STADIUM_GROUPS.forEach(({ trackIds }, ring) => {
-      const expected = Array.from({ length: 16 }, (_, step) => trackIds.some(trackId => barOf(trackId, bar)[step] > 0));
+      const expected = Array.from({ length: 16 }, (_, step) => trackIds.some(trackId => barOf(trackId, bar, song)[step] > 0));
       if (ring > 0) expect(ringHits(ring), `ring ${ring} bar ${bar}`).toEqual(expected);
     });
   };
@@ -2322,11 +2406,13 @@ describe('Song Bars', () => {
 
   it('clock_03 changes on the first step', async () => {
     await openSong();
+    await selectPreset('song:song_back_in_black');
     await clickPlay();
-    tick({ currentBpm: 194, beatIndex: 15 });
-    expectClockShows(1);
-    tick({ currentBpm: 194, beatIndex: 16 });
-    expectClockShows(2);
+    expect(barOf(1, 3, backInBlack)).not.toEqual(barOf(1, 4, backInBlack));
+    tick({ currentBpm: 94, beatIndex: 47 });
+    expectClockShows(3, backInBlack);
+    tick({ currentBpm: 94, beatIndex: 48 });
+    expectClockShows(4, backInBlack);
     await clickPlay();
   });
 
@@ -2335,10 +2421,12 @@ describe('Song Bars', () => {
     await clickPlay();
     vi.useFakeTimers();
     mockVisualDelay = 100;
-    tick({ currentBpm: 194, beatIndex: 16 });
-    expectClockShows(1);
+    tick({ currentBpm: 194, beatIndex: 47 });
     vi.advanceTimersByTime(150);
-    expectClockShows(2);
+    tick({ currentBpm: 194, beatIndex: 48 });
+    expectClockShows(3);
+    vi.advanceTimersByTime(150);
+    expectClockShows(4);
     vi.useRealTimers();
     await clickPlay();
   });
@@ -2425,11 +2513,15 @@ describe('Song Bars', () => {
 
     const saved = [...stores.presets.values()].find((preset: any) => preset.name === 'My Battery') as any;
     expect(saved.bars).toBe(4);
-    expect(saved.gridData[1]).toHaveLength(64);
+    for (const trackId of [1, 2, 3, 4, 5, 7]) expect(saved.gridData[trackId], `track ${trackId}`).toEqual(battery.gridData[trackId] ?? new Array(64).fill(0));
 
     await selectPreset('factory:default');
     await selectPreset(`user:${saved.id}`);
     expect(byId('pattern-steps').textContent).toBe('STEPS: 64/128');
     expect(byId('pattern-name').textContent).toBe('PAT: My Battery');
+    for (const bar of [1, 2, 3, 4]) {
+      pressBar(bar);
+      for (const trackId of [1, 2, 3]) expect(shown(trackId), `track ${trackId} bar ${bar}`).toEqual(barOf(trackId, bar));
+    }
   });
 });

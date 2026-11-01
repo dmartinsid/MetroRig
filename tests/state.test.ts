@@ -182,8 +182,18 @@ describe('Preset normalization', () => {
     expect(preset.gridData[1]).toHaveLength(64);
   });
 
+  it('expands every bar of a legacy 12/8 pattern', () => {
+    const preset = normalizePreset({
+      ...stored(4, 48), timeSignature: '12/8', measureLength: 12, gridData: { 1: Array.from({ length: 48 }, (_, step) => (step === 47 ? 2 : 0)) },
+    });
+    expect(preset.bars).toBe(4);
+    expect(preset.measureLength).toBe(24);
+    expect(preset.gridData[1]).toHaveLength(96);
+    expect(preset.gridData[1][94]).toBe(2);
+  });
+
   it('edge_03 bars that do not fit', () => {
-    for (const [bars, length] of [[4, 60], [3, 64], [0, 64], [2.5, 40]]) {
+    for (const [bars, length] of [[4, 60], [3, 64], [0, 64], [2.5, 40], [2, 32], [5, 80], [8, 128]]) {
       const preset = normalizePreset(stored(bars, length));
       expect(preset.bars).toBe(1);
       expect(preset.gridData[1]).toEqual(stored(bars, length).gridData[1].slice(0, 16));
