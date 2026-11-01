@@ -6,6 +6,54 @@ import { STADIUM_GROUPS, TRACKS, groupHit, nextStepValue } from '../src/kit';
 const namesOf = (trackIds: number[]) => trackIds.map(id => TRACKS[id].name);
 const group = (label: string) => STADIUM_GROUPS.find(g => g.label === label)!;
 
+const publicDir = path.resolve(__dirname, '../public');
+const houseDir = path.join(publicDir, 'kit/house');
+const RECORDINGS: Record<string, string[]> = {
+  kick: ['soft', 'med', 'hard'],
+  snare: ['soft', 'hard', 'crack'],
+  'tom-10': ['soft', 'med', 'hard'],
+  'tom-12': ['soft', 'med', 'hard'],
+  'tom-14': ['soft', 'med', 'hard'],
+  'tom-16': ['soft', 'med', 'hard'],
+};
+const houseFiles = Object.entries(RECORDINGS).flatMap(([piece, recordings]) =>
+  recordings.flatMap(recording => [1, 2, 3].map(take => `${piece}/${recording}-${take}.wav`)));
+
+const TAIL_LEVEL = 32768 * 10 ** (-60 / 20); // -60 dBFS in 16-bit steps
+const FADE_FRAMES = 220; // 5 ms at 44.1 kHz
+
+const toDb = (level: number) => 20 * Math.log10(level / 32768);
+
+// Walks the RIFF chunks of a WAV file, reading the fields of its fmt chunk and its samples.
+function readWav(file: string) {
+  const bytes = fs.readFileSync(path.join(houseDir, file));
+  expect(bytes.toString('latin1', 0, 4)).toBe('RIFF');
+  expect(bytes.toString('latin1', 8, 12)).toBe('WAVE');
+
+  let format = { encoding: 0, channels: 0, sampleRate: 0, bits: 0 };
+  for (let chunk = 12; chunk + 8 <= bytes.length;) {
+    const size = bytes.readUInt32LE(chunk + 4);
+    const body = chunk + 8;
+    if (bytes.toString('latin1', chunk, chunk + 4) === 'fmt ') {
+      format = {
+        encoding: bytes.readUInt16LE(body),
+        channels: bytes.readUInt16LE(body + 2),
+        sampleRate: bytes.readUInt32LE(body + 4),
+        bits: bytes.readUInt16LE(body + 14),
+      };
+    } else if (bytes.toString('latin1', chunk, chunk + 4) === 'data') {
+      const samples = Array.from({ length: size / 2 }, (_, i) => bytes.readInt16LE(body + 2 * i));
+      return { ...format, samples, frames: samples.length / 2 };
+    }
+    chunk = body + size + (size & 1);
+  }
+  throw new Error(`${file} has no data chunk`);
+}
+
+const peakOf = (file: string) => readWav(file).samples.reduce((peak, s) => Math.max(peak, Math.abs(s)), 0);
+const meanPeakDb = (piece: string, recording: string) =>
+  [1, 2, 3].reduce((sum, take) => sum + toDb(peakOf(`${piece}/${recording}-${take}.wav`)), 0) / 3;
+
 describe('Kit', () => {
   it('kit_01 eleven tracks in order', () => {
     expect(TRACKS.map(track => track.name)).toEqual([
@@ -70,5 +118,71 @@ describe('Kit', () => {
     const seen = [0];
     for (let i = 0; i < 3; i++) seen.push(nextStepValue(0, seen[i]));
     expect(seen).toEqual([0, 1, 2, 0]);
+  });
+});
+
+describe('House Kit', () => {
+  it('hk_01 nine takes of each piece', () => {
+    expect(fs.readdirSync(houseDir).sort()).toEqual(Object.keys(RECORDINGS).sort());
+    expect(houseFiles).toHaveLength(54);
+    Object.keys(RECORDINGS).forEach(piece => {
+      const expected = houseFiles.filter(file => file.startsWith(`${piece}/`)).map(file => path.basename(file));
+      expect(fs.readdirSync(path.join(houseDir, piece)).sort()).toEqual(expected.sort());
+    });
+  });
+
+  it('hk_09 format and tail', () => {
+    houseFiles.forEach(file => {
+      const { encoding, channels, sampleRate, bits, samples, frames } = readWav(file);
+      expect({ file, encoding, channels, sampleRate, bits }).toEqual({
+        file, encoding: 1, channels: 2, sampleRate: 44100, bits: 16,
+      });
+
+      const reachesTail = (frame: number) =>
+        Math.max(Math.abs(samples[2 * frame]), Math.abs(samples[2 * frame + 1])) >= TAIL_LEVEL;
+      let framesAfterSound = 0;
+      while (!reachesTail(frames - 1 - framesAfterSound)) framesAfterSound++;
+
+      // The cut frame sits at -60 dBFS, and the fade pulls the last ones under it. So only about
+      // the fade stays under -60 dBFS: more is a late cut or padding, less is a cut above -60.
+      expect(framesAfterSound, file).toBeGreaterThanOrEqual(FADE_FRAMES * 0.9);
+      expect(framesAfterSound, file).toBeLessThanOrEqual(4410); // 100 ms: a low tom's last swings
+
+      // The fade lands on 0, on the last frames only: no silence was padded after it
+      let silentFrames = 0;
+      while (samples[2 * (frames - 1 - silentFrames)] === 0 && samples[2 * (frames - 1 - silentFrames) + 1] === 0) {
+        silentFrames++;
+      }
+      expect(silentFrames, file).toBeGreaterThanOrEqual(1);
+      expect(silentFrames, file).toBeLessThan(FADE_FRAMES / 2);
+    });
+  });
+
+  it('hk_10 recorded levels', () => {
+    // Soft takes stay under the hard hits, so nothing evened out the recordings
+    expect(toDb(peakOf('snare/hard-1.wav')) - toDb(peakOf('snare/soft-1.wav'))).toBeGreaterThanOrEqual(6);
+    expect(toDb(peakOf('kick/hard-1.wav')) - toDb(peakOf('kick/soft-1.wav'))).toBeGreaterThanOrEqual(2);
+    expect(meanPeakDb('snare', 'hard') - meanPeakDb('snare', 'soft')).toBeGreaterThanOrEqual(6);
+    expect(meanPeakDb('kick', 'hard') - meanPeakDb('kick', 'soft')).toBeGreaterThanOrEqual(2);
+    ['tom-10', 'tom-12', 'tom-14', 'tom-16'].forEach(tom => {
+      expect(meanPeakDb(tom, 'hard') - meanPeakDb(tom, 'soft'), tom).toBeGreaterThanOrEqual(1);
+    });
+
+    // The loudest take of each piece still hits full scale, so no gain went down
+    Object.keys(RECORDINGS).forEach(piece => {
+      const peaks = houseFiles.filter(file => file.startsWith(`${piece}/`)).map(peakOf);
+      expect(toDb(Math.max(...peaks)), piece).toBeGreaterThanOrEqual(-1);
+    });
+  });
+
+  it('hk_11 size limit', () => {
+    const kitFiles = (fs.readdirSync(path.join(publicDir, 'kit'), { recursive: true }) as string[])
+      .filter(file => file.endsWith('.wav'))
+      .map(file => path.join('kit', file));
+    expect(kitFiles.length).toBeGreaterThanOrEqual(54 + 7);
+
+    const samples = [...kitFiles, 'kick.wav', 'snare.wav', 'hihat.wav'];
+    const bytes = samples.map(sample => fs.statSync(path.join(publicDir, sample)).size);
+    expect(bytes.reduce((total, size) => total + size)).toBeLessThanOrEqual(20 * 1024 * 1024);
   });
 });

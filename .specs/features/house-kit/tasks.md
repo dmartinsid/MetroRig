@@ -113,9 +113,9 @@ T19 → T20
 
 **Done when**:
 
-- [ ] 54 files exist: 6 pieces × 3 recordings × 3 takes
-- [ ] Tests in `tests/kit.test.ts` read the real files for format, tail, levels and total size
-- [ ] Gate check passes: `npx vitest run`
+- [x] 54 files exist: 6 pieces × 3 recordings × 3 takes
+- [x] Tests in `tests/kit.test.ts` read the real files for format, tail, levels and total size
+- [x] Gate check passes: `npx vitest run`
 
 **Tests**: unit
 **Gate**: quick
