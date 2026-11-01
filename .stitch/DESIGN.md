@@ -113,7 +113,7 @@ The product promise is "rock-solid timing accuracy", so the interface has to fee
 
 ### Product Shape
 
-The native object is **one bar on a loop**: 11 tracks (Click, Kick, Snare, Hi-hat, Open Hat, Ride, Ride Bell, Crash, China, High Tom, Floor Tom) multiplied by up to 32 steps, where a step is a sixteenth. Each cell holds `0` (off), `1` (normal), `2` (accent) or `3` (ghost, drum tracks only). The product has no feed, only this one matrix shown two ways, plus the Grooves screen that loads a song into it:
+The native object is **a pattern of 1 or 4 bars on a loop**: 11 tracks (Click, Kick, Snare, Hi-hat, Open Hat, Ride, Ride Bell, Crash, China, High Tom, Floor Tom) multiplied by up to 32 steps, where a step is a sixteenth. Each cell holds `0` (off), `1` (normal), `2` (accent) or `3` (ghost, drum tracks only). The product has no feed, only this one matrix shown two ways, plus the Grooves screen that loads a song into it:
 
 | View | Projection | Purpose | Lead element |
 |:---|:---|:---|:---|
@@ -245,7 +245,7 @@ A hairline-topped footer in both modes, mono and small. Left: a lit dot and `AUD
 
 ### Sequencer Grid (hero)
 
-Row 1 starts with `BEAT/SUB`, then the count: `1 e & a 2 e & a 3 e & a 4 e & a`, or `1 & 2 &` when a beat has two steps. Beat numbers are bold at full opacity. Below are four rows, each starting with a rectangular outlined track label on a faint tint. Columns are `auto` then equal `1fr` steps with a 0.4rem gap, and a 0.5rem spacer between beats makes the pulse readable at a glance. Cells are 44px tall, at least 14px wide, with a 6px radius and 0.15s transitions.
+Row 1 starts with `BEAT/SUB`, then the count: `1 e & a 2 e & a 3 e & a 4 e & a`, or `1 & 2 &` when a beat has two steps. Beat numbers are bold at full opacity. Below are eleven rows, each starting with a rectangular outlined track label on a faint tint. Columns are `auto` then equal `1fr` steps with a 0.4rem gap, and a 0.5rem spacer between beats makes the pulse readable at a glance. Cells are 32px tall, at least 14px wide, with a 6px radius and 0.15s transitions.
 
 | Cell state | Value | Treatment |
 |:---|:---|:---|
@@ -253,6 +253,7 @@ Row 1 starts with `BEAT/SUB`, then the count: `1 e & a 2 e & a 3 e & a 4 e & a`,
 | Sustain | `0`, following a hit in a beat with 2+ hits | 12% track fill, 25% track border |
 | Hit | `1` | 25% track fill, solid track border, 8px glow at 40%, a `●` mark |
 | Accent | `2` | Solid track fill, 16px full-colour glow, a `▲` mark |
+| Ghost | `3` | 10% track fill, 50% track border, a `•` mark |
 | Hover | any | Lighter fill, border at 50% track colour |
 | Silenced | any | 35% opacity on the whole row |
 
@@ -268,7 +269,7 @@ A mono line under the grid: `PAT: <preset name>`, `STEPS: 16/128`, `RESOLUTION: 
 
 ### Track Mix
 
-Four small cards under the sequencer, one per track: a track dot, the name, then `M` and `S`. A pressed button takes the track colour. Several tracks can be soloed, Solo wins over Mute, and the state lasts until the page reloads. It is never saved in a preset.
+Eleven small cards under the sequencer, one per track: a track dot, the name, then `M` and `S`. A pressed button takes the track colour. Several tracks can be soloed, Solo wins over Mute, and the state lasts until the page reloads. It is never saved in a preset.
 
 ### Figure Palette
 
@@ -334,7 +335,7 @@ All beat-driven visuals are delayed by the device's reported output latency, so 
 - **Under 768px**: the header wraps, the track mix becomes two columns, and the Stadium tempo drops to 5rem.
 - **The grid**: step cells never go under 14px. If the grid doesn't fit, only the grid scrolls sideways.
 
-Orbs are 60px. Step cells are 44px tall.
+Orbs are 60px. Step cells are 32px tall.
 
 ## 6. Design System Notes for Stitch Generation
 
@@ -368,7 +369,7 @@ Don't invent copy, stats, session history, accounts or genres. Practice logs are
 
 **Editor Mode**
 
-> A dark desktop audio plugin called MetroRig on a near-black #080810 background. Sticky glass header: neon green #39FF14 monospaced logo with a small outlined PRO badge, two dark selectors reading "Click: Digital" and "4/4 Metronome". Below, two columns at 2:1. The left glass panel dominates: a muted mono header "4/4 Metronome · 4/4 · 120 BPM", a row of small figure chips (Step, Quarter ●···, Eighths ●·●·, Gallop ●·●●, Rev. Gallop ●●·●, 16ths ●●●●, Rest ····), then a 16-step sequencer with a count row "BEAT/SUB 1 e & a 2 e & a…" and eleven rows with rectangular labels CLICK amber #FFB800, KICK coral #FF2D55, SNARE cyan #00D4FF, HI-HAT mint #00FF94, OPEN HAT #7CFFC4, RIDE #B388FF, RIDE BELL #E0B3FF, CRASH #FF8A3D, CHINA #FF5CA8, HIGH TOM #4D9DFF, FLOOR TOM #7C8CFF. Portrait cells with 6px corners, small gaps grouping them in fours. Show Rock Groove: hits as tinted glowing cells with a dot, the first Click as a solid accent with ▲. Under the grid, a mono line "PAT: Rock Groove STEPS: 16/128 RESOLUTION: 1/16th POS: BAR 01 · STEP 01", then four small cards with M and S buttons, one per track. The right column stacks glass cards: "TEMPO BUS" with a huge 64px neon "120 BPM", a thin slider, an outlined "▶ PLAY" button; a "MEASURE" card; an open "TEMPO TRAINER" card. A thin mono footer reads "AUDIO CLOCK: 44.1 kHz 128 SPLS (2.9ms)" and "LATENCY: --". Smoked glass cards with 12px corners and 1px white-at-8% borders.
+> A dark desktop audio plugin called MetroRig on a near-black #080810 background. Sticky glass header: neon green #39FF14 monospaced logo with a small outlined PRO badge, two dark selectors reading "Click: Digital" and "4/4 Metronome". Below, two columns at 2:1. The left glass panel dominates: a muted mono header "4/4 Metronome · 4/4 · 120 BPM", a row of small figure chips (Step, Quarter ●···, Eighths ●·●·, Gallop ●·●●, Rev. Gallop ●●·●, 16ths ●●●●, Rest ····), then a 16-step sequencer with a count row "BEAT/SUB 1 e & a 2 e & a…" and eleven rows with rectangular labels CLICK amber #FFB800, KICK coral #FF2D55, SNARE cyan #00D4FF, HI-HAT mint #00FF94, OPEN HAT #7CFFC4, RIDE #B388FF, RIDE BELL #E0B3FF, CRASH #FF8A3D, CHINA #FF5CA8, HIGH TOM #4D9DFF, FLOOR TOM #7C8CFF. Portrait cells with 6px corners, small gaps grouping them in fours. Show Rock Groove: hits as tinted glowing cells with a dot, the first Click as a solid accent with ▲. Under the grid, a mono line "PAT: Rock Groove STEPS: 16/128 RESOLUTION: 1/16th POS: BAR 01 · STEP 01", then eleven small cards with M and S buttons, one per track. The right column stacks glass cards: "TEMPO BUS" with a huge 64px neon "120 BPM", a thin slider, an outlined "▶ PLAY" button; a "MEASURE" card; an open "TEMPO TRAINER" card. A thin mono footer reads "AUDIO CLOCK: 44.1 kHz 128 SPLS (2.9ms)" and "LATENCY: --". Smoked glass cards with 12px corners and 1px white-at-8% borders.
 
 **Practice Stadium Mode**
 
