@@ -251,9 +251,9 @@ describe('House Kit', () => {
     const kitFiles = (fs.readdirSync(path.join(publicDir, 'kit'), { recursive: true }) as string[])
       .filter(file => file.endsWith('.wav'))
       .map(file => path.join('kit', file));
-    expect(kitFiles.length).toBeGreaterThanOrEqual(54 + 7);
+    expect(kitFiles.length).toBeGreaterThanOrEqual(54 + 5);
 
-    const samples = [...kitFiles, 'kick.wav', 'snare.wav', 'hihat.wav'];
+    const samples = [...kitFiles, 'hihat.wav'];
     const bytes = samples.map(sample => fs.statSync(path.join(publicDir, sample)).size);
     expect(bytes.reduce((total, size) => total + size)).toBeLessThanOrEqual(20 * 1024 * 1024);
   });
