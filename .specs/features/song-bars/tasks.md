@@ -466,8 +466,8 @@ T16 → T17 → T18 → T19
 
 **Done when**:
 
-- [ ] The Grooves description says songs play 4 bars
-- [ ] Gate check passes: `npx vitest run && npx vite build`
+- [x] The Grooves description says songs play 4 bars
+- [x] Gate check passes: `npx vitest run && npx vite build`
 
 **Tests**: none
 **Gate**: full
