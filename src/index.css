@@ -350,6 +350,20 @@ header {
   gap: 0.5rem;
 }
 
+.status-bar-credit {
+  flex-basis: 100%;
+}
+
+.status-bar-credit a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.status-bar-credit a:hover {
+  color: var(--text);
+}
+
 .status-dot {
   flex: none;
   width: 7px;

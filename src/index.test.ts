@@ -2689,4 +2689,25 @@ describe('House Kit', () => {
     }
     await clickPlay();
   });
+
+  it('hk_31 footer credit', async () => {
+    await openPage();
+    const footer = document.querySelector('footer.status-bar')!;
+    expect(footer.textContent).toContain('Kick, snare and toms: The House Kit by Better Mixes — thanks!');
+    // The footer sits outside every screen, so it shows on all of them
+    ['editor-view', 'stadium-view', 'grooves-view'].forEach(id => {
+      expect(document.getElementById(id)!.contains(footer), id).toBe(false);
+    });
+    expect(footer.parentElement).toBe(document.getElementById('editor-view')!.parentElement);
+  });
+
+  it('hk_32 footer link', async () => {
+    await openPage();
+    const links = [...document.querySelectorAll<HTMLAnchorElement>('footer.status-bar a')];
+    expect(links).toHaveLength(1);
+    expect(links[0].textContent).toBe('Better Mixes');
+    expect(links[0].getAttribute('href')).toBe('https://www.youtube.com/@BetterMixes');
+    expect(links[0].target).toBe('_blank');
+    expect(links[0].rel).toContain('noopener');
+  });
 });
