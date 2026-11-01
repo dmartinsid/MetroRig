@@ -1270,4 +1270,101 @@ describe('Interface V2', () => {
     pressMute(1);
     expect(sentTo(1)).toEqual(realKick);
   });
+
+  it('stad_02 ring order', async () => {
+    await openPage();
+
+    const arcs = [0, 1, 2, 3].map(trackId => {
+      const slice = document.querySelector(`.clock-slice[data-track="${trackId}"]`)!;
+      return [...slice.getAttribute('d')!.matchAll(/A ([\d.]+)/g)].map(match => Number(match[1]));
+    });
+    arcs.forEach(([outer, inner]) => expect(inner).toBeLessThan(outer));
+    for (let ring = 1; ring < 4; ring++) {
+      expect(arcs[ring][0]).toBeLessThan(arcs[ring - 1][1]); // A gap between rings
+    }
+  });
+
+  it('stad_06 tempo format', async () => {
+    await openPage();
+    expect(byId('stadium-bpm').innerText).toBe('120.0');
+    expect(byId('stadium-bpm').parentElement?.textContent).toContain('BPM');
+
+    await clickPlay();
+    tick({ currentBpm: 133.25 });
+    expect(byId('stadium-bpm').innerText).toBe('133.3');
+  });
+
+  it('stad_07 trainer status', async () => {
+    localStorage.removeItem('metrorig_view_mode');
+    await openPage();
+
+    await selectPreset('factory:trainer_calvagada_148_190');
+    expect(byId('stadium-status').innerText).toBe('Trainer 148 → 190 BPM · +2 every 3 bars');
+    expect(byId('stadium-status-dot').classList.contains('lit')).toBe(true);
+
+    await selectPreset('factory:default'); // Off, then turned on by hand in the Editor
+    byId('trainer-enable').checked = true;
+    byId('trainer-enable').dispatchEvent(new Event('change'));
+    byId<HTMLButtonElement>('btn-toggle-view').click();
+    expect(byId('stadium-status').innerText).toBe('Trainer 120 → 160 BPM · +5 every 4 bars');
+    localStorage.removeItem('metrorig_view_mode');
+  });
+
+  it('stad_08 trainer off', async () => {
+    await openPage();
+    await selectPreset('factory:rock');
+    expect(byId('stadium-status').innerText).toBe('Trainer Off');
+    expect(byId('stadium-status-dot').classList.contains('lit')).toBe(false);
+  });
+
+  it('stad_10 orb pulse', async () => {
+    await openPage();
+    await clickPlay();
+    mockGsap.fromTo.mockClear();
+
+    tick({ currentBpm: 120, activeTrackIds: [2] });
+    const tween = mockGsap.fromTo.mock.calls.find(call => call[0] === byId('orb-2'))!;
+    expect(tween[1]).toEqual({ scale: 1.15 });
+    expect(tween[2]).toMatchObject({ scale: 1.0, duration: 0.2 });
+    expect(tween[1]).not.toHaveProperty('backgroundColor');
+    expect(tween[2]).not.toHaveProperty('backgroundColor');
+  });
+
+  it('stad_11 orb inert', async () => {
+    await openPage();
+    await clickPlay();
+    audioCalls.length = 0;
+    mockGsap.fromTo.mockClear();
+
+    [0, 1, 2, 3].forEach(trackId => byId(`orb-${trackId}`).click());
+    expect(audioCalls).toHaveLength(0);
+    expect(mockGsap.fromTo).not.toHaveBeenCalled();
+    [0, 1, 2, 3].forEach(trackId => expect(byId(`mute-${trackId}`).getAttribute('aria-pressed')).toBe('false'));
+  });
+
+  it('stad_12 clock behaviours', async () => {
+    await openPage();
+    await selectPreset('factory:trainer_gallop');
+    await clickPlay();
+    mockGsap.fromTo.mockClear();
+
+    const slices = [...document.querySelectorAll('.clock-slice[data-track="1"]')];
+    expect(slices).toHaveLength(16);
+    expect(slices[0].classList.contains('on')).toBe(true);
+    expect(slices[1].classList.contains('sustain')).toBe(true);
+
+    tick({ currentBpm: 120, beatIndex: 4 });
+    expect(document.querySelector('.clock-label.active')?.textContent).toBe('2');
+    const hand = mockGsap.fromTo.mock.calls.find(call => call[0] === byId('clock-hand'))!;
+    expect(hand[1]).toMatchObject({ rotation: 90 });
+    expect(hand[2]).toMatchObject({ rotation: 112.5 });
+  });
+
+  it('edge_04 stadium placeholder', async () => {
+    await openPage();
+    await selectPreset('factory:rock');
+
+    const selector = byId<HTMLSelectElement>('stadium-preset-selector');
+    expect(selector.options[selector.selectedIndex].text).toBe('Choose a speed trainer');
+  });
 });

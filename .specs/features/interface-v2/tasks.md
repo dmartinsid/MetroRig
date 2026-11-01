@@ -335,10 +335,10 @@ T17
 
 **Done when**:
 
-- [ ] A one-step bar still draws
-- [ ] The tests of the checks for STAD-02, STAD-06, STAD-07, STAD-08, STAD-10, STAD-11, STAD-12, EDGE-04 pass
-- [ ] Gate check passes: `npx vitest run && npx vite build`
-- [ ] Test count: 136 tests pass (no silent deletions)
+- [x] A one-step bar still draws
+- [x] The tests of the checks for STAD-02, STAD-06, STAD-07, STAD-08, STAD-10, STAD-11, STAD-12, EDGE-04 pass
+- [x] Gate check passes: `npx vitest run && npx vite build`
+- [x] Test count: 136 tests pass (no silent deletions)
 
 **Tests**: integration
 **Gate**: full
