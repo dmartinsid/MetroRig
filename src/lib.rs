@@ -7,7 +7,9 @@ const OPEN_HAT_TRACK: usize = 4;
 const GAIN_NORMAL: f32 = 0.7;
 const GAIN_ACCENT: f32 = 1.0;
 const GAIN_GHOST: f32 = 0.3;
-const STEPS_COUNT: usize = 32;
+const STEPS_COUNT: usize = 128; // 4 bars of the longest bar
+const BAR_STEPS_MAX: usize = 32;
+const BARS_MAX: usize = 4;
 
 struct Sample {
     left_channel: Vec<f32>,
@@ -123,8 +125,9 @@ pub struct Engine {
     last_tick_index: i32, // -1 if no tick in last process
     last_tick_bpm: f64,
 
-    // Dynamic measure length looping
-    measure_length: usize,
+    // Dynamic pattern looping
+    measure_length: usize, // The steps of one bar
+    bars: usize,
 
 
     // Sound selection
@@ -179,6 +182,7 @@ impl Engine {
             last_tick_index: -1,
             last_tick_bpm: 120.0,
             measure_length: 16,
+            bars: 1,
             click_mode: 0,
             click_accent: false,
         };
@@ -222,7 +226,7 @@ impl Engine {
     }
 
     fn trigger_step(&mut self) {
-        if self.step_index == 0 {
+        if self.step_index % self.measure_length == 0 {
             if self.first_hit {
                 self.first_hit = false;
                 self.apply_pending_trainer();
@@ -277,7 +281,11 @@ impl Engine {
         }
 
         // Update step index
-        self.step_index = (self.step_index + 1) % self.measure_length;
+        self.step_index = (self.step_index + 1) % self.pattern_length();
+    }
+
+    fn pattern_length(&self) -> usize {
+        self.measure_length * self.bars
     }
 
     fn apply_pending_trainer(&mut self) {
@@ -539,10 +547,20 @@ pub extern "C" fn engine_update_grid(ptr: *mut Engine, sample_id: u32, steps_ptr
 
 #[no_mangle]
 pub extern "C" fn engine_set_measure_length(ptr: *mut Engine, length: u32) {
-    if ptr.is_null() || length == 0 || length > STEPS_COUNT as u32 { return; }
+    if ptr.is_null() || length == 0 || length > BAR_STEPS_MAX as u32 { return; }
     let engine = unsafe { &mut *ptr };
     engine.measure_length = length as usize;
-    if engine.step_index >= engine.measure_length {
+    if engine.step_index >= engine.pattern_length() {
+        engine.step_index = 0;
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn engine_set_bars(ptr: *mut Engine, bars: u32) {
+    if ptr.is_null() || bars == 0 || bars > BARS_MAX as u32 { return; }
+    let engine = unsafe { &mut *ptr };
+    engine.bars = bars as usize;
+    if engine.step_index >= engine.pattern_length() {
         engine.step_index = 0;
     }
 }
@@ -1911,6 +1929,109 @@ mod tests {
         
         engine_stop(ptr);
         engine_free(ptr);
+    }
+
+    // A 4/4 pattern of 4 bars with the Click on every step
+    fn four_bars(bpm: f64) -> Run {
+        let run = Run::new(bpm, &[1; 16]);
+        let grid = [1u8; 64];
+        engine_update_grid(run.ptr, 0, grid.as_ptr(), grid.len());
+        engine_set_bars(run.ptr, 4);
+        run
+    }
+
+    #[test]
+    fn pattern_wraps_after_four_bars() {
+        let mut run = four_bars(120.0);
+        run.play();
+        run.render_hits(66);
+
+        let steps: Vec<i32> = run.hits.iter().map(|hit| hit.step).collect();
+        let expected: Vec<i32> = (0..66).map(|hit| hit % 64).collect();
+        assert_eq!(steps, expected);
+        assert_intervals_at(&run, 0..65, 120.0); // No gap at the wrap
+    }
+
+    #[test]
+    fn one_bar_still_wraps_at_its_length() {
+        let mut run = Run::new(120.0, &[1; 16]);
+        run.play();
+        run.render_hits(18);
+        assert_eq!(run.hits[15].step, 15);
+        assert_eq!(run.hits[16].step, 0);
+    }
+
+    #[test]
+    fn bars_outside_1_to_4_are_refused() {
+        let run = Run::new(120.0, &[1; 16]);
+        for bars in [0, 5, 128] {
+            engine_set_bars(run.ptr, bars);
+            assert_eq!(unsafe { &*run.ptr }.bars, 1, "{} bars", bars);
+        }
+        engine_set_bars(std::ptr::null_mut(), 2); // Must not crash
+        for bars in 1..=4 {
+            engine_set_bars(run.ptr, bars);
+            assert_eq!(unsafe { &*run.ptr }.bars, bars as usize);
+        }
+    }
+
+    #[test]
+    fn fewer_bars_return_a_late_step_to_the_start() {
+        let run = four_bars(120.0);
+        let engine = unsafe { &mut *run.ptr };
+        engine.step_index = 40;
+        engine_set_bars(run.ptr, 2);
+        assert_eq!(engine.step_index, 0);
+    }
+
+    #[test]
+    fn holds_128_steps() {
+        let run = Run::new(120.0, &[0; 16]);
+        let mut grid = [0u8; 128];
+        grid[127] = 2;
+        engine_update_grid(run.ptr, 1, grid.as_ptr(), grid.len());
+        assert_eq!(unsafe { &*run.ptr }.tracks[1].steps[127], 2);
+
+        // One bar stops at 32 steps, however long the pattern may grow
+        engine_set_measure_length(run.ptr, 32);
+        assert_eq!(unsafe { &*run.ptr }.measure_length, 32);
+        engine_set_measure_length(run.ptr, 33);
+        assert_eq!(unsafe { &*run.ptr }.measure_length, 32);
+
+        let too_long = [0u8; 129];
+        engine_update_grid(run.ptr, 1, too_long.as_ptr(), too_long.len());
+        assert_eq!(unsafe { &*run.ptr }.tracks[1].steps[127], 2);
+    }
+
+    #[test]
+    fn trainer_counts_each_bar() {
+        // +5 every 2 bars: bars 1 and 2 at 80, 3 and 4 at 85, then the pattern wraps to 90.
+        let mut run = four_bars(80.0);
+        engine_set_trainer(run.ptr, true, 80.0, 160.0, 5.0, BY_BARS, 2.0, STEPPED);
+        run.play();
+        run.render_hits(66);
+
+        assert_hits_at(&run, 0..32, 80.0);
+        assert_hits_at(&run, 32..64, 85.0);
+        assert_hits_at(&run, 64..66, 90.0);
+    }
+
+    #[test]
+    fn smooth_trainer_ignores_bars() {
+        let bpm_after = |bars: u32| {
+            let mut run = Run::new(100.0, &[1; 16]);
+            if bars > 1 {
+                let grid = [1u8; 64];
+                engine_update_grid(run.ptr, 0, grid.as_ptr(), grid.len());
+                engine_set_bars(run.ptr, bars);
+            }
+            engine_set_trainer(run.ptr, true, 100.0, 200.0, 4.0, BY_BARS, 1.0, SMOOTH);
+            run.play();
+            run.render_hits(33); // Two bars
+            run.hits[32].bpm
+        };
+        assert_eq!(bpm_after(4), bpm_after(1));
+        assert!(bpm_after(4) > 107.0 && bpm_after(4) < 109.0); // +4 per bar, a little under 8 by the ramp's own tempo
     }
 
     #[test]
