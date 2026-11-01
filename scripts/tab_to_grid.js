@@ -1,5 +1,5 @@
-// Turns one bar of a Songsterr drum part into MetroRig's grid. A development tool: the app never calls it.
-// Usage: node scripts/tab_to_grid.js <part.json> <measure index>
+// Turns 4 bars of a Songsterr drum part into MetroRig's grid. A development tool: the app never calls it.
+// Usage: node scripts/tab_to_grid.js <part.json> <first measure index>
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 
@@ -76,10 +76,38 @@ export function barToGrid(measure, timeSignature) {
   return { measureLength, tracks };
 }
 
+// The time signature in force at a measure: a tab writes it only where it changes
+function signatureAt(part, index) {
+  let signature = [4, 4];
+  part.measures.slice(0, index + 1).forEach(measure => { signature = measure.signature ?? signature; });
+  return signature;
+}
+
+export function tempoAt(part, index) {
+  const changes = (part.automations?.tempo ?? []).filter(change => change.measure <= index);
+  return changes.at(-1)?.bpm;
+}
+
+export function barsToGrid(part, first, count = 4) {
+  const signature = signatureAt(part, first);
+  const measures = part.measures.slice(first, first + count);
+  if (measures.length < count) throw new Error(`The tab ends before measure ${first + count}`);
+
+  const grids = measures.map((measure, offset) => {
+    const own = signatureAt(part, first + offset);
+    if (own.join('/') !== signature.join('/')) throw new Error(`Measure ${first + offset} changes the time signature`);
+    return barToGrid(measure, signature);
+  });
+  const tempoChange = (part.automations?.tempo ?? []).some(change => change.measure > first && change.measure < first + count);
+  if (tempoChange) throw new Error(`The tempo changes inside measures ${first} to ${first + count - 1}`);
+
+  const tracks = {};
+  for (let track = 1; track < TRACK_COUNT; track++) tracks[track] = grids.flatMap(grid => grid.tracks[track]);
+  return { measureLength: grids[0].measureLength, bars: count, bpm: tempoAt(part, first), tracks };
+}
+
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const [partPath, index] = process.argv.slice(2);
   const part = JSON.parse(fs.readFileSync(partPath, 'utf8'));
-  let signature = [4, 4];
-  part.measures.slice(0, Number(index) + 1).forEach(measure => { signature = measure.signature ?? signature; });
-  console.log(JSON.stringify(barToGrid(part.measures[Number(index)], signature)));
+  console.log(JSON.stringify(barsToGrid(part, Number(index))));
 }
