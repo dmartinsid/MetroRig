@@ -672,7 +672,7 @@ describe('Interface V2', () => {
     await openPage();
 
     const groups = [...byId('preset-selector').querySelectorAll('optgroup')];
-    expect(groups.map(group => group.label)).toEqual(['Time Signatures', 'Drum Grooves', 'Speed Trainer', 'User Presets']);
+    expect(groups.map(group => group.label)).toEqual(['Time Signatures', 'Drum Grooves', 'Songs', 'Speed Trainer', 'User Presets']);
     groups.forEach(group => expect(group.children.length).toBeGreaterThan(0));
   });
 
@@ -1750,5 +1750,34 @@ describe('Grooves Library', () => {
     const field = (name: string) => card.querySelector(`.song-${name}`)?.textContent;
     expect([field('title'), field('artist'), field('section'), field('bpm'), field('meter')])
       .toEqual(['Back in Black', 'AC/DC', 'Verse', '94 BPM', '4/4']);
+  });
+
+  it('song_07 songs group', async () => {
+    await openPage();
+    const group = byId('group-songs') as unknown as HTMLOptGroupElement;
+    expect((group as any).label).toBe('Songs');
+    expect(group.children).toHaveLength(14);
+
+    await selectPreset('song:song_enter_sandman');
+    expect(byId('pattern-name').textContent).toBe('PAT: Enter Sandman');
+    expect(byId('preset-selector').value).toBe('song:song_enter_sandman');
+  });
+
+  it('song_08 save leaves catalog', async () => {
+    const stores = await openPage();
+    const { SONGS } = await import('./songs');
+    const original = structuredClone(SONGS);
+    await selectPreset('song:song_battery');
+    cell(8, 0).click();
+    byId('preset-name').value = 'My Battery';
+    byId<HTMLButtonElement>('btn-save').click();
+    await flush();
+
+    const saved = [...stores.presets.values()].find(preset => preset.name === 'My Battery');
+    expect(saved.id).toMatch(/^user_/);
+    expect(saved.gridData[8][0]).toBe(1);
+    expect(saved.bpm).toBe(194);
+    expect(SONGS).toEqual(original);
+    expect(byId('preset-selector').value).toBe(`user:${saved.id}`);
   });
 });

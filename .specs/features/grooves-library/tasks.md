@@ -579,10 +579,10 @@ T24 → T25 → T26 → T27 → T28
 
 **Done when**:
 
-- [ ] `Save` on a loaded song leaves `SONGS` unchanged
-- [ ] The tests of the checks for SONG-01 that this task reaches pass
-- [ ] Gate check passes: `npx vitest run`
-- [ ] Test count: at least the previous task's count (no silent deletions)
+- [x] `Save` on a loaded song leaves `SONGS` unchanged
+- [x] The tests of the checks for SONG-01 that this task reaches pass
+- [x] Gate check passes: `npx vitest run`
+- [x] Test count: at least the previous task's count (no silent deletions)
 
 **Tests**: integration
 **Gate**: quick
