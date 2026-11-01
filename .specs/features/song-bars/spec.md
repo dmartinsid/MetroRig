@@ -11,7 +11,7 @@ Each song in the Grooves library is 1 bar in a loop, which sounds like an exerci
 - [ ] All 14 songs play 4 consecutive bars from their tab, with at least 2 different bars
 - [ ] A 4-bar song can be played, edited, saved and followed on the Editor and the Stadium
 - [ ] Every saved preset and groove keeps working as 1 bar
-- [ ] The user approves all 14 songs by ear
+- [x] The user approves all 14 songs by ear: "Aprovei as 14 musicas do jeito que ta"
 
 ## Out of Scope
 
@@ -39,7 +39,7 @@ Each song in the Grooves library is 1 bar in a loop, which sounds like an exerci
 | `POS: BAR` | Keeps counting bars since Play | Stated in the same round, user: "recomendacoes" | y |
 | Groove Library on 4 bars | Enters only the bar on screen | Stated in the same round, user: "recomendacoes" | y |
 | `STEPS` | Total steps over the new limit: `STEPS: 64/128`, and `STEPS: 16/128` on 1 bar | Stated in the same round, user: "recomendacoes" | y |
-| The Every Day I Have the Blues tempo | The tab's 200 BPM until the user's ear approval, which decides it | The user has not heard the recording against the app || y - user: "aprovado" |
+| The Every Day I Have the Blues tempo | The tab's 200 BPM, kept by the user's ear approval | The user has not heard the recording against the app || y - user: "aprovado" |
 | Pressing another bar during playback | The grid shows that bar until the next bar starts, then follows the music again | Nobody asked; the music must not jump || y |
 | Stop on 4 bars | The Editor returns to bar 1, as `POS` already does | Stop already returns to the start || y |
 | `Figure` chips on 4 bars | A figure writes only in the bar on screen | Same rule as the Groove Library || y |
@@ -47,7 +47,7 @@ Each song in the Grooves library is 1 bar in a loop, which sounds like an exerci
 | Limit of one bar | Stays at 32 steps | The time signature alert keeps its meaning || y |
 | Declining the time signature warning | Nothing changes: the 4 bars and the old time signature stay | The rule of the existing song confirmation || y |
 
-**Open questions:** none. The Every Day I Have the Blues tempo is decided at the ear approval in `## Success Criteria`.
+**Open questions:** none.
 
 ---
 
@@ -179,12 +179,12 @@ Each song in the Grooves library is 1 bar in a loop, which sounds like an exerci
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| SNG-01 | P1: Songs of 4 bars | Tasks | Implementing |
-| BAR-01 | P1: Bars in the Editor | Tasks | Implementing |
-| CNT-01 | P1: Counting real bars | Tasks | Implementing |
-| STD-02 | P2: Bars in the Stadium | Tasks | Implementing |
-| BAR-05 | P2: Time signature on 4 bars | Tasks | Implementing |
-| DOC-02 | P3: Sources and documentation | Tasks | Implementing |
+| SNG-01 | P1: Songs of 4 bars | Tasks | Verified |
+| BAR-01 | P1: Bars in the Editor | Tasks | Verified |
+| CNT-01 | P1: Counting real bars | Tasks | Verified |
+| STD-02 | P2: Bars in the Stadium | Tasks | Verified |
+| BAR-05 | P2: Time signature on 4 bars | Tasks | Verified |
+| DOC-02 | P3: Sources and documentation | Tasks | Verified |
 
 **ID format:** one ID per story, with its criteria numbered as above: `BAR-01.3` is the third criterion of BAR-01.
 
@@ -201,6 +201,6 @@ Each song in the Grooves library is 1 bar in a loop, which sounds like an exerci
 
 ## Success Criteria
 
-- [ ] The user approves all 14 songs by ear, with the Every Day I Have the Blues tempo decided there
+- [x] The user approves all 14 songs by ear, with the Every Day I Have the Blues tempo decided there: "Aprovei as 14 musicas do jeito que ta", so it stays at 200 BPM
 - [ ] `npm run test:js`, `npm run test:rust` and `npm run build` pass
 - [ ] Every existing test not changed by this spec still passes
