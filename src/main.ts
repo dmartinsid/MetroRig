@@ -1039,6 +1039,14 @@ function songCard(song: Song) {
   play.setAttribute('aria-label', `Play ${song.title}`);
   play.onclick = () => playSong(song);
   card.appendChild(play);
+
+  const open = document.createElement('button');
+  open.className = 'song-open';
+  open.innerText = 'Open in Editor';
+  open.onclick = () => {
+    if (useSong(song)) state.setViewMode('editor');
+  };
+  card.appendChild(open);
   return card;
 }
 

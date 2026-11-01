@@ -1911,4 +1911,48 @@ describe('Grooves Library', () => {
     expect(kick.every(value => value === 0)).toBe(true);
     await clickPlay();
   });
+
+  it('grv_09 open in editor', async () => {
+    await openPage();
+    openScreen('grooves');
+    songButton('Battery', '.song-open').click();
+    await flush();
+
+    expect(shownScreens()).toEqual(['editor-view']);
+    expect(byId('nav-editor').getAttribute('aria-current')).toBe('page');
+    expect(byId('pattern-name').textContent).toBe('PAT: Battery');
+    expect(byId('btn-play').classList.contains('playing')).toBe(false);
+  });
+
+  it('grv_10 loaded song keeps edits', async () => {
+    const asked = vi.fn(() => false);
+    vi.stubGlobal('confirm', asked);
+    await openPage();
+    await pressPlay('Battery');
+    cell(8, 1).click();
+    openScreen('grooves');
+
+    songButton('Battery', '.song-open').click();
+    await flush();
+    expect(shownScreens()).toEqual(['editor-view']);
+    expect(cell(8, 1).classList.contains('active')).toBe(true);
+
+    await pressPlay('Battery');
+    await pressPlay('Battery');
+    expect(cell(8, 1).classList.contains('active')).toBe(true);
+    expect(asked).not.toHaveBeenCalled();
+    await clickPlay();
+  });
+
+  it('grv_12 decline keeps the screen on open in editor', async () => {
+    vi.stubGlobal('confirm', vi.fn(() => false));
+    await openPage();
+    cell(1, 1).click();
+    openScreen('grooves');
+
+    songButton('Battery', '.song-open').click();
+    await flush();
+    expect(shownScreens()).toEqual(['grooves-view']);
+    expect(byId('pattern-name').textContent).not.toContain('Battery');
+  });
 });
