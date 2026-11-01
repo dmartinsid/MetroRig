@@ -9,6 +9,7 @@ const DYNAMIC_NORMAL: usize = 1;
 const DYNAMIC_ACCENT: usize = 2;
 const HI_HAT_TRACK: usize = 3;
 const OPEN_HAT_TRACK: usize = 4;
+const FADE_SECONDS: f32 = 0.005;
 const GAIN_NORMAL: f32 = 0.7;
 const GAIN_ACCENT: f32 = 1.0;
 const GAIN_GHOST: f32 = 0.3;
@@ -25,6 +26,15 @@ struct Sample {
 enum Source {
     Single,
     Take(usize, usize), // Dynamic, take
+}
+
+// A replaced hit, ringing out under the hit that replaced it
+#[derive(Clone, Copy)]
+struct FadingVoice {
+    source: Source,
+    offset: usize,
+    level: f32,
+    elapsed: usize, // Frames of the fade already played
 }
 
 struct SequencerTrack {
@@ -123,6 +133,8 @@ pub struct Engine {
     playback_active: [bool; MAX_SAMPLES],
     playback_volume: [f32; MAX_SAMPLES],
     playback_gain: [f32; MAX_SAMPLES], // The dynamic of the step that started each voice
+    fading: [Option<FadingVoice>; MAX_SAMPLES],
+    fade_frames: usize,
 
     // Sequencer Grid
     tracks: [SequencerTrack; MAX_SAMPLES],
@@ -203,6 +215,8 @@ impl Engine {
             playback_active: [false; MAX_SAMPLES],
             playback_volume: [0.8, 1.0, 0.9, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.9, 0.9, 0.9, 0.9],
             playback_gain: [GAIN_NORMAL; MAX_SAMPLES],
+            fading: [None; MAX_SAMPLES],
+            fade_frames: (sample_rate * FADE_SECONDS).round() as usize,
             tracks,
             trainer: TrainerSettings {
                 enabled: false,
@@ -241,6 +255,7 @@ impl Engine {
         self.next_take = [[0; DYNAMICS]; MAX_SAMPLES];
         self.playback_active = [false; MAX_SAMPLES];
         self.playback_offsets = [0; MAX_SAMPLES];
+        self.fading = [None; MAX_SAMPLES];
         self.active_click_amp = 0.0;
         self.click_phase = 0.0;
         self.click_accent = false;
@@ -254,6 +269,7 @@ impl Engine {
 
     pub fn stop(&mut self) {
         self.is_playing = false;
+        self.fading = [None; MAX_SAMPLES];
     }
 
     fn recalc_tempo(&mut self) {
@@ -313,6 +329,15 @@ impl Engine {
             let step = self.tracks[i].steps[self.step_index];
             if step > 0 {
                 if let Some(source) = self.next_source(i, step) {
+                    if self.playback_active[i] {
+                        let replaced = self.playback_source[i];
+                        self.fading[i] = Some(FadingVoice {
+                            source: replaced,
+                            offset: self.playback_offsets[i],
+                            level: self.voice_level(i, replaced),
+                            elapsed: 0,
+                        });
+                    }
                     self.playback_source[i] = source;
                     self.playback_active[i] = true;
                     self.playback_offsets[i] = 0;
@@ -534,6 +559,18 @@ impl Engine {
                         }
                         None => self.playback_active[s_idx] = false,
                     }
+                }
+
+                if let Some(voice) = self.fading[s_idx] {
+                    let frame = self.voice_frame(s_idx, voice.source, voice.offset);
+                    if let Some((left, right)) = frame {
+                        let ramp = 1.0 - voice.elapsed as f32 / self.fade_frames as f32;
+                        drums_l += left * voice.level * ramp;
+                        drums_r += right * voice.level * ramp;
+                    }
+                    let elapsed = voice.elapsed + 1;
+                    self.fading[s_idx] = (frame.is_some() && elapsed < self.fade_frames)
+                        .then_some(FadingVoice { offset: voice.offset + 1, elapsed, ..voice });
                 }
             }
 
@@ -2151,6 +2188,113 @@ mod tests {
         set_steps(&run, 2, &[1; 16]);
         engine_start(run.ptr);
         assert_eq!(played_steps(&run, 3), levels(&[(1, 0), (1, 1), (1, 2)]));
+    }
+
+    // A track on which step 0 starts a 0.5 take of these frames and step 1 replaces it with silence
+    fn replaced_take(sample_rate: f32, frames: usize) -> Run {
+        let run = Run::at_rate(sample_rate, 120.0, &[0; 16]);
+        let left = vec![0.5f32; frames];
+        let right = vec![-0.5f32; frames];
+        let silence = [0.0f32; TAKE_FRAMES];
+        engine_load_take(run.ptr, 2, 1, 0, left.as_ptr(), right.as_ptr(), frames);
+        engine_load_take(run.ptr, 2, 1, 1, silence.as_ptr(), silence.as_ptr(), TAKE_FRAMES);
+        let mut grid = [0u8; 16];
+        grid[..2].fill(1);
+        set_steps(&run, 2, &grid);
+        run
+    }
+
+    #[test]
+    fn hk_07_replaced_hit_fades_over_5_ms() {
+        for sample_rate in [44100.0, 48000.0] {
+            let hit = step_samples(sample_rate, 120.0).ceil() as usize;
+            let fade = (sample_rate * 0.005).round() as usize; // HK-07: 5 ms
+            let run = replaced_take(sample_rate, 2 * hit);
+            engine_start(run.ptr);
+            let (left, right) = stereo_output(run.ptr, hit + 2 * fade);
+
+            assert!(left[..hit].iter().all(|&frame| frame == 0.5));
+            for frame in 0..fade {
+                let ramp = 1.0 - frame as f32 / fade as f32;
+                assert!((left[hit + frame] - 0.5 * ramp).abs() < 1e-6, "frame {}", frame);
+                assert!((right[hit + frame] + 0.5 * ramp).abs() < 1e-6, "frame {}", frame);
+            }
+            assert_eq!(*sounding_frames(&left, &right).last().unwrap(), hit + fade - 1);
+        }
+
+        // A single sample fades from its own level, under the hit that replaces it
+        let run = Run::new(120.0, &[0; 16]);
+        let sample = vec![0.5f32; 20000];
+        engine_load_sample(run.ptr, 1, sample.as_ptr(), sample.as_ptr(), sample.len());
+        let mut grid = [0u8; 16];
+        grid[..2].copy_from_slice(&[2, 3]);
+        set_steps(&run, 1, &grid);
+        engine_start(run.ptr);
+        let hit = step_samples(SR, 120.0).ceil() as usize;
+        let (left, _) = stereo_output(run.ptr, hit + 1000);
+        let (old, new) = (0.5 * GAIN_ACCENT, 0.5 * GAIN_GHOST);
+        assert_eq!(left[hit], old + new);
+        let fade = (SR * 0.005).round();
+        assert!((left[hit + 110] - (old * (1.0 - 110.0 / fade) + new)).abs() < 1e-6);
+        assert_eq!(left[hit + 500], new);
+
+        // A hit that ends during the fade stops there
+        let hit = step_samples(SR, 120.0).ceil() as usize;
+        let run = replaced_take(SR, hit + 50);
+        engine_start(run.ptr);
+        let (left, right) = stereo_output(run.ptr, hit + 1000);
+        assert_eq!(*sounding_frames(&left, &right).last().unwrap(), hit + 49);
+    }
+
+    #[test]
+    fn hk_07_a_finished_voice_adds_nothing() {
+        let hit = step_samples(SR, 120.0).ceil() as usize;
+
+        // Long gone, and ending on the very frame of the next hit
+        for frames in [1000, hit] {
+            let run = replaced_take(SR, frames);
+            engine_start(run.ptr);
+            let (left, right) = stereo_output(run.ptr, hit + 1000);
+            assert_eq!(*sounding_frames(&left, &right).last().unwrap(), frames - 1);
+            assert!(unsafe { &*run.ptr }.fading.iter().all(Option::is_none));
+        }
+    }
+
+    #[test]
+    fn hk_07_open_hat_cut_stays_hard() {
+        // The Hi-hat cuts it on the frame, with no fade after
+        let mut hi_hat = [0u8; 16];
+        hi_hat[2] = 1;
+        let cut_at = (2.0 * step_samples(SR, 120.0)).ceil() as usize;
+        assert_eq!(*open_hat_frames(&hi_hat).last().unwrap(), cut_at - 1);
+
+        // A new Open Hat on the Hi-hat's step starts clean, over nothing
+        let run = Run::new(120.0, &[0; 16]);
+        let open_hat = vec![1.0f32; 20000];
+        engine_load_sample(run.ptr, 4, open_hat.as_ptr(), open_hat.as_ptr(), open_hat.len());
+        let mut grid = [0u8; 16];
+        grid[0] = 1;
+        grid[2] = 1;
+        set_steps(&run, 4, &grid);
+        set_steps(&run, 3, &hi_hat);
+        engine_start(run.ptr);
+        let (left, _) = stereo_output(run.ptr, cut_at + 1000);
+        assert_eq!(left[cut_at], 0.7 * GAIN_NORMAL);
+    }
+
+    #[test]
+    fn hk_07_stop_and_play_clear_the_fade() {
+        let hit = step_samples(SR, 120.0).ceil() as usize;
+        let fading_after = |act: extern "C" fn(*mut Engine)| {
+            let run = replaced_take(SR, 2 * hit);
+            engine_start(run.ptr);
+            stereo_output(run.ptr, hit + 10);
+            assert!(unsafe { &*run.ptr }.fading[2].is_some());
+            act(run.ptr);
+            unsafe { &*run.ptr }.fading[2].is_some()
+        };
+        assert!(!fading_after(engine_stop));
+        assert!(!fading_after(engine_start));
     }
 
     #[test]
