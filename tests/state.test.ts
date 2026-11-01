@@ -170,6 +170,17 @@ describe('Preset normalization', () => {
     gridData: { 1: Array.from({ length }, (_, step) => (step % 4 === 0 ? 1 : 0)) },
   });
 
+  it('hk_20 eleven track preset', () => {
+    const hits = (track: number) => Array.from({ length: 64 }, (_, step) => (step % (track + 3) === 0 ? 1 + (step % 3) : 0));
+    const saved = { ...stored(4, 64), gridData: Object.fromEntries(Array.from({ length: 11 }, (_, track) => [track, hits(track)])) };
+    const preset = completeKit(normalizePreset(saved));
+
+    for (let track = 0; track <= 10; track++) expect(preset.gridData[track], `track ${track}`).toEqual(hits(track));
+    expect(preset.gridData[11]).toEqual(new Array(64).fill(0));
+    expect(preset.gridData[12]).toEqual(new Array(64).fill(0));
+    expect(Object.keys(preset.gridData)).toHaveLength(13);
+  });
+
   it('bars_08 no bar count is one bar', () => {
     const preset = normalizePreset(stored(undefined, 16));
     expect(preset.bars ?? 1).toBe(1);
@@ -301,9 +312,9 @@ describe('completeKit', () => {
     const kick = [1, 0, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0];
     const preset = completeKit(stored({ 0: new Array(12).fill(0), 1: kick, 2: new Array(12).fill(0), 3: new Array(12).fill(0) }));
 
-    expect(Object.keys(preset.gridData)).toHaveLength(11);
+    expect(Object.keys(preset.gridData)).toHaveLength(13);
     expect(preset.gridData[1]).toEqual(kick);
-    for (let trackId = 4; trackId <= 10; trackId++) {
+    for (let trackId = 4; trackId <= 12; trackId++) {
       expect(preset.gridData[trackId]).toEqual(new Array(12).fill(0));
     }
   });

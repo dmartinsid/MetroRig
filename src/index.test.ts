@@ -1170,7 +1170,7 @@ describe('Interface V2', () => {
     expect(document.querySelectorAll('.step-cell.silenced')).toHaveLength(16);
 
     byId<HTMLButtonElement>('solo-2').click(); // Solo silences every other track
-    expect(new Set(silencedTracks('.step-cell'))).toEqual(new Set(['0', '1', '3', '4', '5', '6', '7', '8', '9', '10']));
+    expect(new Set(silencedTracks('.step-cell'))).toEqual(new Set(['0', '1', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12']));
   });
 
   it('mute_08 orb still', async () => {
@@ -1449,7 +1449,7 @@ describe('Grooves Library', () => {
     await openPage();
     await clickPlay();
 
-    expect(mockLoadSample.mock.calls.map(([id]) => id).sort((a, b) => a - b)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    expect(mockLoadSample.mock.calls.map(([id]) => id).sort((a, b) => a - b)).toEqual([3, 4, 5, 6, 7, 8]);
     expect(logged).toHaveBeenCalledWith('Failed to load /kit/china.wav:', failure);
     expect(calls('start')).toHaveLength(1);
     expect(byId('btn-play').classList.contains('playing')).toBe(true);
@@ -1473,9 +1473,10 @@ describe('Grooves Library', () => {
     await openPage();
 
     expect([...document.querySelectorAll('.track-label')].map(label => (label as HTMLElement).innerText)).toEqual([
-      'Click', 'Kick', 'Snare', 'Hi-hat', 'Open Hat', 'Ride', 'Ride Bell', 'Crash', 'China', 'High Tom', 'Floor Tom',
+      'Click', 'Kick', 'Snare', 'Hi-hat', 'Open Hat', 'Ride', 'Ride Bell', 'Crash', 'China',
+      'High Tom', 'Mid Tom', 'Low Tom', 'Floor Tom',
     ]);
-    expect(document.querySelectorAll('.step-cell')).toHaveLength(11 * 16);
+    expect(document.querySelectorAll('.step-cell')).toHaveLength(13 * 16);
   });
 
   it('dyn_02 drum cell cycle', async () => {
@@ -1530,14 +1531,17 @@ describe('Grooves Library', () => {
     expect(cell(2, 0).classList.contains('ghost')).toBe(true);
   });
 
-  it('edt_02 eleven mix cards', async () => {
+  it('edt_02 thirteen mix cards', async () => {
     await openPage();
 
     const cards = [...document.querySelectorAll<HTMLElement>('.track-mix-card')];
     expect(cards.map(card => card.querySelector('.track-mix-name')?.textContent)).toEqual([
-      'CLICK', 'KICK', 'SNARE', 'HI-HAT', 'OPEN HAT', 'RIDE', 'RIDE BELL', 'CRASH', 'CHINA', 'HIGH TOM', 'FLOOR TOM',
+      'CLICK', 'KICK', 'SNARE', 'HI-HAT', 'OPEN HAT', 'RIDE', 'RIDE BELL', 'CRASH', 'CHINA',
+      'HIGH TOM', 'MID TOM', 'LOW TOM', 'FLOOR TOM',
     ]);
-    cards.forEach((card, trackId) => {
+    const ids = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 10]; // Grid order, not id order
+    cards.forEach((card, position) => {
+      const trackId = ids[position];
       expect(card.dataset.track).toBe(String(trackId));
       expect(card.querySelector(`#mute-${trackId}`)?.textContent).toBe('M');
       expect(card.querySelector(`#solo-${trackId}`)?.textContent).toBe('S');
@@ -1589,7 +1593,7 @@ describe('Grooves Library', () => {
     await flush();
 
     const saved = [...stores.grooves.values()].find(groove => groove.name === 'Whole kit');
-    expect(Object.keys(saved.gridData)).toEqual(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']);
+    expect(Object.keys(saved.gridData)).toEqual(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12']);
     expect(saved.gridData[7][0]).toBe(1);
     expect(saved.gridData[10][3]).toBe(2);
   });
@@ -1946,7 +1950,7 @@ describe('Grooves Library', () => {
     await openPage([old]);
     await selectPreset('user:stored');
 
-    expect(document.querySelectorAll('.step-cell')).toHaveLength(11 * 16);
+    expect(document.querySelectorAll('.step-cell')).toHaveLength(13 * 16);
     expect(document.querySelectorAll('.step-cell[data-track="8"].active')).toHaveLength(0);
     expect(cell(2, 1).classList.contains('active')).toBe(true); // An unknown value reads as normal
 
@@ -2552,5 +2556,91 @@ describe('Song Bars', () => {
       pressBar(bar);
       for (const trackId of [1, 2, 3]) expect(shown(trackId), `track ${trackId} bar ${bar}`).toEqual(barOf(trackId, bar));
     }
+  });
+});
+
+describe('House Kit', () => {
+  const cell = (trackId: number, step: number) =>
+    document.querySelectorAll<HTMLElement>(`.step-cell[data-track="${trackId}"]`)[step];
+  const dynamicOf = (trackId: number, step: number) =>
+    ['active', 'accent', 'ghost'].filter(name => cell(trackId, step).classList.contains(name)).join();
+  const sentTo = (trackId: number) => [...calls('updateGrid').filter(call => call[0] === trackId).at(-1)![1]];
+  const orbPulsed = (group: number) => mockGsap.fromTo.mock.calls.some(call => call[0] === byId(`orb-${group}`));
+  const NEW_TOMS = [11, 12];
+
+  it('hk_17 thirteen rows and cards', async () => {
+    await openPage();
+
+    expect(document.querySelectorAll('.track-label')).toHaveLength(13);
+    expect(document.querySelectorAll('.track-mix-card')).toHaveLength(13);
+    expect(document.querySelectorAll('.step-cell')).toHaveLength(13 * 16);
+    NEW_TOMS.forEach(trackId => {
+      expect(document.querySelectorAll(`.step-cell[data-track="${trackId}"]`)).toHaveLength(16);
+      expect(document.querySelector(`.track-mix-card[data-track="${trackId}"]`)).not.toBeNull();
+    });
+  });
+
+  it('hk_18 new tom cells cycle and play', async () => {
+    await openPage();
+
+    for (const trackId of NEW_TOMS) {
+      const seen = [];
+      for (let i = 0; i < 4; i++) {
+        cell(trackId, 1).click();
+        seen.push(dynamicOf(trackId, 1));
+      }
+      expect(seen, `track ${trackId}`).toEqual(['active', 'accent', 'ghost', '']);
+    }
+
+    cell(11, 1).click(); // Normal
+    cell(12, 2).click();
+    cell(12, 2).click(); // Accent
+    await clickPlay();
+    expect(sentTo(11)[1]).toBe(1);
+    expect(sentTo(12)[2]).toBe(2);
+    await clickPlay();
+  });
+
+  it('hk_19 mute and solo the new toms', async () => {
+    await openPage();
+    cell(11, 0).click();
+    cell(12, 0).click();
+    await clickPlay();
+    const silence = new Array(16).fill(0);
+    expect(sentTo(11)[0]).toBe(1);
+
+    byId<HTMLButtonElement>('mute-11').click();
+    expect(sentTo(11)).toEqual(silence);
+    expect(sentTo(12)[0]).toBe(1);
+    expect(cell(11, 0).classList.contains('silenced')).toBe(true);
+    byId<HTMLButtonElement>('mute-11').click();
+    expect(sentTo(11)[0]).toBe(1);
+
+    byId<HTMLButtonElement>('solo-12').click();
+    expect(sentTo(12)[0]).toBe(1);
+    expect(sentTo(11)).toEqual(silence);
+    expect(cell(11, 0).classList.contains('silenced')).toBe(true);
+    expect(cell(12, 0).classList.contains('silenced')).toBe(false);
+    await clickPlay();
+  });
+
+  it('hk_21 new toms light the stadium group', async () => {
+    await openPage();
+    const ringOn = (step: number) => document.querySelectorAll(`.clock-slice[data-track="2"]`)[step].classList.contains('on');
+
+    cell(11, 3).click();
+    cell(12, 5).click();
+    expect(ringOn(3)).toBe(true);
+    expect(ringOn(5)).toBe(true);
+    expect(ringOn(4)).toBe(false);
+
+    await clickPlay();
+    for (const trackId of NEW_TOMS) {
+      mockGsap.fromTo.mockClear();
+      tick({ currentBpm: 120, activeTrackIds: [trackId] });
+      expect(orbPulsed(2), `track ${trackId}`).toBe(true);
+      expect(orbPulsed(3)).toBe(false);
+    }
+    await clickPlay();
   });
 });

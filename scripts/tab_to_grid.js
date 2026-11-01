@@ -4,7 +4,7 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 
 const KICK = 1, SNARE = 2, HI_HAT = 3, OPEN_HAT = 4, RIDE = 5, RIDE_BELL = 6, CRASH = 7, CHINA = 8, HIGH_TOM = 9, FLOOR_TOM = 10;
-const TRACK_COUNT = 11;
+const TRACK_COUNT = 13;
 const STEPS_MAX = 32;
 const STEPS_PER_WHOLE = 16;
 
