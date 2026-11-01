@@ -422,11 +422,11 @@ T16 → T17 → T18 → T19
 
 **Done when**:
 
-- [ ] The clock draws 16 slices of the bar in play
-- [ ] It changes with the step that starts the bar
-- [ ] Stopped, it shows bar 1
-- [ ] Orbs pulse as on 1 bar
-- [ ] Gate check passes: `npx vitest run`
+- [x] The clock draws 16 slices of the bar in play
+- [x] It changes with the step that starts the bar
+- [x] Stopped, it shows bar 1
+- [x] Orbs pulse as on 1 bar
+- [x] Gate check passes: `npx vitest run`
 
 **Tests**: integration
 **Gate**: quick
