@@ -902,10 +902,10 @@ describe('Interface V2', () => {
 
   it('edit_11 steps label', async () => {
     await openPage();
-    expect(byId('pattern-steps').textContent).toBe('STEPS: 16/32');
+    expect(byId('pattern-steps').textContent).toBe('STEPS: 16/128');
 
     await selectPreset('factory:blues');
-    expect(byId('pattern-steps').textContent).toBe('STEPS: 24/32');
+    expect(byId('pattern-steps').textContent).toBe('STEPS: 24/128');
   });
 
   it('edit_12 resolution label', async () => {
@@ -946,7 +946,7 @@ describe('Interface V2', () => {
 
     byId('time-sig-num').value = '3';
     byId('time-sig-num').dispatchEvent(new Event('change'));
-    expect(byId('pattern-steps').textContent).toBe('STEPS: 12/32');
+    expect(byId('pattern-steps').textContent).toBe('STEPS: 12/128');
   });
 
   it('edge_03 stop resets position', async () => {
@@ -987,7 +987,7 @@ describe('Interface V2', () => {
 
     stepper('time-sig-num-up');
     expect(byId('time-sig-num').value).toBe('5');
-    expect(byId('pattern-steps').textContent).toBe('STEPS: 20/32');
+    expect(byId('pattern-steps').textContent).toBe('STEPS: 20/128');
     expect(byId('panel-header-text').textContent).toContain('5/4');
 
     stepper('time-sig-num-down');
@@ -1011,7 +1011,7 @@ describe('Interface V2', () => {
     const den = () => byId<HTMLSelectElement>('time-sig-den').value;
     stepper('time-sig-den-up');
     expect(den()).toBe('8');
-    expect(byId('pattern-steps').textContent).toBe('STEPS: 8/32');
+    expect(byId('pattern-steps').textContent).toBe('STEPS: 8/128');
     stepper('time-sig-den-up');
     expect(den()).toBe('16');
     stepper('time-sig-den-up');

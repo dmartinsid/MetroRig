@@ -31,9 +31,10 @@ describe('Display rules', () => {
     expect(formatBarStep(100, 3)).toBe('BAR 100 · STEP 03');
   });
 
-  it('steps label reads the measure over the engine limit', () => {
-    expect(formatSteps(16)).toBe('STEPS: 16/32');
-    expect(formatSteps(7)).toBe('STEPS: 7/32');
+  it('steps label reads the pattern over the engine limit', () => {
+    expect(formatSteps(16)).toBe('STEPS: 16/128');
+    expect(formatSteps(7)).toBe('STEPS: 7/128');
+    expect(formatSteps(64)).toBe('STEPS: 64/128');
   });
 
   it('denominator moves through 4, 8 and 16 and stops at each end', () => {
