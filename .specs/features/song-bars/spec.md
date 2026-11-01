@@ -179,16 +179,16 @@ Each song in the Grooves library is 1 bar in a loop, which sounds like an exerci
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| SNG-01 | P1: Songs of 4 bars | Design | Pending |
-| BAR-01 | P1: Bars in the Editor | Design | Pending |
-| CNT-01 | P1: Counting real bars | Design | Pending |
-| STD-02 | P2: Bars in the Stadium | Design | Pending |
-| BAR-05 | P2: Time signature on 4 bars | Design | Pending |
-| DOC-02 | P3: Sources and documentation | Design | Pending |
+| SNG-01 | P1: Songs of 4 bars | Tasks | Implementing |
+| BAR-01 | P1: Bars in the Editor | Tasks | Implementing |
+| CNT-01 | P1: Counting real bars | Tasks | Implementing |
+| STD-02 | P2: Bars in the Stadium | Tasks | Implementing |
+| BAR-05 | P2: Time signature on 4 bars | Tasks | Implementing |
+| DOC-02 | P3: Sources and documentation | Tasks | Implementing |
 
 **ID format:** one ID per story, with its criteria numbered as above: `BAR-01.3` is the third criterion of BAR-01.
 
-**Coverage:** 6 total, 0 mapped to tasks, 6 unmapped until Tasks.
+**Coverage:** 6 total, 6 mapped to tasks, 0 unmapped.
 
 ---
 
