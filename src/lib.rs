@@ -2,6 +2,8 @@
 use std::slice;
 
 const MAX_SAMPLES: usize = 11; // 0: Click, then the kit in src/kit.ts
+const HI_HAT_TRACK: usize = 3;
+const OPEN_HAT_TRACK: usize = 4;
 const GAIN_NORMAL: f32 = 0.7;
 const GAIN_ACCENT: f32 = 1.0;
 const GAIN_GHOST: f32 = 0.3;
@@ -255,6 +257,11 @@ impl Engine {
                 self.playback_active[0] = true;
                 self.playback_offsets[0] = 0;
             }
+        }
+
+        // A closing hat cuts the open one, as on a real stand
+        if self.tracks[HI_HAT_TRACK].steps[self.step_index] > 0 {
+            self.playback_active[OPEN_HAT_TRACK] = false;
         }
 
         // Check the drum tracks
@@ -1696,6 +1703,48 @@ mod tests {
         let (left, _) = stereo_output(run.ptr, frames);
         assert_eq!(left[10], 0.3);
         assert_eq!(left[frames - 10], 1.0);
+    }
+
+    // Frames that sound in an Open Hat started on step 0, with these Hi-hat steps
+    fn open_hat_frames(hi_hat_grid: &[u8; 16]) -> Vec<usize> {
+        let run = Run::new(120.0, &[0; 16]);
+        let open_hat = vec![1.0f32; 20000];
+        engine_load_sample(run.ptr, 4, open_hat.as_ptr(), open_hat.as_ptr(), open_hat.len());
+        let mut grid = [0u8; 16];
+        grid[0] = 1;
+        engine_update_grid(run.ptr, 4, grid.as_ptr(), 16);
+        engine_update_grid(run.ptr, 3, hi_hat_grid.as_ptr(), 16); // No Hi-hat sample: only its choke acts
+        engine_start(run.ptr);
+        let (left, right) = stereo_output(run.ptr, 20000);
+        sounding_frames(&left, &right)
+    }
+
+    #[test]
+    fn kit_04_hi_hat_chokes_open_hat() {
+        let mut hi_hat = [0u8; 16];
+        hi_hat[2] = 1;
+        let cut_at = 2.0 * step_samples(SR, 120.0);
+        let sounding = open_hat_frames(&hi_hat);
+        assert_within_one_sample(*sounding.last().unwrap() as f64 + 1.0, cut_at, "open hat cut");
+
+        // With no Hi-hat step it rings to its end
+        assert_eq!(*open_hat_frames(&[0; 16]).last().unwrap(), 19999);
+    }
+
+    #[test]
+    fn kit_04_another_piece_does_not_choke_open_hat() {
+        let run = Run::new(120.0, &[0; 16]);
+        let open_hat = vec![1.0f32; 20000];
+        engine_load_sample(run.ptr, 4, open_hat.as_ptr(), open_hat.as_ptr(), open_hat.len());
+        let mut grid = [0u8; 16];
+        grid[0] = 1;
+        engine_update_grid(run.ptr, 4, grid.as_ptr(), 16);
+        let mut ride = [0u8; 16];
+        ride[2] = 1;
+        engine_update_grid(run.ptr, 5, ride.as_ptr(), 16);
+        engine_start(run.ptr);
+        let (left, right) = stereo_output(run.ptr, 20000);
+        assert_eq!(*sounding_frames(&left, &right).last().unwrap(), 19999);
     }
 
     #[test]
