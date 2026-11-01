@@ -508,6 +508,8 @@ function togglePlay() {
       stadiumBpm.innerText = state.activePreset.bpm.toFixed(1);
       updateSongCards();
     } else {
+      viewBar = 0; // A bar pressed while stopped gives way to the first bar in play
+      drawGrid();
       syncAudioSettings();
       audioNode.start();
       state.isPlaying = true;
@@ -589,14 +591,17 @@ function updateTimeSignature() {
     return;
   }
 
-  const dropsBars = barCount(state.activePreset) > 1 && sigStr !== state.activePreset.timeSignature;
-  if (dropsBars && !confirm('Changing the time signature keeps only bar 1. Continue?')) {
-    showActiveTimeSignature();
-    return;
+  if (barCount(state.activePreset) > 1) {
+    if (sigStr === state.activePreset.timeSignature) return;
+    if (!confirm('Changing the time signature keeps only bar 1. Continue?')) {
+      showActiveTimeSignature();
+      return;
+    }
   }
 
   grooveSelector.value = "";
 
+  visualScheduler.cancelAll(); // Ticks of the old bar length must not draw on the new one
   const oldLength = state.activePreset.measureLength || 16;
   state.activePreset.timeSignature = sigStr;
   state.activePreset.measureLength = measureLength;
@@ -699,6 +704,8 @@ function formatLiveBpm(bpm: number): string {
 function renderTick({ beatIndex, currentBpm, activeTrackIds }: TickDetail) {
   // Ticks still in flight after stop must not restart anything
   if (!state.isPlaying) return;
+  // The engine may not have taken a shorter pattern yet
+  if (beatIndex >= patternLength(state.activePreset)) return;
 
   // Update BPM text
   bpmNumber.innerText = formatLiveBpm(Number(currentBpm));
