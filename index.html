@@ -14,7 +14,7 @@
 <body>
   <div id="app">
     <header>
-      <span class="logo">MetroRig<span class="badge">PRO</span></span>
+      <span class="logo">METRORIG<span class="badge">PRO</span></span>
 
       <div class="preset-controls">
         <select id="click-sound-selector" title="Click Sound">
@@ -25,7 +25,7 @@
           <option value="cowbell">Click: Cowbell</option>
         </select>
 
-        <select id="preset-selector">
+        <select id="preset-selector" title="Preset">
           <optgroup id="group-signatures" label="Time Signatures"></optgroup>
           <optgroup id="group-genres" label="Drum Grooves"></optgroup>
           <optgroup id="group-trainers" label="Speed Trainer"></optgroup>
@@ -33,25 +33,69 @@
         </select>
       </div>
 
-      <button id="btn-toggle-view">⚡ Stadium Mode</button>
+      <button id="btn-toggle-view">GO TO STADIUM MODE</button>
     </header>
 
     <!-- Editor Mode -->
     <main id="editor-view">
       <!-- Left: Sequencer -->
-      <section class="sequencer-container card" style="padding: 1.5rem;">
-        <div class="panel-header" id="panel-header-text">Default · 4/4 · 120 BPM</div>
-        <div class="figure-palette" id="figure-palette"></div>
-        <div class="sequencer-grid" id="grid-container"></div>
-      </section>
+      <div class="sequencer-column">
+        <section class="sequencer-container card">
+          <div class="panel-bar">
+            <span class="status-dot" id="sequencer-dot"></span>
+            <div class="panel-header" id="panel-header-text">4/4 Metronome  ·  4/4  ·  120 BPM</div>
+            <div class="editor-timer" id="editor-timer">00:00:00</div>
+          </div>
+          <div class="figure-palette" id="figure-palette"></div>
+          <div class="grid-scroller">
+            <div class="sequencer-grid" id="grid-container"></div>
+          </div>
+          <div class="pattern-bar">
+            <span id="pattern-name">PAT: 4/4 Metronome</span>
+            <span id="pattern-steps">STEPS: 16/32</span>
+            <span>RESOLUTION: 1/16th</span>
+            <span class="pattern-pos">POS: <span id="pattern-pos-value">BAR 01 · STEP 01</span></span>
+          </div>
+        </section>
+
+        <!-- Track Mix -->
+        <section class="track-mix">
+          <div class="track-mix-card card" data-track="0">
+            <span class="track-mix-name">CLICK</span>
+            <button class="mix-btn" id="mute-0" aria-pressed="false" title="Mute Click">M</button>
+            <button class="mix-btn" id="solo-0" aria-pressed="false" title="Solo Click">S</button>
+          </div>
+          <div class="track-mix-card card" data-track="1">
+            <span class="track-mix-name">KICK</span>
+            <button class="mix-btn" id="mute-1" aria-pressed="false" title="Mute Kick">M</button>
+            <button class="mix-btn" id="solo-1" aria-pressed="false" title="Solo Kick">S</button>
+          </div>
+          <div class="track-mix-card card" data-track="2">
+            <span class="track-mix-name">SNARE</span>
+            <button class="mix-btn" id="mute-2" aria-pressed="false" title="Mute Snare">M</button>
+            <button class="mix-btn" id="solo-2" aria-pressed="false" title="Solo Snare">S</button>
+          </div>
+          <div class="track-mix-card card" data-track="3">
+            <span class="track-mix-name">HI-HAT</span>
+            <button class="mix-btn" id="mute-3" aria-pressed="false" title="Mute Hi-hat">M</button>
+            <button class="mix-btn" id="solo-3" aria-pressed="false" title="Solo Hi-hat">S</button>
+          </div>
+        </section>
+      </div>
 
       <!-- Right: Controls -->
       <aside class="controls-container">
         <!-- BPM & Play -->
         <div class="bpm-card card">
+          <div class="card-section-title">TEMPO BUS</div>
           <div class="bpm-display">
             <span id="bpm-number">120</span>
             <span class="bpm-unit">BPM</span>
+          </div>
+          <div class="slider-scale">
+            <span>40</span>
+            <span id="bpm-slider-value">120</span>
+            <span>240</span>
           </div>
           <input type="range" id="bpm-slider" min="40" max="240" value="120">
           <button id="btn-play" class="play-btn">
@@ -69,32 +113,40 @@
         <!-- Measure Controls -->
         <div class="groove-settings-card card">
           <div class="card-section-title">Measure</div>
-          
+
           <div class="ui-row">
-            <div class="form-group-inline">
+            <div class="stepper-field">
               <label for="time-sig-num">Numerator</label>
-              <input type="number" id="time-sig-num" min="1" max="16" value="4">
+              <div class="stepper-row">
+                <input type="number" id="time-sig-num" min="1" max="16" value="4">
+                <div class="stepper-btns">
+                  <button id="time-sig-num-up" aria-label="Increase numerator">▲</button>
+                  <button id="time-sig-num-down" aria-label="Decrease numerator">▼</button>
+                </div>
+              </div>
             </div>
-            <div class="form-group-inline">
+            <div class="stepper-field">
               <label for="time-sig-den">Denominator</label>
-              <select id="time-sig-den">
-                <option value="4">/4</option>
-                <option value="8">/8</option>
-                <option value="16">/16</option>
-              </select>
+              <div class="stepper-row">
+                <select id="time-sig-den">
+                  <option value="4">/4</option>
+                  <option value="8">/8</option>
+                  <option value="16">/16</option>
+                </select>
+                <div class="stepper-btns">
+                  <button id="time-sig-den-up" aria-label="Next denominator">▲</button>
+                  <button id="time-sig-den-down" aria-label="Previous denominator">▼</button>
+                </div>
+              </div>
             </div>
           </div>
 
           <div class="groove-library-group">
-            <div class="slider-label-row">
-              <label for="groove-selector">Drum Grooves</label>
-            </div>
-            <div class="groove-actions">
-              <select id="groove-selector">
-                <option value="">-- Choose a Groove --</option>
-              </select>
-              <button id="btn-save-groove" class="btn-subtle">Save Groove</button>
-            </div>
+            <label for="groove-selector">Groove Library</label>
+            <select id="groove-selector">
+              <option value="">-- Choose a Groove --</option>
+            </select>
+            <button id="btn-save-groove" class="btn-subtle">Save Groove</button>
           </div>
         </div>
 
@@ -109,11 +161,10 @@
           </div>
           <div class="trainer-body" id="trainer-body">
             <div class="trainer-form">
-              <div class="form-group full-width">
-                <label>
-                  <input type="checkbox" id="trainer-enable"> Trainer Active
-                </label>
-              </div>
+              <label class="trainer-switch full-width">
+                <span>Trainer Active</span>
+                <input type="checkbox" id="trainer-enable">
+              </label>
               <div class="form-group">
                 <label for="trainer-start">Start BPM</label>
                 <input type="number" id="trainer-start" value="120">
@@ -153,34 +204,90 @@
     <!-- Stadium View -->
     <main id="stadium-view" class="hidden">
       <div class="stadium-display">
-        <!-- Rotating beat clock -->
-        <svg class="beat-clock" viewBox="-100 -100 200 200" aria-hidden="true">
-          <g id="clock-face"></g>
-          <line id="clock-hand" class="clock-hand" x1="0" y1="0" x2="0" y2="-74"></line>
-          <circle class="clock-hub" r="5"></circle>
-        </svg>
+        <div class="clock-column">
+          <!-- Rotating beat clock -->
+          <svg class="beat-clock" viewBox="-100 -100 200 200" aria-hidden="true">
+            <circle class="clock-rim-dashed" r="84"></circle>
+            <circle class="clock-rim" r="82"></circle>
+            <g id="clock-face"></g>
+            <circle class="clock-hub-ring" r="10"></circle>
+            <line id="clock-hand" class="clock-hand" x1="0" y1="0" x2="0" y2="-80"></line>
+            <circle class="clock-hand-tip" id="clock-hand-tip" cx="0" cy="-80" r="1.6"></circle>
+            <circle class="clock-hub" r="2.2"></circle>
+          </svg>
 
-        <div class="stadium-info">
-          <select id="stadium-preset-selector" aria-label="Speed trainer preset"></select>
-          <div class="stadium-timer" id="stadium-timer">00:00</div>
-          <div class="stadium-bpm" id="stadium-bpm">120.0</div>
-          <div class="stadium-trainer-info" id="stadium-status">Trainer Off</div>
+          <div class="clock-legend">
+            <span data-track="0">CLICK</span>
+            <span data-track="1">KICK</span>
+            <span data-track="2">SNARE</span>
+            <span data-track="3">HI-HAT</span>
+          </div>
+        </div>
+
+        <section class="stadium-panel card">
+          <div class="stadium-field">
+            <label for="stadium-preset-selector">SPEED TRAINER ROUTINE</label>
+            <select id="stadium-preset-selector"></select>
+          </div>
+
+          <div class="stadium-timer-block">
+            <div class="stadium-timer-label">ELAPSED REHEARSAL</div>
+            <div class="stadium-timer" id="stadium-timer">00:00:00</div>
+          </div>
+
+          <div class="stadium-tempo">
+            <span class="stadium-bpm" id="stadium-bpm">120.0</span>
+            <span class="stadium-bpm-unit">BPM</span>
+          </div>
+
+          <div class="stadium-trainer-info" id="stadium-status-pill">
+            <span class="status-dot" id="stadium-status-dot"></span>
+            <span id="stadium-status">Trainer Off</span>
+          </div>
 
           <!-- Per-instrument orbs -->
           <div class="orb-row">
-            <div class="orb" id="orb-0" data-track="0" title="Click"></div>
-            <div class="orb" id="orb-1" data-track="1" title="Kick"></div>
-            <div class="orb" id="orb-2" data-track="2" title="Snare"></div>
-            <div class="orb" id="orb-3" data-track="3" title="Hi-hat"></div>
+            <div class="orb-cell" data-track="0">
+              <div class="orb" id="orb-0" data-track="0">
+                <svg class="orb-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="4" width="11" height="12" rx="2"></rect><path d="M5 8v12h11"></path><circle cx="14.5" cy="10" r="1.5"></circle></svg>
+              </div>
+              <span class="orb-name">CLICK</span>
+            </div>
+            <div class="orb-cell" data-track="1">
+              <div class="orb" id="orb-1" data-track="1">
+                <svg class="orb-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><circle cx="12" cy="12" r="2"></circle></svg>
+              </div>
+              <span class="orb-name">KICK</span>
+            </div>
+            <div class="orb-cell" data-track="2">
+              <div class="orb" id="orb-2" data-track="2">
+                <svg class="orb-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><circle class="orb-icon-fill" cx="12" cy="12" r="4"></circle></svg>
+              </div>
+              <span class="orb-name">SNARE</span>
+            </div>
+            <div class="orb-cell" data-track="3">
+              <div class="orb" id="orb-3" data-track="3">
+                <svg class="orb-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><circle class="orb-icon-fill" cx="12" cy="12" r="1.5"></circle></svg>
+              </div>
+              <span class="orb-name">HI-HAT</span>
+            </div>
           </div>
 
           <button id="btn-stadium-play" class="play-btn play-btn-large">
             <span class="icon-play">▶ PLAY</span>
             <span class="icon-stop">■ STOP</span>
           </button>
-        </div>
+        </section>
       </div>
     </main>
+
+    <footer class="status-bar">
+      <span class="status-bar-clock">
+        <span class="status-dot lit"></span>
+        <span id="footer-clock"></span>
+      </span>
+      <span id="footer-latency">LATENCY: --</span>
+    </footer>
   </div>
 
   <script type="module" src="./src/main.ts"></script>
