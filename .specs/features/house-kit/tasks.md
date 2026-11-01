@@ -241,9 +241,9 @@ T19 → T20
 
 **Done when**:
 
-- [ ] `public/pkg/metrorig_audio_bg.wasm` holds `engine_load_take`
-- [ ] A test plays a take on track 12 through the binary
-- [ ] Gate check passes: `cargo test && npx vitest run && npx vite build`
+- [x] `public/pkg/metrorig_audio_bg.wasm` holds `engine_load_take`
+- [x] A test plays a take on track 12 through the binary
+- [x] Gate check passes: `cargo test && npx vitest run && npx vite build`
 
 **Tests**: unit
 **Gate**: build
