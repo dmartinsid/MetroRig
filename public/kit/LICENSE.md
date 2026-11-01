@@ -1,6 +1,6 @@
 # Drum kit samples
 
-Each file in this folder is one hit, trimmed, faded and peak-normalized to -1 dBFS, at 44.1 kHz, 16-bit, stereo.
+Each file in this folder is one hit, trimmed and faded, at 44.1 kHz, 16-bit, stereo. The files here are peak-normalized to -1 dBFS; the files in `house/` are not, since they keep their recorded levels (see The House Kit below).
 
 ## Earlier samples
 
@@ -36,3 +36,46 @@ By Real Music Media. Its author placed the samples in the public domain: "The sa
 
 - Source: https://freesound.org/people/xIceCoffeex/sounds/171481/
 - License: https://creativecommons.org/publicdomain/zero/1.0/
+
+## The House Kit
+
+By Better Mixes. Thank you, Better Mixes, for the kick, snare and toms.
+
+- Channel: https://www.youtube.com/@BetterMixes
+- Product page: https://www.bettermixes.com/drumsamples
+
+No written terms were found in the zip or on the product pages. The release for general use is the user's account of the video https://www.youtube.com/watch?v=WFS0_5Qsc1w, not a written license.
+
+Every piece uses the `Blend` mic. Each piece was converted with no gain: the files keep their recorded levels, and only the tail was cut at -60 dBFS and faded. `<take>` is 1, 2 or 3 in both columns.
+
+| Piece | Folder |
+| ----- | ------ |
+| Kick | `house/kick/` |
+| Snare | `house/snare/` |
+| High Tom | `house/tom-10/` |
+| Mid Tom | `house/tom-12/` |
+| Low Tom | `house/tom-14/` |
+| Floor Tom | `house/tom-16/` |
+
+Each sample's source, by piece, recording and take, in the kit's own folders:
+
+| File | Source |
+| ---- | ------ |
+| `house/kick/soft-<take>.wav` | `Kick/Blend/Soft <take>.wav` |
+| `house/kick/med-<take>.wav` | `Kick/Blend/Med <take>.wav` |
+| `house/kick/hard-<take>.wav` | `Kick/Blend/Hard <take>.wav` |
+| `house/snare/soft-<take>.wav` | `Snare/Blend/Soft <take>.wav` |
+| `house/snare/hard-<take>.wav` | `Snare/Blend/Hard <take>.wav` |
+| `house/snare/crack-<take>.wav` | `Snare/Blend/Crack <take>.wav` |
+| `house/tom-10/soft-<take>.wav` | `Toms/10/Blend/Soft <take>.wav` |
+| `house/tom-10/med-<take>.wav` | `Toms/10/Blend/Med <take>.wav` |
+| `house/tom-10/hard-<take>.wav` | `Toms/10/Blend/Hard <take>.wav` |
+| `house/tom-12/soft-<take>.wav` | `Toms/12/Blend/Soft <take>.wav` |
+| `house/tom-12/med-<take>.wav` | `Toms/12/Blend/Med <take>.wav` |
+| `house/tom-12/hard-<take>.wav` | `Toms/12/Blend/Hard <take>.wav` |
+| `house/tom-14/soft-<take>.wav` | `Toms/14/Blend/Soft <take>.wav` |
+| `house/tom-14/med-<take>.wav` | `Toms/14/Blend/Med <take>.wav` |
+| `house/tom-14/hard-<take>.wav` | `Toms/14/Blend/Hard <take>.wav` |
+| `house/tom-16/soft-<take>.wav` | `Toms/16/Blend/Soft <take>.wav` |
+| `house/tom-16/med-<take>.wav` | `Toms/16/Blend/Med <take>.wav` |
+| `house/tom-16/hard-<take>.wav` | `Toms/16/Blend/Hard <take>.wav` |
