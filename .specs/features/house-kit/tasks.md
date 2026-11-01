@@ -387,9 +387,9 @@ T19 → T20
 
 **Done when**:
 
-- [ ] Build passes
-- [ ] The walk shows 13 rows at 390, 1024 and 1440 px
-- [ ] Gate check passes: `npx vitest run && npx vite build`
+- [x] Build passes
+- [x] The walk shows 13 rows at 390, 1024 and 1440 px
+- [x] Gate check passes: `npx vitest run && npx vite build`
 
 **Tests**: none
 **Gate**: full

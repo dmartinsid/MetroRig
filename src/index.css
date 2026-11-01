@@ -18,6 +18,8 @@
   --color-crash:    #FF8A3D;
   --color-china:    #FF5CA8;
   --color-hightom:  #4D9DFF;
+  --color-midtom:   #5D97FF;
+  --color-lowtom:   #6C92FF;
   --color-floortom: #7C8CFF;
   --text:           #F3F4F6;
   --text-muted:     #9CA3AF;
@@ -41,6 +43,8 @@
 [data-track="8"] { --track-color: var(--color-china); }
 [data-track="9"] { --track-color: var(--color-hightom); }
 [data-track="10"] { --track-color: var(--color-floortom); }
+[data-track="11"] { --track-color: var(--color-midtom); }
+[data-track="12"] { --track-color: var(--color-lowtom); }
 
 /* ─── Reset & Base ───────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -636,6 +640,11 @@ header {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.75rem;
+}
+
+/* 13 cards fit no column count, so the last one takes its row rather than sit alone in a corner */
+.track-mix-card:last-child {
+  grid-column: 1 / -1;
 }
 
 .track-mix-card {
