@@ -19,7 +19,7 @@ describe('barToGrid', () => {
   it('maps every piece of the kit', () => {
     const pieces: [number, number][] = [
       [35, 1], [36, 1], [37, 2], [38, 2], [40, 2], [91, 2], [42, 3], [44, 3], [46, 4], [92, 4], [51, 5], [59, 5], [93, 5],
-      [53, 6], [49, 7], [55, 7], [57, 7], [52, 8], [47, 9], [48, 9], [50, 9], [41, 10], [43, 10], [45, 10],
+      [53, 6], [49, 7], [55, 7], [57, 7], [52, 8], [50, 9], [47, 11], [48, 11], [45, 12], [41, 10], [43, 10],
     ];
     pieces.forEach(([note, track]) => {
       expect(barToGrid(bar(beat([note], 1)), [4, 4]).tracks[track][0]).toBe(1);
@@ -69,6 +69,17 @@ describe('tab_to_grid', () => {
   const kickOn = (position: number) => bar(...Array.from({ length: 4 }, (_, beatIndex) => (beatIndex === position ? beat([36], 4) : rest(4))));
   const part = (measures: unknown[], tempo = [{ measure: 0, bpm: 120 }]) => ({ measures, automations: { tempo } });
   const fourBars = () => [kickOn(0), kickOn(1), kickOn(2), kickOn(3)];
+
+  it('hk_22 four toms', () => {
+    const toms: [number, number][] = [[50, 9], [47, 11], [48, 11], [45, 12], [41, 10], [43, 10]];
+    toms.forEach(([note, track]) => {
+      const { tracks } = barsToGrid(part([bar(beat([note], 1)), ...fourBars()], [{ measure: 0, bpm: 120 }]), 0);
+      expect(tracks[track].slice(0, 2), `note ${note}`).toEqual([1, 0]);
+      for (const other of [9, 10, 11, 12].filter(id => id !== track)) {
+        expect(tracks[other].every((value: number) => value === 0), `note ${note} on ${other}`).toBe(true);
+      }
+    });
+  });
 
   it('bars_doc four bars from one measure', () => {
     const { measureLength, bars, bpm, tracks } = barsToGrid(part([kickOn(0), ...fourBars()], [{ measure: 0, bpm: 90 }, { measure: 1, bpm: 120 }]), 1);
