@@ -119,10 +119,10 @@ T16 → T17 → T18 → T19
 
 **Done when**:
 
-- [ ] `UPDATE_GRID` pads to 128 and `gridMirror` follows
-- [ ] `SET_BARS` calls `engine_set_bars`
-- [ ] `activeTrackIds` reads a step past 32 correctly
-- [ ] Gate check passes: `npx vitest run`
+- [x] `UPDATE_GRID` pads to 128 and `gridMirror` follows
+- [x] `SET_BARS` calls `engine_set_bars`
+- [x] `activeTrackIds` reads a step past 32 correctly
+- [x] Gate check passes: `npx vitest run`
 
 **Tests**: unit
 **Gate**: quick
