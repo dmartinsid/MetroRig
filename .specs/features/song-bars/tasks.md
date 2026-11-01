@@ -182,9 +182,9 @@ T16 → T17 → T18 → T19
 
 **Done when**:
 
-- [ ] Each function in the design exists
-- [ ] Tests cover 1 bar, 4 bars and every bar boundary
-- [ ] Gate check passes: `npx vitest run`
+- [x] Each function in the design exists
+- [x] Tests cover 1 bar, 4 bars and every bar boundary
+- [x] Gate check passes: `npx vitest run`
 
 **Tests**: unit
 **Gate**: quick
