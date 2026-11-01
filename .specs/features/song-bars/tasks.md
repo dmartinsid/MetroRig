@@ -486,8 +486,8 @@ T16 → T17 → T18 → T19
 
 **Done when**:
 
-- [ ] The bar selector, the clock's current bar and `STEPS: 16/128` are described
-- [ ] Gate check passes: `npx vitest run && npx vite build`
+- [x] The bar selector, the clock's current bar and `STEPS: 16/128` are described
+- [x] Gate check passes: `npx vitest run && npx vite build`
 
 **Tests**: none
 **Gate**: full

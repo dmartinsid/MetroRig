@@ -258,9 +258,13 @@ Row 1 starts with `BEAT/SUB`, then the count: `1 e & a 2 e & a 3 e & a 4 e & a`,
 
 Click cycles off, normal, accent. Drum tracks cycle off, normal, accent, ghost, with `●`, `▲` and a smaller dot. With a figure selected, one click stamps the whole quarter note. Grid length follows the meter: 16 steps in 4/4, 12 in 3/4 and 6/8, 14 in 7/8, 24 in 12/8, 32 at most.
 
+### Bar Selector
+
+On a pattern of 4 bars, a row under the figure chips: a muted `BAR` label and buttons `1` to `4`, styled like the chips, with the current bar in neon. The grid shows that one bar and follows the music during playback. A pattern of 1 bar shows no bar selector.
+
 ### Pattern Bar
 
-A mono line under the grid: `PAT: <preset name>`, `STEPS: 16/32`, `RESOLUTION: 1/16th`, and at the right `POS: BAR 01 · STEP 01`, with the position in neon. Bars count from Play and reset on Stop.
+A mono line under the grid: `PAT: <preset name>`, `STEPS: 16/128`, `RESOLUTION: 1/16th`, and at the right `POS: BAR 01 · STEP 01`, with the position in neon. Bars count from Play and reset on Stop. `STEPS` shows the whole pattern, 64/128 on 4 bars.
 
 ### Track Mix
 
@@ -284,7 +288,7 @@ Not a floating notification. It's an inline card in the control column, between 
 
 ### Beat Clock
 
-The hero of Stadium: an SVG up to 700px wide (`min(70vh, 90vw)`). Four concentric rings run outside in as `CLICK`, `KICK`, `SNARE/TOMS` (Snare, High Tom, Floor Tom) and `CYMBALS` (Hi-hat, Open Hat, Ride, Ride Bell, Crash, China), each with one annular slice per step, lit when any track of its group hits, and a small gap between rings. Empty Kick and Snare slices merge into a continuous ring. Slice fills are track colour when on, a 30% mix when sustained, and Dead Slice when empty, separated by thin Studio Black strokes. Faint lines mark each beat, a small bevelled disc fills the centre around a green hub, and mono numerals sit outside the rings, turning neon on the current beat. A thin white hand at 70% opacity sweeps linearly from the hub, step by step, with a small dot at its tip. A dotted legend sits below the clock.
+The hero of Stadium: an SVG up to 700px wide (`min(70vh, 90vw)`). Four concentric rings run outside in as `CLICK`, `KICK`, `SNARE/TOMS` (Snare, High Tom, Floor Tom) and `CYMBALS` (Hi-hat, Open Hat, Ride, Ride Bell, Crash, China), each with one annular slice per step, lit when any track of its group hits, and a small gap between rings. Empty Kick and Snare slices merge into a continuous ring. Slice fills are track colour when on, a 30% mix when sustained, and Dead Slice when empty, separated by thin Studio Black strokes. Faint lines mark each beat, a small bevelled disc fills the centre around a green hub, and mono numerals sit outside the rings, turning neon on the current beat. A thin white hand at 70% opacity sweeps linearly from the hub, step by step, with a small dot at its tip. A dotted legend sits below the clock. On 4 bars the clock draws only the bar in play, changing at each bar, and bar 1 when stopped.
 
 ### Stadium Readout
 
@@ -364,7 +368,7 @@ Don't invent copy, stats, session history, accounts or genres. Practice logs are
 
 **Editor Mode**
 
-> A dark desktop audio plugin called MetroRig on a near-black #080810 background. Sticky glass header: neon green #39FF14 monospaced logo with a small outlined PRO badge, two dark selectors reading "Click: Digital" and "4/4 Metronome". Below, two columns at 2:1. The left glass panel dominates: a muted mono header "4/4 Metronome · 4/4 · 120 BPM", a row of small figure chips (Step, Quarter ●···, Eighths ●·●·, Gallop ●·●●, Rev. Gallop ●●·●, 16ths ●●●●, Rest ····), then a 16-step sequencer with a count row "BEAT/SUB 1 e & a 2 e & a…" and eleven rows with rectangular labels CLICK amber #FFB800, KICK coral #FF2D55, SNARE cyan #00D4FF, HI-HAT mint #00FF94, OPEN HAT #7CFFC4, RIDE #B388FF, RIDE BELL #E0B3FF, CRASH #FF8A3D, CHINA #FF5CA8, HIGH TOM #4D9DFF, FLOOR TOM #7C8CFF. Portrait cells with 6px corners, small gaps grouping them in fours. Show Rock Groove: hits as tinted glowing cells with a dot, the first Click as a solid accent with ▲. Under the grid, a mono line "PAT: Rock Groove STEPS: 16/32 RESOLUTION: 1/16th POS: BAR 01 · STEP 01", then four small cards with M and S buttons, one per track. The right column stacks glass cards: "TEMPO BUS" with a huge 64px neon "120 BPM", a thin slider, an outlined "▶ PLAY" button; a "MEASURE" card; an open "TEMPO TRAINER" card. A thin mono footer reads "AUDIO CLOCK: 44.1 kHz 128 SPLS (2.9ms)" and "LATENCY: --". Smoked glass cards with 12px corners and 1px white-at-8% borders.
+> A dark desktop audio plugin called MetroRig on a near-black #080810 background. Sticky glass header: neon green #39FF14 monospaced logo with a small outlined PRO badge, two dark selectors reading "Click: Digital" and "4/4 Metronome". Below, two columns at 2:1. The left glass panel dominates: a muted mono header "4/4 Metronome · 4/4 · 120 BPM", a row of small figure chips (Step, Quarter ●···, Eighths ●·●·, Gallop ●·●●, Rev. Gallop ●●·●, 16ths ●●●●, Rest ····), then a 16-step sequencer with a count row "BEAT/SUB 1 e & a 2 e & a…" and eleven rows with rectangular labels CLICK amber #FFB800, KICK coral #FF2D55, SNARE cyan #00D4FF, HI-HAT mint #00FF94, OPEN HAT #7CFFC4, RIDE #B388FF, RIDE BELL #E0B3FF, CRASH #FF8A3D, CHINA #FF5CA8, HIGH TOM #4D9DFF, FLOOR TOM #7C8CFF. Portrait cells with 6px corners, small gaps grouping them in fours. Show Rock Groove: hits as tinted glowing cells with a dot, the first Click as a solid accent with ▲. Under the grid, a mono line "PAT: Rock Groove STEPS: 16/128 RESOLUTION: 1/16th POS: BAR 01 · STEP 01", then four small cards with M and S buttons, one per track. The right column stacks glass cards: "TEMPO BUS" with a huge 64px neon "120 BPM", a thin slider, an outlined "▶ PLAY" button; a "MEASURE" card; an open "TEMPO TRAINER" card. A thin mono footer reads "AUDIO CLOCK: 44.1 kHz 128 SPLS (2.9ms)" and "LATENCY: --". Smoked glass cards with 12px corners and 1px white-at-8% borders.
 
 **Practice Stadium Mode**
 
