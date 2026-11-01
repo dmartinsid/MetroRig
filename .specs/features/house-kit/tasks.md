@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/house-kit/design.md`
-**Status**: Approved
+**Status**: Done
 **Approved**: 2026-11-01 - user: "aprovo e vamos de subagents"
 **Build**: `npm run build`
 **Run js**: `npx vitest run --reporter=verbose`
@@ -644,7 +644,7 @@ Proof: run rust | test tests::hk_36_click_restarts_with_no_fade ... ok
 The feature's live state, written as it happens - a compaction gives no warning.
 
 **Settled mid-build:** Sub-agents accepted, user: "aprovo e vamos de subagents". 3 batches. Work happens on branch `house-kit`, with no push. Layers went on branch `house-kit-layer`, user: "Vamos somar os sons diferentes, acho que vai ser uma boa. gere sim"; `Close` and `Room` on Kick and Snare are AD-015 and HK-35. The PR goes from `house-kit-layer`, user: "pode abrir a PR".
-**Dispatched:** Batch 1 (Phases 1-2, T1-T7) from ef86231, returned at b1e49e0. Batch 2 (Phases 3-4, T8-T13) from b1e49e0, returned at 50118f7. Batch 3 (Phase 5, T14-T18) from 50118f7; Phase 6 stays with the orchestrator, since it needs the user. Verifier from 6293dfd, over `main..house-kit-layer`.
+**Dispatched:** Batch 1 (Phases 1-2, T1-T7) from ef86231, returned at b1e49e0. Batch 2 (Phases 3-4, T8-T13) from b1e49e0, returned at 50118f7. Batch 3 (Phase 5, T14-T18) from 50118f7; Phase 6 stays with the orchestrator, since it needs the user. Verifier from 6293dfd, over `main..house-kit-layer`, returned FAIL with 9 findings, closed in d7ab3ad.
 **Walked:** Run `npx vite --port 4317`, open `http://localhost:4317/`. Stadium, 1512 px wide: the footer shows the credit, and the Editor holds 13 track labels and 13 mix cards. A real click on Play fetched all 54 House Kit files with no failure, and Stop showed 284 ms after the click on the local dev server. Batch 3 checked 390, 1024 and 1440 px through iframes: 13 rows, no sideways page scroll, footer with no overflow. Ear approval, on `http://localhost:4317/` (layers) beside `http://localhost:4319/` (`Blend` alone): I asked for an answer on Kick and Snare, and said the answer closes T19 with the 4 toms. User: "Pode deixar assim, pode abrir a PR". That one answer stands for all 6 pieces: Kick, Snare, High Tom, Mid Tom, Low Tom and Floor Tom are approved, and none was rejected, so no piece was rolled back and no recording was replaced. Trims heard and approved: Kick 0.85, the other 5 pieces 0.7.
 
 ---
