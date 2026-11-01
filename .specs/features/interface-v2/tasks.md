@@ -202,10 +202,10 @@ T17
 
 **Done when**:
 
-- [ ] `sampleRate` added to the test mock
-- [ ] The tests of the checks for SHELL-04, SHELL-05, SHELL-06, SHELL-07, SHELL-08 pass
-- [ ] Gate check passes: `npx vitest run && npx vite build`
-- [ ] Test count: 88 tests pass (no silent deletions)
+- [x] `sampleRate` added to the test mock
+- [x] The tests of the checks for SHELL-04, SHELL-05, SHELL-06, SHELL-07, SHELL-08 pass
+- [x] Gate check passes: `npx vitest run && npx vite build`
+- [x] Test count: 88 tests pass (no silent deletions)
 
 **Tests**: integration
 **Gate**: full

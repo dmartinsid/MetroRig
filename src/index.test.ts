@@ -30,6 +30,7 @@ vi.mock('./audio/MetronomeNode', () => {
       loadSample = mockLoadSample;
       setClickMode = mockSetClickMode;
       visualDelayMs = () => mockVisualDelay;
+      sampleRate = () => 44100;
 
       constructor() {
         super();
@@ -755,5 +756,42 @@ describe('Interface V2', () => {
     expect(byId('stadium-view').contains(byId('stadium-timer'))).toBe(true);
     expect(byId('editor-timer').textContent).toBe('00:00:00');
     expect(byId('stadium-timer').textContent).toBe('00:00:00');
+  });
+
+  it('shell_04 editor toggle text', async () => {
+    localStorage.removeItem('metrorig_view_mode');
+    await openPage();
+    expect(byId('btn-toggle-view').innerText).toBe('GO TO STADIUM MODE');
+  });
+
+  it('shell_05 stadium toggle text', async () => {
+    localStorage.removeItem('metrorig_view_mode');
+    await openPage();
+
+    byId<HTMLButtonElement>('btn-toggle-view').click();
+    expect(byId('btn-toggle-view').innerText).toBe('GO TO EDITOR MODE');
+    expect(byId('stadium-view').classList.contains('hidden')).toBe(false);
+    localStorage.removeItem('metrorig_view_mode');
+  });
+
+  it('shell_06 footer clock', async () => {
+    await openPage();
+    expect(byId('footer-clock').textContent).toBe('AUDIO CLOCK: 44.1 kHz 128 SPLS (2.9ms)');
+  });
+
+  it('shell_07 footer latency', async () => {
+    await openPage();
+    await clickPlay();
+    mockVisualDelay = 12.34;
+    vi.useFakeTimers();
+
+    tick({ currentBpm: 120, beatIndex: 0 });
+    vi.advanceTimersByTime(20);
+    expect(byId('footer-latency').textContent).toBe('LATENCY: 12.3ms');
+  });
+
+  it('shell_08 latency placeholder', async () => {
+    await openPage();
+    expect(byId('footer-latency').textContent).toBe('LATENCY: --');
   });
 });
