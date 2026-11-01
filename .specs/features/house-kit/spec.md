@@ -141,6 +141,7 @@ Kick, snare and toms use one sample each, and a step's dynamic only changes its 
 - HK-33: WHEN the pattern loops THEN the engine SHALL continue the take rotation.
 - HK-34: WHEN a user changes a step's dynamic during playback THEN the engine SHALL play the new dynamic's next take at that step's next hit.
 - HK-35: The Kick samples SHALL mix each `Blend` take with the same take's `Close` above 2 kHz and its `Room` at half level, the Snare samples SHALL mix each `Blend` take with the same take's `Close`, lined up, and its `Room` at half level, and one gain per piece SHALL bring its loudest take to full scale.
+- HK-36: WHEN a Click sample starts while the last one is still sounding THEN the engine SHALL restart it at once with no fade; HK-07 covers the drum tracks.
 
 ---
 
@@ -183,8 +184,9 @@ Kick, snare and toms use one sample each, and a step's dynamic only changes its 
 | HK-33 | P1: Real recordings at each dynamic | Tasks | Implemented |
 | HK-34 | P1: Real recordings at each dynamic | Tasks | Implemented |
 | HK-35 | P1: Real recordings at each dynamic | Tasks | Implemented |
+| HK-36 | P1: Real recordings at each dynamic | Tasks | Implemented |
 
-**Coverage:** 35 total, 35 mapped to tasks, 0 unmapped
+**Coverage:** 36 total, 36 mapped to tasks, 0 unmapped
 
 ---
 

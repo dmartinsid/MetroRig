@@ -1,3 +1,4 @@
+import { execFileSync } from 'child_process';
 import { describe, it, expect } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -215,13 +216,16 @@ describe('House Kit', () => {
   });
 
   it('hk_10 recorded levels', () => {
-    // Soft takes stay under the hard hits, so nothing evened out the recordings
-    expect(toDb(peakOf('snare/hard-1.wav')) - toDb(peakOf('snare/soft-1.wav'))).toBeGreaterThanOrEqual(6);
-    expect(toDb(peakOf('kick/hard-1.wav')) - toDb(peakOf('kick/soft-1.wav'))).toBeGreaterThanOrEqual(2);
-    expect(meanPeakDb('snare', 'hard') - meanPeakDb('snare', 'soft')).toBeGreaterThanOrEqual(6);
-    expect(meanPeakDb('kick', 'hard') - meanPeakDb('kick', 'soft')).toBeGreaterThanOrEqual(2);
-    ['tom-10', 'tom-12', 'tom-14', 'tom-16'].forEach(tom => {
-      expect(meanPeakDb(tom, 'hard') - meanPeakDb(tom, 'soft'), tom).toBeGreaterThanOrEqual(1);
+    // Mean peak of each recording in dB, measured on the approved files: anything that evened the
+    // recordings out moves one of these. Peaks of the loud toms reach full scale in the kit itself.
+    const levels: Record<string, number[]> = {
+      kick: [-4.74, -1.73, -0.35], snare: [-9.34, -0.5, -0.49], 'tom-10': [-2.4, 0, 0],
+      'tom-12': [-1.72, 0, 0], 'tom-14': [-2.94, 0, 0], 'tom-16': [-4.82, -0.17, 0],
+    };
+    Object.entries(RECORDINGS).forEach(([piece, recordings]) => {
+      recordings.forEach((recording, index) => {
+        expect(Math.abs(meanPeakDb(piece, recording) - levels[piece][index]), `${piece}/${recording}`).toBeLessThanOrEqual(0.05);
+      });
     });
 
     // The loudest take of each piece still hits full scale, so no gain went down
@@ -232,12 +236,23 @@ describe('House Kit', () => {
   });
 
   it('hk_35 kick and snare layers', () => {
-    const builder = fs.readFileSync(path.resolve(__dirname, '../scripts/build_house_kit.py'), 'utf8');
-    const layers = builder.slice(builder.indexOf('LAYERS = {'), builder.indexOf('\n}\n', builder.indexOf('LAYERS = {')));
-    expect(layers).toContain("'kick': (('Kick/Close', 1.0, 'highpass=f=2000:poles=2', False), ('Kick/Room', 0.5, None, False))");
-    expect(layers).toContain("'snare': (('Snare/Close', 1.0, None, True), ('Snare/Room', 0.5, None, False))");
-    expect(layers.match(/^    '/gm)).toHaveLength(2); // Toms have no layers
+    // The builder itself, on made-up recordings: each file against its exact mix, within the rounding of 3 sources, which the
+    // piece's gain scales: 1.25 steps × at most 2.6, plus 0.5 for the file
+    const check = path.resolve(__dirname, 'fixtures/build_house_kit_check.py');
+    const { pieces, filters } = JSON.parse(execFileSync('python3', ['-I', check], { encoding: 'utf8' }).trim().split('\n').at(-1)!);
+    Object.entries(pieces as Record<string, { worst: number; loudest: number }>).forEach(([piece, { worst }]) => {
+      expect(worst, piece).toBeLessThanOrEqual(4);
+    });
+    expect(pieces.kick.loudest).toBe(32767);
+    expect(pieces.snare.loudest).toBe(32767);
+    expect(filters['Kick/Close']).toBe('highpass=f=2000:poles=2');
+    expect(filters['Kick/Room']).toBeNull();
+    expect(filters['Snare/Close']).toBeNull();
+    expect(filters['Snare/Room']).toBeNull();
+    expect(Object.keys(filters).filter(source => /Close|Room/.test(source)).sort())
+      .toEqual(['Kick/Close', 'Kick/Room', 'Snare/Close', 'Snare/Room']); // Toms have no layers
 
+    // The shipped files
     ['kick', 'snare'].forEach(piece => {
       const peaks = houseFiles.filter(file => file.startsWith(`${piece}/`)).map(peakOf);
       expect(toDb(Math.max(...peaks)), piece).toBeGreaterThanOrEqual(-0.1);

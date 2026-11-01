@@ -485,7 +485,7 @@ T19 → T20
 **Where**: `src/kit.ts`
 **Depends on**: None - the phase before it
 **Reuses**: `bank.trim`
-**Requirement**: HK-24, HK-25, HK-26, HK-27, HK-35
+**Requirement**: HK-24, HK-25, HK-26, HK-27, HK-35, HK-36
 
 **Done when**:
 
@@ -569,7 +569,7 @@ Proof: run rust | test tests::hk_13_missing_dynamic_falls_back ... ok
 Proof: run rust | test tests::hk_14_track_with_no_takes_is_silent ... ok
 
 **C16** - The app lists the 13 tracks in the spec's order (HK-15, AC 1)
-Proof: run js | ✓ tests/kit.test.ts > House Kit > hk_15 thirteen tracks in order
+Proof: run js | ✓ src/index.test.ts > House Kit > hk_15 rows follow the track order
 
 **C17** - Ids 0 to 10 keep their meaning, with Mid Tom 11 and Low Tom 12 (HK-16, AC 2)
 Proof: run js | ✓ tests/kit.test.ts > House Kit > hk_16 ids stay
@@ -634,6 +634,9 @@ Proof: walk - no sideways page scroll at the 3 widths, written to Handoff
 **C37** - Kick and Snare mix the recipe's layers, and one gain brings each piece's loudest take to full scale (HK-35, Edge Cases 3)
 Proof: run js | ✓ tests/kit.test.ts > House Kit > hk_35 kick and snare layers
 
+**C38** - A Click sample restarts at once, with no fade (HK-36, Edge Cases 4)
+Proof: run rust | test tests::hk_36_click_restarts_with_no_fade ... ok
+
 ---
 
 ## Handoff
@@ -641,7 +644,7 @@ Proof: run js | ✓ tests/kit.test.ts > House Kit > hk_35 kick and snare layers
 The feature's live state, written as it happens - a compaction gives no warning.
 
 **Settled mid-build:** Sub-agents accepted, user: "aprovo e vamos de subagents". 3 batches. Work happens on branch `house-kit`, with no push. Layers went on branch `house-kit-layer`, user: "Vamos somar os sons diferentes, acho que vai ser uma boa. gere sim"; `Close` and `Room` on Kick and Snare are AD-015 and HK-35. The PR goes from `house-kit-layer`, user: "pode abrir a PR".
-**Dispatched:** Batch 1 (Phases 1-2, T1-T7) from ef86231, returned at b1e49e0. Batch 2 (Phases 3-4, T8-T13) from b1e49e0, returned at 50118f7. Batch 3 (Phase 5, T14-T18) from 50118f7; Phase 6 stays with the orchestrator, since it needs the user.
+**Dispatched:** Batch 1 (Phases 1-2, T1-T7) from ef86231, returned at b1e49e0. Batch 2 (Phases 3-4, T8-T13) from b1e49e0, returned at 50118f7. Batch 3 (Phase 5, T14-T18) from 50118f7; Phase 6 stays with the orchestrator, since it needs the user. Verifier from 6293dfd, over `main..house-kit-layer`.
 **Walked:** Run `npx vite --port 4317`, open `http://localhost:4317/`. Stadium, 1512 px wide: the footer shows the credit, and the Editor holds 13 track labels and 13 mix cards. A real click on Play fetched all 54 House Kit files with no failure, and Stop showed 284 ms after the click on the local dev server. Batch 3 checked 390, 1024 and 1440 px through iframes: 13 rows, no sideways page scroll, footer with no overflow. Ear approval, on `http://localhost:4317/` (layers) beside `http://localhost:4319/` (`Blend` alone): I asked for an answer on Kick and Snare, and said the answer closes T19 with the 4 toms. User: "Pode deixar assim, pode abrir a PR". That one answer stands for all 6 pieces: Kick, Snare, High Tom, Mid Tom, Low Tom and Floor Tom are approved, and none was rejected, so no piece was rolled back and no recording was replaced. Trims heard and approved: Kick 0.85, the other 5 pieces 0.7.
 
 ---

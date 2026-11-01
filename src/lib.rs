@@ -2247,6 +2247,26 @@ mod tests {
     }
 
     #[test]
+    fn hk_36_click_restarts_with_no_fade() {
+        let hit = step_samples(SR, 120.0).ceil() as usize;
+        let run = Run::new(120.0, &[0; 16]);
+        let sample: Vec<f32> = (0..4 * hit).map(|frame| 0.2 + 0.5 * frame as f32 / (4 * hit) as f32).collect();
+        engine_load_sample(run.ptr, 0, sample.as_ptr(), sample.as_ptr(), sample.len());
+        engine_set_click_mode(run.ptr, 1);
+        let mut grid = [0u8; 16];
+        grid[..2].fill(1);
+        set_steps(&run, 0, &grid);
+        engine_start(run.ptr);
+
+        let (left, _) = stereo_output(run.ptr, 2 * hit);
+        assert!(left[0] > 0.0);
+        assert!(left[hit] < left[hit - 1]); // It starts over on the very frame of the hit
+        for frame in 0..hit {
+            assert_eq!(left[hit + frame], left[frame], "frame {}", frame); // Nothing of the last one remains
+        }
+    }
+
+    #[test]
     fn hk_07_a_finished_voice_adds_nothing() {
         let hit = step_samples(SR, 120.0).ceil() as usize;
 

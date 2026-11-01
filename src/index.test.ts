@@ -2616,6 +2616,23 @@ describe('House Kit', () => {
   const orbPulsed = (group: number) => mockGsap.fromTo.mock.calls.some(call => call[0] === byId(`orb-${group}`));
   const NEW_TOMS = [11, 12];
 
+  it('hk_15 rows follow the track order', async () => {
+    await openPage();
+    const rowOf = (element: HTMLElement) => Number(element.style.gridRow);
+    const labels = [...document.querySelectorAll<HTMLElement>('.track-label')].sort((a, b) => rowOf(a) - rowOf(b));
+
+    expect(labels.map(label => label.innerText)).toEqual([
+      'Click', 'Kick', 'Snare', 'Hi-hat', 'Open Hat', 'Ride', 'Ride Bell', 'Crash', 'China',
+      'High Tom', 'Mid Tom', 'Low Tom', 'Floor Tom',
+    ]);
+    expect(labels.map(rowOf)).toEqual([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]);
+    labels.forEach(label => {
+      const cells = document.querySelectorAll<HTMLElement>(`.step-cell[data-track="${label.dataset.track}"]`);
+      expect(cells).toHaveLength(16);
+      cells.forEach(step => expect(rowOf(step), label.innerText).toBe(rowOf(label)));
+    });
+  });
+
   it('hk_17 thirteen rows and cards', async () => {
     await openPage();
 
@@ -2669,6 +2686,20 @@ describe('House Kit', () => {
     expect(sentTo(11)).toEqual(silence);
     expect(cell(11, 0).classList.contains('silenced')).toBe(true);
     expect(cell(12, 0).classList.contains('silenced')).toBe(false);
+    byId<HTMLButtonElement>('solo-12').click();
+
+    byId<HTMLButtonElement>('mute-12').click();
+    expect(sentTo(12)).toEqual(silence);
+    expect(sentTo(11)[0]).toBe(1);
+    expect(cell(12, 0).classList.contains('silenced')).toBe(true);
+    byId<HTMLButtonElement>('mute-12').click();
+    expect(sentTo(12)[0]).toBe(1);
+
+    byId<HTMLButtonElement>('solo-11').click();
+    expect(sentTo(11)[0]).toBe(1);
+    expect(sentTo(12)).toEqual(silence);
+    expect(cell(12, 0).classList.contains('silenced')).toBe(true);
+    expect(cell(11, 0).classList.contains('silenced')).toBe(false);
     await clickPlay();
   });
 
