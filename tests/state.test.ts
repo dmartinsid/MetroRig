@@ -233,3 +233,17 @@ describe('Preset normalization', () => {
     expect(startBpmFor(preset)).toBe(120);
   });
 });
+
+describe('Factory grooves', () => {
+  it('edit_23 five named grooves', () => {
+    expect(FACTORY_GROOVES.map(groove => groove.name)).toEqual([
+      'Rock Groove', 'Metal Groove', 'Blues Shuffle', 'Jazz Swing', 'Metalcore Breakdown',
+    ]);
+
+    const metalcore = FACTORY_GROOVES.find(groove => groove.id === 'metalcore')!;
+    expect(metalcore.length).toBe(16);
+    expect(metalcore.tracks[1]).toEqual([1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0]);
+    expect(metalcore.tracks[2]).toEqual([0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0]);
+    expect(metalcore.tracks[3]).toEqual([1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]);
+  });
+});
