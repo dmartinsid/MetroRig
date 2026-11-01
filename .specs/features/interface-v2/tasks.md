@@ -114,10 +114,10 @@ T17
 
 **Done when**:
 
-- [ ] `audibleSteps` returns the input length and never mutates it, 1 extra test beside the checks
-- [ ] The tests of the checks for MUTE-04, MUTE-05, MUTE-06 pass
-- [ ] Gate check passes: `npx vitest run`
-- [ ] Test count: 67 tests pass (no silent deletions)
+- [x] `audibleSteps` returns the input length and never mutates it, 1 extra test beside the checks
+- [x] The tests of the checks for MUTE-04, MUTE-05, MUTE-06 pass
+- [x] Gate check passes: `npx vitest run`
+- [x] Test count: 67 tests pass (no silent deletions)
 
 **Tests**: unit
 **Gate**: quick
