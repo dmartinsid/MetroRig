@@ -2026,6 +2026,14 @@ describe('Song Bars', () => {
     return stores;
   };
 
+  const barButtons = () => [...document.querySelectorAll<HTMLButtonElement>('#bar-selector .bar-btn')];
+
+  it('the page holds a hidden selector of 4 bars', async () => {
+    await openPage();
+    expect(barButtons().map(button => button.textContent)).toEqual(['1', '2', '3', '4']);
+    expect(byId('bar-selector').hidden).toBe(true);
+  });
+
   it('sends the bar count with every pattern', async () => {
     await openSong();
     await clickPlay();

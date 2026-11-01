@@ -313,9 +313,9 @@ T16 → T17 → T18 → T19
 
 **Done when**:
 
-- [ ] Buttons `1` to `4` sit above the grid, hidden by default
-- [ ] `src/index.test.ts` finds them in the real page
-- [ ] Gate check passes: `npx vitest run`
+- [x] Buttons `1` to `4` sit above the grid, hidden by default
+- [x] `src/index.test.ts` finds them in the real page
+- [x] Gate check passes: `npx vitest run`
 
 **Tests**: integration
 **Gate**: quick
