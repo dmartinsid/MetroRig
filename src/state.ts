@@ -23,6 +23,8 @@ export type StoredPreset = Preset & { swing?: number };
 
 export type TrainerSettings = Preset['trainerSettings'];
 
+export type ViewMode = 'editor' | 'stadium' | 'grooves';
+
 export interface PracticeLog {
   id?: number;
   date: string;
@@ -145,7 +147,7 @@ export class StateManager {
     }
   };
 
-  public activeViewMode: 'editor' | 'stadium' = 'editor';
+  public activeViewMode: ViewMode = 'editor';
   public isPlaying: boolean = false;
   public currentLiveBpm: number = 120;
 
@@ -180,12 +182,12 @@ export class StateManager {
 
   private loadActiveViewMode() {
     const mode = localStorage.getItem('metrorig_view_mode');
-    if (mode === 'stadium' || mode === 'editor') {
+    if (mode === 'stadium' || mode === 'editor' || mode === 'grooves') {
       this.activeViewMode = mode;
     }
   }
 
-  setViewMode(mode: 'editor' | 'stadium') {
+  setViewMode(mode: ViewMode) {
     this.activeViewMode = mode;
     localStorage.setItem('metrorig_view_mode', mode);
     this.notify();
