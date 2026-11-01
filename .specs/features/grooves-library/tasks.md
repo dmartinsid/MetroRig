@@ -378,10 +378,10 @@ T24 → T25 → T26 → T27 → T28
 
 **Done when**:
 
-- [ ] Legend and orb labels read `CLICK`, `KICK`, `SNARE/TOMS`, `CYMBALS`
-- [ ] The tests of the checks for STD-01 that this task reaches pass
-- [ ] Gate check passes: `npx vitest run`
-- [ ] Test count: at least the previous task's count (no silent deletions)
+- [x] Legend and orb labels read `CLICK`, `KICK`, `SNARE/TOMS`, `CYMBALS`
+- [x] The tests of the checks for STD-01 that this task reaches pass
+- [x] Gate check passes: `npx vitest run`
+- [x] Test count: at least the previous task's count (no silent deletions)
 
 **Tests**: integration
 **Gate**: quick
