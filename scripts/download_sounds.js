@@ -3,7 +3,6 @@ import https from 'https';
 import path from 'path';
 
 const assets = {
-  'hihat.wav': 'https://raw.githubusercontent.com/ArunMichaelDsouza/javascript-30-course/master/src/01-javascript-drum-kit/sounds/hihat-close.wav',
   'mechanical.wav': 'https://raw.githubusercontent.com/rfauver/metronome/master/click.wav',
   'click.wav': 'https://raw.githubusercontent.com/rfauver/metronome/master/click.wav',
   'stick.wav': 'https://raw.githubusercontent.com/wesbos/JavaScript30/master/01%20-%20JavaScript%20Drum%20Kit/sounds/tink.wav',

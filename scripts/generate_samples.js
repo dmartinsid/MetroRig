@@ -65,7 +65,4 @@ function writeWav(filename, type) {
 
 if (!fs.existsSync('public')) fs.mkdirSync('public');
 writeWav('public/click.wav', 'click');
-writeWav('public/kick.wav', 'kick');
-writeWav('public/snare.wav', 'snare');
-writeWav('public/hihat.wav', 'hihat');
 console.log("Audio samples generated successfully in public/");

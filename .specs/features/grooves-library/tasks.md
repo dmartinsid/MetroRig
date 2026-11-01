@@ -241,14 +241,14 @@ T24 → T25 → T26 → T27 → T28
 
 **Done when**:
 
-- [ ] The kit's bundled terms are read first; SM Drums only if they allow redistribution, otherwise the approved fallback
-- [ ] If no CC0 China is found, the task stops and the user decides
-- [ ] `public/kit/LICENSE.md` records name, source and license
-- [ ] `public/kit/` totals at most 10 MB
-- [ ] Old `kick.wav`, `snare.wav`, `hihat.wav` removed, and `scripts/download_sounds.js` no longer fetches them
-- [ ] The tests of the checks for KIT-01, DOC-01 that this task reaches pass
-- [ ] Gate check passes: `npx vitest run`
-- [ ] Test count: at least the previous task's count (no silent deletions)
+- [x] The kit's bundled terms are read first; SM Drums only if they allow redistribution, otherwise the approved fallback
+- [x] If no CC0 China is found, the task stops and the user decides
+- [x] `public/kit/LICENSE.md` records name, source and license
+- [x] `public/kit/` totals at most 10 MB
+- [x] Old `kick.wav`, `snare.wav`, `hihat.wav` removed, and `scripts/download_sounds.js` no longer fetches them
+- [x] The tests of the checks for KIT-01, DOC-01 that this task reaches pass
+- [x] Gate check passes: `npx vitest run`
+- [x] Test count: at least the previous task's count (no silent deletions)
 
 **Tests**: unit
 **Gate**: quick
@@ -267,11 +267,11 @@ T24 → T25 → T26 → T27 → T28
 
 **Done when**:
 
-- [ ] `Promise.allSettled` over the 10 loads
-- [ ] Click stays audible when none loaded
-- [ ] The tests of the checks for KIT-01 that this task reaches pass
-- [ ] Gate check passes: `npx vitest run`
-- [ ] Test count: at least the previous task's count (no silent deletions)
+- [x] `Promise.allSettled` over the 10 loads
+- [x] Click stays audible when none loaded
+- [x] The tests of the checks for KIT-01 that this task reaches pass
+- [x] Gate check passes: `npx vitest run`
+- [x] Test count: at least the previous task's count (no silent deletions)
 
 **Tests**: integration
 **Gate**: quick
@@ -942,7 +942,7 @@ Proof: walk - the user played all 14 songs and approved each one, recorded in Ha
 
 The feature's live state, written as it happens - a compaction gives no warning.
 
-**Settled mid-build:** Q22 had no explicit answer, only "aprovado", so no batch worker is dispatched and the tasks run in the main session.
+**Settled mid-build:** Q22 had no explicit answer, only "aprovado", so no batch worker is dispatched and the tasks run in the main session. T6: the SM Drums package (2026-11-01) holds no license terms and its author's site states none, so the approved fallback applies: the Open Source Drumkit, whose author placed it in the public domain, plus one CC0 China from Freesound.
 **Dispatched:** none
 **Walked:** none
 
