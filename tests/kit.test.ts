@@ -12,6 +12,10 @@ describe('Kit', () => {
       'Click', 'Kick', 'Snare', 'Hi-hat', 'Open Hat', 'Ride', 'Ride Bell', 'Crash', 'China', 'High Tom', 'Floor Tom',
     ]);
     expect(TRACKS.map(track => track.id)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    expect(TRACKS.map(track => track.sample)).toEqual([
+      null, '/kit/kick.wav', '/kit/snare.wav', '/kit/hihat.wav', '/kit/open-hat.wav', '/kit/ride.wav',
+      '/kit/ride-bell.wav', '/kit/crash.wav', '/kit/china.wav', '/kit/high-tom.wav', '/kit/floor-tom.wav',
+    ]);
   });
 
   it('kit_03 samples exist with a license', () => {
@@ -25,6 +29,7 @@ describe('Kit', () => {
       return fs.statSync(path.join(publicDir, sample)).size;
     });
     expect(license).toContain('The Open Source Drum Kit');
+    expect(license).toContain('SM Drums'); // Why the first-choice kit is not the one shipped
     expect(license).toContain('CC0');
     expect(bytes.reduce((total, size) => total + size)).toBeLessThanOrEqual(10 * 1024 * 1024);
   });
@@ -48,6 +53,11 @@ describe('Kit', () => {
     expect(groupHit(trackIds, gridData, 1)).toBe(true); // A ghost on China counts
     expect(groupHit(trackIds, gridData, 0)).toBe(false); // Snare belongs to another group
     expect(groupHit(trackIds, gridData, 2)).toBe(false);
+
+    // Any track of the group counts, whatever its place in it
+    trackIds.forEach(trackId => {
+      expect(groupHit(trackIds, { [trackId]: [1] }, 0)).toBe(true);
+    });
   });
 
   it('cycles a drum step through every dynamic', () => {

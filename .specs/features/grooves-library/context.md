@@ -103,6 +103,12 @@ Answer quoted from the user: "recomendacoes". It accepts Q19 to Q21.
 
 ---
 
+## Kit license outcome
+
+The SM Drums package and its author's site state no license terms, so the Q19 fallback applies: the Open Source Drumkit plus one CC0 China. `public/kit/LICENSE.md` records it.
+
+---
+
 ## Deferred Ideas
 
 - The `Presets` header link.
