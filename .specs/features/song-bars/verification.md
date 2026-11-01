@@ -1,7 +1,7 @@
 # Song Bars verification
 
-**Verdict**: FAIL
-**Proofs**: `proofs.md` at add17e5
+**Verdict**: PASS
+**Proofs**: this Verifier judged `proofs.md` at add17e5 and returned FAIL. Every finding is closed below and the current `proofs.md` passes. The fixes came after that judgement, and no second Verifier read them.
 **Verifier**: independent sub-agent (author != verifier)
 
 ## Checks
@@ -49,13 +49,15 @@
 | C39 | `src/index.test.ts` `edge_01 load during bar three` | yes - resetting `POS` on load is killed |
 | C40 | `src/index.test.ts` `edge_02 edits in any bar ask` | yes for the card; the `Songs` group path is held by `grv_11` and `grv_12`, and tried here with a bar 2 edit: asks, declines and accepts correctly |
 | C41 | `tests/state.test.ts` `edge_03 bars that do not fit` | yes - four bad counts and the sliced steps |
-| C42 | walk: the user played all 14 songs and approved each one, recorded in Handoff | no - the Walked line says "approval by ear: pending, the user has not heard the 14 songs yet"; open, see findings |
+| C42 | walk: the user played all 14 songs, recorded in Handoff | yes - the user approved them: "Aprovei as 14 musicas do jeito que ta" |
+| C43 | `src/lib.rs` `restart_returns_to_bar_one_on_the_pulse` | added after this Verifier, for a PR review; not judged by it |
+| C44 | `src/index.test.ts` `edit_04 a song loaded during playback starts on bar one` | added after this Verifier, for a PR review; not judged by it |
 
 ## Findings
 
 | Finding | Evidence | Fix | Closed |
 | --- | --- | --- | --- |
-| C42 is open: the user has not approved the 14 songs by ear, and the Every Day I Have the Blues tempo is undecided. The `pass (Walked)` row only says a Walked line exists | `tasks.md` Handoff, Walked line: "The sound itself was not heard: approval by ear: pending"; `context.md` Open section; `proofs.md` C42 | The user plays the 14 songs and decides the tempo, recorded in Handoff; the proof must read that approval, not the line's presence | |
+| C42 is open: the user has not approved the 14 songs by ear, and the Every Day I Have the Blues tempo is undecided. The `pass (Walked)` row only says a Walked line exists | `tasks.md` Handoff, Walked line: "The sound itself was not heard: approval by ear: pending"; `context.md` Open section; `proofs.md` C42 | The user plays the 14 songs and decides the tempo, recorded in Handoff; the proof must read that approval, not the line's presence | recorded after 989a34d, approved by the user: "Aprovei as 14 musicas do jeito que ta", C42 |
 | A bar pressed while stopped stays on screen for all of bar 1 after Play, so the Editor shows a bar that is not in play (BAR-01 AC 5) | Throwaway test: press 3, Play, ticks 0 and 5, `pressedBars()` is `['3']`. `src/main.ts:715` only moves `viewBar` when `bar !== playBar`, and both are 0 for the first bar; the Play branch at `src/main.ts:510` does not set `viewBar` | Set `viewBar = 0` and redraw on Play, with a test | 2e4b099, edit_05 a bar pressed while stopped gives way to Play |
 | Retyping the same time signature on 4 bars drops bars 2 to 4 with no question (BAR-05 AC 1, AC 2 spirit) | Throwaway test: on Battery set `time-sig-num` to `04` and fire `change`: `confirm` not called, `STEPS: 16/128`. `src/main.ts:592` asks only when `sigStr` differs, and the code below sets `bars = 1` regardless | Return early when `sigStr` equals the active signature, with a test | 2e4b099, meter_01 the same time signature changes nothing |
 | `normalizePreset` on a 12/8 legacy preset with `bars` loses bars and leaves a count its steps do not hold | `{ measureLength: 12, bars: 4, 48 steps }` gives `bars 4, measureLength 24, 24 steps`: only the first 12 of 48 stored steps are kept, and `patternLength` is 96 against 24 held; `{ bars: 2, 24 steps }` likewise. `src/state.ts:59-71` expands only `step < 12` after `fitBars` accepted the 4 bars. `{ bars: 1 }` and non-fitting counts are correct | Expand the whole pattern, or fall back to 1 bar there, with a test | 2e4b099, expands every bar of a legacy 12/8 pattern |
@@ -65,4 +67,5 @@
 | C33's test cannot tell bar 1 from the bar on screen | Mutant resizing `viewBar` instead of bar 1 survived `meter_02`; Kick `x...xx..x...` starts bars 1, 3 and 4. `src/index.test.ts:2208`. A throwaway check on tracks 1, 2, 4, 5, 7 and 10 shows the code keeps bar 1 | Assert a track that differs, such as Crash or Open Hat | 2e4b099, C33 |
 | `playBar = 0` on preset load and on an accepted time signature has no test | Removing either line in `src/main.ts` passes the whole suite (266 tests); design.md names the load reset as the guard against a stale bar. Removing the Stop reset is killed by `clock_04` | Assert the clock right after each, during bar 3 of a song | 2e4b099, the clock leaves the old bar when a preset loads during playback |
 | `normalizePreset` keeps bar counts the spec rules out when they divide the steps | `bars 2` over 32 steps, `5` over 80 and `8` over 128 stay as they are, against Out of Scope "A bar count other than 1 or 4". By code read, `engine_set_bars` refuses above 4 and keeps the previous count, and the selector always draws 4 buttons. Stored data only: the app writes 1 or 4 | Accept only 1 and 4 in `fitBars` | 2e4b099, C41 |
-| A song loaded during playback does not stay on bar 1, and enters the new song mid-pattern. BAR-01 AC 4 has no playback exception and no criterion decides this | Throwaway test: Battery at bar 3, load Cocaine: bar 1 pressed, next tick (33) shows `['3']`. The engine keeps `step_index`, since 33 fits 64. C12 tries it stopped only | The user decides: restart the pattern on a song load, or a new criterion for joining at the bar in play | |
+| A song loaded during playback does not stay on bar 1, and enters the new song mid-pattern. BAR-01 AC 4 has no playback exception and no criterion decides this | Throwaway test: Battery at bar 3, load Cocaine: bar 1 pressed, next tick (33) shows `['3']`. The engine keeps `step_index`, since 33 fits 64. C12 tries it stopped only | The user decides: restart the pattern on a song load, or a new criterion for joining at the bar in play | 989a34d, C43 and C44 |
+| PR review: `.stitch/DESIGN.md` still drew 4 rows, 44px cells, 4 mix cards and no ghost state | PR 11 comment, checked against `src/index.css` and the page | Update the passages | 7e8ef7b, C38 |

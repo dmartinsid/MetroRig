@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/song-bars/design.md`
-**Status**: In Progress
+**Status**: Done
 **Approved**: 2026-11-01 - user: "aprovado"
 **Build**: `npm run build`
 **Run js**: `npx vitest run --reporter=verbose`
@@ -624,15 +624,21 @@ Proof: run js | ✓ tests/state.test.ts > Preset normalization > edge_03 bars th
 **C42** - The user approves all 14 songs by ear, with the Every Day I Have the Blues tempo decided (Success Criteria, item 1)
 Proof: walk - the user played all 14 songs and approved each one, recorded in Handoff
 
+**C43** - During playback the pattern returns to bar 1 on the next step, on the same pulse (BAR-01, AC 4)
+Proof: run rust | test tests::restart_returns_to_bar_one_on_the_pulse ... ok
+
+**C44** - A song loaded during playback starts on bar 1 with no `start` or `stop` (BAR-01, AC 4)
+Proof: run js | ✓ src/index.test.ts > Song Bars > edit_04 a song loaded during playback starts on bar one
+
 ---
 
 ## Handoff
 
 The feature's live state, written as it happens - a compaction gives no warning.
 
-**Settled mid-build:** no batch worker: the tasks run in the main session, stated before approval and approved with "aprovado".
+**Settled mid-build:** After the Verifier the user approved the songs, "Aprovei as 14 musicas do jeito que ta", and pointed to a PR review. Its song-switch finding is fixed without a new decision: `engine_restart_pattern` satisfies BAR-01.4 and GRV-01.8 with no `start` or `stop`, so `grv_08` holds. no batch worker: the tasks run in the main session, stated before approval and approved with "aprovado".
 **Dispatched:** Verifier at add17e5, returned FAIL with 11 findings. No screens sub-agent: no criterion cites a capture.
-**Walked:** Run `npx vite --port 4317`, open `http://localhost:4317/`. Songs: Grooves, `Open in Editor` on `Back in Black` opened bar 1, `STEPS: 64/128`, 94 BPM, Kick `x.......x.......`; bar 4 showed the fill, Kick `x....x..x..x....`. Widths: at 1024px and 390px pressing `3` showed bar 3 with `document.scrollWidth` equal to the window width. Playback at 1440px: the selector walked 4, 1, 2, 3, 4, 1, 2 while `POS` counted `BAR 04` to `BAR 10`, with no console error but the missing `favicon.ico`. Stadium during playback: the Kick and Snare rings changed at each bar, 2/2 lit in the plain bars and 4/5 in the fill. Stop returned to bar 1 and `BAR 01 · STEP 01`. A plain preset shows no selector. The sound itself was not heard: approval by ear: pending, the user has not heard the 14 songs yet.
+**Walked:** Run `npx vite --port 4317`, open `http://localhost:4317/`. Songs: Grooves, `Open in Editor` on `Back in Black` opened bar 1, `STEPS: 64/128`, 94 BPM, Kick `x.......x.......`; bar 4 showed the fill, Kick `x....x..x..x....`. Widths: at 1024px and 390px pressing `3` showed bar 3 with `document.scrollWidth` equal to the window width. Playback at 1440px: the selector walked 4, 1, 2, 3, 4, 1, 2 while `POS` counted `BAR 04` to `BAR 10`, with no console error but the missing `favicon.ico`. Stadium during playback: the Kick and Snare rings changed at each bar, 2/2 lit in the plain bars and 4/5 in the fill. Stop returned to bar 1 and `BAR 01 · STEP 01`. A plain preset shows no selector. Approval by ear: the user played the 14 songs and approved all of them: "Aprovei as 14 musicas do jeito que ta". Every Day I Have the Blues stays at 200 BPM.
 
 ---
 

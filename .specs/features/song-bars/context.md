@@ -45,9 +45,9 @@ All five questions below were answered "recomendacoes".
 - A groove from the Groove Library enters only the bar on screen.
 - `STEPS` shows the total over the new limit.
 
-### Open
+### Every Day I Have the Blues
 
-- Every Day I Have the Blues: the tab's 200 BPM stays until the user hears it. The user said it "parece muito rapida"; the question to tap the pulse against the recording has no answer yet, and "recomendacoes" could not settle it because the recommendation depended on what the user hears. Q6 asked: "Se soar lento, vai para 100 BPM. Se soar igual ao app, mantenho 200, e aí você escolhe entre aceitar assim ou trocar de versão."
+- It stays at the tab's 200 BPM. The user approved the 14 songs by ear: "Aprovei as 14 musicas do jeito que ta".
 
 ### Agent's Discretion
 
