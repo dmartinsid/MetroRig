@@ -408,9 +408,9 @@ T19 → T20
 
 **Done when**:
 
-- [ ] The line reads as the spec gives it
-- [ ] The link opens the channel in a new tab
-- [ ] Gate check passes: `npx vitest run`
+- [x] The line reads as the spec gives it
+- [x] The link opens the channel in a new tab
+- [x] Gate check passes: `npx vitest run`
 
 **Tests**: integration
 **Gate**: quick

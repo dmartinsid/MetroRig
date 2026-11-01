@@ -176,8 +176,8 @@ Kick, snare and toms use one sample each, and a step's dynamic only changes its 
 | HK-28 | P2: Credit to Better Mixes | Design | Pending |
 | HK-29 | P2: Credit to Better Mixes | Design | Pending |
 | HK-30 | P2: Credit to Better Mixes | Design | Pending |
-| HK-31 | P2: Credit to Better Mixes | Design | Pending |
-| HK-32 | P2: Credit to Better Mixes | Design | Pending |
+| HK-31 | P2: Credit to Better Mixes | Tasks | Implementing |
+| HK-32 | P2: Credit to Better Mixes | Tasks | Implementing |
 | HK-33 | P1: Real recordings at each dynamic | Tasks | Implementing |
 | HK-34 | P1: Real recordings at each dynamic | Tasks | Implementing |
 
