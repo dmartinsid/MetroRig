@@ -8,6 +8,7 @@ describe('Shipped WASM', () => {
     const exports = WebAssembly.Module.exports(new WebAssembly.Module(wasm)).map(entry => entry.name);
 
     expect(exports).toContain('engine_set_trainer');
+    expect(exports).toContain('engine_restart_pattern');
     expect(exports).not.toContain('engine_set_swing');
   });
 

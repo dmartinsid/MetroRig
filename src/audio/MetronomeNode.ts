@@ -118,6 +118,10 @@ export class MetronomeNode extends EventTarget {
     this.workletNode?.port.postMessage({ type: 'SET_MEASURE_LENGTH', length });
   }
 
+  restartPattern() {
+    this.workletNode?.port.postMessage({ type: 'RESTART_PATTERN' });
+  }
+
   setBars(bars: number) {
     this.workletNode?.port.postMessage({ type: 'SET_BARS', bars });
   }

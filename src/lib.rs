@@ -555,6 +555,14 @@ pub extern "C" fn engine_set_measure_length(ptr: *mut Engine, length: u32) {
     }
 }
 
+// The next step plays bar 1, on the pulse already running: nothing stops or starts
+#[no_mangle]
+pub extern "C" fn engine_restart_pattern(ptr: *mut Engine) {
+    if ptr.is_null() { return; }
+    let engine = unsafe { &mut *ptr };
+    engine.step_index = 0;
+}
+
 #[no_mangle]
 pub extern "C" fn engine_set_bars(ptr: *mut Engine, bars: u32) {
     if ptr.is_null() || bars == 0 || bars > BARS_MAX as u32 { return; }
@@ -1950,6 +1958,21 @@ mod tests {
         let expected: Vec<i32> = (0..66).map(|hit| hit % 64).collect();
         assert_eq!(steps, expected);
         assert_intervals_at(&run, 0..65, 120.0); // No gap at the wrap
+    }
+
+    #[test]
+    fn restart_returns_to_bar_one_on_the_pulse() {
+        let mut run = four_bars(120.0);
+        run.play();
+        run.render_hits(36);
+        engine_restart_pattern(run.ptr);
+        engine_restart_pattern(std::ptr::null_mut()); // Must not crash
+        run.render_hits(40);
+
+        let last = run.hits.iter().position(|hit| hit.step == 0 && hit.pos > 0).unwrap();
+        assert_eq!(run.hits[last - 1].step, last as i32 - 1);
+        assert_eq!(run.hits[last + 1].step, 1);
+        assert_intervals_at(&run, 0..39, 120.0); // The pulse does not move
     }
 
     #[test]

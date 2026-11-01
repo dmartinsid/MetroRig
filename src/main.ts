@@ -870,6 +870,8 @@ function loadPresetIntoUI(storedPreset: StoredPreset) {
   
   drawGrid();
   syncAudioSettings();
+  // A pattern of 4 bars starts from its first bar, without touching the pulse
+  if (isAudioInit && state.isPlaying && barCount(preset) > 1) audioNode.restartPattern();
   grooveSelector.value = "";
 
   updatePanelHeader();

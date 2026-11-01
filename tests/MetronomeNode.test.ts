@@ -32,6 +32,16 @@ describe('MetronomeNode', () => {
     expect(new MetronomeNode().sampleRate()).toBe(48000);
   });
 
+  it('should post message to worklet when restartPattern is called', () => {
+    const node = new MetronomeNode();
+    const mockWorkletNode = new MockAudioWorkletNode();
+    (node as any).workletNode = mockWorkletNode;
+
+    node.restartPattern();
+
+    expect(mockWorkletNode.port.postMessage).toHaveBeenCalledWith({ type: 'RESTART_PATTERN' });
+  });
+
   it('should post message to worklet when setBars is called', () => {
     const node = new MetronomeNode();
     const mockWorkletNode = new MockAudioWorkletNode();
