@@ -162,7 +162,7 @@ Kick, snare and toms use one sample each, and a step's dynamic only changes its 
 | HK-14 | P1: Real recordings at each dynamic | Tasks | Implementing |
 | HK-15 | P1: Four toms | Tasks | Implementing |
 | HK-16 | P1: Four toms | Design | Implementing |
-| HK-17 | P1: Four toms | Design | Implementing |
+| HK-17 | P1: Four toms | Tasks | Implementing |
 | HK-18 | P1: Four toms | Design | Implementing |
 | HK-19 | P1: Four toms | Design | Implementing |
 | HK-20 | P1: Four toms | Design | Implementing |
