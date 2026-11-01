@@ -1,6 +1,7 @@
 import { MetronomeNode, TickDetail } from './audio/MetronomeNode';
 import { StateManager, FACTORY_PRESETS, FACTORY_GROOVES, SPEED_TRAINER_PRESETS, Preset, StoredPreset, TrainerSettings, CustomGroove, FIGURES, getBeatsPerMeasure, getBeatForStep, isSustainedStep, applyFigure, measureLengthFor, normalizePreset, startBpmFor } from './state';
 import { VisualScheduler } from './visualSync';
+import { formatClock, formatLatency, formatTimer } from './display';
 import workletUrl from './audio/metronome-processor?url';
 
 declare const gsap: any;
@@ -22,6 +23,8 @@ const btnStadiumPlay = document.getElementById('btn-stadium-play') as HTMLButton
 const stadiumBpm = document.getElementById('stadium-bpm') as HTMLElement;
 const stadiumTimer = document.getElementById('stadium-timer') as HTMLElement;
 const stadiumStatus = document.getElementById('stadium-status') as HTMLElement;
+const footerClock = document.getElementById('footer-clock') as HTMLElement;
+const footerLatency = document.getElementById('footer-latency') as HTMLElement;
 
 const panelHeaderText = document.getElementById('panel-header-text') as HTMLElement;
 const saveToast = document.getElementById('save-toast') as HTMLElement;
@@ -538,6 +541,8 @@ function renderTick({ beatIndex, currentBpm, activeTrackIds }: TickDetail) {
 
   updateStadiumStatus();
 
+  if (beatIndex === 0) footerLatency.textContent = formatLatency(audioNode.visualDelayMs());
+
   // Beat clock
   const { timeSignature } = state.activePreset;
   const measureLength = state.activePreset.measureLength || 16;
@@ -832,6 +837,7 @@ const storedClickSound = localStorage.getItem('metrorig_click_sound') || 'digita
 clickSoundSelector.value = storedClickSound;
 
 // Initial draw and population
+footerClock.textContent = formatClock(audioNode.sampleRate());
 populatePresetsDropdown();
 populateGroovesDropdown();
 drawFigurePalette();

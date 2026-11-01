@@ -241,11 +241,11 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | SHELL-01 | P1: Rack shell | Tasks | Implementing |
 | SHELL-02 | P1: Rack shell | Tasks | Implementing |
 | SHELL-03 | P1: Rack shell | Tasks | Implementing |
-| SHELL-04 | P1: Rack shell | Tasks | Pending |
-| SHELL-05 | P1: Rack shell | Tasks | Pending |
-| SHELL-06 | P1: Rack shell | Tasks | Pending |
-| SHELL-07 | P1: Rack shell | Tasks | Pending |
-| SHELL-08 | P1: Rack shell | Tasks | Pending |
+| SHELL-04 | P1: Rack shell | Tasks | Implementing |
+| SHELL-05 | P1: Rack shell | Tasks | Implementing |
+| SHELL-06 | P1: Rack shell | Tasks | Implementing |
+| SHELL-07 | P1: Rack shell | Tasks | Implementing |
+| SHELL-08 | P1: Rack shell | Tasks | Implementing |
 | SHELL-09 | P1: Rack shell | Tasks | Implementing |
 | EDIT-01 | P1: Editor Mode | Tasks | Pending |
 | EDIT-02 | P1: Editor Mode | Tasks | Implementing |
