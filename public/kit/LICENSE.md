@@ -1,6 +1,8 @@
 # Drum kit samples
 
-Each file is one hit, trimmed, faded and peak-normalized to -1 dBFS, at 44.1 kHz, 16-bit, stereo.
+Each file in this folder is one hit, trimmed, faded and peak-normalized to -1 dBFS, at 44.1 kHz, 16-bit, stereo.
+
+`/kick.wav`, `/snare.wav` and `/hihat.wav`, in `public/`, are this project's own, written by `scripts/generate_samples.js`.
 
 SM Drums was the first choice. Its package, checked on 2026-11-01, holds no license terms and its author's site states none, so it is not shipped.
 
@@ -13,9 +15,6 @@ By Real Music Media. Its author placed the samples in the public domain: "The sa
 
 | File | Source |
 | ---- | ------ |
-| `kick.wav` | `kick/kick22.wav` |
-| `snare.wav` | `snare/snare-top37.wav` |
-| `hihat.wav` | `hihat/closed-hihat/chh28.wav` |
 | `open-hat.wav` | `hihat/half-open-hihat/hohh38.wav` |
 | `ride.wav` | `ride/ride-mid-out11.wav` |
 | `ride-bell.wav` | `ride/ride-bell12.wav` |

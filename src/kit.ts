@@ -1,9 +1,9 @@
 // Every track of the kit, in grid order. Ids 0 to 3 predate the expanded kit, so saved presets keep them.
 export const TRACKS: { id: number; name: string; label: string; sample: string | null }[] = [
   { id: 0, name: 'Click', label: 'CLICK', sample: null },
-  { id: 1, name: 'Kick', label: 'KICK', sample: '/kit/kick.wav' },
-  { id: 2, name: 'Snare', label: 'SNARE', sample: '/kit/snare.wav' },
-  { id: 3, name: 'Hi-hat', label: 'HI-HAT', sample: '/kit/hihat.wav' },
+  { id: 1, name: 'Kick', label: 'KICK', sample: '/kick.wav' },
+  { id: 2, name: 'Snare', label: 'SNARE', sample: '/snare.wav' },
+  { id: 3, name: 'Hi-hat', label: 'HI-HAT', sample: '/hihat.wav' },
   { id: 4, name: 'Open Hat', label: 'OPEN HAT', sample: '/kit/open-hat.wav' },
   { id: 5, name: 'Ride', label: 'RIDE', sample: '/kit/ride.wav' },
   { id: 6, name: 'Ride Bell', label: 'RIDE BELL', sample: '/kit/ride-bell.wav' },

@@ -13,7 +13,7 @@ describe('Kit', () => {
     ]);
     expect(TRACKS.map(track => track.id)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
     expect(TRACKS.map(track => track.sample)).toEqual([
-      null, '/kit/kick.wav', '/kit/snare.wav', '/kit/hihat.wav', '/kit/open-hat.wav', '/kit/ride.wav',
+      null, '/kick.wav', '/snare.wav', '/hihat.wav', '/kit/open-hat.wav', '/kit/ride.wav',
       '/kit/ride-bell.wav', '/kit/crash.wav', '/kit/china.wav', '/kit/high-tom.wav', '/kit/floor-tom.wav',
     ]);
   });

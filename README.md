@@ -42,7 +42,7 @@ To run the metronome locally, you need:
 
 ## Drum Samples
 
-The kit in `public/kit/` comes from public-domain and CC0 sources, listed file by file in `public/kit/LICENSE.md`.
+Kick, Snare and Hi-hat are this project's own samples, written by `scripts/generate_samples.js`. The other 7 pieces, in `public/kit/`, come from public-domain and CC0 sources, listed file by file in `public/kit/LICENSE.md`.
 
 ## Building for Production
 
