@@ -1541,4 +1541,36 @@ describe('Grooves Library', () => {
     expect(cell(1, 0).classList.contains('accent')).toBe(true);
     expect(cell(2, 0).classList.contains('ghost')).toBe(true);
   });
+
+  it('edt_02 eleven mix cards', async () => {
+    await openPage();
+
+    const cards = [...document.querySelectorAll<HTMLElement>('.track-mix-card')];
+    expect(cards.map(card => card.querySelector('.track-mix-name')?.textContent)).toEqual([
+      'CLICK', 'KICK', 'SNARE', 'HI-HAT', 'OPEN HAT', 'RIDE', 'RIDE BELL', 'CRASH', 'CHINA', 'HIGH TOM', 'FLOOR TOM',
+    ]);
+    cards.forEach((card, trackId) => {
+      expect(card.dataset.track).toBe(String(trackId));
+      expect(card.querySelector(`#mute-${trackId}`)?.textContent).toBe('M');
+      expect(card.querySelector(`#solo-${trackId}`)?.textContent).toBe('S');
+    });
+  });
+
+  it('edt_03 new track obeys mix', async () => {
+    await openPage();
+    cell(8, 0).click();
+    await clickPlay();
+    const china = () => [...calls('updateGrid').filter(([trackId]) => trackId === 8).at(-1)![1]][0];
+    expect(china()).toBe(1);
+
+    byId<HTMLButtonElement>('mute-8').click();
+    expect(byId('mute-8').getAttribute('aria-pressed')).toBe('true');
+    expect(china()).toBe(0);
+    expect(cell(8, 0).classList.contains('silenced')).toBe(true);
+
+    byId<HTMLButtonElement>('solo-8').click();
+    expect(china()).toBe(1); // A solo beats a mute, as on every other track
+    expect(cell(1, 0).classList.contains('silenced')).toBe(true);
+    await clickPlay();
+  });
 });
