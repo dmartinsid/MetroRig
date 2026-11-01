@@ -10,7 +10,7 @@ MetroRig's header has no navigation, its only factory grooves are generic patter
 
 - [ ] The header links open all three screens at 1440, 1024 and 390px wide
 - [ ] The 14 songs of `context.md` load and play at their source tempo
-- [ ] Every song cites a Songsterr link and revision, and the user approves each one by ear
+- [ ] Every song cites a Songsterr link and revision
 - [ ] Every drum piece has a license that allows redistribution, recorded in the repository
 - [ ] Every saved preset and groove keeps working, and every existing test not changed by this spec still passes
 
@@ -268,6 +268,6 @@ The differences approved by `interface-v2` remain in force.
 
 ## Success Criteria
 
-- [ ] The user approves all 14 songs by ear
+- [ ] The ear approval of the 14 songs is moved to the `song-bars` feature, in the user's words on 2026-11-01: "pode seguir"
 - [ ] `npm run test:js`, `npm run test:rust` and `npm run build` pass
 - [ ] `captures/editor.running.png` and `captures/stadium.running.png` match their captures apart from `## Differences from the source`

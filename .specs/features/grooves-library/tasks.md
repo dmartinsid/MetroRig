@@ -933,8 +933,8 @@ Proof: run js | ✓ src/index.test.ts > Grooves Library > edge_02 load keeps the
 **C62** - A stored value outside 0 to 3 becomes `normal` (Edge Cases, item 3)
 Proof: run js | ✓ tests/state.test.ts > completeKit > edge_03 cleans step values
 
-**C63** - The user approves all 14 songs by ear (Success Criteria, item 1)
-Proof: walk - the user played all 14 songs and approved each one, recorded in Handoff
+**C63** - The ear approval of the 14 songs is moved to `song-bars` (Success Criteria, item 1)
+Proof: walk - the user agreed to move it, recorded in Handoff
 
 ---
 
@@ -943,8 +943,8 @@ Proof: walk - the user played all 14 songs and approved each one, recorded in Ha
 The feature's live state, written as it happens - a compaction gives no warning.
 
 **Settled mid-build:** KIT-01.3 changed after the build, in the user's words: "Vamos voltar pro som anterior e so deixar no novo o que nao tem". Kick, Snare and Hi-hat play the earlier samples again, and only pieces with no earlier sample stay new. Q22 had no explicit answer, only "aprovado", so no batch worker is dispatched and the tasks run in the main session. T6: the SM Drums package (2026-11-01) holds no license terms and its author's site states none, so the approved fallback applies: the Open Source Drumkit, whose author placed it in the public domain, plus one CC0 China from Freesound.
-**Dispatched:** Verifier and screens round 1, at aae0fa3, returned. Screens round 2 at 565de64, returned: one row differs, the Stadium ring line, and goes to the user.
-**Walked:** Run `npx vite --port 4317`, open `http://localhost:4317/`. Editor capture state, window 1252x1227: choose preset `Rock Groove`, choose `Rock Groove` in the Groove Library, click Kick step 11, turn on `Trainer Active`, click the `Quarter` chip; stopped, the Save Toast shows `Rock Groove`. Stadium capture state, window 1600x1280: choose preset `Calvagada - 148 - 190`, click `Stadium`; stopped, with the Play button showing `PLAY`. Header navigation: at 1440, 1024 and 390px all three links show and each opens its screen, with `document.scrollWidth` equal to the window width. Grooves: at 1440, 14 cards on `All`; `▶` on `Highway to Hell` loaded it, played at 116 BPM and turned the card to `■`, and all 10 kit samples returned 200; `Open in Editor` opened the grid with its hits. At 390px the cards stack in one column and the page does not scroll sideways. Editor: at 1024px and 390px all 11 tracks show and only the grid scrolls. Header selectors stay reachable at 1024px and 390px. Stadium at 390px and 1600px shows 4 rings and the labels `CLICK`, `KICK`, `SNARE/TOMS`, `CYMBALS`. Approval by ear: pending, the user has not heard the 14 songs yet.
+**Dispatched:** Verifier and screens round 1, at aae0fa3, returned. Screens round 2 at 565de64, returned: one row differs, the Stadium ring line, and goes to the user. The user chose the fix and a retake of that row only, with "pode seguir"; the author retook and judged it, with no sub-agent, at d3baa4b.
+**Walked:** Run `npx vite --port 4317`, open `http://localhost:4317/`. Editor capture state, window 1252x1227: choose preset `Rock Groove`, choose `Rock Groove` in the Groove Library, click Kick step 11, turn on `Trainer Active`, click the `Quarter` chip; stopped, the Save Toast shows `Rock Groove`. Stadium capture state, window 1600x1280: choose preset `Calvagada - 148 - 190`, click `Stadium`; stopped, with the Play button showing `PLAY`. Header navigation: at 1440, 1024 and 390px all three links show and each opens its screen, with `document.scrollWidth` equal to the window width. Grooves: at 1440, 14 cards on `All`; `▶` on `Highway to Hell` loaded it, played at 116 BPM and turned the card to `■`, and all 10 kit samples returned 200; `Open in Editor` opened the grid with its hits. At 390px the cards stack in one column and the page does not scroll sideways. Editor: at 1024px and 390px all 11 tracks show and only the grid scrolls. Header selectors stay reachable at 1024px and 390px. Stadium at 390px and 1600px shows 4 rings and the labels `CLICK`, `KICK`, `SNARE/TOMS`, `CYMBALS`. Approval by ear: not given here; the user moved it to `song-bars` on 2026-11-01 with "pode seguir", because the songs grow to 4 bars there.
 
 ---
 
