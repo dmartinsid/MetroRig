@@ -268,12 +268,12 @@ T16 → T17 → T18 → T19
 
 **Done when**:
 
-- [ ] Each song holds 4 consecutive bars from its tab, at its revision
-- [ ] Each song holds at least 2 different bars, Highway to Hell and Crossroads from another stretch
-- [ ] `source.measure` is the first bar and `bpm` the tab's tempo there
-- [ ] `section` names the stretch
-- [ ] `songToPreset` marks every beat of the 4 bars in `Click`, with one accent on beat 1 of bar 1
-- [ ] Gate check passes: `npx vitest run`
+- [x] Each song holds 4 consecutive bars from its tab, at its revision
+- [x] Each song holds at least 2 different bars, Highway to Hell and Crossroads from another stretch
+- [x] `source.measure` is the first bar and `bpm` the tab's tempo there
+- [x] `section` names the stretch
+- [x] `songToPreset` marks every beat of the 4 bars in `Click`, with one accent on beat 1 of bar 1
+- [x] Gate check passes: `npx vitest run`
 
 **Tests**: unit
 **Gate**: quick

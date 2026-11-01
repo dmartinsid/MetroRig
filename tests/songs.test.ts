@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { SONGS, songToPreset, songsForGenre } from '../src/songs';
 import { TRACKS } from '../src/kit';
 import { measureLengthFor } from '../src/state';
+import { barsToGrid } from '../scripts/tab_to_grid.js';
+import tabs from './fixtures/song_tabs.json';
 
 describe('Songs', () => {
   // Tempos and artists as the cited tabs state them
@@ -49,7 +51,7 @@ describe('Songs', () => {
       expect(song.bpm, song.id).toBeGreaterThanOrEqual(40);
       expect(song.bpm, song.id).toBeLessThanOrEqual(240);
       const tracks = Object.values(song.gridData);
-      tracks.forEach(steps => expect(steps, song.id).toHaveLength(song.measureLength));
+      tracks.forEach(steps => expect(steps, song.id).toHaveLength(song.measureLength * song.bars));
       tracks.forEach(steps => expect(steps.every(value => [0, 1, 2, 3].includes(value)), song.id).toBe(true));
       expect(tracks.flat().some(value => value > 0), song.id).toBe(true);
       expect(song.gridData[0], song.id).toBeUndefined(); // Click comes from the time signature
@@ -58,26 +60,71 @@ describe('Songs', () => {
 
   it('song_04 click marks the beats', () => {
     const song = SONGS[0];
-    expect(songToPreset(song).gridData[0]).toEqual([2, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0]);
-    expect(songToPreset({ ...song, timeSignature: '3/4', measureLength: 12 }).gridData[0]).toEqual([2, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0]);
-    expect(songToPreset({ ...song, timeSignature: '12/8', measureLength: 24 }).gridData[0].filter(Boolean)).toHaveLength(12);
+    expect(songToPreset({ ...song, bars: 1 }).gridData[0]).toEqual([2, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0]);
+    expect(songToPreset({ ...song, bars: 1, timeSignature: '3/4', measureLength: 12 }).gridData[0]).toEqual([2, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0]);
+    expect(songToPreset({ ...song, bars: 1, timeSignature: '12/8', measureLength: 24 }).gridData[0].filter(Boolean)).toHaveLength(12);
   });
 
   it('turns a song into a preset with every track and no Trainer', () => {
     const song = SONGS[0];
     const preset = songToPreset(song);
 
-    expect(preset).toMatchObject({ id: song.id, name: song.title, bpm: song.bpm, timeSignature: song.timeSignature, measureLength: song.measureLength });
+    expect(preset).toMatchObject({ id: song.id, name: song.title, bpm: song.bpm, timeSignature: song.timeSignature, measureLength: song.measureLength, bars: 4 });
     expect(preset.trainerSettings.enabled).toBe(false);
     expect(Object.keys(preset.gridData)).toHaveLength(TRACKS.length);
     expect(preset.gridData[1]).toEqual(song.gridData[1]);
-    expect(preset.gridData[10]).toEqual(new Array(song.measureLength).fill(0));
+    expect(preset.gridData[10]).toEqual(new Array(64).fill(0));
   });
 
   it('copies steps so editing a preset leaves the catalog alone', () => {
     const song = SONGS[0];
     songToPreset(song).gridData[1][0] = 3;
     expect(song.gridData[1][0]).not.toBe(3);
+  });
+
+  const tabOf = (id: string) => (tabs as Record<string, { first: number; tempo: number; measures: object[] }>)[id];
+
+  it('bars_01 four bars of sixteen', () => {
+    expect(SONGS).toHaveLength(14);
+    SONGS.forEach(song => {
+      expect([song.timeSignature, song.measureLength, song.bars], song.id).toEqual(['4/4', 16, 4]);
+      const preset = songToPreset(song);
+      TRACKS.forEach(track => expect(preset.gridData[track.id], `${song.id} ${track.name}`).toHaveLength(64));
+    });
+  });
+
+  it('bars_02 consecutive measures', () => {
+    SONGS.forEach(song => {
+      const tab = tabOf(song.id);
+      const { tracks } = barsToGrid({ measures: tab.measures }, 0);
+      TRACKS.slice(1).forEach(track => {
+        expect(song.gridData[track.id] ?? new Array(64).fill(0), `${song.id} ${track.name}`).toEqual(tracks[track.id]);
+      });
+    });
+  });
+
+  it('bars_03 two different bars', () => {
+    SONGS.forEach(song => {
+      const bar = (index: number) => JSON.stringify(TRACKS.slice(1).map(track => song.gridData[track.id]?.slice(index * 16, (index + 1) * 16)));
+      expect(new Set([0, 1, 2, 3].map(bar)).size, song.id).toBeGreaterThanOrEqual(2);
+    });
+  });
+
+  it('bars_04 first measure and tempo', () => {
+    SONGS.forEach(song => {
+      const tab = tabOf(song.id);
+      expect(song.source.measure, song.id).toBe(tab.first);
+      expect(song.bpm, song.id).toBe(tab.tempo);
+    });
+  });
+
+  it('bars_05 click marks every beat', () => {
+    SONGS.forEach(song => {
+      const click = songToPreset(song).gridData[0];
+      const expected = new Array(64).fill(0).map((_, step) => (step % 4 === 0 ? 1 : 0));
+      expected[0] = 2;
+      expect(click, song.id).toEqual(expected);
+    });
   });
 
   it('filters by genre', () => {
