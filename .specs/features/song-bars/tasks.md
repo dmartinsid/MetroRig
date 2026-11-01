@@ -631,7 +631,7 @@ Proof: walk - the user played all 14 songs and approved each one, recorded in Ha
 The feature's live state, written as it happens - a compaction gives no warning.
 
 **Settled mid-build:** no batch worker: the tasks run in the main session, stated before approval and approved with "aprovado".
-**Dispatched:** Verifier at the HEAD of this commit. No screens sub-agent: no criterion cites a capture.
+**Dispatched:** Verifier at add17e5, returned FAIL with 11 findings. No screens sub-agent: no criterion cites a capture.
 **Walked:** Run `npx vite --port 4317`, open `http://localhost:4317/`. Songs: Grooves, `Open in Editor` on `Back in Black` opened bar 1, `STEPS: 64/128`, 94 BPM, Kick `x.......x.......`; bar 4 showed the fill, Kick `x....x..x..x....`. Widths: at 1024px and 390px pressing `3` showed bar 3 with `document.scrollWidth` equal to the window width. Playback at 1440px: the selector walked 4, 1, 2, 3, 4, 1, 2 while `POS` counted `BAR 04` to `BAR 10`, with no console error but the missing `favicon.ico`. Stadium during playback: the Kick and Snare rings changed at each bar, 2/2 lit in the plain bars and 4/5 in the fill. Stop returned to bar 1 and `BAR 01 · STEP 01`. A plain preset shows no selector. The sound itself was not heard: approval by ear: pending, the user has not heard the 14 songs yet.
 
 ---
