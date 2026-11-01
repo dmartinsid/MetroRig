@@ -149,8 +149,8 @@ Kick, snare and toms use one sample each, and a step's dynamic only changes its 
 | HK-01 | P1: Real recordings at each dynamic | Tasks | Implementing |
 | HK-02 | P1: Real recordings at each dynamic | Tasks | Implementing |
 | HK-03 | P1: Real recordings at each dynamic | Tasks | Implementing |
-| HK-04 | P1: Real recordings at each dynamic | Design | Pending |
-| HK-05 | P1: Real recordings at each dynamic | Design | Pending |
+| HK-04 | P1: Real recordings at each dynamic | Tasks | Implementing |
+| HK-05 | P1: Real recordings at each dynamic | Tasks | Implementing |
 | HK-06 | P1: Real recordings at each dynamic | Tasks | Implementing |
 | HK-07 | P1: Real recordings at each dynamic | Design | Pending |
 | HK-08 | P1: Real recordings at each dynamic | Tasks | Implementing |
@@ -178,8 +178,8 @@ Kick, snare and toms use one sample each, and a step's dynamic only changes its 
 | HK-30 | P2: Credit to Better Mixes | Design | Pending |
 | HK-31 | P2: Credit to Better Mixes | Design | Pending |
 | HK-32 | P2: Credit to Better Mixes | Design | Pending |
-| HK-33 | P1: Real recordings at each dynamic | Design | Pending |
-| HK-34 | P1: Real recordings at each dynamic | Design | Pending |
+| HK-33 | P1: Real recordings at each dynamic | Tasks | Implementing |
+| HK-34 | P1: Real recordings at each dynamic | Tasks | Implementing |
 
 **Coverage:** 34 total, 0 mapped to tasks, 34 unmapped ⚠️
 
