@@ -29,6 +29,7 @@ function fakeEngine() {
       },
       engine_free_buf: vi.fn(),
       engine_update_grid: vi.fn(),
+      engine_load_take: vi.fn(),
       engine_start: vi.fn(),
       engine_set_bpm: vi.fn(),
       engine_set_bars: vi.fn(),
@@ -158,6 +159,40 @@ describe('Worklet', () => {
     const tick = processor.port.postMessage.mock.calls.find(([msg]) => msg.type === 'TICK')!;
     expect(tick[0].activeTrackIds).toEqual([1, 8, 10]);
     expect(engine.exports.engine_update_grid).toHaveBeenCalledWith(1, 10, expect.any(Number), 128);
+  });
+
+  it('reports tracks 11 and 12 on a tick', async () => {
+    const engine = fakeEngine();
+    engine.tickOnBlocks = new Set([1]);
+    const { processor, send, runBlock } = await startProcessor(engine);
+
+    for (const trackId of [11, 12]) {
+      send({ type: 'UPDATE_GRID', trackId, steps: new Uint8Array([1, 0, 0, 0]) });
+    }
+    runBlock();
+
+    const tick = processor.port.postMessage.mock.calls.find(([msg]) => msg.type === 'TICK')!;
+    expect(tick[0].activeTrackIds).toEqual([11, 12]);
+    expect(engine.exports.engine_update_grid).toHaveBeenCalledWith(1, 12, expect.any(Number), 128);
+  });
+
+  it('sends a LOAD_TAKE message to engine_load_take with its samples in the heap', async () => {
+    const engine = fakeEngine();
+    let heardLeft: number[] = [];
+    let heardRight: number[] = [];
+    engine.exports.engine_load_take.mockImplementation((_ptr: number, _track: number, _dynamic: number, _take: number, l: number, r: number, length: number) => {
+      const heap = new RealFloat32Array(engine.exports.memory.buffer);
+      heardLeft = Array.from(heap.subarray(l / 4, l / 4 + length));
+      heardRight = Array.from(heap.subarray(r / 4, r / 4 + length));
+    });
+    const { send } = await startProcessor(engine);
+
+    send({ type: 'LOAD_TAKE', trackId: 12, dynamic: 2, take: 1, leftChannel: new RealFloat32Array([0.5, 0.25]), rightChannel: new RealFloat32Array([-0.5, -0.25]) });
+
+    expect(engine.exports.engine_load_take).toHaveBeenCalledWith(1, 12, 2, 1, expect.any(Number), expect.any(Number), 2);
+    expect(heardLeft).toEqual([0.5, 0.25]);
+    expect(heardRight).toEqual([-0.5, -0.25]);
+    expect(engine.exports.engine_free_buf).toHaveBeenCalledTimes(2);
   });
 
   it('reports the tracks of a step past 32', async () => {
