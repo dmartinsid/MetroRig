@@ -16,7 +16,7 @@
 - **Trade-off**: The status areas read less like hardware than the captures.
 - **Scope**: every MetroRig screen
 - **Date**: 2026-10-31
-- **Status**: active (AD-002)
+- **Status**: active (AD-002); `song-bars` changes `STEPS` to the pattern's total over 128, user: "recomendacoes"
 
 ### AD-003
 - **Decision**: The sequencer keeps its beat spacer and sustain state, which the Editor capture does not draw.
@@ -81,3 +81,11 @@
 - **Scope**: grooves-library, songs
 - **Date**: 2026-11-01
 - **Status**: active (AD-010)
+
+### AD-011
+- **Decision**: `measureLength` always means the steps of one bar. A pattern is `bars` × `measureLength`, `bars` is 1 when absent, and `gridData` holds the whole pattern.
+- **Reason**: Beats, the clock, figures, the Trainer and the time signature all reason about one bar. A `measureLength` of 64 would make each of them learn the difference.
+- **Trade-off**: Code that walks a whole pattern must use `patternLength`, not `measureLength`.
+- **Scope**: every pattern, engine included
+- **Date**: 2026-11-01
+- **Status**: active (AD-011)
