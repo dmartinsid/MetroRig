@@ -10,6 +10,15 @@ interface WasmEngineExports {
   engine_set_bars(ptr: number, bars: number): void;
   engine_restart_pattern(ptr: number): void;
   engine_load_sample(ptr: number, sampleId: number, leftPtr: number, rightPtr: number, length: number): void;
+  engine_load_take(
+    ptr: number,
+    track: number,
+    dynamic: number,
+    take: number,
+    leftPtr: number,
+    rightPtr: number,
+    length: number
+  ): void;
   engine_update_grid(ptr: number, sampleId: number, stepsPtr: number, length: number): void;
   engine_set_trainer(
     ptr: number,
@@ -30,7 +39,7 @@ interface WasmEngineExports {
 }
 
 // The worklet is served on its own, so it cannot import src/kit.ts
-const TRACK_COUNT = 11;
+const TRACK_COUNT = 13;
 const PATTERN_STEPS = 128; // STEPS_COUNT in src/lib.rs
 
 class MetronomeProcessor extends AudioWorkletProcessor {
@@ -138,23 +147,14 @@ class MetronomeProcessor extends AudioWorkletProcessor {
       }
       case 'LOAD_SAMPLE': {
         const { sampleId, leftChannel, rightChannel } = msg;
-        const length = leftChannel.length;
-        const floatSize = 4;
-        const byteLength = length * floatSize;
-        
-        // Allocate transfer buffers
-        const ptrL = exports.engine_alloc(byteLength);
-        const ptrR = exports.engine_alloc(byteLength);
-        
-        const heapFloat = new Float32Array(exports.memory.buffer);
-        heapFloat.set(leftChannel, ptrL / floatSize);
-        heapFloat.set(rightChannel, ptrR / floatSize);
-
-        exports.engine_load_sample(this.enginePtr, sampleId, ptrL, ptrR, length);
-        
-        // Free transfer buffers immediately
-        exports.engine_free_buf(ptrL, byteLength);
-        exports.engine_free_buf(ptrR, byteLength);
+        this.loadIntoEngine(leftChannel, rightChannel, (ptrL, ptrR, length) =>
+          exports.engine_load_sample(this.enginePtr, sampleId, ptrL, ptrR, length));
+        break;
+      }
+      case 'LOAD_TAKE': {
+        const { trackId, dynamic, take, leftChannel, rightChannel } = msg;
+        this.loadIntoEngine(leftChannel, rightChannel, (ptrL, ptrR, length) =>
+          exports.engine_load_take(this.enginePtr, trackId, dynamic, take, ptrL, ptrR, length));
         break;
       }
       case 'SET_TRAINER':
@@ -167,6 +167,30 @@ class MetronomeProcessor extends AudioWorkletProcessor {
         exports.engine_set_click_mode(this.enginePtr, msg.mode);
         break;
     }
+  }
+
+  // Copies a sample into the heap for the engine to read, then frees the copy
+  private loadIntoEngine(
+    leftChannel: Float32Array,
+    rightChannel: Float32Array,
+    load: (ptrL: number, ptrR: number, length: number) => void
+  ) {
+    const exports = this.wasmExports!;
+    const length = leftChannel.length;
+    const floatSize = 4;
+    const byteLength = length * floatSize;
+
+    const ptrL = exports.engine_alloc(byteLength);
+    const ptrR = exports.engine_alloc(byteLength);
+
+    const heapFloat = new Float32Array(exports.memory.buffer);
+    heapFloat.set(leftChannel, ptrL / floatSize);
+    heapFloat.set(rightChannel, ptrR / floatSize);
+
+    load(ptrL, ptrR, length);
+
+    exports.engine_free_buf(ptrL, byteLength);
+    exports.engine_free_buf(ptrR, byteLength);
   }
 
   private sendTrainer(update: WasmEngineExports['engine_set_trainer'], msg: any) {

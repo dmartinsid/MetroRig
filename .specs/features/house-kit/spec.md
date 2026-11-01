@@ -166,7 +166,7 @@ Kick, snare and toms use one sample each, and a step's dynamic only changes its 
 | HK-18 | P1: Four toms | Design | Pending |
 | HK-19 | P1: Four toms | Design | Pending |
 | HK-20 | P1: Four toms | Design | Pending |
-| HK-21 | P1: Four toms | Design | Pending |
+| HK-21 | P1: Four toms | Design | Implementing |
 | HK-22 | P1: Four toms | Design | Pending |
 | HK-23 | P1: Four toms | Design | Pending |
 | HK-24 | P1: Approval by ear | Design | Pending |

@@ -262,9 +262,9 @@ T19 → T20
 
 **Done when**:
 
-- [ ] `LOAD_TAKE` reaches `engine_load_take`
-- [ ] A tick reports tracks 11 and 12
-- [ ] Gate check passes: `npx vitest run`
+- [x] `LOAD_TAKE` reaches `engine_load_take`
+- [x] A tick reports tracks 11 and 12
+- [x] Gate check passes: `npx vitest run`
 
 **Tests**: unit
 **Gate**: quick
