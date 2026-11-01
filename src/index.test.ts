@@ -1051,6 +1051,7 @@ describe('Interface V2', () => {
       .flatMap((step, index) => step.classList.contains('active') ? [index] : []);
     expect(hits(1)).toEqual([0, 3, 5, 8, 11, 13]);
     expect(hits(2)).toEqual([8]);
+    expect(hits(3)).toEqual([0, 2, 4, 6, 8, 10, 12, 14]);
     expect(byId('bpm-number').innerText).toBe('120');
     expect(byId('bpm-slider').value).toBe('120');
   });
@@ -1106,6 +1107,26 @@ describe('Interface V2', () => {
     await openPage();
     await selectPreset('factory:rock');
     expect(toastShown()).toBe(false);
+
+    const grooves = byId<HTMLSelectElement>('groove-selector');
+    grooves.value = 'factory:rock';
+    grooves.dispatchEvent(new Event('change'));
+    mockGsap.set.mockClear();
+    stepper('time-sig-den-down'); // Already at /4
+    expect(toastShown()).toBe(false);
+    expect(grooves.value).toBe('factory:rock');
+
+    await openPage([storedPreset({ timeSignature: '1/4', measureLength: 4 })]);
+    await selectPreset('user:stored');
+    mockGsap.set.mockClear();
+    stepper('time-sig-num-down'); // Already at 1
+    expect(toastShown()).toBe(false);
+
+    document.querySelector<HTMLElement>('.step-cell[data-track="1"]')!.click();
+    expect(toastShown()).toBe(true);
+    mockGsap.to.mockClear();
+    await selectPreset('factory:rock'); // A load discards the edit
+    expect(mockGsap.to.mock.calls.find(call => call[0] === byId('save-toast'))?.[1]).toMatchObject({ opacity: 0 });
   });
 
   it('edge_01 stepper limit', async () => {
@@ -1217,6 +1238,18 @@ describe('Interface V2', () => {
     expect(byId('mute-1').getAttribute('aria-pressed')).toBe('true');
     expect(sentTo(1)).toEqual(silence);
     expect(document.querySelector('.track-label[data-track="1"]')?.classList.contains('silenced')).toBe(true);
+
+    byId<HTMLButtonElement>('solo-2').click();
+    await selectPreset('factory:rock');
+    expect(byId('solo-2').getAttribute('aria-pressed')).toBe('true');
+    expect(sentTo(3)).toEqual(silence);
+
+    const grooves = byId<HTMLSelectElement>('groove-selector');
+    grooves.value = 'factory:metal';
+    grooves.dispatchEvent(new Event('change'));
+    expect(byId('solo-2').getAttribute('aria-pressed')).toBe('true');
+    expect(byId('mute-1').getAttribute('aria-pressed')).toBe('true');
+    expect(sentTo(3)).toEqual(silence);
   });
 
   it('mute_12 play sends empty', async () => {
@@ -1366,5 +1399,44 @@ describe('Interface V2', () => {
 
     const selector = byId<HTMLSelectElement>('stadium-preset-selector');
     expect(selector.options[selector.selectedIndex].text).toBe('Choose a speed trainer');
+  });
+
+  it('stad_13 tempo follows slider and stop', async () => {
+    await openPage();
+    byId('bpm-slider').value = '150';
+    byId('bpm-slider').dispatchEvent(new Event('input'));
+    expect(byId('stadium-bpm').innerText).toBe('150.0');
+
+    await clickPlay();
+    tick({ currentBpm: 170 });
+    expect(byId('stadium-bpm').innerText).toBe('170.0');
+    await clickPlay(); // Stop
+    expect(byId('stadium-bpm').innerText).toBe('150.0');
+    expect(byId('bpm-number').innerText).toBe('150');
+  });
+
+  it('edit_30 header follows save', async () => {
+    await openPage();
+    await selectPreset('factory:rock');
+
+    byId('preset-name').value = 'Take';
+    byId<HTMLButtonElement>('btn-save').click();
+    await flush();
+    expect(byId('panel-header-text').textContent).toBe('Take  ·  4/4  ·  120 BPM');
+  });
+
+  it('edit_31 first click after save', async () => {
+    await openPage();
+    await selectPreset('factory:rock');
+    await clickPlay();
+
+    byId('preset-name').value = 'Take';
+    byId<HTMLButtonElement>('btn-save').click();
+    await flush();
+
+    const target = document.querySelectorAll<HTMLElement>('.step-cell[data-track="1"]')[2];
+    target.click();
+    expect(document.querySelectorAll('.step-cell[data-track="1"]')[2].classList.contains('active')).toBe(true);
+    expect(sentTo(1).slice(0, 3)).toEqual([1, 0, 1]);
   });
 });
