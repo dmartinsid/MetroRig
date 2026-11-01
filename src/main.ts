@@ -67,6 +67,7 @@ const gridContainer = document.getElementById('grid-container') as HTMLElement;
 const presetSelector = document.getElementById('preset-selector') as HTMLSelectElement;
 const groupSignatures = document.getElementById('group-signatures') as HTMLOptGroupElement;
 const groupGenres = document.getElementById('group-genres') as HTMLOptGroupElement;
+const groupSongs = document.getElementById('group-songs') as HTMLOptGroupElement;
 const groupTrainers = document.getElementById('group-trainers') as HTMLOptGroupElement;
 const groupUser = document.getElementById('group-user') as HTMLOptGroupElement;
 const stadiumPresetSelector = document.getElementById('stadium-preset-selector') as HTMLSelectElement;
@@ -95,6 +96,7 @@ function markPresetAsModified() {
 function populatePresetsDropdown(selectedId?: string) {
   groupSignatures.innerHTML = '';
   groupGenres.innerHTML = '';
+  groupSongs.innerHTML = '';
   groupTrainers.innerHTML = '';
   stadiumPresetSelector.innerHTML = '<option value="">Choose a speed trainer</option>';
   
@@ -112,6 +114,13 @@ function populatePresetsDropdown(selectedId?: string) {
     opt.value = `factory:${p.id}`;
     opt.innerText = p.name;
     groupGenres.appendChild(opt);
+  });
+
+  SONGS.forEach(song => {
+    const opt = document.createElement('option');
+    opt.value = `song:${song.id}`;
+    opt.innerText = song.title;
+    groupSongs.appendChild(opt);
   });
 
   // Add Speed Trainers to both the header and Stadium dropdowns
@@ -689,6 +698,9 @@ presetSelector.onchange = () => {
     if (targetPreset) {
       loadPresetIntoUI(targetPreset);
     }
+  } else if (val.startsWith('song:')) {
+    const song = SONGS.find(s => s.id === val.replace('song:', ''));
+    if (song) loadPresetIntoUI(songToPreset(song));
   } else if (val.startsWith('user:')) {
     const pid = val.replace('user:', '');
     state.getAllPresets().then(userPresets => {
