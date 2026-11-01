@@ -689,10 +689,10 @@ T24 → T25 → T26 → T27 → T28
 
 **Done when**:
 
-- [ ] No horizontal page scroll at 390px
-- [ ] The walk shows the result
-- [ ] Gate check passes: `npx vitest run && npx vite build`
-- [ ] Test count: at least the previous task's count (no silent deletions)
+- [x] No horizontal page scroll at 390px
+- [x] The walk shows the result
+- [x] Gate check passes: `npx vitest run && npx vite build`
+- [x] Test count: at least the previous task's count (no silent deletions)
 
 **Tests**: none
 **Gate**: full
