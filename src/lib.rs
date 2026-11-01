@@ -1,7 +1,10 @@
 #![allow(dead_code)]
 use std::slice;
 
-const MAX_SAMPLES: usize = 4; // 0: Click, 1: Kick, 2: Snare, 3: Hi-hat
+const MAX_SAMPLES: usize = 11; // 0: Click, then the kit in src/kit.ts
+const GAIN_NORMAL: f32 = 0.7;
+const GAIN_ACCENT: f32 = 1.0;
+const GAIN_GHOST: f32 = 0.3;
 const STEPS_COUNT: usize = 32;
 
 struct Sample {
@@ -101,6 +104,7 @@ pub struct Engine {
     playback_offsets: [usize; MAX_SAMPLES],
     playback_active: [bool; MAX_SAMPLES],
     playback_volume: [f32; MAX_SAMPLES],
+    playback_gain: [f32; MAX_SAMPLES], // The dynamic of the step that started each voice
 
     // Sequencer Grid
     tracks: [SequencerTrack; MAX_SAMPLES],
@@ -126,14 +130,18 @@ pub struct Engine {
     click_accent: bool,
 }
 
+// A step's value is its dynamic: 1 normal, 2 accent, 3 ghost
+fn step_gain(step: u8) -> f32 {
+    match step {
+        2 => GAIN_ACCENT,
+        3 => GAIN_GHOST,
+        _ => GAIN_NORMAL,
+    }
+}
+
 impl Engine {
     pub fn new(sample_rate: f32) -> Self {
-        let tracks = [
-            SequencerTrack { steps: [0; STEPS_COUNT] },
-            SequencerTrack { steps: [0; STEPS_COUNT] },
-            SequencerTrack { steps: [0; STEPS_COUNT] },
-            SequencerTrack { steps: [0; STEPS_COUNT] },
-        ];
+        let tracks = std::array::from_fn(|_| SequencerTrack { steps: [0; STEPS_COUNT] });
         
         let mut eng = Engine {
             sample_rate,
@@ -146,10 +154,11 @@ impl Engine {
             click_phase: 0.0,
             active_click_freq: 0.0,
             active_click_amp: 0.0,
-            samples: [None, None, None, None],
+            samples: std::array::from_fn(|_| None),
             playback_offsets: [0; MAX_SAMPLES],
             playback_active: [false; MAX_SAMPLES],
-            playback_volume: [0.8, 1.0, 0.9, 0.7],
+            playback_volume: [0.8, 1.0, 0.9, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.9, 0.9],
+            playback_gain: [GAIN_NORMAL; MAX_SAMPLES],
             tracks,
             trainer: TrainerSettings {
                 enabled: false,
@@ -248,12 +257,14 @@ impl Engine {
             }
         }
 
-        // Check drum tracks (1 = Kick, 2 = Snare, 3 = Hi-hat)
+        // Check the drum tracks
         for i in 1..MAX_SAMPLES {
-            if self.tracks[i].steps[self.step_index] > 0 {
+            let step = self.tracks[i].steps[self.step_index];
+            if step > 0 {
                 if self.samples[i].is_some() {
                     self.playback_active[i] = true;
                     self.playback_offsets[i] = 0;
+                    self.playback_gain[i] = step_gain(step);
                 }
             }
         }
@@ -428,8 +439,9 @@ impl Engine {
                     if let Some(ref sample) = self.samples[s_idx] {
                         let offset = self.playback_offsets[s_idx];
                         if offset < sample.left_channel.len() {
-                            drums_l += sample.left_channel[offset] * self.playback_volume[s_idx];
-                            drums_r += sample.right_channel[offset] * self.playback_volume[s_idx];
+                            let level = self.playback_volume[s_idx] * self.playback_gain[s_idx];
+                            drums_l += sample.left_channel[offset] * level;
+                            drums_r += sample.right_channel[offset] * level;
                             self.playback_offsets[s_idx] += 1;
                         } else {
                             self.playback_active[s_idx] = false;
@@ -973,7 +985,7 @@ mod tests {
         let run = Run::new(120.0, &[0; 16]);
         engine_load_sample(run.ptr, 1, left.as_ptr(), right.as_ptr(), left.len());
         let mut grid = [0u8; 16];
-        grid[0] = 1;
+        grid[0] = 2; // An accent is the piece's full level
         engine_update_grid(run.ptr, 1, grid.as_ptr(), 16);
         engine_start(run.ptr);
         stereo_output(run.ptr, frames)
@@ -1631,10 +1643,64 @@ mod tests {
         // At 44100Hz and 120BPM, the step duration is 5512.5 samples.
         // It triggers step 0 immediately since current step starts at 0.0 and triggers.
         // Let's verify that the output contains the sample multiplied by the playback volume (1.0 for kick)
-        assert_eq!(buf_l[0], 0.5);
-        assert_eq!(buf_r[0], -0.5);
-        assert_eq!(buf_l[1], 1.0);
-        assert_eq!(buf_r[1], -1.0);
+        // and by the normal dynamic
+        assert_eq!(buf_l[0], 0.5 * GAIN_NORMAL);
+        assert_eq!(buf_r[0], -0.5 * GAIN_NORMAL);
+        assert_eq!(buf_l[1], 1.0 * GAIN_NORMAL);
+        assert_eq!(buf_r[1], -1.0 * GAIN_NORMAL);
+    }
+
+    // The peak a drum track plays one full-scale frame at, on a step of this value
+    fn drum_peak(track: u32, value: u8) -> f32 {
+        let run = Run::new(120.0, &[0; 16]);
+        let sample = [1.0f32, 1.0];
+        engine_load_sample(run.ptr, track, sample.as_ptr(), sample.as_ptr(), sample.len());
+        let mut grid = [0u8; 16];
+        grid[0] = value;
+        engine_update_grid(run.ptr, track, grid.as_ptr(), 16);
+        engine_start(run.ptr);
+        let (left, _) = stereo_output(run.ptr, 2);
+        left[0]
+    }
+
+    #[test]
+    fn kit_02_every_drum_track_plays_its_sample() {
+        let levels = [1.0, 0.9, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.9, 0.9];
+        for track in 1..=10u32 {
+            let expected = levels[track as usize - 1] * GAIN_ACCENT;
+            assert_eq!(drum_peak(track, 2), expected, "track {}", track);
+        }
+    }
+
+    #[test]
+    fn dyn_01_step_values_set_the_gain() {
+        assert_eq!(drum_peak(1, 3), 0.3);
+        assert_eq!(drum_peak(1, 1), 0.7);
+        assert_eq!(drum_peak(1, 2), 1.0);
+        // A level other than the kick's scales with its piece
+        assert_eq!(drum_peak(2, 3), 0.9 * 0.3);
+        assert_eq!(drum_peak(8, 3), 0.7 * 0.3);
+    }
+
+    #[test]
+    fn dyn_01_a_voice_keeps_the_gain_of_its_own_step() {
+        let run = Run::new(120.0, &[0; 16]);
+        let sample = vec![1.0f32; 20000];
+        engine_load_sample(run.ptr, 1, sample.as_ptr(), sample.as_ptr(), sample.len());
+        let mut grid = [0u8; 16];
+        grid[0] = 3;
+        grid[1] = 2;
+        engine_update_grid(run.ptr, 1, grid.as_ptr(), 16);
+        engine_start(run.ptr);
+        let frames = step_samples(SR, 120.0) as usize + 100;
+        let (left, _) = stereo_output(run.ptr, frames);
+        assert_eq!(left[10], 0.3);
+        assert_eq!(left[frames - 10], 1.0);
+    }
+
+    #[test]
+    fn dyn_01_an_unknown_value_plays_normal() {
+        assert_eq!(drum_peak(1, 9), 0.7);
     }
 
     #[test]

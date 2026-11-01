@@ -150,12 +150,12 @@ T24 → T25 → T26 → T27 → T28
 
 **Done when**:
 
-- [ ] `MAX_SAMPLES` is 11 and every array sized from it
-- [ ] Tests that asserted unity gain on value 1 assert 0.7, and change in nothing else
-- [ ] An engine test holds each new id
-- [ ] The tests of the checks for KIT-01, DYN-01 that this task reaches pass
-- [ ] Gate check passes: `cargo test`
-- [ ] Test count: at least the previous task's count (no silent deletions)
+- [x] `MAX_SAMPLES` is 11 and every array sized from it
+- [x] Tests that asserted unity gain on value 1 assert 0.7, and change in nothing else
+- [x] An engine test holds each new id
+- [x] The tests of the checks for KIT-01, DYN-01 that this task reaches pass
+- [x] Gate check passes: `cargo test`
+- [x] Test count: at least the previous task's count (no silent deletions)
 
 **Tests**: unit
 **Gate**: rust
