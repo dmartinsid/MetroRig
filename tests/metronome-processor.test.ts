@@ -26,6 +26,8 @@ function fakeEngine() {
         nextPtr += size + (8 - (size % 8)) % 8;
         return ptr;
       },
+      engine_free_buf: vi.fn(),
+      engine_update_grid: vi.fn(),
       engine_start: vi.fn(),
       engine_set_bpm: vi.fn(),
       engine_set_trainer: vi.fn(),
@@ -138,6 +140,21 @@ describe('Worklet', () => {
     expect(ticks).toHaveLength(3);
     expect(ticks[0][0]).toEqual({ type: 'TICK', beatIndex: 0, currentBpm: 120, activeTrackIds: [] });
     logs.forEach(log => expect(log).not.toHaveBeenCalled());
+  });
+
+  it('reports every track of the kit on a tick', async () => {
+    const engine = fakeEngine();
+    engine.tickOnBlocks = new Set([1]);
+    const { processor, send, runBlock } = await startProcessor(engine);
+
+    for (const trackId of [1, 8, 10]) {
+      send({ type: 'UPDATE_GRID', trackId, steps: new Uint8Array([1, 0, 0, 0]) });
+    }
+    runBlock();
+
+    const tick = processor.port.postMessage.mock.calls.find(([msg]) => msg.type === 'TICK')!;
+    expect(tick[0].activeTrackIds).toEqual([1, 8, 10]);
+    expect(engine.exports.engine_update_grid).toHaveBeenCalledWith(1, 10, expect.any(Number), 32);
   });
 
   it('rt_02 reuses heap views', async () => {

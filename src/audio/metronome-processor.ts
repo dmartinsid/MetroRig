@@ -27,6 +27,9 @@ interface WasmEngineExports {
   engine_set_click_mode(ptr: number, mode: number): void;
 }
 
+// The worklet is served on its own, so it cannot import src/kit.ts
+const TRACK_COUNT = 11;
+
 class MetronomeProcessor extends AudioWorkletProcessor {
   private enginePtr: number = 0;
   private wasmExports?: WasmEngineExports;
@@ -44,12 +47,7 @@ class MetronomeProcessor extends AudioWorkletProcessor {
   private heapDouble = new Float64Array(0);
 
   // Local mirror of the grid data for computing activeTrackIds on tick
-  private gridMirror: number[][] = [
-    new Array(32).fill(0),
-    new Array(32).fill(0),
-    new Array(32).fill(0),
-    new Array(32).fill(0),
-  ];
+  private gridMirror: number[][] = Array.from({ length: TRACK_COUNT }, () => new Array(32).fill(0));
 
   constructor() {
     super();
@@ -210,7 +208,7 @@ class MetronomeProcessor extends AudioWorkletProcessor {
 
       // Determine which tracks have a step active at this beat
       const activeTrackIds: number[] = [];
-      for (let t = 0; t < 4; t++) {
+      for (let t = 0; t < TRACK_COUNT; t++) {
         if ((this.gridMirror[t][tickIndex] ?? 0) > 0) {
           activeTrackIds.push(t);
         }
