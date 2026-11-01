@@ -290,11 +290,11 @@ T17
 
 **Done when**:
 
-- [ ] Steppers go through `updateTimeSignature`
-- [ ] The Trainer status updates on a form change
-- [ ] The tests of the checks for EDIT-17, EDIT-18, EDIT-20, EDIT-21, EDIT-24, EDIT-25, EDIT-26, EDIT-27, EDIT-28, EDIT-29, EDGE-01 pass
-- [ ] Gate check passes: `npx vitest run && npx vite build`
-- [ ] Test count: 117 tests pass (no silent deletions)
+- [x] Steppers go through `updateTimeSignature`
+- [x] Opening Stadium refreshes the Trainer status, because `vis_01` holds the text steady in the Editor until a tick renders
+- [x] The tests of the checks for EDIT-17, EDIT-18, EDIT-20, EDIT-21, EDIT-24, EDIT-25, EDIT-26, EDIT-27, EDIT-28, EDIT-29, EDGE-01 pass
+- [x] Gate check passes: `npx vitest run && npx vite build`
+- [x] Test count: 117 tests pass (no silent deletions)
 
 **Tests**: integration
 **Gate**: full

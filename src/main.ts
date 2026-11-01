@@ -1,7 +1,7 @@
 import { MetronomeNode, TickDetail } from './audio/MetronomeNode';
 import { StateManager, FACTORY_PRESETS, FACTORY_GROOVES, SPEED_TRAINER_PRESETS, Preset, StoredPreset, TrainerSettings, CustomGroove, FIGURES, getBeatsPerMeasure, getBeatForStep, isSustainedStep, applyFigure, measureLengthFor, normalizePreset, startBpmFor } from './state';
 import { VisualScheduler } from './visualSync';
-import { formatBarStep, formatClock, formatLatency, formatSteps, formatTimer } from './display';
+import { formatBarStep, formatClock, formatLatency, formatSteps, formatTimer, nextDenominator } from './display';
 import workletUrl from './audio/metronome-processor?url';
 
 declare const gsap: any;
@@ -17,6 +17,7 @@ const stadiumView = document.getElementById('stadium-view') as HTMLElement;
 
 const bpmSlider = document.getElementById('bpm-slider') as HTMLInputElement;
 const bpmNumber = document.getElementById('bpm-number') as HTMLElement;
+const bpmSliderValue = document.getElementById('bpm-slider-value') as HTMLElement;
 const btnPlay = document.getElementById('btn-play') as HTMLButtonElement;
 const btnStadiumPlay = document.getElementById('btn-stadium-play') as HTMLButtonElement;
 
@@ -455,6 +456,7 @@ state.subscribe((s) => {
     editorView.classList.add('hidden');
     stadiumView.classList.remove('hidden');
     btnToggleView.innerText = 'GO TO EDITOR MODE';
+    updateStadiumStatus(); // The Trainer form lives in the Editor
   }
 });
 
@@ -466,6 +468,7 @@ btnToggleView.onclick = () => {
 bpmSlider.oninput = () => {
   const bpm = Number(bpmSlider.value);
   bpmNumber.innerText = String(bpm);
+  bpmSliderValue.innerText = String(bpm);
   state.activePreset.bpm = bpm;
   if (isAudioInit) audioNode.setBpm(bpm);
   markPresetAsModified();
@@ -522,6 +525,21 @@ function updateTimeSignature() {
 timeSigNum.onchange = updateTimeSignature;
 timeSigDen.onchange = updateTimeSignature;
 
+function stepNumerator(delta: number) {
+  timeSigNum.value = String(Number(timeSigNum.value) + delta);
+  updateTimeSignature();
+}
+
+function stepDenominator(direction: 1 | -1) {
+  timeSigDen.value = String(nextDenominator(Number(timeSigDen.value), direction));
+  updateTimeSignature();
+}
+
+(document.getElementById('time-sig-num-up') as HTMLButtonElement).onclick = () => stepNumerator(1);
+(document.getElementById('time-sig-num-down') as HTMLButtonElement).onclick = () => stepNumerator(-1);
+(document.getElementById('time-sig-den-up') as HTMLButtonElement).onclick = () => stepDenominator(1);
+(document.getElementById('time-sig-den-down') as HTMLButtonElement).onclick = () => stepDenominator(-1);
+
 btnPlay.onclick = togglePlay;
 btnStadiumPlay.onclick = togglePlay;
 
@@ -536,7 +554,8 @@ formInputs.forEach(el => {
   };
 });
 
-let trainerOpen = false;
+let trainerOpen = true;
+gsap.set(trainerChevron, { rotation: 180 });
 trainerToggle.onclick = () => {
   trainerOpen = !trainerOpen;
   if (trainerOpen) {
@@ -661,6 +680,7 @@ function loadPresetIntoUI(storedPreset: StoredPreset) {
   const ts = preset.trainerSettings;
   
   bpmSlider.value = String(state.activePreset.bpm);
+  bpmSliderValue.innerText = String(state.activePreset.bpm);
   // During playback the engine jumps to the preset's start tempo
   const shownBpm = state.isPlaying ? startBpmFor(preset) : preset.bpm;
   bpmNumber.innerText = String(shownBpm);
