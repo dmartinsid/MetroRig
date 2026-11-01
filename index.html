@@ -16,6 +16,12 @@
     <header>
       <span class="logo">METRORIG<span class="badge">PRO</span></span>
 
+      <nav class="view-nav" aria-label="Screens">
+        <button class="view-link" id="nav-editor" data-view="editor">Editor</button>
+        <button class="view-link" id="nav-stadium" data-view="stadium">Stadium</button>
+        <button class="view-link" id="nav-grooves" data-view="grooves">Grooves</button>
+      </nav>
+
       <div class="preset-controls">
         <div class="click-field">
           <label for="click-sound-selector">Click:</label>
@@ -35,8 +41,6 @@
           <optgroup id="group-user" label="User Presets"></optgroup>
         </select>
       </div>
-
-      <button id="btn-toggle-view">GO TO STADIUM MODE</button>
     </header>
 
     <!-- Editor Mode -->
@@ -277,6 +281,9 @@
         </section>
       </div>
     </main>
+
+    <!-- Grooves View -->
+    <main id="grooves-view" class="hidden"></main>
 
     <footer class="status-bar">
       <span class="status-bar-clock">
