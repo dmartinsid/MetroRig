@@ -575,25 +575,38 @@ function updateTimeSignature() {
   
   const measureLength = measureLengthFor(num, den);
 
+  const showActiveTimeSignature = () => {
+    if (!state.activePreset.timeSignature) return;
+    const parts = state.activePreset.timeSignature.split('/');
+    timeSigNum.value = parts[0];
+    timeSigDen.value = parts[1];
+  };
+
   // Clamp to 32 steps max
   if (measureLength > 32) {
     alert("Time signature exceeds the maximum limit of 32 steps!");
-    if (state.activePreset.timeSignature) {
-      const parts = state.activePreset.timeSignature.split('/');
-      timeSigNum.value = parts[0];
-      timeSigDen.value = parts[1];
-    }
+    showActiveTimeSignature();
+    return;
+  }
+
+  const dropsBars = barCount(state.activePreset) > 1 && sigStr !== state.activePreset.timeSignature;
+  if (dropsBars && !confirm('Changing the time signature keeps only bar 1. Continue?')) {
+    showActiveTimeSignature();
     return;
   }
 
   grooveSelector.value = "";
 
+  const oldLength = state.activePreset.measureLength || 16;
   state.activePreset.timeSignature = sigStr;
   state.activePreset.measureLength = measureLength;
+  state.activePreset.bars = 1;
+  viewBar = 0;
+  playBar = 0;
 
   // Resize gridData tracks to match the new length
   for (const { id: trackId } of TRACKS) {
-    const oldSteps = state.activePreset.gridData[trackId] || [];
+    const oldSteps = barSteps(state.activePreset.gridData[trackId] || [], 0, oldLength);
     const newSteps = new Array(measureLength).fill(0);
     for (let i = 0; i < Math.min(oldSteps.length, measureLength); i++) {
       newSteps[i] = oldSteps[i];

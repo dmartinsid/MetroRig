@@ -2184,6 +2184,116 @@ describe('Song Bars', () => {
     expect(saved.gridData[0]).toBeUndefined();
   });
 
+  const stepNumeratorDown = () => byId<HTMLButtonElement>('time-sig-num-down').click();
+
+  it('meter_01 asks first', async () => {
+    await openSong();
+    const confirmSpy = vi.fn(() => {
+      // Nothing has changed when the question appears
+      expect(byId('pattern-steps').textContent).toBe('STEPS: 64/128');
+      return false;
+    });
+    vi.stubGlobal('confirm', confirmSpy);
+
+    stepNumeratorDown();
+    expect(confirmSpy).toHaveBeenCalledTimes(1);
+    byId<HTMLButtonElement>('time-sig-den-up').click();
+    expect(confirmSpy).toHaveBeenCalledTimes(2);
+    byId('time-sig-num').value = '3';
+    byId('time-sig-num').dispatchEvent(new Event('change'));
+    expect(confirmSpy).toHaveBeenCalledTimes(3);
+  });
+
+  it('meter_02 accept keeps bar one', async () => {
+    await openSong();
+    await clickPlay();
+    pressBar(3);
+    vi.stubGlobal('confirm', vi.fn(() => true));
+    stepNumeratorDown();
+
+    expect(byId('pattern-steps').textContent).toBe('STEPS: 12/128');
+    expect(shown(1)).toEqual(barOf(1, 1).slice(0, 12));
+    expect(lastCall('setBars')).toEqual([1]);
+    expect(lastCall('setMeasureLength')).toEqual([12]);
+    expect([...calls('updateGrid').filter(([trackId]) => trackId === 1).at(-1)![1]]).toEqual(barOf(1, 1).slice(0, 12));
+    await clickPlay();
+  });
+
+  it('meter_02 a longer bar still starts from bar one', async () => {
+    await openSong();
+    vi.stubGlobal('confirm', vi.fn(() => true));
+    byId<HTMLButtonElement>('time-sig-num-up').click();
+
+    expect(byId('pattern-steps').textContent).toBe('STEPS: 20/128');
+    expect(shown(1)).toEqual([...barOf(1, 1), 0, 0, 0, 0]);
+  });
+
+  it('meter_03 decline changes nothing', async () => {
+    await openSong();
+    vi.stubGlobal('confirm', vi.fn(() => false));
+    stepNumeratorDown();
+
+    expect(byId('time-sig-num').value).toBe('4');
+    expect(byId('time-sig-den').value).toBe('4');
+    expect(byId('pattern-steps').textContent).toBe('STEPS: 64/128');
+    expect(byId('bar-selector').hidden).toBe(false);
+    pressBar(4);
+    expect(shown(1)).toEqual(barOf(1, 4));
+  });
+
+  it('meter_04 selector hides', async () => {
+    await openSong();
+    vi.stubGlobal('confirm', vi.fn(() => true));
+    stepNumeratorDown();
+    expect(byId('bar-selector').hidden).toBe(true);
+  });
+
+  it('count_06 limit of one bar', async () => {
+    await openSong();
+    const alertSpy = vi.fn();
+    const confirmSpy = vi.fn();
+    vi.stubGlobal('alert', alertSpy);
+    vi.stubGlobal('confirm', confirmSpy);
+    byId('time-sig-num').value = '10';
+    byId('time-sig-num').dispatchEvent(new Event('change'));
+
+    expect(alertSpy).toHaveBeenCalledWith('Time signature exceeds the maximum limit of 32 steps!');
+    expect(confirmSpy).not.toHaveBeenCalled();
+    expect(byId('time-sig-num').value).toBe('4');
+    expect(byId('pattern-steps').textContent).toBe('STEPS: 64/128');
+  });
+
+  it('edge_01 load during bar three', async () => {
+    await openSong();
+    await clickPlay();
+    tick({ currentBpm: 194, beatIndex: 0 });
+    tick({ currentBpm: 194, beatIndex: 16 });
+    tick({ currentBpm: 194, beatIndex: 32 });
+    await selectPreset('factory:default');
+    expect(lastCall('setBars')).toEqual([1]);
+    expect(byId('bar-selector').hidden).toBe(true);
+
+    tick({ currentBpm: 120, beatIndex: 0 });
+    expect(byId('pattern-pos-value').textContent).toBe('BAR 04 · STEP 01');
+    await clickPlay();
+  });
+
+  it('edge_02 edits in any bar ask', async () => {
+    await openSong();
+    pressBar(4);
+    cell(10, 2).click();
+    const confirmSpy = vi.fn(() => false);
+    vi.stubGlobal('confirm', confirmSpy);
+
+    byId<HTMLButtonElement>('nav-grooves').click();
+    const card = [...document.querySelectorAll<HTMLElement>('.song-card')].find(element => element.textContent!.includes('Cocaine'))!;
+    card.querySelector<HTMLButtonElement>('.song-open')!.click();
+    await flush();
+
+    expect(confirmSpy).toHaveBeenCalledTimes(1);
+    expect(byId('pattern-name').textContent).toBe('PAT: Battery');
+  });
+
   it('the page holds a hidden selector of 4 bars', async () => {
     await openPage();
     expect(barButtons().map(button => button.textContent)).toEqual(['1', '2', '3', '4']);
