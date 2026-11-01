@@ -199,8 +199,8 @@ T19 → T20
 
 **Done when**:
 
-- [ ] Each of the 3 levels of fallback has a test
-- [ ] Gate check passes: `cargo test`
+- [x] Each of the 3 levels of fallback has a test
+- [x] Gate check passes: `cargo test`
 
 **Tests**: unit
 **Gate**: rust
