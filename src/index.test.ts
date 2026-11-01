@@ -979,4 +979,146 @@ describe('Interface V2', () => {
     tick({ currentBpm: 120, beatIndex: 0 });
     expect(position()).toBe('POS: BAR 01 · STEP 01');
   });
+
+  const stepper = (id: string) => byId<HTMLButtonElement>(id).click();
+
+  it('edit_17 slider scale', async () => {
+    await openPage();
+    await selectPreset('factory:metal');
+
+    const labels = [...document.querySelectorAll('.slider-scale span')].map(label => label.textContent);
+    expect(labels).toEqual(['40', '140', '240']);
+  });
+
+  it('edit_18 slider label follows', async () => {
+    await openPage();
+
+    byId('bpm-slider').value = '150';
+    byId('bpm-slider').dispatchEvent(new Event('input'));
+    expect(byId('bpm-slider-value').innerText).toBe('150');
+  });
+
+  it('edit_20 numerator stepper', async () => {
+    await openPage();
+
+    stepper('time-sig-num-up');
+    expect(byId('time-sig-num').value).toBe('5');
+    expect(byId('pattern-steps').textContent).toBe('STEPS: 20/32');
+    expect(byId('panel-header-text').textContent).toContain('5/4');
+
+    stepper('time-sig-num-down');
+    expect(byId('time-sig-num').value).toBe('4');
+
+    ['3', '2', '1', '1'].forEach(value => {
+      stepper('time-sig-num-down');
+      expect(byId('time-sig-num').value).toBe(value);
+    });
+
+    stepper('time-sig-den-up');
+    stepper('time-sig-den-up'); // /16
+    byId('time-sig-num').value = '16';
+    stepper('time-sig-num-up');
+    expect(byId('time-sig-num').value).toBe('16');
+  });
+
+  it('edit_21 denominator stepper', async () => {
+    await openPage();
+
+    const den = () => byId<HTMLSelectElement>('time-sig-den').value;
+    stepper('time-sig-den-up');
+    expect(den()).toBe('8');
+    expect(byId('pattern-steps').textContent).toBe('STEPS: 8/32');
+    stepper('time-sig-den-up');
+    expect(den()).toBe('16');
+    stepper('time-sig-den-up');
+    expect(den()).toBe('16');
+    stepper('time-sig-den-down');
+    stepper('time-sig-den-down');
+    expect(den()).toBe('4');
+    stepper('time-sig-den-down');
+    expect(den()).toBe('4');
+  });
+
+  it('edit_24 metalcore applied', async () => {
+    await openPage();
+
+    const grooves = byId<HTMLSelectElement>('groove-selector');
+    expect([...grooves.options].map(option => option.text)).toContain('Metalcore Breakdown');
+    grooves.value = 'factory:metalcore';
+    grooves.dispatchEvent(new Event('change'));
+
+    const hits = (trackId: number) => [...document.querySelectorAll(`.step-cell[data-track="${trackId}"]`)]
+      .flatMap((step, index) => step.classList.contains('active') ? [index] : []);
+    expect(hits(1)).toEqual([0, 3, 5, 8, 11, 13]);
+    expect(hits(2)).toEqual([8]);
+    expect(byId('bpm-number').innerText).toBe('120');
+    expect(byId('bpm-slider').value).toBe('120');
+  });
+
+  it('edit_25 trainer starts open', async () => {
+    await openPage();
+
+    expect(mockGsap.set).toHaveBeenCalledWith(byId('trainer-chevron'), { rotation: 180 });
+    byId('trainer-toggle').click(); // The first click closes it
+    expect(mockGsap.to.mock.calls.find(call => call[0] === byId('trainer-body'))?.[1]).toMatchObject({ height: 0 });
+  });
+
+  it('edit_26 trainer switch', async () => {
+    await openPage();
+    await clickPlay();
+
+    const toggle = (checked: boolean) => {
+      byId('trainer-enable').checked = checked;
+      byId('trainer-enable').dispatchEvent(new Event('change'));
+    };
+    toggle(true);
+    expect(lastCall('setTrainer')[0].enabled).toBe(true);
+    toggle(false);
+    expect(lastCall('setTrainer')[0].enabled).toBe(false);
+  });
+
+  it('edit_27 steady dot', async () => {
+    await openPage();
+
+    byId('trainer-enable').checked = true;
+    byId('trainer-enable').dispatchEvent(new Event('change'));
+    expect(byId('trainer-dot').classList.contains('visible')).toBe(true);
+
+    const css = fs.readFileSync(path.resolve(__dirname, './index.css'), 'utf8');
+    expect(css).not.toMatch(/@keyframes|animation\s*:/);
+    expect(mockGsap.fromTo.mock.calls.some(call => call[0] === byId('trainer-dot'))).toBe(false);
+    expect(mockGsap.to.mock.calls.some(call => call[0] === byId('trainer-dot'))).toBe(false);
+  });
+
+  const toastShown = () => mockGsap.set.mock.calls.some(
+    call => call[0] === byId('save-toast') && call[1].display === 'flex');
+
+  it('edit_28 toast after edit', async () => {
+    await openPage();
+    await selectPreset('factory:rock');
+
+    document.querySelector<HTMLElement>('.step-cell[data-track="1"]')!.click();
+    expect(toastShown()).toBe(true);
+    expect(byId('preset-name').value).toBe('Rock Groove');
+  });
+
+  it('edit_29 toast hidden', async () => {
+    await openPage();
+    await selectPreset('factory:rock');
+    expect(toastShown()).toBe(false);
+  });
+
+  it('edge_01 stepper limit', async () => {
+    await openPage();
+    const alertSpy = vi.fn();
+    vi.stubGlobal('alert', alertSpy);
+
+    byId('time-sig-num').value = '8';
+    byId('time-sig-num').dispatchEvent(new Event('change'));
+    stepper('time-sig-num-up'); // 9/4 needs 36 steps
+
+    expect(alertSpy).toHaveBeenCalledWith('Time signature exceeds the maximum limit of 32 steps!');
+    expect(byId('time-sig-num').value).toBe('8');
+    expect(document.querySelectorAll('.step-cell[data-track="0"]')).toHaveLength(32);
+  });
 });

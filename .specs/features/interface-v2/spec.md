@@ -263,19 +263,19 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | EDIT-14 | P1: Editor Mode | Tasks | Implementing |
 | EDIT-15 | P1: Editor Mode | Tasks | Implementing |
 | EDIT-16 | P1: Editor Mode | Tasks | Implementing |
-| EDIT-17 | P1: Editor Mode | Tasks | Pending |
-| EDIT-18 | P1: Editor Mode | Tasks | Pending |
+| EDIT-17 | P1: Editor Mode | Tasks | Implementing |
+| EDIT-18 | P1: Editor Mode | Tasks | Implementing |
 | EDIT-19 | P1: Editor Mode | Tasks | Implementing |
-| EDIT-20 | P1: Editor Mode | Tasks | Pending |
-| EDIT-21 | P1: Editor Mode | Tasks | Pending |
+| EDIT-20 | P1: Editor Mode | Tasks | Implementing |
+| EDIT-21 | P1: Editor Mode | Tasks | Implementing |
 | EDIT-22 | P1: Editor Mode | Tasks | Implementing |
 | EDIT-23 | P1: Editor Mode | Tasks | Implementing |
-| EDIT-24 | P1: Editor Mode | Tasks | Pending |
-| EDIT-25 | P1: Editor Mode | Tasks | Pending |
-| EDIT-26 | P1: Editor Mode | Tasks | Pending |
-| EDIT-27 | P1: Editor Mode | Tasks | Pending |
-| EDIT-28 | P1: Editor Mode | Tasks | Pending |
-| EDIT-29 | P1: Editor Mode | Tasks | Pending |
+| EDIT-24 | P1: Editor Mode | Tasks | Implementing |
+| EDIT-25 | P1: Editor Mode | Tasks | Implementing |
+| EDIT-26 | P1: Editor Mode | Tasks | Implementing |
+| EDIT-27 | P1: Editor Mode | Tasks | Implementing |
+| EDIT-28 | P1: Editor Mode | Tasks | Implementing |
+| EDIT-29 | P1: Editor Mode | Tasks | Implementing |
 | STAD-01 | P1: Stadium Mode | Tasks | Pending |
 | STAD-02 | P1: Stadium Mode | Tasks | Pending |
 | STAD-03 | P1: Stadium Mode | Tasks | Implementing |
@@ -316,7 +316,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | RESP-07 | P2: Narrow windows | Tasks | Pending |
 | DOCS-01 | P3: Design document | Tasks | Pending |
 | DOCS-02 | P3: Design document | Tasks | Pending |
-| EDGE-01 | Edge Cases | Tasks | Pending |
+| EDGE-01 | Edge Cases | Tasks | Implementing |
 | EDGE-02 | Edge Cases | Tasks | Implementing |
 | EDGE-03 | Edge Cases | Tasks | Implementing |
 | EDGE-04 | Edge Cases | Tasks | Pending |
