@@ -1165,6 +1165,12 @@ select:focus {
   stroke: var(--bg);
 }
 
+.clock-ring-separator {
+  fill: none;
+  stroke: var(--bg);
+  stroke-width: 1.2;
+}
+
 .clock-beat-line {
   stroke: rgba(255, 255, 255, 0.1);
   stroke-width: 0.4;
