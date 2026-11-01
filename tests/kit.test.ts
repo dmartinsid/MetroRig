@@ -1,9 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
-import { STADIUM_GROUPS, TRACKS, groupHit, nextStepValue } from '../src/kit';
+import { STADIUM_GROUPS, TRACKS, groupHit, nextStepValue, takesOf } from '../src/kit';
 
-const namesOf = (trackIds: number[]) => trackIds.map(id => TRACKS[id].name);
+const namesOf = (trackIds: number[]) => trackIds.map(id => TRACKS.find(track => track.id === id)!.name);
 const group = (label: string) => STADIUM_GROUPS.find(g => g.label === label)!;
 
 const publicDir = path.resolve(__dirname, '../public');
@@ -55,14 +55,16 @@ const meanPeakDb = (piece: string, recording: string) =>
   [1, 2, 3].reduce((sum, take) => sum + toDb(peakOf(`${piece}/${recording}-${take}.wav`)), 0) / 3;
 
 describe('Kit', () => {
-  it('kit_01 eleven tracks in order', () => {
+  it('kit_01 thirteen tracks in order', () => {
     expect(TRACKS.map(track => track.name)).toEqual([
-      'Click', 'Kick', 'Snare', 'Hi-hat', 'Open Hat', 'Ride', 'Ride Bell', 'Crash', 'China', 'High Tom', 'Floor Tom',
+      'Click', 'Kick', 'Snare', 'Hi-hat', 'Open Hat', 'Ride', 'Ride Bell', 'Crash', 'China',
+      'High Tom', 'Mid Tom', 'Low Tom', 'Floor Tom',
     ]);
-    expect(TRACKS.map(track => track.id)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    expect(TRACKS.map(track => track.id)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 10]);
+    // The pieces of The House Kit load as banks, so only the hi-hat and cymbals keep a single sample
     expect(TRACKS.map(track => track.sample)).toEqual([
-      null, '/kick.wav', '/snare.wav', '/hihat.wav', '/kit/open-hat.wav', '/kit/ride.wav',
-      '/kit/ride-bell.wav', '/kit/crash.wav', '/kit/china.wav', '/kit/high-tom.wav', '/kit/floor-tom.wav',
+      null, null, null, '/hihat.wav', '/kit/open-hat.wav', '/kit/ride.wav',
+      '/kit/ride-bell.wav', '/kit/crash.wav', '/kit/china.wav', null, null, null, null,
     ]);
   });
 
@@ -70,7 +72,7 @@ describe('Kit', () => {
     const publicDir = path.resolve(__dirname, '../public');
     const license = fs.readFileSync(path.join(publicDir, 'kit/LICENSE.md'), 'utf8');
     const samples = TRACKS.flatMap(track => (track.sample ? [track.sample] : []));
-    expect(samples).toHaveLength(10);
+    expect(samples).toHaveLength(6);
 
     const bytes = samples.map(sample => {
       expect(license).toContain(path.basename(sample));
@@ -79,11 +81,11 @@ describe('Kit', () => {
     expect(license).toContain('The Open Source Drum Kit');
     expect(license).toContain('SM Drums'); // Why the first-choice kit is not the one shipped
     expect(license).toContain('CC0');
-    expect(bytes.reduce((total, size) => total + size)).toBeLessThanOrEqual(10 * 1024 * 1024);
+    expect(bytes.reduce((total, size) => total + size)).toBeLessThanOrEqual(20 * 1024 * 1024);
   });
 
   it('std_02 snare and toms group', () => {
-    expect(namesOf(group('SNARE/TOMS').trackIds)).toEqual(['Snare', 'High Tom', 'Floor Tom']);
+    expect(namesOf(group('SNARE/TOMS').trackIds)).toEqual(['Snare', 'High Tom', 'Mid Tom', 'Low Tom', 'Floor Tom']);
   });
 
   it('std_03 cymbals group', () => {
@@ -92,7 +94,7 @@ describe('Kit', () => {
 
   it('holds every track in exactly one group', () => {
     expect(STADIUM_GROUPS.map(g => g.label)).toEqual(['CLICK', 'KICK', 'SNARE/TOMS', 'CYMBALS']);
-    expect(STADIUM_GROUPS.flatMap(g => g.trackIds).sort((a, b) => a - b)).toEqual(TRACKS.map(track => track.id));
+    expect(STADIUM_GROUPS.flatMap(g => g.trackIds).sort((a, b) => a - b)).toEqual(TRACKS.map(track => track.id).sort((a, b) => a - b));
   });
 
   it('std_04 group hit', () => {
@@ -129,6 +131,60 @@ describe('House Kit', () => {
       const expected = houseFiles.filter(file => file.startsWith(`${piece}/`)).map(file => path.basename(file));
       expect(fs.readdirSync(path.join(houseDir, piece)).sort()).toEqual(expected.sort());
     });
+
+    // takesOf names those files: 9 per piece, and each one exists
+    const pieces = TRACKS.filter(track => track.bank);
+    expect(pieces.map(track => track.bank!.folder)).toEqual(['kick', 'snare', 'tom-10', 'tom-12', 'tom-14', 'tom-16']);
+    pieces.forEach(track => {
+      const takes = takesOf(track);
+      expect(takes, track.name).toHaveLength(9);
+      expect(takes.map(({ dynamic, take }) => [dynamic, take]), track.name).toEqual(
+        [0, 1, 2].flatMap(dynamic => [0, 1, 2].map(take => [dynamic, take])));
+      takes.forEach(({ url }) => expect(fs.existsSync(path.join(publicDir, url)), url).toBe(true));
+    });
+    expect(takesOf(TRACKS.find(track => track.name === 'Hi-hat')!)).toEqual([]);
+  });
+
+  it('hk_03 snare recordings', () => {
+    const snare = TRACKS.find(track => track.name === 'Snare')!;
+    const dynamics = [0, 1, 2].map(dynamic => takesOf(snare).filter(take => take.dynamic === dynamic).map(take => take.url));
+    expect(dynamics).toEqual([
+      ['/kit/house/snare/soft-1.wav', '/kit/house/snare/soft-2.wav', '/kit/house/snare/soft-3.wav'],
+      ['/kit/house/snare/hard-1.wav', '/kit/house/snare/hard-2.wav', '/kit/house/snare/hard-3.wav'],
+      ['/kit/house/snare/crack-1.wav', '/kit/house/snare/crack-2.wav', '/kit/house/snare/crack-3.wav'],
+    ]);
+  });
+
+  it('kick and toms recordings by dynamic', () => {
+    ['Kick', 'High Tom', 'Mid Tom', 'Low Tom', 'Floor Tom'].forEach(name => {
+      const track = TRACKS.find(piece => piece.name === name)!;
+      const recordings = [0, 1, 2].map(dynamic => path.basename(takesOf(track).find(take => take.dynamic === dynamic)!.url, '-1.wav'));
+      expect(recordings, name).toEqual(['soft', 'med', 'hard']);
+    });
+  });
+
+  it('hk_15 thirteen tracks in order', () => {
+    expect(TRACKS).toHaveLength(13);
+    expect(TRACKS.map(track => track.name)).toEqual([
+      'Click', 'Kick', 'Snare', 'Hi-hat', 'Open Hat', 'Ride', 'Ride Bell', 'Crash', 'China',
+      'High Tom', 'Mid Tom', 'Low Tom', 'Floor Tom',
+    ]);
+    expect(TRACKS.map(track => track.label)).toEqual([
+      'CLICK', 'KICK', 'SNARE', 'HI-HAT', 'OPEN HAT', 'RIDE', 'RIDE BELL', 'CRASH', 'CHINA',
+      'HIGH TOM', 'MID TOM', 'LOW TOM', 'FLOOR TOM',
+    ]);
+  });
+
+  it('hk_16 ids stay', () => {
+    const idOf = (name: string) => TRACKS.find(track => track.name === name)!.id;
+    const before = ['Click', 'Kick', 'Snare', 'Hi-hat', 'Open Hat', 'Ride', 'Ride Bell', 'Crash', 'China', 'High Tom', 'Floor Tom'];
+    expect(before.map(idOf)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    expect(idOf('Mid Tom')).toBe(11);
+    expect(idOf('Low Tom')).toBe(12);
+  });
+
+  it('hk_21 the toms group lights all four toms and the snare', () => {
+    expect(group('SNARE/TOMS').trackIds).toEqual([2, 9, 11, 12, 10]);
   });
 
   it('hk_09 format and tail', () => {

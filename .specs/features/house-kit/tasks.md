@@ -303,10 +303,10 @@ T19 → T20
 
 **Done when**:
 
-- [ ] `takesOf` gives 9 URLs per piece, on files that exist
-- [ ] Track order, ids and groups match the spec
-- [ ] Existing tests that pin 11 tracks now pin 13, with no assertion loosened
-- [ ] Gate check passes: `npx vitest run`
+- [x] `takesOf` gives 9 URLs per piece, on files that exist
+- [x] Track order, ids and groups match the spec
+- [x] Existing tests that pin 11 tracks now pin 13, with no assertion loosened
+- [x] Gate check passes: `npx vitest run`
 
 **Tests**: unit
 **Gate**: quick
