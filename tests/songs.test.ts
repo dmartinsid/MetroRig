@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { SONGS, songToPreset, songsForGenre } from '../src/songs';
 import { TRACKS } from '../src/kit';
+import { measureLengthFor } from '../src/state';
 
 describe('Songs', () => {
   // Tempos and artists as the cited tabs state them
@@ -43,6 +44,8 @@ describe('Songs', () => {
   it('song_03 bounds', () => {
     SONGS.forEach(song => {
       expect(song.measureLength, song.id).toBeLessThanOrEqual(32);
+      const [numerator, denominator] = song.timeSignature.split('/').map(Number);
+      expect(song.measureLength, song.id).toBe(measureLengthFor(numerator, denominator)); // Exactly 1 bar
       expect(song.bpm, song.id).toBeGreaterThanOrEqual(40);
       expect(song.bpm, song.id).toBeLessThanOrEqual(240);
       const tracks = Object.values(song.gridData);

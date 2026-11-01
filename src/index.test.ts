@@ -1570,6 +1570,8 @@ describe('Grooves Library', () => {
     expect(cell(7, 0).classList.contains('active')).toBe(false);
     expect(cell(1, 2).classList.contains('active')).toBe(false);
     expect(cell(1, 0).classList.contains('active')).toBe(true);
+    expect(cell(0, 0).classList.contains('accent')).toBe(true); // Click belongs to the meter, not the groove
+    expect(cell(0, 4).classList.contains('active')).toBe(true);
   });
 
   it('edt_05 save groove keeps the kit', async () => {
@@ -1761,6 +1763,10 @@ describe('Grooves Library', () => {
     await selectPreset('song:song_enter_sandman');
     expect(byId('pattern-name').textContent).toBe('PAT: Enter Sandman');
     expect(byId('preset-selector').value).toBe('song:song_enter_sandman');
+
+    await pressPlay('Cocaine'); // A card moves the selector too
+    expect(byId('preset-selector').value).toBe('song:song_cocaine');
+    await clickPlay();
   });
 
   it('song_08 save leaves catalog', async () => {
@@ -1902,6 +1908,8 @@ describe('Grooves Library', () => {
 
   it('song_05 load replaces everything', async () => {
     await openPage();
+    await selectPreset('factory:3_4'); // Another meter, so the song must replace it
+    expect(byId('time-sig-num').value).toBe('3');
     byId('trainer-enable').checked = true;
     byId('trainer-enable').dispatchEvent(new Event('change'));
     cell(7, 3).click();
@@ -1911,6 +1919,8 @@ describe('Grooves Library', () => {
 
     expect(byId('bpm-slider').value).toBe('154');
     expect(byId('time-sig-num').value).toBe('4');
+    expect(byId('time-sig-den').value).toBe('4');
+    expect(lastCall('setMeasureLength')).toEqual([16]);
     expect(byId('trainer-enable').checked).toBe(false);
     expect(cell(7, 3).classList.contains('active')).toBe(false);
     expect(cell(1, 3).classList.contains('active')).toBe(true); // The chorus kick
@@ -1920,10 +1930,27 @@ describe('Grooves Library', () => {
   it('song_06 card matches tempo bus', async () => {
     await openPage();
     await pressPlay('The Trooper');
-    await clickPlay();
 
     expect(songButton('The Trooper', '.song-bpm').textContent).toBe(`${byId('bpm-number').innerText} BPM`);
     expect(byId('bpm-number').innerText).toBe('162');
+    await clickPlay();
+  });
+
+  it('edt_06 an old preset loads through the page', async () => {
+    const old = storedPreset();
+    old.gridData[2][1] = 7;
+    await openPage([old]);
+    await selectPreset('user:stored');
+
+    expect(document.querySelectorAll('.step-cell')).toHaveLength(11 * 16);
+    expect(document.querySelectorAll('.step-cell[data-track="8"].active')).toHaveLength(0);
+    expect(cell(2, 1).classList.contains('active')).toBe(true); // An unknown value reads as normal
+
+    await clickPlay();
+    const snare = [...calls('updateGrid').filter(([trackId]) => trackId === 2).at(-1)![1]];
+    expect(snare[1]).toBe(1);
+    expect(calls('updateGrid').map(([trackId]) => trackId)).toContain(10);
+    await clickPlay();
   });
 
   it('edge_02 load keeps the mix', async () => {

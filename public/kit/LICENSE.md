@@ -2,6 +2,8 @@
 
 Each file is one hit, trimmed, faded and peak-normalized to -1 dBFS, at 44.1 kHz, 16-bit, stereo.
 
+SM Drums was the first choice. Its package, checked on 2026-11-01, holds no license terms and its author's site states none, so it is not shipped.
+
 ## The Open Source Drum Kit
 
 By Real Music Media. Its author placed the samples in the public domain: "The samples and the mappings are completely in the public domain."
