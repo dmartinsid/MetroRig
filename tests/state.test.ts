@@ -162,6 +162,34 @@ describe('Meter rules', () => {
 });
 
 describe('Preset normalization', () => {
+  const stored = (bars: number | undefined, length: number) => ({
+    ...FACTORY_PRESETS[0],
+    timeSignature: '4/4',
+    measureLength: 16,
+    bars,
+    gridData: { 1: Array.from({ length }, (_, step) => (step % 4 === 0 ? 1 : 0)) },
+  });
+
+  it('bars_08 no bar count is one bar', () => {
+    const preset = normalizePreset(stored(undefined, 16));
+    expect(preset.bars ?? 1).toBe(1);
+    expect(preset.gridData[1]).toEqual(stored(undefined, 16).gridData[1]);
+  });
+
+  it('keeps 4 bars that fit their steps', () => {
+    const preset = normalizePreset(stored(4, 64));
+    expect(preset.bars).toBe(4);
+    expect(preset.gridData[1]).toHaveLength(64);
+  });
+
+  it('edge_03 bars that do not fit', () => {
+    for (const [bars, length] of [[4, 60], [3, 64], [0, 64], [2.5, 40]]) {
+      const preset = normalizePreset(stored(bars, length));
+      expect(preset.bars).toBe(1);
+      expect(preset.gridData[1]).toEqual(stored(bars, length).gridData[1].slice(0, 16));
+    }
+  });
+
   const trainerSettings: Preset['trainerSettings'] = { enabled: false, startBpm: 100, targetBpm: 150, increment: 5, stepType: 'measures', stepValue: 4, curve: 'stepped' };
   const legacy12_8 = () => ({
     id: 'user_1',
@@ -249,6 +277,11 @@ describe('Factory grooves', () => {
 });
 
 describe('completeKit', () => {
+  it('fills a missing track to the whole pattern', () => {
+    const preset = { ...FACTORY_PRESETS[0], measureLength: 16, bars: 4, gridData: { 1: new Array(64).fill(1) } };
+    expect(completeKit(preset).gridData[10]).toEqual(new Array(64).fill(0));
+  });
+
   const trainerSettings: Preset['trainerSettings'] = { enabled: false, startBpm: 100, targetBpm: 150, increment: 5, stepType: 'measures', stepValue: 4, curve: 'stepped' };
   const stored = (gridData: Record<number, number[]>): Preset => ({
     id: 'user_1', name: 'Saved', bpm: 100, timeSignature: '3/4', measureLength: 12, gridData, trainerSettings,
