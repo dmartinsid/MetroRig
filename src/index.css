@@ -894,63 +894,45 @@ select:focus {
 
 /* ─── Stadium View ───────────────────────────────────────── */
 #stadium-view {
-  min-height: calc(100vh - 70px);
   display: flex;
-  justify-content: center;
-  align-items: center;
-  background: radial-gradient(ellipse at center, rgba(57,255,20,0.03) 0%, transparent 70%);
+  background: radial-gradient(ellipse at 30% 50%, rgba(57, 255, 20, 0.035) 0%, transparent 60%);
 }
 
 .stadium-display {
-  display: flex;
-  flex-wrap: wrap;
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 576px);
   align-items: center;
-  justify-content: center;
-  gap: 2rem 4rem;
-  padding: 1.5rem 1rem;
+  gap: 2rem;
+  padding: 1.5rem;
 }
 
-.stadium-info {
-  text-align: center;
+.clock-column {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1.5rem;
-}
-
-.stadium-timer {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 1.2rem;
-  color: var(--text-muted);
-  letter-spacing: 0.15em;
-}
-
-.stadium-bpm {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 8rem;
-  font-weight: 900;
-  color: var(--neon-green);
-  text-shadow: 0 0 30px rgba(57, 255, 20, 0.4);
-  letter-spacing: -0.05em;
-  line-height: 1;
-}
-
-.stadium-trainer-info {
-  font-size: 1rem;
-  color: var(--cyber-yellow);
-  letter-spacing: 0.05em;
-}
-
-#stadium-preset-selector {
-  width: 280px;
-  max-width: 100%;
+  gap: 0.25rem;
+  min-width: 0;
 }
 
 /* Beat clock */
 .beat-clock {
   width: min(70vh, 90vw);
-  max-width: 560px;
+  max-width: 700px;
   height: auto;
+}
+
+.clock-rim {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.04);
+  stroke-width: 0.4;
+}
+
+.clock-rim-dashed {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.06);
+  stroke-width: 0.4;
+  stroke-dasharray: 0.8 2.2;
 }
 
 .clock-slice {
@@ -968,57 +950,214 @@ select:focus {
 }
 
 .clock-beat-line {
-  stroke: var(--text-muted);
-  stroke-width: 1;
+  stroke: rgba(255, 255, 255, 0.1);
+  stroke-width: 0.4;
 }
 
 .clock-center {
-  fill: var(--bg);
+  fill: #0d0d16;
+  stroke: rgba(255, 255, 255, 0.06);
+  stroke-width: 0.5;
 }
 
 .clock-label {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--mono);
   font-size: 11px;
   font-weight: 700;
   text-anchor: middle;
   dominant-baseline: central;
   fill: var(--text-muted);
+  opacity: 0.6;
 }
 
 .clock-label.active {
   fill: var(--neon-green);
+  opacity: 1;
 }
 
-.clock-hand {
+.clock-hand line {
   stroke: rgba(255, 255, 255, 0.7);
-  stroke-width: 5;
+  stroke-width: 0.6;
   stroke-linecap: round;
 }
 
-.clock-hub {
+.clock-hand-tip {
   fill: var(--text);
+}
+
+.clock-hub-ring {
+  fill: none;
+  stroke: rgba(57, 255, 20, 0.4);
+  stroke-width: 0.4;
+}
+
+.clock-hub {
+  fill: var(--neon-green);
+}
+
+.clock-legend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.25rem 2rem;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+}
+
+.clock-legend span {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.clock-legend span::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--track-color);
+}
+
+/* Readout panel */
+.stadium-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 1.75rem;
+  min-width: 0;
+  padding: 2.5rem;
+}
+
+.stadium-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.stadium-field label,
+.stadium-timer-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+#stadium-preset-selector {
+  padding: 0.85rem 2.5rem 0.85rem 1.1rem;
+  font-size: 1rem;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none' stroke='%239CA3AF' stroke-width='1.5'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 1.1rem center;
+}
+
+.stadium-timer-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.stadium-timer {
+  font-family: var(--mono);
+  font-size: 1.5rem;
+  color: var(--text);
+  letter-spacing: 0.15em;
+}
+
+.stadium-tempo {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.stadium-bpm {
+  font-family: var(--mono);
+  font-size: 8rem;
+  font-weight: 900;
+  color: var(--neon-green);
+  text-shadow: 0 0 30px rgba(57, 255, 20, 0.4);
+  letter-spacing: -0.05em;
+  line-height: 1;
+}
+
+.stadium-bpm-unit {
+  font-family: var(--mono);
+  font-size: 1.75rem;
+  color: var(--text-muted);
+}
+
+.stadium-trainer-info {
+  align-self: center;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 1rem;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  color: var(--cyber-yellow);
+  background: rgba(255, 230, 0, 0.04);
+  border: 1px solid rgba(255, 230, 0, 0.3);
+  border-radius: 999px;
 }
 
 /* Orb row */
 .orb-row {
   display: flex;
-  gap: 2rem;
+  justify-content: space-around;
+  gap: 1rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--glass-border);
+}
+
+.orb-cell {
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  gap: 0.75rem;
 }
 
 .orb {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  position: relative;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
   background: var(--track-color);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--track-color) 40%, transparent);
+}
+
+.orb-icon {
+  width: 28px;
+  height: 28px;
+  fill: none;
+  stroke: var(--bg);
+  stroke-width: 2;
+}
+
+.orb-icon-fill {
+  fill: var(--bg);
+}
+
+.orb-name {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--track-color);
 }
 
 /* Stadium play button */
 .play-btn-large {
-  width: 200px;
+  align-self: center;
+  width: 250px;
+  max-width: 100%;
   font-size: 1.2rem;
-  border-radius: 999px;
+  border-width: 2px;
+  border-radius: var(--radius-card);
   padding: 1rem 2rem;
+  background: var(--bg);
 }

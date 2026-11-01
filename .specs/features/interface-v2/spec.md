@@ -276,7 +276,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | EDIT-27 | P1: Editor Mode | Tasks | Implementing |
 | EDIT-28 | P1: Editor Mode | Tasks | Implementing |
 | EDIT-29 | P1: Editor Mode | Tasks | Implementing |
-| STAD-01 | P1: Stadium Mode | Tasks | Pending |
+| STAD-01 | P1: Stadium Mode | Tasks | Implementing |
 | STAD-02 | P1: Stadium Mode | Tasks | Implementing |
 | STAD-03 | P1: Stadium Mode | Tasks | Implementing |
 | STAD-04 | P1: Stadium Mode | Tasks | Implementing |
