@@ -138,7 +138,7 @@ export class MetronomeNode extends EventTarget {
     this.workletNode?.port.postMessage({ type: 'REPLACE_TRAINER', ...settings });
   }
 
-  async loadSample(sampleId: number, audioUrl: string) {
+  private async decode(audioUrl: string) {
     const response = await fetch(audioUrl);
     const arrayBuffer = await response.arrayBuffer();
     const audioBuffer = await this.ctx.decodeAudioData(arrayBuffer);
@@ -147,10 +147,33 @@ export class MetronomeNode extends EventTarget {
     const rightChannel = audioBuffer.numberOfChannels > 1 
       ? audioBuffer.getChannelData(1) 
       : leftChannel; // Fallback to mono
+    return { leftChannel, rightChannel };
+  }
+
+  async loadSample(sampleId: number, audioUrl: string) {
+    const { leftChannel, rightChannel } = await this.decode(audioUrl);
 
     this.workletNode?.port.postMessage({
       type: 'LOAD_SAMPLE',
       sampleId,
+      leftChannel,
+      rightChannel
+    });
+  }
+
+  // The engine stores the take as sent, so the trim is multiplied in here
+  async loadTake(trackId: number, dynamic: number, take: number, audioUrl: string, trim: number) {
+    const decoded = await this.decode(audioUrl);
+    const leftChannel = decoded.leftChannel.map(sample => sample * trim);
+    const rightChannel = decoded.rightChannel === decoded.leftChannel
+      ? leftChannel
+      : decoded.rightChannel.map(sample => sample * trim);
+
+    this.workletNode?.port.postMessage({
+      type: 'LOAD_TAKE',
+      trackId,
+      dynamic,
+      take,
       leftChannel,
       rightChannel
     });

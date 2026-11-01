@@ -283,8 +283,8 @@ T19 → T20
 
 **Done when**:
 
-- [ ] The message holds the channels × trim
-- [ ] Gate check passes: `npx vitest run`
+- [x] The message holds the channels × trim
+- [x] Gate check passes: `npx vitest run`
 
 **Tests**: unit
 **Gate**: quick

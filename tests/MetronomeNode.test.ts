@@ -10,6 +10,7 @@ class MockAudioContext {
   };
   destination = {};
   resume = vi.fn().mockResolvedValue(undefined);
+  decodeAudioData = vi.fn();
 }
 
 class MockMessagePort {
@@ -30,6 +31,46 @@ vi.stubGlobal('AudioWorkletNode', MockAudioWorkletNode);
 describe('MetronomeNode', () => {
   it('reports the sample rate the context really runs at', () => {
     expect(new MetronomeNode().sampleRate()).toBe(48000);
+  });
+
+  it('loads a take as its channels times the trim', async () => {
+    const node = new MetronomeNode();
+    const mockWorkletNode = new MockAudioWorkletNode();
+    (node as any).workletNode = mockWorkletNode;
+    const left = new Float32Array([1, -0.5, 0.25]);
+    const right = new Float32Array([0.5, 0.5, -1]);
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ arrayBuffer: async () => new ArrayBuffer(0) }));
+    (node as any).ctx.decodeAudioData.mockResolvedValue({
+      numberOfChannels: 2,
+      getChannelData: (channel: number) => (channel === 0 ? left : right),
+    });
+
+    await node.loadTake(12, 2, 1, '/kit/house/tom-14/hard-2.wav', 0.5);
+
+    expect(fetch).toHaveBeenCalledWith('/kit/house/tom-14/hard-2.wav');
+    const message = mockWorkletNode.port.postMessage.mock.calls.at(-1)![0];
+    expect(message.type).toBe('LOAD_TAKE');
+    expect([message.trackId, message.dynamic, message.take]).toEqual([12, 2, 1]);
+    expect(Array.from(message.leftChannel)).toEqual([0.5, -0.25, 0.125]);
+    expect(Array.from(message.rightChannel)).toEqual([0.25, 0.25, -0.5]);
+    expect(Array.from(left)).toEqual([1, -0.5, 0.25]);
+  });
+
+  it('loads a mono take on both channels at its trim', async () => {
+    const node = new MetronomeNode();
+    const mockWorkletNode = new MockAudioWorkletNode();
+    (node as any).workletNode = mockWorkletNode;
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ arrayBuffer: async () => new ArrayBuffer(0) }));
+    (node as any).ctx.decodeAudioData.mockResolvedValue({
+      numberOfChannels: 1,
+      getChannelData: () => new Float32Array([1, 0.5]),
+    });
+
+    await node.loadTake(1, 0, 0, '/kick.wav', 0.5);
+
+    const message = mockWorkletNode.port.postMessage.mock.calls.at(-1)![0];
+    expect(Array.from(message.leftChannel)).toEqual([0.5, 0.25]);
+    expect(Array.from(message.rightChannel)).toEqual([0.5, 0.25]);
   });
 
   it('should post message to worklet when restartPattern is called', () => {
