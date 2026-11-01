@@ -400,10 +400,10 @@ T16 → T17 → T18 → T19
 
 **Done when**:
 
-- [ ] The native confirm comes before any change, on both inputs and both steppers
-- [ ] Accepting keeps bar 1 resized and hides the selector
-- [ ] Declining restores the inputs and keeps the 4 bars
-- [ ] Gate check passes: `npx vitest run`
+- [x] The native confirm comes before any change, on both inputs and both steppers
+- [x] Accepting keeps bar 1 resized and hides the selector
+- [x] Declining restores the inputs and keeps the 4 bars
+- [x] Gate check passes: `npx vitest run`
 
 **Tests**: integration
 **Gate**: quick
