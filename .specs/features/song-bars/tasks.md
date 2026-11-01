@@ -141,8 +141,8 @@ T16 → T17 → T18 → T19
 
 **Done when**:
 
-- [ ] `setBars` posts `SET_BARS`
-- [ ] Gate check passes: `npx vitest run`
+- [x] `setBars` posts `SET_BARS`
+- [x] Gate check passes: `npx vitest run`
 
 **Tests**: unit
 **Gate**: quick

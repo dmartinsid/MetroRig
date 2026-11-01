@@ -118,6 +118,10 @@ export class MetronomeNode extends EventTarget {
     this.workletNode?.port.postMessage({ type: 'SET_MEASURE_LENGTH', length });
   }
 
+  setBars(bars: number) {
+    this.workletNode?.port.postMessage({ type: 'SET_BARS', bars });
+  }
+
   updateGrid(trackId: number, steps: Uint8Array) {
     this.workletNode?.port.postMessage({ type: 'UPDATE_GRID', trackId, steps });
   }
