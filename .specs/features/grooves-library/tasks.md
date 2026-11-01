@@ -312,10 +312,10 @@ T24 → T25 → T26 → T27 → T28
 
 **Done when**:
 
-- [ ] No `trackId < 4` remains in `drawGrid` or `syncMeterAndGrid`
-- [ ] The tests of the checks for EDT-01, DYN-01 that this task reaches pass
-- [ ] Gate check passes: `npx vitest run`
-- [ ] Test count: at least the previous task's count (no silent deletions)
+- [x] No `trackId < 4` remains in `drawGrid` or `syncMeterAndGrid`
+- [x] The tests of the checks for EDT-01, DYN-01 that this task reaches pass
+- [x] Gate check passes: `npx vitest run`
+- [x] Test count: at least the previous task's count (no silent deletions)
 
 **Tests**: integration
 **Gate**: quick

@@ -1,6 +1,6 @@
 import { MetronomeNode, TickDetail } from './audio/MetronomeNode';
 import { StateManager, FACTORY_PRESETS, FACTORY_GROOVES, SPEED_TRAINER_PRESETS, Preset, StoredPreset, TrainerSettings, CustomGroove, FIGURES, getBeatsPerMeasure, getBeatForStep, isSustainedStep, applyFigure, measureLengthFor, normalizePreset, completeKit, startBpmFor } from './state';
-import { TRACKS } from './kit';
+import { STEP_ACCENT, STEP_GHOST, STEP_NORMAL, TRACKS, nextStepValue } from './kit';
 import { VisualScheduler } from './visualSync';
 import { audibleSteps, createTrackMix, isAudible, toggleMute, toggleSolo } from './trackMix';
 import { formatBarStep, formatClock, formatLatency, formatSteps, formatTimer, nextDenominator } from './display';
@@ -193,12 +193,12 @@ function syncMeterAndGrid() {
   audioNode.setMeasureLength(state.activePreset.measureLength || 16);
   
   // Update active tracks
-  for (let trackId = 0; trackId < 4; trackId++) sendTrack(trackId);
+  TRACKS.forEach(track => sendTrack(track.id));
 }
 
 // The one path to the engine: silenced tracks play an empty grid, the preset keeps its steps
 function sendTrack(trackId: number) {
-  const steps = state.activePreset.gridData[trackId] || new Array(16).fill(0);
+  const steps = state.activePreset.gridData[trackId] || new Array(state.activePreset.measureLength || 16).fill(0);
   audioNode.updateGrid(trackId, audibleSteps(trackMix, trackId, steps));
 }
 
@@ -215,7 +215,6 @@ function readTrainerInputs(): TrainerSettings {
 }
 
 // Draw Sequencer Grid
-const trackNames = ['Click', 'Kick', 'Snare', 'Hi-hat'];
 const SUBDIVISION_LABELS: Record<number, string[]> = { 2: ['', '&'], 4: ['', 'e', '&', 'a'] };
 
 // Figure stamped by grid clicks; null toggles single steps
@@ -280,19 +279,19 @@ function drawGrid() {
     gridContainer.appendChild(count);
   }
 
-  for (let trackId = 0; trackId < 4; trackId++) {
+  for (const { id: trackId, name } of TRACKS) {
     // Label cell
     const label = document.createElement('div');
     label.className = 'track-label';
     label.setAttribute('data-track', String(trackId));
-    label.innerText = trackNames[trackId];
+    label.innerText = name;
     const silenced = !isAudible(trackMix, trackId);
     label.classList.toggle('silenced', silenced);
     label.style.gridRow = String(trackId + 2);
     label.style.gridColumn = '1';
     gridContainer.appendChild(label);
 
-    const trackSteps = gridData[trackId] ??= new Array(16).fill(0);
+    const trackSteps = gridData[trackId] ??= new Array(measureLength).fill(0);
 
     for (let step = 0; step < measureLength; step++) {
       const cell = document.createElement('div');
@@ -301,23 +300,25 @@ function drawGrid() {
       cell.style.gridRow = String(trackId + 2);
       cell.style.gridColumn = String(stepColumns[step]);
 
-      if (trackSteps[step] === 1) {
+      if (trackSteps[step] === STEP_NORMAL) {
         cell.classList.add('active');
         cell.innerText = '●';
       }
-      if (trackSteps[step] === 2) {
+      if (trackSteps[step] === STEP_ACCENT) {
         cell.classList.add('accent');
         cell.innerText = '▲';
+      }
+      if (trackSteps[step] === STEP_GHOST) {
+        cell.classList.add('ghost');
+        cell.innerText = '•';
       }
       if (isSustainedStep(trackSteps, step, measureLength, beats)) cell.classList.add('sustain');
 
       cell.onclick = () => {
         if (activeFigure) {
           applyFigure(trackSteps, step, activeFigure.pattern, measureLength);
-        } else if (trackId === 0) {
-          trackSteps[step] = (trackSteps[step] + 1) % 3;
         } else {
-          trackSteps[step] = trackSteps[step] === 1 ? 0 : 1;
+          trackSteps[step] = nextStepValue(trackId, trackSteps[step]);
         }
 
         if (isAudioInit) sendTrack(trackId);
@@ -531,7 +532,7 @@ function updateTimeSignature() {
   state.activePreset.measureLength = measureLength;
 
   // Resize gridData tracks to match the new length
-  for (let trackId = 0; trackId < 4; trackId++) {
+  for (const { id: trackId } of TRACKS) {
     const oldSteps = state.activePreset.gridData[trackId] || [];
     const newSteps = new Array(measureLength).fill(0);
     for (let i = 0; i < Math.min(oldSteps.length, measureLength); i++) {
