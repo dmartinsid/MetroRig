@@ -64,7 +64,7 @@
 - **Trade-off**: The Editor is taller and denser than the capture.
 - **Scope**: grooves-library, Editor
 - **Date**: 2026-11-01
-- **Status**: active (AD-008)
+- **Status**: active (AD-008); AD-012 raises the count to 13
 
 ### AD-009
 - **Decision**: The Stadium keeps 4 rings and 4 orbs, grouped as `CLICK`, `KICK`, `SNARE/TOMS` and `CYMBALS`, where `stadium.png` labels them `CLICK`, `KICK`, `SNARE` and `HI-HAT`.
@@ -89,3 +89,27 @@
 - **Scope**: every pattern, engine included
 - **Date**: 2026-11-01
 - **Status**: active (AD-011)
+
+### AD-012
+- **Decision**: MetroRig has 13 tracks. `Mid Tom` (id 11) and `Low Tom` (id 12) sit between `High Tom` and `Floor Tom` in the grid, and join `SNARE/TOMS` in the Stadium. Existing ids do not change.
+- **Reason**: Q3: "Ficamos com a A, deixando a B para uma feature separada?" The user answered "vamos pra 13 trilhas", choosing option B over the recommendation. Q9, on the order and the Stadium group, was answered "recomendacoes".
+- **Trade-off**: The Editor is taller still. Grid order no longer follows id order.
+- **Scope**: house-kit, every track list. Supersedes the count of 11 in AD-008; AD-009 keeps its 4 groups
+- **Date**: 2026-11-01
+- **Status**: active (AD-012)
+
+### AD-013
+- **Decision**: The House Kit ships without written terms. `public/kit/LICENSE.md` records the kit, its author's channel and the release for general use as the user reported it from the video.
+- **Reason**: Q1: "Podemos usar o kit e registrar `Unconfirmed: no terms on record`...?" The user answered "vamos usar, no video o rapaz liberou pra uso geral, agradecer a ele e ao canal dele pelo sons." The zip and the product pages state no terms, and the video's transcript could not be read.
+- **Trade-off**: The written record rests on the user's account of the video. It departs from Q19 of grooves-library, which refused SM Drums for having no written terms.
+- **Scope**: house-kit, kit license
+- **Date**: 2026-11-01
+- **Status**: active (AD-013)
+
+### AD-014
+- **Decision**: All drum samples together may take up to 20 MB, up from 10 MB.
+- **Reason**: Q6: "Ficamos com a A?" (20 MB, keeping 3 takes). The user answered "recomendacoes". Four toms at 3 dynamics × 3 takes need about 16.6 MB in all.
+- **Trade-off**: The first load takes longer, and fetches 54 new files.
+- **Scope**: house-kit, kit size
+- **Date**: 2026-11-01
+- **Status**: active (AD-014)
