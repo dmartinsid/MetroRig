@@ -158,9 +158,9 @@ T17
 
 **Done when**:
 
-- [ ] 1 test in `tests/MetronomeNode.test.ts` covers the getter
-- [ ] Gate check passes: `npx vitest run`
-- [ ] Test count: 69 tests pass (no silent deletions)
+- [x] 1 test in `tests/MetronomeNode.test.ts` covers the getter
+- [x] Gate check passes: `npx vitest run`
+- [x] Test count: 69 tests pass (no silent deletions)
 
 **Tests**: unit
 **Gate**: quick
