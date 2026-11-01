@@ -1,6 +1,6 @@
 import { MetronomeNode, TickDetail } from './audio/MetronomeNode';
 import { StateManager, FACTORY_PRESETS, FACTORY_GROOVES, SPEED_TRAINER_PRESETS, Preset, StoredPreset, TrainerSettings, CustomGroove, FIGURES, getBeatsPerMeasure, getBeatForStep, isSustainedStep, applyFigure, measureLengthFor, normalizePreset, completeKit, startBpmFor } from './state';
-import { STEP_ACCENT, STEP_GHOST, STEP_NORMAL, TRACKS, nextStepValue } from './kit';
+import { STADIUM_GROUPS, STEP_ACCENT, STEP_GHOST, STEP_NORMAL, TRACKS, groupHit, nextStepValue } from './kit';
 import { VisualScheduler } from './visualSync';
 import { audibleSteps, createTrackMix, isAudible, toggleMute, toggleSolo } from './trackMix';
 import { formatBarStep, formatClock, formatLatency, formatSteps, formatTimer, nextDenominator } from './display';
@@ -349,7 +349,7 @@ function updatePatternBar() {
   patternSteps.textContent = formatSteps(state.activePreset.measureLength || 16);
 }
 
-// Draw Stadium beat clock: one ring per track, one slice per step, 12 o'clock is step 0
+// Draw Stadium beat clock: one ring per group, one slice per step, 12 o'clock is step 0
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const CLOCK_RING_OUTER = 80;
 const CLOCK_RING_WIDTH = 15;
@@ -367,10 +367,10 @@ function drawBeatClock() {
   const beats = getBeatsPerMeasure(timeSignature, measureLength);
   clockFace.innerHTML = '';
 
-  for (let trackId = 0; trackId < 4; trackId++) {
-    const radius = CLOCK_RING_OUTER - CLOCK_RING_WIDTH * trackId;
+  STADIUM_GROUPS.forEach(({ trackIds }, ring) => {
+    const radius = CLOCK_RING_OUTER - CLOCK_RING_WIDTH * ring;
     const innerRadius = radius - CLOCK_RING_WIDTH + CLOCK_RING_GAP;
-    const trackSteps = gridData[trackId] || [];
+    const ringSteps = Array.from({ length: measureLength }, (_, step) => (groupHit(trackIds, gridData, step) ? 1 : 0));
     for (let step = 0; step < measureLength; step++) {
       // A slice can't span the full circle, which a single-step measure would need
       const [x1, y1] = clockPoint(step / measureLength, radius);
@@ -381,12 +381,12 @@ function drawBeatClock() {
 
       const slice = document.createElementNS(SVG_NS, 'path');
       slice.setAttribute('d', `M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2} L ${x3} ${y3} A ${innerRadius} ${innerRadius} 0 ${largeArc} 0 ${x4} ${y4} Z`);
-      const sustained = isSustainedStep(trackSteps, step, measureLength, beats);
-      slice.setAttribute('class', trackSteps[step] > 0 ? 'clock-slice on' : sustained ? 'clock-slice sustain' : 'clock-slice');
-      slice.setAttribute('data-track', String(trackId));
+      const sustained = isSustainedStep(ringSteps, step, measureLength, beats);
+      slice.setAttribute('class', ringSteps[step] > 0 ? 'clock-slice on' : sustained ? 'clock-slice sustain' : 'clock-slice');
+      slice.setAttribute('data-track', String(ring));
       clockFace.appendChild(slice);
     }
-  }
+  });
 
   const center = document.createElementNS(SVG_NS, 'circle');
   center.setAttribute('r', String(CLOCK_RING_OUTER - CLOCK_RING_WIDTH * 4));
@@ -655,9 +655,10 @@ function renderTick({ beatIndex, currentBpm, activeTrackIds }: TickDetail) {
 
   // Orbs keep a steady color and only nudge in size, avoiding luminance flashes
   const ids: number[] = activeTrackIds ?? [];
-  ids.filter(trackId => isAudible(trackMix, trackId)).forEach((trackId: number) => {
-    const orb = orbs[trackId];
-    if (!orb) return;
+  const audible = ids.filter(trackId => isAudible(trackMix, trackId));
+  STADIUM_GROUPS.forEach(({ trackIds }, group) => {
+    if (!trackIds.some(trackId => audible.includes(trackId))) return;
+    const orb = orbs[group];
     gsap.killTweensOf(orb);
     gsap.fromTo(orb,
       { scale: 1.15 },

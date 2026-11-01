@@ -711,7 +711,7 @@ describe('Interface V2', () => {
 
     const entries = [...document.querySelectorAll<HTMLElement>('.clock-legend [data-track]')];
     expect(entries.map(entry => [entry.dataset.track, entry.textContent])).toEqual([
-      ['0', 'CLICK'], ['1', 'KICK'], ['2', 'SNARE'], ['3', 'HI-HAT'],
+      ['0', 'CLICK'], ['1', 'KICK'], ['2', 'SNARE/TOMS'], ['3', 'CYMBALS'],
     ]);
   });
 
@@ -730,7 +730,7 @@ describe('Interface V2', () => {
   it('stad_09 orb markup', async () => {
     await openPage();
 
-    const names = ['CLICK', 'KICK', 'SNARE', 'HI-HAT'];
+    const names = ['CLICK', 'KICK', 'SNARE/TOMS', 'CYMBALS'];
     names.forEach((name, trackId) => {
       const orb = byId(`orb-${trackId}`);
       expect(orb.dataset.track).toBe(String(trackId));
@@ -1602,5 +1602,60 @@ describe('Grooves Library', () => {
     expect(Object.keys(saved.gridData)).toEqual(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']);
     expect(saved.gridData[7][0]).toBe(1);
     expect(saved.gridData[10][3]).toBe(2);
+  });
+
+  const orbPulsed = (group: number) => mockGsap.fromTo.mock.calls.some(call => call[0] === byId(`orb-${group}`));
+
+  it('std_01 four group labels', async () => {
+    await openPage();
+
+    const labels = ['CLICK', 'KICK', 'SNARE/TOMS', 'CYMBALS'];
+    expect([...document.querySelectorAll('.clock-legend span')].map(entry => entry.textContent)).toEqual(labels);
+    expect([...document.querySelectorAll('.orb-name')].map(name => name.textContent)).toEqual(labels);
+    expect(document.querySelectorAll('.orb')).toHaveLength(4);
+
+    const rings = new Set([...document.querySelectorAll('.clock-slice')].map(slice => slice.getAttribute('data-track')));
+    expect(rings).toEqual(new Set(['0', '1', '2', '3']));
+  });
+
+  it('std_04 ring lights for any track of its group', async () => {
+    await openPage();
+    const ringOn = (ring: number, step: number) =>
+      document.querySelectorAll(`.clock-slice[data-track="${ring}"]`)[step].classList.contains('on');
+
+    cell(10, 1).click(); // Floor Tom
+    cell(8, 5).click(); // China
+    expect(ringOn(2, 1)).toBe(true);
+    expect(ringOn(3, 5)).toBe(true);
+    expect(ringOn(3, 1)).toBe(false);
+  });
+
+  it('std_05 orb pulses for its group', async () => {
+    await openPage();
+    await clickPlay();
+    mockGsap.fromTo.mockClear();
+
+    tick({ currentBpm: 120, activeTrackIds: [9] }); // High Tom
+    expect(orbPulsed(2)).toBe(true);
+    expect(orbPulsed(3)).toBe(false);
+
+    mockGsap.fromTo.mockClear();
+    tick({ currentBpm: 120, activeTrackIds: [7] }); // Crash
+    expect(orbPulsed(3)).toBe(true);
+    expect(orbPulsed(2)).toBe(false);
+    await clickPlay();
+  });
+
+  it('std_06 silenced group stays still', async () => {
+    await openPage();
+    await clickPlay();
+    [2, 9, 10].forEach(trackId => byId<HTMLButtonElement>(`mute-${trackId}`).click());
+    byId<HTMLButtonElement>('mute-3').click();
+    mockGsap.fromTo.mockClear();
+
+    tick({ currentBpm: 120, activeTrackIds: [2, 9, 10, 3, 7] }); // Already in flight
+    expect(orbPulsed(2)).toBe(false);
+    expect(orbPulsed(3)).toBe(true); // Crash is still audible, so its group pulses
+    await clickPlay();
   });
 });
