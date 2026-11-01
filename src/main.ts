@@ -439,6 +439,7 @@ function togglePlay() {
       resetPosition();
       sequencerDot.classList.remove('lit');
       bpmNumber.innerText = String(state.activePreset.bpm);
+      stadiumBpm.innerText = state.activePreset.bpm.toFixed(1);
     } else {
       syncAudioSettings();
       audioNode.start();
@@ -488,12 +489,11 @@ bpmSlider.oninput = () => {
   const bpm = Number(bpmSlider.value);
   bpmNumber.innerText = String(bpm);
   bpmSliderValue.innerText = String(bpm);
+  stadiumBpm.innerText = bpm.toFixed(1);
   state.activePreset.bpm = bpm;
   if (isAudioInit) audioNode.setBpm(bpm);
   markPresetAsModified();
-
-  const ts = measureLengthToTimeSig(state.activePreset.measureLength || 16);
-  panelHeaderText.textContent = `${state.activePreset.name}  ·  ${ts}  ·  ${bpm} BPM`;
+  updatePanelHeader();
 };
 
 function updateTimeSignature() {
@@ -537,20 +537,26 @@ function updateTimeSignature() {
   syncPlaybackSettings();
   markPresetAsModified();
 
-  const bpm = state.activePreset.bpm;
-  panelHeaderText.textContent = `${state.activePreset.name}  ·  ${sigStr}  ·  ${bpm} BPM`;
+  updatePanelHeader();
 }
 
 timeSigNum.onchange = updateTimeSignature;
 timeSigDen.onchange = updateTimeSignature;
 
+// A stepper at its stop changes nothing, so it must not count as an edit
 function stepNumerator(delta: number) {
-  timeSigNum.value = String(Number(timeSigNum.value) + delta);
+  const numerator = Number(timeSigNum.value);
+  const next = Math.min(16, Math.max(1, numerator + delta));
+  if (next === numerator) return;
+  timeSigNum.value = String(next);
   updateTimeSignature();
 }
 
 function stepDenominator(direction: 1 | -1) {
-  timeSigDen.value = String(nextDenominator(Number(timeSigDen.value), direction));
+  const denominator = Number(timeSigDen.value);
+  const next = nextDenominator(denominator, direction);
+  if (next === denominator) return;
+  timeSigDen.value = String(next);
   updateTimeSignature();
 }
 
@@ -684,6 +690,11 @@ stadiumPresetSelector.onchange = () => {
   presetSelector.dispatchEvent(new Event('change'));
 };
 
+function updatePanelHeader() {
+  const { name, bpm, measureLength } = state.activePreset;
+  panelHeaderText.textContent = `${name}  ·  ${measureLengthToTimeSig(measureLength || 16)}  ·  ${bpm} BPM`;
+}
+
 function measureLengthToTimeSig(len: number): string {
   // Try to parse from state.activePreset.timeSignature first
   if (state.activePreset.timeSignature && state.activePreset.timeSignature.includes('/')) {
@@ -754,9 +765,7 @@ function loadPresetIntoUI(storedPreset: StoredPreset) {
   syncAudioSettings();
   grooveSelector.value = "";
 
-  const bpm = state.activePreset.bpm;
-  const timeSig = measureLengthToTimeSig(state.activePreset.measureLength || 16);
-  panelHeaderText.textContent = `${state.activePreset.name}  ·  ${timeSig}  ·  ${bpm} BPM`;
+  updatePanelHeader();
 
   stadiumBpm.innerText = shownBpm.toFixed(1);
   updateStadiumStatus();
@@ -778,7 +787,8 @@ btnSave.onclick = () => {
   
   state.savePreset(newPreset).then(() => {
     state.activePreset = newPreset;
-    updatePatternBar();
+    drawGrid(); // Cell handlers must hold the saved copy's steps
+    updatePanelHeader();
     populatePresetsDropdown(`user:${id}`);
     presetNameInput.value = '';
     gsap.killTweensOf(saveToast);
