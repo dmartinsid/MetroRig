@@ -172,7 +172,7 @@ Kick, snare and toms use one sample each, and a step's dynamic only changes its 
 | HK-24 | P1: Approval by ear | Design | Pending |
 | HK-25 | P1: Approval by ear | Design | Pending |
 | HK-26 | P1: Approval by ear | Design | Pending |
-| HK-27 | P1: Approval by ear | Design | Pending |
+| HK-27 | P1: Approval by ear | Design | Implementing |
 | HK-28 | P2: Credit to Better Mixes | Design | Pending |
 | HK-29 | P2: Credit to Better Mixes | Design | Pending |
 | HK-30 | P2: Credit to Better Mixes | Design | Pending |
