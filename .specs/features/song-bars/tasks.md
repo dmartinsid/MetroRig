@@ -9,7 +9,8 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/song-bars/design.md`
-**Status**: Draft
+**Status**: Approved
+**Approved**: 2026-11-01 - user: "aprovado"
 **Build**: `npm run build`
 **Run js**: `npx vitest run --reporter=verbose`
 **Run rust**: `cargo test`
@@ -629,7 +630,7 @@ Proof: walk - the user played all 14 songs and approved each one, recorded in Ha
 
 The feature's live state, written as it happens - a compaction gives no warning.
 
-**Settled mid-build:** none
+**Settled mid-build:** no batch worker: the tasks run in the main session, stated before approval and approved with "aprovado".
 **Dispatched:** none
 **Walked:** not yet
 
