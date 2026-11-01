@@ -1,7 +1,7 @@
 import { MetronomeNode, TickDetail } from './audio/MetronomeNode';
 import { StateManager, FACTORY_PRESETS, FACTORY_GROOVES, SPEED_TRAINER_PRESETS, Preset, StoredPreset, TrainerSettings, ViewMode, FIGURES, getBeatsPerMeasure, getBeatForStep, isSustainedStep, applyFigure, measureLengthFor, normalizePreset, completeKit, startBpmFor } from './state';
 import { barCount, barOfStep, barSteps, patternLength, stepInBar, writeBar } from './bars';
-import { STADIUM_GROUPS, STEP_ACCENT, STEP_GHOST, STEP_NORMAL, TRACKS, groupHit, nextStepValue } from './kit';
+import { STADIUM_GROUPS, STEP_ACCENT, STEP_GHOST, STEP_NORMAL, TRACKS, groupHit, nextStepValue, takesOf } from './kit';
 import { VisualScheduler } from './visualSync';
 import { audibleSteps, createTrackMix, isAudible, toggleMute, toggleSolo } from './trackMix';
 import { formatBarStep, formatClock, formatLatency, formatSteps, formatTimer, nextDenominator } from './display';
@@ -170,12 +170,20 @@ function syncStadiumPresetSelector() {
   if (stadiumPresetSelector.selectedIndex < 0) stadiumPresetSelector.value = '';
 }
 
-// A sample that fails leaves its track silent and the rest of the kit playing
+// A file that fails leaves its hit to the next loaded take, or its track silent, and the rest of the kit playing
 async function loadKit() {
-  const drums = TRACKS.filter(track => track.sample);
-  const loads = await Promise.allSettled(drums.map(track => audioNode.loadSample(track.id, track.sample!)));
-  loads.forEach((load, i) => {
-    if (load.status === 'rejected') console.error(`Failed to load ${drums[i].sample}:`, load.reason);
+  const loads: { url: string; load: Promise<void> }[] = [];
+  for (const track of TRACKS) {
+    if (track.sample) loads.push({ url: track.sample, load: audioNode.loadSample(track.id, track.sample) });
+    if (track.bank) {
+      for (const { dynamic, take, url } of takesOf(track)) {
+        loads.push({ url, load: audioNode.loadTake(track.id, dynamic, take, url, track.bank.trim) });
+      }
+    }
+  }
+  const results = await Promise.allSettled(loads.map(({ load }) => load));
+  results.forEach((result, i) => {
+    if (result.status === 'rejected') console.error(`Failed to load ${loads[i].url}:`, result.reason);
   });
 }
 

@@ -7,6 +7,7 @@ import { STADIUM_GROUPS } from './kit';
 
 const mockInit = vi.fn().mockResolvedValue(undefined);
 const mockLoadSample = vi.fn().mockResolvedValue(undefined);
+const mockLoadTake = vi.fn().mockResolvedValue(undefined);
 const mockSetClickMode = vi.fn();
 
 // Every message the page sends the audio node, in order
@@ -32,6 +33,7 @@ vi.mock('./audio/MetronomeNode', () => {
       setTrainer = recorded('setTrainer');
       replaceTrainer = recorded('replaceTrainer');
       loadSample = mockLoadSample;
+      loadTake = mockLoadTake;
       setClickMode = mockSetClickMode;
       visualDelayMs = () => mockVisualDelay;
       sampleRate = () => 44100;
@@ -2560,6 +2562,50 @@ describe('Song Bars', () => {
 });
 
 describe('House Kit', () => {
+  const taken = () => mockLoadTake.mock.calls.map(([trackId, dynamic, take, url, trim]) => ({ trackId, dynamic, take, url, trim }));
+
+  it('loads every take of each bank at its trim, and no bank piece as a single sample', async () => {
+    mockLoadTake.mockReset();
+    mockLoadTake.mockResolvedValue(undefined);
+    mockLoadSample.mockClear();
+    await openPage();
+    await clickPlay();
+
+    const loads = taken();
+    expect(loads).toHaveLength(54);
+    const bankIds = [1, 2, 9, 10, 11, 12];
+    bankIds.forEach(trackId => {
+      const own = loads.filter(load => load.trackId === trackId);
+      expect(own, `track ${trackId}`).toHaveLength(9);
+      expect(new Set(own.map(load => load.url)).size).toBe(9);
+      own.forEach(load => expect(load.trim).toBe(0.7));
+    });
+    expect(loads.find(load => load.trackId === 2 && load.dynamic === 2 && load.take === 1)!.url).toBe('/kit/house/snare/crack-2.wav');
+    expect(loads.find(load => load.trackId === 12 && load.dynamic === 1 && load.take === 0)!.url).toBe('/kit/house/tom-14/med-1.wav');
+    expect(mockLoadSample.mock.calls.map(([id]) => id).filter(id => bankIds.includes(id))).toEqual([]);
+    await clickPlay();
+  });
+
+  it('hk_12 logs a failed take', async () => {
+    const failure = new Error('404');
+    mockLoadTake.mockReset();
+    mockLoadTake.mockImplementation((trackId: number, dynamic: number, take: number) =>
+      trackId === 2 && dynamic === 1 && take === 1 ? Promise.reject(failure) : Promise.resolve());
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => {});
+    await openPage();
+    await clickPlay();
+
+    expect(logged).toHaveBeenCalledWith('Failed to load /kit/house/snare/hard-2.wav:', failure);
+    expect(logged.mock.calls.filter(([message]) => String(message).startsWith('Failed to load'))).toHaveLength(1);
+    expect(taken()).toHaveLength(54); // The other 53 takes were still requested
+    expect(calls('start')).toHaveLength(1);
+    expect(byId('btn-play').classList.contains('playing')).toBe(true);
+    await clickPlay();
+    logged.mockRestore();
+    mockLoadTake.mockReset();
+    mockLoadTake.mockResolvedValue(undefined);
+  });
+
   const cell = (trackId: number, step: number) =>
     document.querySelectorAll<HTMLElement>(`.step-cell[data-track="${trackId}"]`)[step];
   const dynamicOf = (trackId: number, step: number) =>

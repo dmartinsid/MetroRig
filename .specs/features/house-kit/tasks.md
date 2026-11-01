@@ -325,9 +325,9 @@ T19 → T20
 
 **Done when**:
 
-- [ ] Every take is loaded
-- [ ] A failed take logs its path and the rest still load
-- [ ] Gate check passes: `npx vitest run`
+- [x] Every take is loaded
+- [x] A failed take logs its path and the rest still load
+- [x] Gate check passes: `npx vitest run`
 
 **Tests**: integration
 **Gate**: quick
