@@ -8,7 +8,7 @@
 - **Trade-off**: The header is sparser than the capture.
 - **Scope**: interface-v2, header
 - **Date**: 2026-10-31
-- **Status**: active (AD-001)
+- **Status**: active (AD-001); its removal of the `Editor`, `Stadium` and `Grooves` links is superseded by AD-007
 
 ### AD-002
 - **Decision**: MetroRig's screens show only real values. Invented telemetry and decorative codes from the captures are removed or replaced by what the app knows.
@@ -32,7 +32,7 @@
 - **Trade-off**: The label differs from the capture's sample.
 - **Scope**: interface-v2, groove library
 - **Date**: 2026-10-31
-- **Status**: active (AD-004)
+- **Status**: active (AD-004); AD-010 makes the exception for songs
 
 ### AD-005
 - **Decision**: Where the two captures disagree, the Editor capture's header wins: `PRO` in capitals and two separate selectors. The toggle uses the PRD and Stadium wording.
@@ -49,3 +49,35 @@
 - **Scope**: interface-v2, Mute and Solo
 - **Date**: 2026-10-31
 - **Status**: active (AD-006)
+
+### AD-007
+- **Decision**: The header carries working `Editor`, `Stadium` and `Grooves` links, and the `GO TO STADIUM MODE` toggle is removed. `Presets` stays out.
+- **Reason**: Q2: "Os links `Editor`, `Stadium` e `Grooves` entram no header, como na captura, e o botão `GO TO STADIUM MODE` sai?" The user answered "q2 recomendacao". The links now have an action, and the toggle's label has no meaning with three screens.
+- **Trade-off**: The captures draw a pill the product no longer has.
+- **Scope**: grooves-library, header
+- **Date**: 2026-11-01
+- **Status**: active (AD-007)
+
+### AD-008
+- **Decision**: The Editor grid and the Mute/Solo cards always show all 11 tracks, with lower rows, where `editor.png` draws 4.
+- **Reason**: Q14: "A grade e os cards de Mute/Solo mostram sempre as 9 trilhas, com linhas mais baixas?" The user answered "q14 recomendacao", and Q10 raised the count to 11: "coloca o china e sino sim". A collapsed grid would hide parts of a loaded song.
+- **Trade-off**: The Editor is taller and denser than the capture.
+- **Scope**: grooves-library, Editor
+- **Date**: 2026-11-01
+- **Status**: active (AD-008)
+
+### AD-009
+- **Decision**: The Stadium keeps 4 rings and 4 orbs, grouped as `CLICK`, `KICK`, `SNARE/TOMS` and `CYMBALS`, where `stadium.png` labels them `CLICK`, `KICK`, `SNARE` and `HI-HAT`.
+- **Reason**: Q15: "O relógio mantém 4 anéis, agrupando as peças em `CLICK`, `KICK`, `SNARE/TOMS` e `CYMBALS`, e os orbs seguem o mesmo agrupamento?" The user answered "q15 recomendacao, pode ser os grupos senao nao vai caber".
+- **Trade-off**: The clock shows less detail than the Editor.
+- **Scope**: grooves-library, Stadium
+- **Date**: 2026-11-01
+- **Status**: active (AD-009)
+
+### AD-010
+- **Decision**: A song carries its tempo. Loading one replaces BPM, time signature and drum tracks, and the Grooves screen shows the BPM. The `Groove Library` dropdown keeps AD-004.
+- **Reason**: Q9: "Carregar uma música troca o BPM, o compasso e as trilhas de bateria, desliga o Trainer e mostra o BPM na tela?" The user answered "q9 recomendacao". The tempo is part of the song.
+- **Trade-off**: Songs and library grooves apply differently.
+- **Scope**: grooves-library, songs
+- **Date**: 2026-11-01
+- **Status**: active (AD-010)
