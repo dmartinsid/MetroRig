@@ -12,6 +12,13 @@
   --color-kick:     #FF2D55;
   --color-snare:    #00D4FF;
   --color-hihat:    #00FF94;
+  --color-openhat:  #7CFFC4;
+  --color-ride:     #B388FF;
+  --color-bell:     #E0B3FF;
+  --color-crash:    #FF8A3D;
+  --color-china:    #FF5CA8;
+  --color-hightom:  #4D9DFF;
+  --color-floortom: #7C8CFF;
   --text:           #F3F4F6;
   --text-muted:     #9CA3AF;
   --cyber-yellow:   #FFE600;
@@ -27,6 +34,13 @@
 [data-track="1"] { --track-color: var(--color-kick);  }
 [data-track="2"] { --track-color: var(--color-snare); }
 [data-track="3"] { --track-color: var(--color-hihat); }
+[data-track="4"] { --track-color: var(--color-openhat); }
+[data-track="5"] { --track-color: var(--color-ride); }
+[data-track="6"] { --track-color: var(--color-bell); }
+[data-track="7"] { --track-color: var(--color-crash); }
+[data-track="8"] { --track-color: var(--color-china); }
+[data-track="9"] { --track-color: var(--color-hightom); }
+[data-track="10"] { --track-color: var(--color-floortom); }
 
 /* ─── Reset & Base ───────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -356,7 +370,7 @@ header {
   background: color-mix(in srgb, var(--track-color) 8%, transparent);
   border: 1px solid var(--track-color);
   border-radius: 3px;
-  padding: 4px 10px;
+  padding: 2px 8px;
   min-width: 80px;
   text-align: center;
   text-transform: uppercase;
@@ -366,7 +380,7 @@ header {
 /* Step cells */
 .step-cell {
   min-width: 14px;
-  height: 44px;
+  height: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -406,6 +420,12 @@ header {
   background: var(--track-color);
   border-color: var(--track-color);
   box-shadow: 0 0 16px var(--track-color);
+}
+
+.step-cell.ghost {
+  color: var(--track-color);
+  background: color-mix(in srgb, var(--track-color) 10%, transparent);
+  border-color: color-mix(in srgb, var(--track-color) 50%, transparent);
 }
 
 .step-cell.silenced,
