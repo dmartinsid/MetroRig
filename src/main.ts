@@ -940,7 +940,7 @@ grooveSelector.onchange = () => {
       for (let i = 0; i < activeLen; i++) {
         destPattern[i] = srcPattern[i % length] || 0;
       }
-      state.activePreset.gridData[trackId] = destPattern;
+      writeBar(state.activePreset.gridData[trackId] ??= [], viewBar, activeLen, destPattern);
     }
     drawGrid();
     syncPlaybackSettings();
@@ -967,7 +967,7 @@ btnSaveGroove.onclick = () => {
   const activeLen = state.activePreset.measureLength || 16;
   const gridData: Record<number, number[]> = {};
   for (const { id: trackId } of TRACKS.slice(1)) {
-    const srcTrack = state.activePreset.gridData[trackId] || [];
+    const srcTrack = barSteps(state.activePreset.gridData[trackId] || [], viewBar, activeLen);
     const paddedTrack = new Array(activeLen).fill(0);
     for (let i = 0; i < Math.min(srcTrack.length, activeLen); i++) {
       paddedTrack[i] = srcTrack[i];

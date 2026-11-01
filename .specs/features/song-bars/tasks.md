@@ -379,9 +379,9 @@ T16 → T17 → T18 → T19
 
 **Done when**:
 
-- [ ] A Groove Library pick writes only the bar on screen and leaves `Click`
-- [ ] `Save Groove` stores the bar on screen as 1 bar
-- [ ] Gate check passes: `npx vitest run`
+- [x] A Groove Library pick writes only the bar on screen and leaves `Click`
+- [x] `Save Groove` stores the bar on screen as 1 bar
+- [x] Gate check passes: `npx vitest run`
 
 **Tests**: integration
 **Gate**: quick
