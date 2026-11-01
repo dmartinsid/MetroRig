@@ -1,5 +1,5 @@
 import { MetronomeNode, TickDetail } from './audio/MetronomeNode';
-import { StateManager, FACTORY_PRESETS, FACTORY_GROOVES, SPEED_TRAINER_PRESETS, Preset, StoredPreset, TrainerSettings, CustomGroove, FIGURES, getBeatsPerMeasure, getBeatForStep, isSustainedStep, applyFigure, measureLengthFor, normalizePreset, startBpmFor } from './state';
+import { StateManager, FACTORY_PRESETS, FACTORY_GROOVES, SPEED_TRAINER_PRESETS, Preset, StoredPreset, TrainerSettings, CustomGroove, FIGURES, getBeatsPerMeasure, getBeatForStep, isSustainedStep, applyFigure, measureLengthFor, normalizePreset, completeKit, startBpmFor } from './state';
 import { TRACKS } from './kit';
 import { VisualScheduler } from './visualSync';
 import { audibleSteps, createTrackMix, isAudible, toggleMute, toggleSolo } from './trackMix';
@@ -713,7 +713,7 @@ function measureLengthToTimeSig(len: number): string {
 
 function loadPresetIntoUI(storedPreset: StoredPreset) {
   visualScheduler.cancelAll(); // Ticks of the previous preset must not overwrite this one
-  const preset = normalizePreset(storedPreset);
+  const preset = completeKit(normalizePreset(storedPreset));
   state.activePreset = preset;
   const ts = preset.trainerSettings;
   

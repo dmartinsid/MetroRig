@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { StateManager, FACTORY_PRESETS, FACTORY_GROOVES, SPEED_TRAINER_PRESETS, FIGURES, getBeatsPerMeasure, getBeatForStep, isSustainedStep, applyFigure, measureLengthFor, normalizePreset, startBpmFor } from '../src/state';
+import { StateManager, FACTORY_PRESETS, FACTORY_GROOVES, SPEED_TRAINER_PRESETS, FIGURES, getBeatsPerMeasure, getBeatForStep, isSustainedStep, applyFigure, measureLengthFor, normalizePreset, completeKit, startBpmFor } from '../src/state';
 import type { Preset } from '../src/state';
 
 describe('StateManager Tests', () => {
@@ -247,3 +247,33 @@ describe('Factory grooves', () => {
     expect(metalcore.tracks[3]).toEqual([1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]);
   });
 });
+
+describe('completeKit', () => {
+  const trainerSettings: Preset['trainerSettings'] = { enabled: false, startBpm: 100, targetBpm: 150, increment: 5, stepType: 'measures', stepValue: 4, curve: 'stepped' };
+  const stored = (gridData: Record<number, number[]>): Preset => ({
+    id: 'user_1', name: 'Saved', bpm: 100, timeSignature: '3/4', measureLength: 12, gridData, trainerSettings,
+  });
+
+  it('edt_06 fills missing tracks', () => {
+    const kick = [1, 0, 0, 0, 2, 0, 0, 0, 1, 0, 0, 0];
+    const preset = completeKit(stored({ 0: new Array(12).fill(0), 1: kick, 2: new Array(12).fill(0), 3: new Array(12).fill(0) }));
+
+    expect(Object.keys(preset.gridData)).toHaveLength(11);
+    expect(preset.gridData[1]).toEqual(kick);
+    for (let trackId = 4; trackId <= 10; trackId++) {
+      expect(preset.gridData[trackId]).toEqual(new Array(12).fill(0));
+    }
+  });
+
+  it('edge_03 cleans step values', () => {
+    const preset = completeKit(stored({ 1: [0, 1, 2, 3, 4, 255, -1, 1.5] }));
+    expect(preset.gridData[1]).toEqual([0, 1, 2, 3, 1, 1, 1, 1]);
+  });
+
+  it('fills the tracks of every factory preset', () => {
+    [...FACTORY_PRESETS, ...SPEED_TRAINER_PRESETS].forEach(factory => {
+      expect(completeKit(factory).gridData[10]).toHaveLength(factory.measureLength);
+    });
+  });
+});
+

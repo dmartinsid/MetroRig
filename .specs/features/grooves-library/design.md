@@ -35,7 +35,7 @@ flowchart TD
 | Component | Location | How to Use |
 | --------- | -------- | ---------- |
 | `loadPresetIntoUI` | `src/main.ts:707` | Loads a song, including the Trainer reset and the running-playback tempo jump |
-| `normalizePreset` | `src/state.ts:53` | Fills missing tracks of stored presets and cleans step values |
+| `normalizePreset` | `src/state.ts:53` | Runs first on every load; the new `completeKit` then fills missing tracks and cleans step values |
 | `audibleSteps`, `isAudible` | `src/trackMix.ts` | Already take any track id |
 | `togglePlay` | `src/main.ts:429` | Runs `▶` and `■` on a card |
 | `setViewMode` | `src/state.ts:172` | Widens from two modes to three |
@@ -163,7 +163,7 @@ interface Song {
 | Error Scenario | Handling | User Impact |
 | -------------- | -------- | ----------- |
 | A drum sample fails to fetch or decode | `Promise.allSettled` over the loads; each failure goes to `console.error` | That piece stays silent, the rest play |
-| Stored step value outside 0 to 3 | `normalizePreset` makes it 1 | The hit plays as `normal` |
+| Stored step value outside 0 to 3 | `completeKit` makes it 1 | The hit plays as `normal` |
 | Bar does not fit the grid | `tab_to_grid.js` refuses it | The agent asks the user before picking another bar or dropping the song |
 | User declines the confirmation | Handler returns before any change | Nothing changes |
 
@@ -180,7 +180,7 @@ interface Song {
 | Hard-coded `trackId < 4` loops | `src/main.ts:189`, `src/main.ts:276`, `src/main.ts:361`, `src/main.ts:527`, `src/audio/metronome-processor.ts:213` | A new track would be silently ignored | Each loop reads `TRACKS.length`; catalog and integration tests use track 8 |
 | `gridMirror` holds 4 rows | `src/audio/metronome-processor.ts:47` | `UPDATE_GRID` for a new track fails on read | T5 sizes it to 11 |
 | `applyPattern` writes tracks 1 to 3 only | `src/main.ts:843` | A groove leaves stale cymbals behind | T11 covers tracks 1 to 10 |
-| `FACTORY_PRESETS` and speed trainers store 4 tracks | `src/state.ts:269` | Loading them leaves new tracks undefined | `normalizePreset` runs on every load |
+| `FACTORY_PRESETS` and speed trainers store 4 tracks | `src/state.ts:269` | Loading them leaves new tracks undefined | `completeKit` runs on every load |
 | Community tabs can be wrong | `src/songs.ts` | A groove differs from the record | The revision is stored, and the user approves by ear |
 | Existing Rust tests assert unity gain on value 1 | `src/lib.rs:1633` | They fail by design with `normal` at 0.7 | They change in T2 to the spec's gain, and nothing else in them |
 
