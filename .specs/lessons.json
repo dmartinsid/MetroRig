@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 26,
+  "next_id": 32,
   "lessons": [
     {
       "id": "L-001",
@@ -454,6 +454,114 @@
       ],
       "created": "2026-11-01T18:13:35Z",
       "last_seen": "2026-11-01T18:13:35Z"
+    },
+    {
+      "id": "L-026",
+      "key": "ac_gap::when display order differs from id order place rows by list position and test the drawn rows rather than the data array",
+      "text": "When display order differs from id order, place rows by list position, and test the drawn rows rather than the data array.",
+      "signal": "ac_gap",
+      "scope": "",
+      "status": "candidate",
+      "features": [
+        "house-kit"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "C16"
+      ],
+      "created": "2026-11-01T22:10:54Z",
+      "last_seen": "2026-11-01T22:10:54Z"
+    },
+    {
+      "id": "L-027",
+      "key": "weak_test::pin each measured level per recording floors on one pair of recordings let the levels drift",
+      "text": "Pin each measured level per recording; floors on one pair of recordings let the levels drift.",
+      "signal": "weak_test",
+      "scope": "",
+      "status": "candidate",
+      "features": [
+        "house-kit"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "C10"
+      ],
+      "created": "2026-11-01T22:10:54Z",
+      "last_seen": "2026-11-01T22:10:54Z"
+    },
+    {
+      "id": "L-028",
+      "key": "weak_test::a rule that says everything else stays the same needs a pin of the old value of every item not a check on the changed fields",
+      "text": "A rule that says everything else stays the same needs a pin of the old value of every item, not a check on the changed fields.",
+      "signal": "weak_test",
+      "scope": "",
+      "status": "candidate",
+      "features": [
+        "house-kit"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "C24"
+      ],
+      "created": "2026-11-01T22:10:54Z",
+      "last_seen": "2026-11-01T22:10:54Z"
+    },
+    {
+      "id": "L-029",
+      "key": "weak_test::mute and solo tests press every control on every new track not one control per track",
+      "text": "Mute and Solo tests press every control on every new track, not one control per track.",
+      "signal": "weak_test",
+      "scope": "",
+      "status": "candidate",
+      "features": [
+        "house-kit"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "C20"
+      ],
+      "created": "2026-11-01T22:10:54Z",
+      "last_seen": "2026-11-01T22:10:54Z"
+    },
+    {
+      "id": "L-030",
+      "key": "weak_test::test a sample builder by running it on made up sources and comparing each output to its exact mix not by reading its constants",
+      "text": "Test a sample builder by running it on made-up sources and comparing each output to its exact mix, not by reading its constants.",
+      "signal": "weak_test",
+      "scope": "",
+      "status": "candidate",
+      "features": [
+        "house-kit"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "C37"
+      ],
+      "created": "2026-11-01T22:10:54Z",
+      "last_seen": "2026-11-01T22:10:54Z"
+    },
+    {
+      "id": "L-031",
+      "key": "ac_gap::a rule worded for any track must name the click which has its own code path in the engine",
+      "text": "A rule worded for any track must name the Click, which has its own code path in the engine.",
+      "signal": "ac_gap",
+      "scope": "",
+      "status": "candidate",
+      "features": [
+        "house-kit"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "HK-07"
+      ],
+      "created": "2026-11-01T22:10:54Z",
+      "last_seen": "2026-11-01T22:10:54Z"
     }
   ]
 }
