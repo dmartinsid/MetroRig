@@ -378,9 +378,9 @@ T17
 
 **Done when**:
 
-- [ ] Build the capture `.specs/features/interface-v2/captures/editor.png`
-- [ ] Gate check passes: `npx vitest run && npx vite build`
-- [ ] Test count: 136 tests pass (no silent deletions)
+- [x] Build the capture `.specs/features/interface-v2/captures/editor.png`
+- [x] Gate check passes: `npx vitest run && npx vite build`
+- [x] Test count: 136 tests pass (no silent deletions)
 
 **Tests**: none
 **Gate**: full
