@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MetroRig — Stadium Mode</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          "colors": {
+            "error-container": "#93000a",
+            "text-muted": "#9CA3AF",
+            "inverse-primary": "#106e00",
+            "background": "#13131b",
+            "primary": "#efffe3",
+            "on-tertiary": "#373100",
+            "tertiary-container": "#f7df00",
+            "on-tertiary-fixed": "#201c00",
+            "on-secondary-container": "#005669",
+            "surface-variant": "#34343d",
+            "outline-variant": "#3c4b35",
+            "on-error-container": "#ffdad6",
+            "on-surface-variant": "#baccb0",
+            "error": "#ffb4ab",
+            "on-primary-fixed": "#022100",
+            "track-hihat": "#00FF94",
+            "on-error": "#690005",
+            "surface-bright": "#393842",
+            "track-snare": "#00D4FF",
+            "surface": "#13131b",
+            "tertiary": "#fff9ee",
+            "on-background": "#e4e1ed",
+            "on-primary-container": "#107100",
+            "tertiary-fixed-dim": "#dec800",
+            "surface-container-highest": "#34343d",
+            "surface-container-lowest": "#0d0d16",
+            "text-primary": "#F3F4F6",
+            "border-glass": "rgba(255, 255, 255, 0.08)",
+            "on-primary": "#053900",
+            "primary-container": "#39ff14",
+            "track-click": "#FFB800",
+            "surface-container-high": "#292932",
+            "surface-recessed": "rgba(8, 8, 16, 0.8)",
+            "secondary-fixed": "#b4ebff",
+            "track-kick": "#FF2D55",
+            "surface-container-low": "#1b1b23",
+            "on-surface": "#e4e1ed",
+            "surface-tint": "#2ae500",
+            "cell-empty": "rgba(255, 255, 255, 0.03)",
+            "secondary-fixed-dim": "#3cd7ff",
+            "secondary": "#a2e7ff",
+            "outline": "#85967c",
+            "on-primary-fixed-variant": "#095300",
+            "surface-dim": "#13131b",
+            "primary-fixed-dim": "#2ae500",
+            "inverse-on-surface": "#302f39",
+            "tertiary-fixed": "#fde400",
+            "on-secondary-fixed": "#001f27",
+            "on-tertiary-container": "#6d6200",
+            "surface-container": "#1f1f28",
+            "on-secondary": "#003642",
+            "surface-glass": "rgba(255, 255, 255, 0.04)",
+            "secondary-container": "#00d2fd",
+            "primary-fixed": "#79ff5b",
+            "on-secondary-fixed-variant": "#004e5f",
+            "inverse-surface": "#e4e1ed",
+            "on-tertiary-fixed-variant": "#504700"
+          },
+          "borderRadius": {
+            "DEFAULT": "0.125rem",
+            "lg": "0.25rem",
+            "xl": "0.5rem",
+            "full": "0.75rem"
+          },
+          "spacing": {
+            "gutter": "1.5rem",
+            "margin-mobile": "1rem",
+            "space-xs": "0.25rem",
+            "space-md": "0.75rem",
+            "space-lg": "1rem",
+            "margin": "2rem",
+            "space-2xl": "2rem",
+            "space-sm": "0.4rem",
+            "space-xl": "1.5rem",
+            "gutter-beat": "0.5rem",
+            "gutter-sm": "0.4rem"
+          },
+          "fontFamily": {
+            "badge-caps": ["JetBrains Mono"],
+            "mono-selector": ["JetBrains Mono"],
+            "headline-editor": ["JetBrains Mono"],
+            "metadata-header": ["JetBrains Mono"],
+            "display-stadium": ["JetBrains Mono"],
+            "action-transport-lg": ["Inter"],
+            "control-interactive": ["Inter"],
+            "field-micro-label": ["Inter"],
+            "badge-instrument": ["Inter"],
+            "label-card-header": ["Inter"],
+            "title-brand": ["JetBrains Mono"],
+            "headline-editor-mobile": ["JetBrains Mono"],
+            "body-default": ["Inter"],
+            "grid-step-index": ["JetBrains Mono"],
+            "display-stadium-mobile": ["JetBrains Mono"],
+            "telemetry-timer": ["JetBrains Mono"],
+            "action-transport-md": ["Inter"]
+          },
+          "fontSize": {
+            "badge-caps": ["9.6px", { "lineHeight": "12px", "letterSpacing": "0.1em", "fontWeight": "700" }],
+            "mono-selector": ["13.6px", { "lineHeight": "18px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "headline-editor": ["64px", { "lineHeight": "1.0", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "metadata-header": ["12.8px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "400" }],
+            "display-stadium": ["128px", { "lineHeight": "1.0", "letterSpacing": "-0.05em", "fontWeight": "900" }],
+            "action-transport-lg": ["19.2px", { "lineHeight": "24px", "letterSpacing": "0.1em", "fontWeight": "700" }],
+            "control-interactive": ["13.6px", { "lineHeight": "18px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "field-micro-label": ["11.2px", { "lineHeight": "14px", "letterSpacing": "0.06em", "fontWeight": "600" }],
+            "badge-instrument": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+            "label-card-header": ["13.6px", { "lineHeight": "18px", "letterSpacing": "0.08em", "fontWeight": "700" }],
+            "title-brand": ["24px", { "lineHeight": "32px", "letterSpacing": "0em", "fontWeight": "700" }],
+            "headline-editor-mobile": ["40px", { "lineHeight": "1.0", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+            "body-default": ["16px", { "lineHeight": "24px", "letterSpacing": "0.02em", "fontWeight": "400" }],
+            "grid-step-index": ["11.2px", { "lineHeight": "14px", "letterSpacing": "0em", "fontWeight": "400" }],
+            "display-stadium-mobile": ["64px", { "lineHeight": "1.0", "letterSpacing": "-0.04em", "fontWeight": "900" }],
+            "telemetry-timer": ["19.2px", { "lineHeight": "24px", "letterSpacing": "0.15em", "fontWeight": "400" }],
+            "action-transport-md": ["16px", { "lineHeight": "20px", "letterSpacing": "0.1em", "fontWeight": "700" }]
+          }
+        }
+      }
+    };
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1;
+    }
+    @keyframes sweepRotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .sweep-hand {
+      transform-origin: 260px 260px;
+      animation: sweepRotate 2s linear infinite;
+    }
+  </style>
+</head>
+<body class="bg-[#080810] text-text-primary min-h-screen flex flex-col font-body-default text-body-default antialiased overflow-x-hidden selection:bg-primary-container selection:text-background">
+<!-- BACKGROUND RADIAL PHOSPHOR FIELD -->
+<div class="fixed inset-0 pointer-events-none z-0">
+<div class="absolute top-1/2 left-1/3 -translate-x-1/2 -translate-y-1/2 w-[720px] h-[720px] rounded-full bg-primary-container/[0.035] blur-[140px]"></div>
+<div class="absolute bottom-0 right-1/4 w-[480px] h-[480px] rounded-full bg-track-snare/[0.025] blur-[120px]"></div>
+</div>
+<!-- SHARED TOP NAVBAR (glassmorphic rack header) -->
+<header class="docked full-width top-0 z-50 sticky border-b border-border-glass bg-surface-dim/80 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.5)]">
+<div class="flex justify-between items-center w-full px-gutter h-14 bg-surface-dim/80 border-b border-border-glass max-w-full">
+<!-- Left: Logo & Pro Badge -->
+<div class="flex items-center space-x-3">
+<span class="text-title-brand font-title-brand tracking-wider text-primary-container drop-shadow-[0_0_12px_rgba(57,255,20,0.4)]">METRORIG</span>
+<span class="px-2 py-0.5 rounded border border-primary-container/40 text-primary-container font-badge-caps text-badge-caps tracking-widest bg-primary-container/10">Pro</span>
+</div>
+<!-- Navigation Links -->
+<nav class="hidden md:flex items-center space-x-6">
+<a class="text-text-muted font-mono-selector text-mono-selector hover:text-text-primary pb-1 hover:bg-surface-glass transition-colors duration-150" href="#">Editor</a>
+<a class="text-primary-container border-b-2 border-primary-container font-mono-selector text-mono-selector font-bold pb-1" href="#">Stadium</a>
+<a class="text-text-muted font-mono-selector text-mono-selector hover:text-text-primary pb-1 hover:bg-surface-glass transition-colors duration-150" href="#">Grooves</a>
+<a class="text-text-muted font-mono-selector text-mono-selector hover:text-text-primary pb-1 hover:bg-surface-glass transition-colors duration-150" href="#">Presets</a>
+</nav>
+<!-- Center Audio Selectors (Rack style) -->
+<div class="hidden lg:flex items-center space-x-3 bg-surface-recessed px-3 py-1 rounded border border-border-glass">
+<div class="flex items-center space-x-1.5 text-text-muted font-metadata-header text-metadata-header border-r border-border-glass pr-3">
+<span class="text-[10px] uppercase tracking-wider text-text-muted/60">SOUND</span>
+<span class="text-text-primary font-mono-selector">Click: Digital</span>
+</div>
+<div class="flex items-center space-x-1.5 text-text-muted font-metadata-header text-metadata-header">
+<span class="text-[10px] uppercase tracking-wider text-text-muted/60">METER</span>
+<span class="text-primary-container font-mono-selector">4/4 Metronome</span>
+</div>
+</div>
+<!-- Right Action Controls -->
+<div class="flex items-center space-x-3">
+<button aria-label="Tune" class="p-1.5 rounded text-text-muted hover:text-text-primary hover:bg-surface-glass border border-border-glass transition-colors active:scale-[0.98]">
+<span class="material-symbols-outlined text-[18px]">tune</span>
+</button>
+<button aria-label="Settings" class="p-1.5 rounded text-text-muted hover:text-text-primary hover:bg-surface-glass border border-border-glass transition-colors active:scale-[0.98]">
+<span class="material-symbols-outlined text-[18px]">settings</span>
+</button>
+<a class="hidden sm:inline-flex items-center space-x-1 px-3 py-1.5 rounded-full border border-primary-container text-primary-container font-badge-caps text-badge-caps tracking-widest hover:bg-primary-container hover:text-surface-container-lowest transition-colors shadow-[0_0_12px_rgba(57,255,20,0.2)]" href="#">
+<span>GO TO EDITOR MODE</span>
+</a>
+</div>
+</div>
+</header>
+<!-- MAIN STADIUM STAGE -->
+<main class="relative z-10 flex-1 flex flex-col justify-center px-4 md:px-gutter py-6 max-w-7xl mx-auto w-full">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center justify-items-center">
+<!-- LEFT: HERO CONCENTRIC CIRCULAR BEAT CLOCK -->
+<section aria-label="Polar Beat Clock" class="lg:col-span-7 flex flex-col items-center justify-center w-full select-none">
+<div class="relative w-full max-w-[520px] aspect-square flex items-center justify-center">
+<!-- Outer Calibration Hairline Scale with Beat Labels -->
+<div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+<!-- Beat Labels (1, 2, 3, 4) at quarter points outside orbit -->
+<span class="absolute top-1 font-display-stadium font-black text-2xl md:text-3xl text-primary-container drop-shadow-[0_0_16px_rgba(57,255,20,0.8)] tracking-tighter">1</span>
+<span class="absolute right-2 font-display-stadium font-black text-xl md:text-2xl text-text-muted/60 tracking-tighter">2</span>
+<span class="absolute bottom-1 font-display-stadium font-black text-xl md:text-2xl text-text-muted/60 tracking-tighter">3</span>
+<span class="absolute left-2 font-display-stadium font-black text-xl md:text-2xl text-text-muted/60 tracking-tighter">4</span>
+</div>
+<!-- SVG Concentric Slices Polar Clock -->
+<svg class="w-full h-full drop-shadow-[0_12px_40px_rgba(0,0,0,0.9)] overflow-visible" viewbox="0 0 520 520">
+<defs>
+<filter height="140%" id="glow-click" width="140%" x="-20%" y="-20%">
+<fegaussianblur result="blur" stddeviation="6"></fegaussianblur>
+<fecomposite in="SourceGraphic" in2="blur" operator="over"></fecomposite>
+</filter>
+<filter height="160%" id="glow-neon" width="160%" x="-30%" y="-30%">
+<fegaussianblur result="blur" stddeviation="8"></fegaussianblur>
+<fecomposite in="SourceGraphic" in2="blur" operator="over"></fecomposite>
+</filter>
+<!-- Radial gradient core -->
+<radialgradient cx="50%" cy="50%" id="centerCore" r="50%">
+<stop offset="0%" stop-color="#161622"></stop>
+<stop offset="90%" stop-color="#080810"></stop>
+<stop offset="100%" stop-color="#1f1f28"></stop>
+</radialgradient>
+</defs>
+<!-- Outer calibration circle -->
+<circle cx="260" cy="260" fill="none" r="236" stroke="rgba(255,255,255,0.06)" stroke-dasharray="2 6" stroke-width="1"></circle>
+<circle cx="260" cy="260" fill="none" r="230" stroke="rgba(255,255,255,0.04)" stroke-width="1"></circle>
+<!-- ================= RING 0 (OUTER): AMBER CLICK (#FFB800) ================= -->
+<!-- r_out = 224, r_in = 186 | 16 slices: step angle = 22.5 deg -->
+<!-- Lit on 1 (0 deg), 2 (90 deg), 3 (180 deg), 4 (270 deg) -->
+<g id="ring-click" transform="rotate(-90 260 260)">
+<!-- Step 0 (Beat 1 - ACCENT): 0 deg to 22.5 deg -->
+<path d="M 260 36 A 224 224 0 0 1 345.7 52.8 L 331.1 88.3 A 186 186 0 0 0 260 74 Z" fill="#FFB800" filter="url(#glow-click)" stroke="#080810" stroke-width="2"></path>
+<!-- Step 1-3: Unlit -->
+<path d="M 345.7 52.8 A 224 224 0 0 1 418.4 101.6 L 391.5 128.8 A 186 186 0 0 0 331.1 88.3 Z" fill="#16161F" stroke="#080810" stroke-width="2"></path>
+<path d="M 418.4 101.6 A 224 224 0 0 1 467.2 174.3 L 432.0 188.9 A 186 186 0 0 0 391.5 128.8 Z" fill="#16161F" stroke="#080810" stroke-width="2"></path>
+<path d="M 467.2 174.3 A 224 224 0 0 1 484 260 L 446 260 A 186 186 0 0 0 432.0 188.9 Z" fill="#16161F" stroke="#080810" stroke-width="2"></path>
+<!-- Step 4 (Beat 2): 90 to 112.5 deg (LIT) -->
+<path d="M 484 260 A 224 224 0 0 1 467.2 345.7 L 432.0 331.1 A 186 186 0 0 0 446 260 Z" fill="#FFB800" fill-opacity="0.85" stroke="#080810" stroke-width="2"></path>
+<!-- Step 5-7: Unlit -->
+<path d="M 467.2 345.7 A 224 224 0 0 1 418.4 418.4 L 391.5 391.5 A 186 186 0 0 0 432.0 331.1 Z" fill="#16161F" stroke="#080810" stroke-width="2"></path>
+<path d="M 418.4 418.4 A 224 224 0 0 1 345.7 467.2 L 331.1 432.0 A 186 186 0 0 0 391.5 391.5 Z" fill="#16161F" stroke="#080810" stroke-width="2"></path>
+<path d="M 345.7 467.2 A 224 224 0 0 1 260 484 L 260 446 A 186 186 0 0 0 331.1 432.0 Z" fill="#16161F" stroke="#080810" stroke-width="2"></path>
+<!-- Step 8 (Beat 3): 180 to 202.5 deg (LIT) -->
+<path d="M 260 484 A 224 224 0 0 1 174.3 467.2 L 188.9 432.0 A 186 186 0 0 0 260 446 Z" fill="#FFB800" fill-opacity="0.85" stroke="#080810" stroke-width="2"></path>
+<!-- Step 9-11: Unlit -->
+<path d="M 174.3 467.2 A 224 224 0 0 1 101.6 418.4 L 128.8 391.5 A 186 186 0 0 0 188.9 432.0 Z" fill="#16161F" stroke="#080810" stroke-width="2"></path>
+<path d="M 101.6 418.4 A 224 224 0 0 1 52.8 345.7 L 88.3 331.1 A 186 186 0 0 0 128.8 391.5 Z" fill="#16161F" stroke="#080810" stroke-width="2"></path>
+<path d="M 52.8 345.7 A 224 224 0 0 1 36 260 L 74 260 A 186 186 0 0 0 88.3 331.1 Z" fill="#16161F" stroke="#080810" stroke-width="2"></path>
+<!-- Step 12 (Beat 4): 270 to 292.5 deg (LIT) -->
+<path d="M 36 260 A 224 224 0 0 1 52.8 174.3 L 88.3 188.9 A 186 186 0 0 0 74 260 Z" fill="#FFB800" fill-opacity="0.85" stroke="#080810" stroke-width="2"></path>
+<!-- Step 13-15: Unlit -->
+<path d="M 52.8 174.3 A 224 224 0 0 1 101.6 101.6 L 128.8 128.8 A 186 186 0 0 0 88.3 188.9 Z" fill="#16161F" stroke="#080810" stroke-width="2"></path>
+<path d="M 101.6 101.6 A 224 224 0 0 1 174.3 52.8 L 188.9 88.3 A 186 186 0 0 0 128.8 128.8 Z" fill="#16161F" stroke="#080810" stroke-width="2"></path>
+<path d="M 174.3 52.8 A 224 224 0 0 1 260 36 L 260 74 A 186 186 0 0 0 188.9 88.3 Z" fill="#16161F" stroke="#080810" stroke-width="2"></path>
+</g>
+<!-- ================= RING 1: HOT CORAL KICK (#FF2D55) ================= -->
+<!-- r_out = 182, r_in = 144 | Lit on step 0 (beat 1) & step 8 (beat 3) -->
+<g id="ring-kick" transform="rotate(-90 260 260)">
+<!-- Step 0: LIT -->
+<path d="M 260 78 A 182 182 0 0 1 329.6 91.7 L 315.1 126.9 A 144 144 0 0 0 260 116 Z" fill="#FF2D55" stroke="#080810" stroke-width="2"></path>
+<!-- Steps 1-7: Unlit -->
+<path d="M 329.6 91.7 A 182 182 0 0 1 442 260 L 404 260 A 144 144 0 0 0 315.1 126.9 Z" fill="#16161F" stroke="#080810" stroke-width="2"></path>
+<!-- Step 8: LIT -->
+<path d="M 260 442 A 182 182 0 0 1 190.4 428.3 L 204.9 393.1 A 144 144 0 0 0 260 404 Z" fill="#FF2D55" stroke="#080810" stroke-width="2"></path>
+<!-- Steps 9-15: Unlit -->
+<path d="M 190.4 428.3 A 182 182 0 0 1 78 260 L 116 260 A 144 144 0 0 0 204.9 393.1 Z" fill="#16161F" stroke="#080810" stroke-width="2"></path>
+<!-- Step 4, 12 gaps filled -->
+<path d="M 442 260 A 182 182 0 0 1 260 442 L 260 404 A 144 144 0 0 0 404 260 Z" fill="#16161F" stroke="#080810" stroke-width="2"></path>
+<path d="M 78 260 A 182 182 0 0 1 260 78 L 260 116 A 144 144 0 0 0 116 260 Z" fill="#16161F" stroke="#080810" stroke-width="2"></path>
+</g>
+<!-- ================= RING 2: ICE CYAN SNARE (#00D4FF) ================= -->
+<!-- r_out = 140, r_in = 102 | Lit on beat 2 (step 4, 90 deg) & beat 4 (step 12, 270 deg) -->
+<g id="ring-snare" transform="rotate(-90 260 260)">
+<!-- Beat 1 (Step 0-3): Unlit -->
+<path d="M 260 120 A 140 140 0 0 1 400 260 L 362 260 A 102 102 0 0 0 260 158 Z" fill="#16161F" stroke="#080810" stroke-width="2"></path>
+<!-- Step 4 (Beat 2): LIT Cyan -->
+<path d="M 400 260 A 140 140 0 0 1 389.5 313.6 L 352.4 299.1 A 102 102 0 0 0 362 260 Z" fill="#00D4FF" stroke="#080810" stroke-width="2"></path>
+<!-- Step 5-11: Unlit -->
+<path d="M 389.5 313.6 A 140 140 0 0 1 120 260 L 158 260 A 102 102 0 0 0 352.4 299.1 Z" fill="#16161F" stroke="#080810" stroke-width="2"></path>
+<!-- Step 12 (Beat 4): LIT Cyan -->
+<path d="M 120 260 A 140 140 0 0 1 130.5 206.4 L 167.6 220.9 A 102 102 0 0 0 158 260 Z" fill="#00D4FF" stroke="#080810" stroke-width="2"></path>
+<!-- Step 13-15: Unlit -->
+<path d="M 130.5 206.4 A 140 140 0 0 1 260 120 L 260 158 A 102 102 0 0 0 167.6 220.9 Z" fill="#16161F" stroke="#080810" stroke-width="2"></path>
+</g>
+<!-- ================= RING 3: MINT HI-HAT (#00FF94) ================= -->
+<!-- r_out = 98, r_in = 60 | Lit on eighth notes (steps 0, 2, 4, 6, 8, 10, 12, 14) -->
+<g id="ring-hihat" transform="rotate(-90 260 260)">
+<!-- 8 eighth note active slices alternating -->
+<!-- Step 0 -->
+<path d="M 260 162 A 98 98 0 0 1 297.5 169.4 L 282.9 204.6 A 60 60 0 0 0 260 200 Z" fill="#00FF94" stroke="#080810" stroke-width="1.5"></path>
+<!-- Step 1 -->
+<path d="M 297.5 169.4 A 98 98 0 0 1 329.3 190.7 L 302.4 217.6 A 60 60 0 0 0 282.9 204.6 Z" fill="#16161F" stroke="#080810" stroke-width="1.5"></path>
+<!-- Step 2 -->
+<path d="M 329.3 190.7 A 98 98 0 0 1 350.6 222.5 L 315.4 237.1 A 60 60 0 0 0 302.4 217.6 Z" fill="#00FF94" stroke="#080810" stroke-width="1.5"></path>
+<!-- Step 3 -->
+<path d="M 350.6 222.5 A 98 98 0 0 1 358 260 L 320 260 A 60 60 0 0 0 315.4 237.1 Z" fill="#16161F" stroke="#080810" stroke-width="1.5"></path>
+<!-- Step 4 -->
+<path d="M 358 260 A 98 98 0 0 1 350.6 297.5 L 315.4 282.9 A 60 60 0 0 0 320 260 Z" fill="#00FF94" stroke="#080810" stroke-width="1.5"></path>
+<!-- Step 5 -->
+<path d="M 350.6 297.5 A 98 98 0 0 1 329.3 329.3 L 302.4 302.4 A 60 60 0 0 0 315.4 282.9 Z" fill="#16161F" stroke="#080810" stroke-width="1.5"></path>
+<!-- Step 6 -->
+<path d="M 329.3 329.3 A 98 98 0 0 1 297.5 350.6 L 282.9 315.4 A 60 60 0 0 0 302.4 302.4 Z" fill="#00FF94" stroke="#080810" stroke-width="1.5"></path>
+<!-- Step 7 -->
+<path d="M 297.5 350.6 A 98 98 0 0 1 260 358 L 260 320 A 60 60 0 0 0 282.9 315.4 Z" fill="#16161F" stroke="#080810" stroke-width="1.5"></path>
+<!-- Step 8 -->
+<path d="M 260 358 A 98 98 0 0 1 222.5 350.6 L 237.1 315.4 A 60 60 0 0 0 260 320 Z" fill="#00FF94" stroke="#080810" stroke-width="1.5"></path>
+<!-- Step 9 -->
+<path d="M 222.5 350.6 A 98 98 0 0 1 190.7 329.3 L 217.6 302.4 A 60 60 0 0 0 237.1 315.4 Z" fill="#16161F" stroke="#080810" stroke-width="1.5"></path>
+<!-- Step 10 -->
+<path d="M 190.7 329.3 A 98 98 0 0 1 169.4 297.5 L 204.6 282.9 A 60 60 0 0 0 217.6 302.4 Z" fill="#00FF94" stroke="#080810" stroke-width="1.5"></path>
+<!-- Step 11 -->
+<path d="M 169.4 297.5 A 98 98 0 0 1 162 260 L 200 260 A 60 60 0 0 0 204.6 282.9 Z" fill="#16161F" stroke="#080810" stroke-width="1.5"></path>
+<!-- Step 12 -->
+<path d="M 162 260 A 98 98 0 0 1 169.4 222.5 L 204.6 237.1 A 60 60 0 0 0 200 260 Z" fill="#00FF94" stroke="#080810" stroke-width="1.5"></path>
+<!-- Step 13 -->
+<path d="M 169.4 222.5 A 98 98 0 0 1 190.7 190.7 L 217.6 217.6 A 60 60 0 0 0 204.6 237.1 Z" fill="#16161F" stroke="#080810" stroke-width="1.5"></path>
+<!-- Step 14 -->
+<path d="M 190.7 190.7 A 98 98 0 0 1 222.5 169.4 L 237.1 204.6 A 60 60 0 0 0 217.6 217.6 Z" fill="#00FF94" stroke="#080810" stroke-width="1.5"></path>
+<!-- Step 15 -->
+<path d="M 222.5 169.4 A 98 98 0 0 1 260 162 L 260 200 A 60 60 0 0 0 237.1 204.6 Z" fill="#16161F" stroke="#080810" stroke-width="1.5"></path>
+</g>
+<!-- ================= CENTER HUB CORE ================= -->
+<circle cx="260" cy="260" fill="url(#centerCore)" r="56" stroke="rgba(255,255,255,0.08)" stroke-width="1.5"></circle>
+<circle cx="260" cy="260" fill="#080810" r="24" stroke="#39FF14" stroke-opacity="0.3" stroke-width="1"></circle>
+<circle cx="260" cy="260" fill="#39FF14" filter="url(#glow-neon)" r="5"></circle>
+<!-- ================= LINEAR SWEEPING CLOCK HAND ================= -->
+<g class="sweep-hand">
+<!-- Glow shadow line -->
+<line stroke="#FFFFFF" stroke-linecap="round" stroke-opacity="0.85" stroke-width="2" x1="260" x2="260" y1="260" y2="34"></line>
+<!-- Tapered head pointer -->
+<circle cx="260" cy="34" fill="#FFFFFF" filter="url(#glow-neon)" r="3.5"></circle>
+</g>
+</svg>
+</div>
+<!-- Clock Telemetry Legend Strip -->
+<div class="mt-4 flex items-center space-x-6 text-[11px] font-metadata-header text-text-muted/70 tracking-widest uppercase">
+<span class="flex items-center space-x-1.5">
+<span class="w-2 h-2 rounded-full bg-track-click"></span>
+<span>Click</span>
+</span>
+<span class="flex items-center space-x-1.5">
+<span class="w-2 h-2 rounded-full bg-track-kick"></span>
+<span>Kick</span>
+</span>
+<span class="flex items-center space-x-1.5">
+<span class="w-2 h-2 rounded-full bg-track-snare"></span>
+<span>Snare</span>
+</span>
+<span class="flex items-center space-x-1.5">
+<span class="w-2 h-2 rounded-full bg-track-hihat"></span>
+<span>Hi-Hat</span>
+</span>
+</div>
+</section>
+<!-- RIGHT: STADIUM READOUT & CONTROL STACK -->
+<section class="lg:col-span-5 w-full flex justify-center">
+<!-- Smoked Glass Rack Card Container -->
+<div class="w-full max-w-[460px] bg-surface-glass backdrop-blur-[20px] rounded-xl border border-border-glass p-6 md:p-8 shadow-[0_8px_32px_rgba(0,0,0,0.5)] relative overflow-hidden flex flex-col items-center text-center">
+<!-- Subtle Top Specular Edge Highlight -->
+<div class="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+<!-- 1. Speed Trainer Selector Dropdown -->
+<div class="w-full mb-6">
+<label class="block text-left text-field-micro-label font-field-micro-label uppercase text-text-muted/70 mb-1.5">SPEED TRAINER ROUTINE</label>
+<div class="relative w-full">
+<div class="w-full h-10 px-3.5 bg-surface-recessed rounded border border-border-glass flex items-center justify-between text-mono-selector font-mono-selector text-text-primary text-sm hover:border-primary-container/40 transition-colors cursor-pointer">
+<span class="truncate">Calvagada - 148 - 190</span>
+<span class="material-symbols-outlined text-text-muted text-[18px]">expand_more</span>
+</div>
+</div>
+</div>
+<!-- 2. Practice Elapsed Timer Readout -->
+<div class="mb-2">
+<span class="text-field-micro-label font-field-micro-label uppercase tracking-widest text-text-muted/60 block mb-0.5">ELAPSED REHEARSAL</span>
+<span class="text-telemetry-timer font-telemetry-timer text-text-primary/90 tracking-[0.2em] font-normal drop-shadow-[0_0_8px_rgba(255,255,255,0.1)]">00:04:12</span>
+</div>
+<!-- 3. Giant Tempo Readout (128px mono in Stadium mode) -->
+<div class="my-4 flex items-baseline justify-center">
+<span class="text-display-stadium-mobile md:text-display-stadium font-display-stadium font-black text-primary-container tracking-tighter leading-none select-all drop-shadow-[0_0_32px_rgba(57,255,20,0.45)]">
+              120.0
+            </span>
+<span class="ml-2.5 font-display-stadium font-bold text-xl md:text-2xl text-text-muted/70 tracking-widest">
+              BPM
+            </span>
+</div>
+<!-- 4. Trainer Status Line (Cyber Yellow) -->
+<div class="mb-8 flex items-center space-x-2 px-3 py-1.5 rounded-full bg-surface-recessed border border-[#FFE600]/30 shadow-[0_0_12px_rgba(255,230,0,0.1)]">
+<span class="w-2 h-2 rounded-full bg-primary-container animate-pulse shadow-[0_0_6px_#39FF14]"></span>
+<span class="text-xs font-mono-selector font-medium text-[#FFE600] tracking-wide">
+              Trainer 120 → 160 BPM · +5 every 4 bars
+            </span>
+</div>
+<!-- 5. Instrument Orbs Row -->
+<div class="w-full mb-8 pt-4 border-t border-border-glass">
+<div class="grid grid-cols-4 gap-3 place-items-center">
+<!-- Amber Click Orb -->
+<div class="flex flex-col items-center space-y-2">
+<div class="w-12 h-12 rounded-full bg-track-click flex items-center justify-center shadow-[0_0_16px_rgba(255,184,0,0.45)] border border-[#FFD066]/40 transition-transform active:scale-95">
+<span class="material-symbols-outlined text-[#080810] text-[20px]" style="font-variation-settings: 'FILL' 1;">file_map_stack</span>
+</div>
+<span class="text-[11px] font-badge-instrument font-semibold uppercase tracking-wider text-track-click">CLICK</span>
+</div>
+<!-- Hot Coral Kick Orb -->
+<div class="flex flex-col items-center space-y-2">
+<div class="w-12 h-12 rounded-full bg-track-kick flex items-center justify-center shadow-[0_0_16px_rgba(255,45,85,0.45)] border border-[#FF7088]/40 transition-transform active:scale-95">
+<span class="material-symbols-outlined text-[#080810] text-[20px]" style="font-variation-settings: 'FILL' 1;">album</span>
+</div>
+<span class="text-[11px] font-badge-instrument font-semibold uppercase tracking-wider text-track-kick">KICK</span>
+</div>
+<!-- Ice Cyan Snare Orb -->
+<div class="flex flex-col items-center space-y-2">
+<div class="w-12 h-12 rounded-full bg-track-snare flex items-center justify-center shadow-[0_0_16px_rgba(0,212,255,0.45)] border border-[#70E7FF]/40 transition-transform active:scale-95">
+<span class="material-symbols-outlined text-[#080810] text-[20px]" style="font-variation-settings: 'FILL' 1;">radio_button_checked</span>
+</div>
+<span class="text-[11px] font-badge-instrument font-semibold uppercase tracking-wider text-track-snare">SNARE</span>
+</div>
+<!-- Mint Hi-hat Orb -->
+<div class="flex flex-col items-center space-y-2">
+<div class="w-12 h-12 rounded-full bg-track-hihat flex items-center justify-center shadow-[0_0_16px_rgba(0,255,148,0.45)] border border-[#7DFFCB]/40 transition-transform active:scale-95">
+<span class="material-symbols-outlined text-[#080810] text-[20px]" style="font-variation-settings: 'FILL' 1;">adjust</span>
+</div>
+<span class="text-[11px] font-badge-instrument font-semibold uppercase tracking-wider text-track-hihat">HI-HAT</span>
+</div>
+</div>
+</div>
+<!-- 6. Primary Action: Master Play Pill Button -->
+<div class="w-full flex justify-center">
+<button class="w-[200px] h-12 rounded-full border-2 border-primary-container bg-surface-recessed text-primary-container font-action-transport-md text-action-transport-md tracking-[0.15em] flex items-center justify-center space-x-2.5 transition-all duration-150 hover:bg-primary-container hover:text-[#080810] hover:shadow-[0_0_24px_rgba(57,255,20,0.6)] active:scale-95 cursor-pointer">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">play_arrow</span>
+<span>PLAY</span>
+</button>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- QUICK SETTINGS BAR / FOOTER TELEMETRY STRIP -->
+<footer class="relative z-10 border-t border-border-glass bg-surface-recessed/60 backdrop-blur-md py-2.5 px-gutter">
+<div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between text-xs font-metadata-header text-text-muted/60 space-y-1 sm:space-y-0">
+<!-- Audio Clock Status -->
+<div class="flex items-center space-x-4">
+<span class="flex items-center space-x-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+<span>Audio Clock: <strong class="text-text-primary/90 font-mono-selector font-normal">48.0 kHz</strong></span>
+</span>
+<span class="hidden md:inline text-border-glass">•</span>
+<span class="hidden md:inline">Latency: <strong class="text-text-primary/90 font-mono-selector font-normal">Zero-Drift Hardware Parity</strong></span>
+</div>
+<!-- DSP Engine Core Version -->
+<div class="flex items-center space-x-2">
+<span class="uppercase tracking-widest text-[10px]">DSP Engine</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-variant/40 border border-border-glass font-mono-selector text-text-primary text-[11px]">
+          MetroRig Core V2.4.8
+        </span>
+</div>
+</div>
+</footer>
+</body></html>
