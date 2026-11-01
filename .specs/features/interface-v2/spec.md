@@ -297,9 +297,9 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | MUTE-01 | P2: Mute and Solo | Tasks | Pending |
 | MUTE-02 | P2: Mute and Solo | Tasks | Pending |
 | MUTE-03 | P2: Mute and Solo | Tasks | Pending |
-| MUTE-04 | P2: Mute and Solo | Tasks | Pending |
-| MUTE-05 | P2: Mute and Solo | Tasks | Pending |
-| MUTE-06 | P2: Mute and Solo | Tasks | Pending |
+| MUTE-04 | P2: Mute and Solo | Tasks | Implementing |
+| MUTE-05 | P2: Mute and Solo | Tasks | Implementing |
+| MUTE-06 | P2: Mute and Solo | Tasks | Implementing |
 | MUTE-07 | P2: Mute and Solo | Tasks | Pending |
 | MUTE-08 | P2: Mute and Solo | Tasks | Pending |
 | MUTE-09 | P2: Mute and Solo | Tasks | Pending |
