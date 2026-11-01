@@ -56,6 +56,66 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: STAD-03 (specs)
 - last seen: 2026-11-01T03:04:06Z
 
+### L-008 - Send every entry point of an action through the same guard, and test each entry point.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `src/main.ts` · harmful: 0
+- features: grooves-library
+- evidence: GRV-01.11 (src/main.ts) (src/main.ts)
+- last seen: 2026-11-01T16:19:20Z
+
+### L-009 - Make a user intent idempotent across async initialisation, and test it with the initialisation held open.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `src/main.ts` · harmful: 0
+- features: grooves-library
+- evidence: GRV-01.5 (src/main.ts) (src/main.ts)
+- last seen: 2026-11-01T16:19:20Z
+
+### L-010 - Reach the state under test through a path that does not set the asserted value itself.
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `tests` · harmful: 0
+- features: grooves-library
+- evidence: C42 (src/index.test.ts) (tests)
+- last seen: 2026-11-01T16:19:20Z
+
+### L-011 - Start a replace test from a state that differs in every field the replacement writes.
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `tests` · harmful: 0
+- features: grooves-library
+- evidence: C40 (src/index.test.ts) (tests)
+- last seen: 2026-11-01T16:19:20Z
+
+### L-012 - Prove a rule over a group on every member of the group, not on its last one.
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `tests` · harmful: 0
+- features: grooves-library
+- evidence: C54 (tests/kit.test.ts) (tests)
+- last seen: 2026-11-01T16:19:20Z
+
+### L-013 - Assert what an action must leave alone, not only what it must change.
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `tests` · harmful: 0
+- features: grooves-library
+- evidence: C47 (src/index.test.ts) (tests)
+- last seen: 2026-11-01T16:19:20Z
+
+### L-014 - Hold a data-cleaning rule through the page path, not only through its function.
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `tests` · harmful: 0
+- features: grooves-library
+- evidence: C62 (src/index.test.ts) (tests)
+- last seen: 2026-11-01T16:19:20Z
+
+### L-015 - Pin the full mapping from each id to its file, not one sample entry.
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `tests` · harmful: 0
+- features: grooves-library
+- evidence: KIT-01.2 (tests/kit.test.ts) (tests)
+- last seen: 2026-11-01T16:19:20Z
+
+### L-016 - Record why a conditional fallback was taken, so the condition can be checked.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `specs` · harmful: 0
+- features: grooves-library
+- evidence: C12 (KIT-01.3) (specs)
+- last seen: 2026-11-01T16:19:20Z
+
+### L-017 - Check a line drawn in a gap against the strokes of the shapes beside it, which can cover the gap.
+- signal: `spec_deviation` · recurrence: 1 feature(s) · scope: `src/index.css` · harmful: 0
+- features: grooves-library
+- evidence: C3 (src/index.css) (src/index.css)
+- last seen: 2026-11-01T16:19:20Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
