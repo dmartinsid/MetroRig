@@ -97,7 +97,7 @@ Answers quoted from the user: "q10 coloca o china e sino sim. q11 recomendacao q
 
 Answer quoted from the user: "recomendacoes". It accepts Q19 to Q21.
 
-- Q19: SM Drums if its bundled terms allow redistribution. Otherwise the Open Source Drumkit plus one CC0 China hit.
+- Q19: SM Drums if its bundled terms allow redistribution. Otherwise the Open Source Drumkit plus one CC0 China hit. Changed 2026-11-01, after the user heard the kit: "O som de caixa, pratos e bumbo ta muito pior do que era. Vamos voltar pro som anterior e so deixar no novo o que nao tem pra ver." Kick, Snare and Hi-hat went back to the earlier samples; the 7 pieces that had none stay new.
 - Q20: the labels are `All` and `Open in Editor`.
 - Q21: `ghost` 0.3, `normal` 0.7, `accent` 1.0, adjusted by ear.
 
