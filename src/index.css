@@ -202,6 +202,129 @@ header {
   font-weight: 700;
 }
 
+/* ─── Grooves ────────────────────────────────────────────── */
+#grooves-view {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 100%;
+  padding: 1.5rem;
+}
+
+.genre-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.genre-tab {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-cell);
+  padding: 0.45rem 0.9rem;
+  cursor: pointer;
+}
+
+.genre-tab:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.genre-tab[aria-pressed="true"] {
+  color: var(--neon-green);
+  border-color: var(--neon-green);
+  box-shadow: 0 0 8px rgba(57, 255, 20, 0.25);
+}
+
+.song-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.song-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.2rem 0.75rem;
+  align-items: center;
+  padding: 1.1rem 1.25rem;
+}
+
+.song-title {
+  grid-column: 1 / -1;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.song-artist {
+  grid-column: 1 / -1;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.song-section {
+  grid-column: 1 / -1;
+  margin-top: 0.5rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.song-bpm {
+  font-family: var(--mono);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--neon-green);
+}
+
+.song-meter {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.song-play,
+.song-open {
+  margin-top: 0.75rem;
+  font-family: var(--mono);
+  font-weight: 700;
+  border-radius: var(--radius-control);
+  cursor: pointer;
+}
+
+.song-play {
+  height: 38px;
+  font-size: 0.95rem;
+  color: var(--neon-green);
+  background: transparent;
+  border: 1px solid var(--neon-green);
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.song-play:hover {
+  color: var(--bg);
+  background: var(--neon-green);
+}
+
+.song-open {
+  height: 38px;
+  padding: 0 0.75rem;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  background: var(--field-bg);
+  border: 1px solid var(--glass-border);
+}
+
+.song-open:hover {
+  color: var(--text);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
 /* ─── Status Bar ─────────────────────────────────────────── */
 .status-bar {
   display: flex;
@@ -1319,6 +1442,14 @@ select:focus {
   .click-field select {
     flex: 1;
     width: 0;
+  }
+
+  #grooves-view {
+    padding: 1rem;
+  }
+
+  .song-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .stadium-display {
