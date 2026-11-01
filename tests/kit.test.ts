@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest';
+import * as fs from 'fs';
+import * as path from 'path';
 import { STADIUM_GROUPS, TRACKS, groupHit, nextStepValue } from '../src/kit';
 
 const namesOf = (trackIds: number[]) => trackIds.map(id => TRACKS[id].name);
@@ -10,6 +12,21 @@ describe('Kit', () => {
       'Click', 'Kick', 'Snare', 'Hi-hat', 'Open Hat', 'Ride', 'Ride Bell', 'Crash', 'China', 'High Tom', 'Floor Tom',
     ]);
     expect(TRACKS.map(track => track.id)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  });
+
+  it('kit_03 samples exist with a license', () => {
+    const publicDir = path.resolve(__dirname, '../public');
+    const license = fs.readFileSync(path.join(publicDir, 'kit/LICENSE.md'), 'utf8');
+    const samples = TRACKS.flatMap(track => (track.sample ? [track.sample] : []));
+    expect(samples).toHaveLength(10);
+
+    const bytes = samples.map(sample => {
+      expect(license).toContain(path.basename(sample));
+      return fs.statSync(path.join(publicDir, sample)).size;
+    });
+    expect(license).toContain('The Open Source Drum Kit');
+    expect(license).toContain('CC0');
+    expect(bytes.reduce((total, size) => total + size)).toBeLessThanOrEqual(10 * 1024 * 1024);
   });
 
   it('std_02 snare and toms group', () => {
