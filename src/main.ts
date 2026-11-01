@@ -63,6 +63,8 @@ const trackMixCards = document.getElementById('track-mix') as HTMLElement;
 const genreTabs = document.getElementById('genre-tabs') as HTMLElement;
 const songGrid = document.getElementById('song-grid') as HTMLElement;
 const figurePalette = document.getElementById('figure-palette') as HTMLElement;
+const barSelector = document.getElementById('bar-selector') as HTMLElement;
+const barButtons = [...barSelector.querySelectorAll<HTMLButtonElement>('.bar-btn')];
 const gridContainer = document.getElementById('grid-container') as HTMLElement;
 
 const presetSelector = document.getElementById('preset-selector') as HTMLSelectElement;
@@ -262,7 +264,24 @@ function drawFigurePalette() {
   });
 }
 
+// The bar the Editor shows, and the bar in play, which is the first one when stopped
+let viewBar = 0;
+let playBar = 0;
+
+function drawBarSelector() {
+  barSelector.hidden = barCount(state.activePreset) === 1;
+  barButtons.forEach((button, bar) => button.setAttribute('aria-pressed', String(bar === viewBar)));
+}
+
+barButtons.forEach((button, bar) => {
+  button.onclick = () => {
+    viewBar = bar;
+    drawGrid();
+  };
+});
+
 function drawGrid() {
+  drawBarSelector();
   gridContainer.innerHTML = '';
   const { gridData, timeSignature } = state.activePreset;
   const measureLength = state.activePreset.measureLength || 16;
@@ -313,7 +332,8 @@ function drawGrid() {
     label.style.gridColumn = '1';
     gridContainer.appendChild(label);
 
-    const trackSteps = gridData[trackId] ??= new Array(measureLength).fill(0);
+    const allSteps = gridData[trackId] ??= new Array(patternLength(state.activePreset)).fill(0);
+    const trackSteps = barSteps(allSteps, viewBar, measureLength);
 
     for (let step = 0; step < measureLength; step++) {
       const cell = document.createElement('div');
@@ -342,6 +362,7 @@ function drawGrid() {
         } else {
           trackSteps[step] = nextStepValue(trackId, trackSteps[step]);
         }
+        writeBar(allSteps, viewBar, measureLength, trackSteps);
 
         if (isAudioInit) sendTrack(trackId);
         drawGrid();
@@ -761,6 +782,8 @@ function loadPresetIntoUI(storedPreset: StoredPreset) {
   visualScheduler.cancelAll(); // Ticks of the previous preset must not overwrite this one
   const preset = completeKit(normalizePreset(storedPreset));
   state.activePreset = preset;
+  viewBar = 0;
+  playBar = 0;
   const ts = preset.trainerSettings;
   
   bpmSlider.value = String(state.activePreset.bpm);
