@@ -226,8 +226,8 @@ T16 → T17 → T18 → T19
 
 **Done when**:
 
-- [ ] `formatSteps` shows the total over 128
-- [ ] Gate check passes: `npx vitest run`
+- [x] `formatSteps` shows the total over 128
+- [x] Gate check passes: `npx vitest run`
 
 **Tests**: unit
 **Gate**: quick
