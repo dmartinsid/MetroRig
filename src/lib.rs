@@ -2,6 +2,11 @@
 use std::slice;
 
 const MAX_SAMPLES: usize = 13; // 0: Click, then the kit in src/kit.ts
+const DYNAMICS: usize = 3;
+const TAKES: usize = 3;
+const DYNAMIC_GHOST: usize = 0;
+const DYNAMIC_NORMAL: usize = 1;
+const DYNAMIC_ACCENT: usize = 2;
 const HI_HAT_TRACK: usize = 3;
 const OPEN_HAT_TRACK: usize = 4;
 const GAIN_NORMAL: f32 = 0.7;
@@ -14,6 +19,12 @@ const BARS_MAX: usize = 4;
 struct Sample {
     left_channel: Vec<f32>,
     right_channel: Vec<f32>,
+}
+
+#[derive(Clone, Copy)]
+enum Source {
+    Single,
+    Take(usize, usize), // Dynamic, take
 }
 
 struct SequencerTrack {
@@ -105,6 +116,8 @@ pub struct Engine {
 
     // Drum samples playback state
     samples: [Option<Sample>; MAX_SAMPLES],
+    bank: [[[Option<Sample>; TAKES]; DYNAMICS]; MAX_SAMPLES],
+    playback_source: [Source; MAX_SAMPLES],
     playback_offsets: [usize; MAX_SAMPLES],
     playback_active: [bool; MAX_SAMPLES],
     playback_volume: [f32; MAX_SAMPLES],
@@ -144,6 +157,28 @@ fn step_gain(step: u8) -> f32 {
     }
 }
 
+fn step_dynamic(step: u8) -> usize {
+    match step {
+        2 => DYNAMIC_ACCENT,
+        3 => DYNAMIC_GHOST,
+        _ => DYNAMIC_NORMAL,
+    }
+}
+
+// Starts at the first frame reaching 1% of peak. A silent sample matches at frame 0.
+fn trim_onset(left: &[f32], right: &[f32]) -> Sample {
+    let peak = left.iter().chain(right).fold(0.0f32, |peak, s| peak.max(s.abs()));
+    let threshold = peak * 0.01;
+    let onset = (0..left.len())
+        .find(|&i| left[i].abs() >= threshold || right[i].abs() >= threshold)
+        .unwrap_or(0);
+
+    Sample {
+        left_channel: left[onset..].to_vec(),
+        right_channel: right[onset..].to_vec(),
+    }
+}
+
 impl Engine {
     pub fn new(sample_rate: f32) -> Self {
         let tracks = std::array::from_fn(|_| SequencerTrack { steps: [0; STEPS_COUNT] });
@@ -160,6 +195,8 @@ impl Engine {
             active_click_freq: 0.0,
             active_click_amp: 0.0,
             samples: std::array::from_fn(|_| None),
+            bank: std::array::from_fn(|_| std::array::from_fn(|_| std::array::from_fn(|_| None))),
+            playback_source: [Source::Single; MAX_SAMPLES],
             playback_offsets: [0; MAX_SAMPLES],
             playback_active: [false; MAX_SAMPLES],
             playback_volume: [0.8, 1.0, 0.9, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.9, 0.9, 0.9, 0.9],
@@ -272,7 +309,8 @@ impl Engine {
         for i in 1..MAX_SAMPLES {
             let step = self.tracks[i].steps[self.step_index];
             if step > 0 {
-                if self.samples[i].is_some() {
+                if let Some(source) = self.next_source(i, step) {
+                    self.playback_source[i] = source;
                     self.playback_active[i] = true;
                     self.playback_offsets[i] = 0;
                     self.playback_gain[i] = step_gain(step);
@@ -282,6 +320,32 @@ impl Engine {
 
         // Update step index
         self.step_index = (self.step_index + 1) % self.pattern_length();
+    }
+
+    // A track with a bank plays it. Only a track without one plays its single sample.
+    fn next_source(&mut self, track: usize, step: u8) -> Option<Source> {
+        let dynamic = step_dynamic(step);
+        if self.bank[track][dynamic][0].is_some() {
+            return Some(Source::Take(dynamic, 0));
+        }
+        self.samples[track].is_some().then_some(Source::Single)
+    }
+
+    // A voice's frame, or None past the end of its recording
+    fn voice_frame(&self, track: usize, source: Source, offset: usize) -> Option<(f32, f32)> {
+        let sample = match source {
+            Source::Single => self.samples[track].as_ref(),
+            Source::Take(dynamic, take) => self.bank[track][dynamic][take].as_ref(),
+        }?;
+        Some((*sample.left_channel.get(offset)?, sample.right_channel[offset]))
+    }
+
+    // A take plays at its recorded level, with its trim already in the sample
+    fn voice_level(&self, track: usize, source: Source) -> f32 {
+        match source {
+            Source::Single => self.playback_volume[track] * self.playback_gain[track],
+            Source::Take(..) => 1.0,
+        }
     }
 
     fn pattern_length(&self) -> usize {
@@ -451,16 +515,15 @@ impl Engine {
             
             for s_idx in 1..MAX_SAMPLES {
                 if self.playback_active[s_idx] {
-                    if let Some(ref sample) = self.samples[s_idx] {
-                        let offset = self.playback_offsets[s_idx];
-                        if offset < sample.left_channel.len() {
-                            let level = self.playback_volume[s_idx] * self.playback_gain[s_idx];
-                            drums_l += sample.left_channel[offset] * level;
-                            drums_r += sample.right_channel[offset] * level;
+                    let source = self.playback_source[s_idx];
+                    match self.voice_frame(s_idx, source, self.playback_offsets[s_idx]) {
+                        Some((left, right)) => {
+                            let level = self.voice_level(s_idx, source);
+                            drums_l += left * level;
+                            drums_r += right * level;
                             self.playback_offsets[s_idx] += 1;
-                        } else {
-                            self.playback_active[s_idx] = false;
                         }
+                        None => self.playback_active[s_idx] = false,
                     }
                 }
             }
@@ -520,19 +583,26 @@ pub extern "C" fn engine_load_sample(
     let engine = unsafe { &mut *ptr };
     let left_slice = unsafe { slice::from_raw_parts(left_ptr, length) };
     let right_slice = unsafe { slice::from_raw_parts(right_ptr, length) };
+    engine.samples[sample_id as usize] = Some(trim_onset(left_slice, right_slice));
+}
 
-    // Start at the first frame reaching 1% of peak. A silent sample matches at frame 0.
-    let peak = left_slice.iter().chain(right_slice).fold(0.0f32, |peak, s| peak.max(s.abs()));
-    let threshold = peak * 0.01;
-    let onset = (0..length)
-        .find(|&i| left_slice[i].abs() >= threshold || right_slice[i].abs() >= threshold)
-        .unwrap_or(0);
-
-    let sample = Sample {
-        left_channel: left_slice[onset..].to_vec(),
-        right_channel: right_slice[onset..].to_vec(),
-    };
-    engine.samples[sample_id as usize] = Some(sample);
+// Dynamic: 0 Ghost, 1 Normal, 2 Accent
+#[no_mangle]
+pub extern "C" fn engine_load_take(
+    ptr: *mut Engine,
+    track: u32,
+    dynamic: u32,
+    take: u32,
+    left_ptr: *const f32,
+    right_ptr: *const f32,
+    length: usize
+) {
+    if ptr.is_null() || left_ptr.is_null() || right_ptr.is_null() { return; }
+    if track >= MAX_SAMPLES as u32 || dynamic >= DYNAMICS as u32 || take >= TAKES as u32 { return; }
+    let engine = unsafe { &mut *ptr };
+    let left_slice = unsafe { slice::from_raw_parts(left_ptr, length) };
+    let right_slice = unsafe { slice::from_raw_parts(right_ptr, length) };
+    engine.bank[track as usize][dynamic as usize][take as usize] = Some(trim_onset(left_slice, right_slice));
 }
 
 #[no_mangle]
@@ -1813,6 +1883,126 @@ mod tests {
     #[test]
     fn dyn_01_an_unknown_value_plays_normal() {
         assert_eq!(drum_peak(1, 9), 0.7);
+    }
+
+    // --- The take bank: every take holds one level, so the output names the take that played ---
+
+    const TAKE_FRAMES: usize = 64; // Far shorter than a step, so hits never overlap
+
+    fn take_level(dynamic: u32, take: u32) -> f32 {
+        0.1 * (dynamic + 1) as f32 + 0.02 * (take + 1) as f32
+    }
+
+    fn load_take(run: &Run, track: u32, dynamic: u32, take: u32) {
+        let left = [take_level(dynamic, take); TAKE_FRAMES];
+        let right = [-take_level(dynamic, take); TAKE_FRAMES];
+        engine_load_take(run.ptr, track, dynamic, take, left.as_ptr(), right.as_ptr(), TAKE_FRAMES);
+    }
+
+    fn load_bank(run: &Run, track: u32) {
+        for dynamic in 0..3 {
+            for take in 0..3 {
+                load_take(run, track, dynamic, take);
+            }
+        }
+    }
+
+    // What each of the steps played, read a few frames into the step
+    fn played_steps(run: &Run, steps: usize) -> Vec<f32> {
+        let step = step_samples(SR, 120.0);
+        let (left, _) = stereo_output(run.ptr, (steps as f64 * step) as usize + 10);
+        (0..steps).map(|k| left[(k as f64 * step).ceil() as usize + 2]).collect()
+    }
+
+    fn set_steps(run: &Run, track: u32, steps: &[u8]) {
+        engine_update_grid(run.ptr, track, steps.as_ptr(), steps.len());
+    }
+
+    #[test]
+    fn hk_02_kick_and_toms_map_their_dynamics() {
+        const GHOST: u32 = 0;
+        const NORMAL: u32 = 1;
+        const ACCENT: u32 = 2;
+        for track in [1, 9, 10, 11, 12] {
+            for (step, dynamic) in [(3u8, GHOST), (1, NORMAL), (2, ACCENT)] {
+                let run = Run::new(120.0, &[0; 16]);
+                load_bank(&run, track);
+                let mut grid = [0u8; 16];
+                grid[0] = step;
+                set_steps(&run, track, &grid);
+                engine_start(run.ptr);
+                let (left, right) = stereo_output(run.ptr, 2);
+                assert_eq!(left[0], take_level(dynamic, 0), "track {} step {}", track, step);
+                assert_eq!(right[0], -take_level(dynamic, 0), "track {} step {}", track, step);
+            }
+        }
+    }
+
+    #[test]
+    fn hk_06_bank_hit_has_no_step_gain() {
+        // Kick, Snare and a tom: the track's mix level does not touch a bank hit either
+        for track in [1, 2, 9, 11] {
+            for step in [3u8, 1, 2] {
+                let run = Run::new(120.0, &[0; 16]);
+                let left = [0.5f32; TAKE_FRAMES];
+                let right = [-0.25f32; TAKE_FRAMES];
+                for dynamic in 0..3 {
+                    engine_load_take(run.ptr, track, dynamic, 0, left.as_ptr(), right.as_ptr(), TAKE_FRAMES);
+                }
+                let mut grid = [0u8; 16];
+                grid[0] = step;
+                set_steps(&run, track, &grid);
+                engine_start(run.ptr);
+                let (out_l, out_r) = stereo_output(run.ptr, 2);
+                assert_eq!(out_l[0], 0.5, "track {} step {}", track, step);
+                assert_eq!(out_r[0], -0.25, "track {} step {}", track, step);
+            }
+        }
+    }
+
+    #[test]
+    fn hk_08_single_sample_keeps_its_gains() {
+        // Hi-hat, Open Hat, Ride, Ride Bell, Crash and China, all at the level 0.7
+        for track in 3..=8 {
+            assert_eq!(drum_peak(track, 3), 0.7 * 0.3, "track {}", track);
+            assert_eq!(drum_peak(track, 1), 0.7 * 0.7, "track {}", track);
+            assert_eq!(drum_peak(track, 2), 0.7 * 1.0, "track {}", track);
+        }
+
+        // A bank on another track changes nothing
+        let run = Run::new(120.0, &[0; 16]);
+        load_bank(&run, 1);
+        let sample = [1.0f32; 2];
+        engine_load_sample(run.ptr, 3, sample.as_ptr(), sample.as_ptr(), sample.len());
+        let mut grid = [0u8; 16];
+        grid[0] = 3;
+        set_steps(&run, 3, &grid);
+        engine_start(run.ptr);
+        let (left, _) = stereo_output(run.ptr, 2);
+        assert_eq!(left[0], 0.7 * 0.3);
+    }
+
+    #[test]
+    fn a_take_trims_its_onset_like_a_sample() {
+        let run = Run::new(120.0, &[0; 16]);
+        let take = [0.0f32, 0.001, 0.5, 1.0];
+        engine_load_take(run.ptr, 2, 1, 0, take.as_ptr(), take.as_ptr(), take.len());
+        let stored = unsafe { &*run.ptr }.bank[2][1][0].as_ref().unwrap();
+        assert_eq!(stored.left_channel, vec![0.5, 1.0]);
+        assert_eq!(stored.right_channel, vec![0.5, 1.0]);
+    }
+
+    #[test]
+    fn a_take_outside_the_bank_is_refused() {
+        let run = Run::new(120.0, &[0; 16]);
+        let take = [1.0f32];
+        engine_load_take(run.ptr, 13, 0, 0, take.as_ptr(), take.as_ptr(), 1);
+        engine_load_take(run.ptr, 1, 3, 0, take.as_ptr(), take.as_ptr(), 1);
+        engine_load_take(run.ptr, 1, 0, 3, take.as_ptr(), take.as_ptr(), 1);
+        engine_load_take(std::ptr::null_mut(), 1, 0, 0, take.as_ptr(), take.as_ptr(), 1);
+        engine_load_take(run.ptr, 1, 0, 0, std::ptr::null(), take.as_ptr(), 1);
+        engine_load_take(run.ptr, 1, 0, 0, take.as_ptr(), std::ptr::null(), 1);
+        assert!(unsafe { &*run.ptr }.bank.iter().flatten().flatten().all(Option::is_none));
     }
 
     #[test]
