@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { MetronomeNode } from './audio/MetronomeNode';
 import { SONGS } from './songs';
+import { STADIUM_GROUPS } from './kit';
 
 const mockInit = vi.fn().mockResolvedValue(undefined);
 const mockLoadSample = vi.fn().mockResolvedValue(undefined);
@@ -2292,6 +2293,85 @@ describe('Song Bars', () => {
 
     expect(confirmSpy).toHaveBeenCalledTimes(1);
     expect(byId('pattern-name').textContent).toBe('PAT: Battery');
+  });
+
+  // The steps each ring lights, against what the song holds in that bar
+  const ringHits = (ring: number) => [...document.querySelectorAll(`.clock-slice[data-track="${ring}"]`)].map(slice => slice.classList.contains('on'));
+  const expectClockShows = (bar: number) => {
+    STADIUM_GROUPS.forEach(({ trackIds }, ring) => {
+      const expected = Array.from({ length: 16 }, (_, step) => trackIds.some(trackId => barOf(trackId, bar)[step] > 0));
+      if (ring > 0) expect(ringHits(ring), `ring ${ring} bar ${bar}`).toEqual(expected);
+    });
+  };
+
+  it('clock_01 sixteen slices', async () => {
+    await openSong();
+    STADIUM_GROUPS.forEach((_, ring) => expect(ringHits(ring)).toHaveLength(16));
+    expect([...document.querySelectorAll('.clock-label')].map(label => label.textContent)).toEqual(['1', '2', '3', '4']);
+  });
+
+  it('clock_02 bar in play', async () => {
+    await openSong();
+    await clickPlay();
+    for (const [beatIndex, bar] of [[0, 1], [16, 2], [32, 3], [48, 4], [0, 1]]) {
+      tick({ currentBpm: 194, beatIndex });
+      expectClockShows(bar);
+    }
+    await clickPlay();
+  });
+
+  it('clock_03 changes on the first step', async () => {
+    await openSong();
+    await clickPlay();
+    tick({ currentBpm: 194, beatIndex: 15 });
+    expectClockShows(1);
+    tick({ currentBpm: 194, beatIndex: 16 });
+    expectClockShows(2);
+    await clickPlay();
+  });
+
+  it('clock_03 waits for the sound', async () => {
+    await openSong();
+    await clickPlay();
+    vi.useFakeTimers();
+    mockVisualDelay = 100;
+    tick({ currentBpm: 194, beatIndex: 16 });
+    expectClockShows(1);
+    vi.advanceTimersByTime(150);
+    expectClockShows(2);
+    vi.useRealTimers();
+    await clickPlay();
+  });
+
+  it('clock_04 stopped shows bar one', async () => {
+    await openSong();
+    pressBar(3);
+    expectClockShows(1);
+
+    await clickPlay();
+    tick({ currentBpm: 194, beatIndex: 40 });
+    expectClockShows(3);
+    await clickPlay();
+    expectClockShows(1);
+  });
+
+  it('clock_04 a press during playback leaves the clock', async () => {
+    await openSong();
+    await clickPlay();
+    tick({ currentBpm: 194, beatIndex: 16 });
+    pressBar(4);
+    expectClockShows(2);
+    await clickPlay();
+  });
+
+  it('clock_05 orb pulses', async () => {
+    await openSong();
+    await clickPlay();
+    mockGsap.fromTo.mockClear();
+    tick({ currentBpm: 194, beatIndex: 53, activeTrackIds: [2] });
+    expect(mockGsap.fromTo.mock.calls.some(call => call[0] === byId('orb-2'))).toBe(true);
+    expect(mockGsap.fromTo.mock.calls.some(call => call[0] === byId('orb-1'))).toBe(false);
+    await clickPlay();
   });
 
   it('the page holds a hidden selector of 4 bars', async () => {

@@ -412,7 +412,7 @@ function drawBeatClock() {
   STADIUM_GROUPS.forEach(({ trackIds }, ring) => {
     const radius = CLOCK_RING_OUTER - CLOCK_RING_WIDTH * ring;
     const innerRadius = radius - CLOCK_RING_WIDTH + CLOCK_RING_GAP;
-    const ringSteps = Array.from({ length: measureLength }, (_, step) => (groupHit(trackIds, gridData, step) ? 1 : 0));
+    const ringSteps = Array.from({ length: measureLength }, (_, step) => (groupHit(trackIds, gridData, playBar * measureLength + step) ? 1 : 0));
     for (let step = 0; step < measureLength; step++) {
       // A slice can't span the full circle, which a single-step measure would need
       const [x1, y1] = clockPoint(step / measureLength, radius);
