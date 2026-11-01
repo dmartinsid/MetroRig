@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 2,
+  "next_id": 8,
   "lessons": [
     {
       "id": "L-001",
@@ -22,6 +22,114 @@
       ],
       "created": "2026-10-31T17:07:39Z",
       "last_seen": "2026-10-31T17:07:39Z"
+    },
+    {
+      "id": "L-002",
+      "key": "ac_gap::return early from a stepper at its limit so a value that does not change never counts as an edit",
+      "text": "Return early from a stepper at its limit so a value that does not change never counts as an edit.",
+      "signal": "ac_gap",
+      "scope": "src/main.ts",
+      "status": "candidate",
+      "features": [
+        "interface-v2"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "src/main.ts (src/main.ts)"
+      ],
+      "created": "2026-11-01T03:04:06Z",
+      "last_seen": "2026-11-01T03:04:06Z"
+    },
+    {
+      "id": "L-003",
+      "key": "ac_gap::redraw every view whose handlers captured the active state object after replacing that object",
+      "text": "Redraw every view whose handlers captured the active state object after replacing that object.",
+      "signal": "ac_gap",
+      "scope": "src/main.ts",
+      "status": "candidate",
+      "features": [
+        "interface-v2"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "src/main.ts (src/main.ts)"
+      ],
+      "created": "2026-11-01T03:04:06Z",
+      "last_seen": "2026-11-01T03:04:06Z"
+    },
+    {
+      "id": "L-004",
+      "key": "ac_gap::when two views show one value update both on every path that changes it",
+      "text": "When two views show one value, update both on every path that changes it.",
+      "signal": "ac_gap",
+      "scope": "src/main.ts",
+      "status": "candidate",
+      "features": [
+        "interface-v2"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "src/main.ts (src/main.ts)"
+      ],
+      "created": "2026-11-01T03:04:06Z",
+      "last_seen": "2026-11-01T03:04:06Z"
+    },
+    {
+      "id": "L-005",
+      "key": "weak_test::prove a persistence rule on each kind of state and each path that could clear it",
+      "text": "Prove a persistence rule on each kind of state and each path that could clear it.",
+      "signal": "weak_test",
+      "scope": "src/index.test.ts",
+      "status": "candidate",
+      "features": [
+        "interface-v2"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "C67 (src/index.test.ts)"
+      ],
+      "created": "2026-11-01T03:04:06Z",
+      "last_seen": "2026-11-01T03:04:06Z"
+    },
+    {
+      "id": "L-006",
+      "key": "weak_test::make a documentation proof name every subject its criterion lists",
+      "text": "Make a documentation proof name every subject its criterion lists.",
+      "signal": "weak_test",
+      "scope": "docs",
+      "status": "candidate",
+      "features": [
+        "interface-v2"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "C77 (docs)"
+      ],
+      "created": "2026-11-01T03:04:06Z",
+      "last_seen": "2026-11-01T03:04:06Z"
+    },
+    {
+      "id": "L-007",
+      "key": "spec_deviation::copy a capture s colour rule into the criterion instead of paraphrasing it",
+      "text": "Copy a capture's colour rule into the criterion instead of paraphrasing it.",
+      "signal": "spec_deviation",
+      "scope": "specs",
+      "status": "candidate",
+      "features": [
+        "interface-v2"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "STAD-03 (specs)"
+      ],
+      "created": "2026-11-01T03:04:06Z",
+      "last_seen": "2026-11-01T03:04:06Z"
     }
   ]
 }
