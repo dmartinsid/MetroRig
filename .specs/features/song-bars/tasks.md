@@ -357,10 +357,10 @@ T16 → T17 → T18 → T19
 
 **Done when**:
 
-- [ ] The grid follows the bar in play
-- [ ] Pressing a bar during playback holds until the next bar, with no change in sound
-- [ ] Stop returns to bar 1
-- [ ] Gate check passes: `npx vitest run`
+- [x] The grid follows the bar in play
+- [x] Pressing a bar during playback holds until the next bar, with no change in sound
+- [x] Stop returns to bar 1
+- [x] Gate check passes: `npx vitest run`
 
 **Tests**: integration
 **Gate**: quick

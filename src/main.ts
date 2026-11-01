@@ -498,6 +498,9 @@ function togglePlay() {
       btnStadiumPlay.classList.remove('playing');
       clearInterval(timerInterval);
       visualScheduler.cancelAll();
+      viewBar = 0;
+      playBar = 0;
+      drawGrid();
       resetBeatClock();
       resetPosition();
       sequencerDot.classList.remove('lit');
@@ -693,6 +696,14 @@ function renderTick({ beatIndex, currentBpm, activeTrackIds }: TickDetail) {
   const { timeSignature } = state.activePreset;
   const measureLength = state.activePreset.measureLength || 16;
   const step = stepInBar(beatIndex, measureLength);
+
+  // A bar pressed during playback holds until here
+  const bar = barOfStep(beatIndex, measureLength);
+  if (bar !== playBar) {
+    playBar = bar;
+    viewBar = bar;
+    drawGrid();
+  }
 
   // Steps only rise within a bar, so anything else is a wrap to the next one
   if (step <= lastStep) currentBar++;

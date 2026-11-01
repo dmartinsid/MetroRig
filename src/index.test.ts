@@ -2106,6 +2106,47 @@ describe('Song Bars', () => {
     }
   });
 
+  it('edit_05 follows the bar in play', async () => {
+    await openSong();
+    await clickPlay();
+    for (const [beatIndex, bar] of [[0, 1], [15, 1], [16, 2], [32, 3], [48, 4], [63, 4], [0, 1]]) {
+      tick({ currentBpm: 194, beatIndex });
+      expect(pressedBars(), `step ${beatIndex}`).toEqual([String(bar)]);
+      expect(shown(1), `step ${beatIndex}`).toEqual(barOf(1, bar));
+    }
+    await clickPlay();
+  });
+
+  it('edit_06 press during playback', async () => {
+    await openSong();
+    await clickPlay();
+    tick({ currentBpm: 194, beatIndex: 0 });
+
+    const sent = audioCalls.length;
+    pressBar(3);
+    expect(audioCalls.length).toBe(sent); // The sound does not change
+    expect(shown(1)).toEqual(barOf(1, 3));
+
+    tick({ currentBpm: 194, beatIndex: 1 });
+    tick({ currentBpm: 194, beatIndex: 15 });
+    expect(pressedBars()).toEqual(['3']); // It holds until the next bar starts
+
+    tick({ currentBpm: 194, beatIndex: 16 });
+    expect(pressedBars()).toEqual(['2']);
+    expect(shown(1)).toEqual(barOf(1, 2));
+    await clickPlay();
+  });
+
+  it('edit_11 stop returns to bar one', async () => {
+    await openSong();
+    await clickPlay();
+    tick({ currentBpm: 194, beatIndex: 40 });
+    expect(pressedBars()).toEqual(['3']);
+    await clickPlay();
+    expect(pressedBars()).toEqual(['1']);
+    expect(shown(1)).toEqual(barOf(1, 1));
+  });
+
   it('the page holds a hidden selector of 4 bars', async () => {
     await openPage();
     expect(barButtons().map(button => button.textContent)).toEqual(['1', '2', '3', '4']);
