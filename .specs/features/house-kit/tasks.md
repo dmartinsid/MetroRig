@@ -366,9 +366,9 @@ T19 → T20
 
 **Done when**:
 
-- [ ] Battery matches its tab
-- [ ] The other 13 songs keep their grids
-- [ ] Gate check passes: `npx vitest run`
+- [x] Battery matches its tab
+- [x] The other 13 songs keep their grids
+- [x] Gate check passes: `npx vitest run`
 
 **Tests**: unit
 **Gate**: quick
