@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { barToGrid } from '../scripts/tab_to_grid.js';
+import { barToGrid, barsToGrid } from '../scripts/tab_to_grid.js';
 
 const beat = (frets: number[], unit: number, extra: Record<string, unknown> = {}, note: Record<string, unknown> = {}) =>
   ({ duration: [1, unit], notes: frets.map(fret => ({ fret, string: 0, ...note })), ...extra });
@@ -62,5 +62,42 @@ describe('barToGrid', () => {
 
   it('refuses a bar longer than the grid', () => {
     expect(() => barToGrid(bar(rest(1)), [9, 4])).toThrow('does not fit 32 steps');
+  });
+});
+
+describe('tab_to_grid', () => {
+  const kickOn = (position: number) => bar(...Array.from({ length: 4 }, (_, beatIndex) => (beatIndex === position ? beat([36], 4) : rest(4))));
+  const part = (measures: unknown[], tempo = [{ measure: 0, bpm: 120 }]) => ({ measures, automations: { tempo } });
+  const fourBars = () => [kickOn(0), kickOn(1), kickOn(2), kickOn(3)];
+
+  it('bars_doc four bars from one measure', () => {
+    const { measureLength, bars, bpm, tracks } = barsToGrid(part([kickOn(0), ...fourBars()], [{ measure: 0, bpm: 90 }, { measure: 1, bpm: 120 }]), 1);
+
+    expect(measureLength).toBe(16);
+    expect(bars).toBe(4);
+    expect(bpm).toBe(120);
+    expect(tracks[1]).toHaveLength(64);
+    expect(tracks[1].flatMap((value: number, step: number) => (value ? [step] : []))).toEqual([0, 20, 40, 60]);
+    expect(tracks[2]).toEqual(new Array(64).fill(0));
+  });
+
+  it('refuses a stretch past the end of the tab', () => {
+    expect(() => barsToGrid(part(fourBars()), 1)).toThrow('ends before measure');
+  });
+
+  it('refuses a stretch with another time signature', () => {
+    const measures = fourBars();
+    (measures[2] as Record<string, unknown>).signature = [3, 4];
+    expect(() => barsToGrid(part(measures), 0)).toThrow('changes the time signature');
+  });
+
+  it('refuses a stretch where the tempo changes', () => {
+    expect(() => barsToGrid(part(fourBars(), [{ measure: 0, bpm: 120 }, { measure: 2, bpm: 130 }]), 0)).toThrow('tempo changes');
+  });
+
+  it('refuses a stretch with a note off the grid', () => {
+    const measures = fourBars();
+    measures[3] = bar(beat([36], 12, { tuplet: 3 }), beat([36], 12, { tuplet: 3 }), beat([36], 12, { tuplet: 3 }), rest(4), rest(2));
+    expect(() => barsToGrid(part(measures), 0)).toThrow('falls between steps');
   });
 });

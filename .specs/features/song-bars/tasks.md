@@ -246,10 +246,10 @@ T16 → T17 → T18 → T19
 
 **Done when**:
 
-- [ ] `barsToGrid` returns 4 bars joined per track
-- [ ] It refuses a stretch with another time signature or a tempo change
-- [ ] The command line takes the first measure
-- [ ] Gate check passes: `npx vitest run`
+- [x] `barsToGrid` returns 4 bars joined per track
+- [x] It refuses a stretch with another time signature or a tempo change
+- [x] The command line takes the first measure
+- [x] Gate check passes: `npx vitest run`
 
 **Tests**: unit
 **Gate**: quick
