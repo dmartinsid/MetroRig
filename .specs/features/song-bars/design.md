@@ -1,7 +1,7 @@
 # Song Bars Design
 
 **Spec**: `.specs/features/song-bars/spec.md`
-**Status**: Draft
+**Status**: Approved
 
 ---
 
