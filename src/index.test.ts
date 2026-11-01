@@ -1440,3 +1440,31 @@ describe('Interface V2', () => {
     expect(sentTo(1).slice(0, 3)).toEqual([1, 0, 1]);
   });
 });
+
+describe('Grooves Library', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+    delete (globalThis as any).indexedDB;
+    localStorage.removeItem('metrorig_view_mode');
+    mockGsap.to.mockClear();
+    mockGsap.set.mockClear();
+    mockGsap.fromTo.mockClear();
+  });
+
+  it('kit_06 failed sample stays local', async () => {
+    const failure = new Error('404');
+    mockLoadSample.mockReset();
+    mockLoadSample.mockImplementation((sampleId: number) =>
+      sampleId === 8 ? Promise.reject(failure) : Promise.resolve());
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => {});
+    await openPage();
+    await clickPlay();
+
+    expect(mockLoadSample.mock.calls.map(([id]) => id).sort((a, b) => a - b)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    expect(logged).toHaveBeenCalledWith('Failed to load /kit/china.wav:', failure);
+    expect(calls('start')).toHaveLength(1);
+    expect(byId('btn-play').classList.contains('playing')).toBe(true);
+    await clickPlay();
+  });
+});

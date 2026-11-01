@@ -1,5 +1,6 @@
 import { MetronomeNode, TickDetail } from './audio/MetronomeNode';
 import { StateManager, FACTORY_PRESETS, FACTORY_GROOVES, SPEED_TRAINER_PRESETS, Preset, StoredPreset, TrainerSettings, CustomGroove, FIGURES, getBeatsPerMeasure, getBeatForStep, isSustainedStep, applyFigure, measureLengthFor, normalizePreset, startBpmFor } from './state';
+import { TRACKS } from './kit';
 import { VisualScheduler } from './visualSync';
 import { audibleSteps, createTrackMix, isAudible, toggleMute, toggleSolo } from './trackMix';
 import { formatBarStep, formatClock, formatLatency, formatSteps, formatTimer, nextDenominator } from './display';
@@ -146,6 +147,15 @@ function syncStadiumPresetSelector() {
   if (stadiumPresetSelector.selectedIndex < 0) stadiumPresetSelector.value = '';
 }
 
+// A sample that fails leaves its track silent and the rest of the kit playing
+async function loadKit() {
+  const drums = TRACKS.filter(track => track.sample);
+  const loads = await Promise.allSettled(drums.map(track => audioNode.loadSample(track.id, track.sample!)));
+  loads.forEach((load, i) => {
+    if (load.status === 'rejected') console.error(`Failed to load ${drums[i].sample}:`, load.reason);
+  });
+}
+
 // Initialize Metronome Engine
 let isAudioInit = false;
 async function initAudio() {
@@ -153,11 +163,8 @@ async function initAudio() {
   // Compile Wasm and launch worklet using assets loaded through Vite
   await audioNode.init('/pkg/metrorig_audio_bg.wasm', workletUrl);
   
-  // Load default empty samples
-  await audioNode.loadSample(1, '/kick.wav');
-  await audioNode.loadSample(2, '/snare.wav');
-  await audioNode.loadSample(3, '/hihat.wav');
-  
+  await loadKit();
+
   isAudioInit = true;
   await syncClickSound(); // Wait for click sound loading
   syncAudioSettings();
