@@ -468,10 +468,10 @@ T24 → T25 → T26 → T27 → T28
 
 **Done when**:
 
-- [ ] Each song's bar taken from its tab with T15
-- [ ] The tests of the checks for SONG-01 that this task reaches pass
-- [ ] Gate check passes: `npx vitest run`
-- [ ] Test count: at least the previous task's count (no silent deletions)
+- [x] Each song's bar taken from its tab with T15
+- [x] The tests of the checks for SONG-01 that this task reaches pass
+- [x] Gate check passes: `npx vitest run`
+- [x] Test count: at least the previous task's count (no silent deletions)
 
 **Tests**: unit
 **Gate**: quick
