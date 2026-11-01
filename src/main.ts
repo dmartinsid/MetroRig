@@ -1,5 +1,6 @@
 import { MetronomeNode, TickDetail } from './audio/MetronomeNode';
 import { StateManager, FACTORY_PRESETS, FACTORY_GROOVES, SPEED_TRAINER_PRESETS, Preset, StoredPreset, TrainerSettings, ViewMode, FIGURES, getBeatsPerMeasure, getBeatForStep, isSustainedStep, applyFigure, measureLengthFor, normalizePreset, completeKit, startBpmFor } from './state';
+import { barCount, barOfStep, barSteps, patternLength, stepInBar, writeBar } from './bars';
 import { STADIUM_GROUPS, STEP_ACCENT, STEP_GHOST, STEP_NORMAL, TRACKS, groupHit, nextStepValue } from './kit';
 import { VisualScheduler } from './visualSync';
 import { audibleSteps, createTrackMix, isAudible, toggleMute, toggleSolo } from './trackMix';
@@ -211,14 +212,15 @@ function syncPlaybackSettings() {
 function syncMeterAndGrid() {
   // Set measure length
   audioNode.setMeasureLength(state.activePreset.measureLength || 16);
-  
+  audioNode.setBars(barCount(state.activePreset));
+
   // Update active tracks
   TRACKS.forEach(track => sendTrack(track.id));
 }
 
 // The one path to the engine: silenced tracks play an empty grid, the preset keeps its steps
 function sendTrack(trackId: number) {
-  const steps = state.activePreset.gridData[trackId] || new Array(state.activePreset.measureLength || 16).fill(0);
+  const steps = state.activePreset.gridData[trackId] || new Array(patternLength(state.activePreset)).fill(0);
   audioNode.updateGrid(trackId, audibleSteps(trackMix, trackId, steps));
 }
 
@@ -365,7 +367,7 @@ function applyTrackMix() {
 
 function updatePatternBar() {
   patternName.textContent = `PAT: ${state.activePreset.name}`;
-  patternSteps.textContent = formatSteps(state.activePreset.measureLength || 16);
+  patternSteps.textContent = formatSteps(patternLength(state.activePreset));
 }
 
 // Draw Stadium beat clock: one ring per group, one slice per step, 12 o'clock is step 0
@@ -667,23 +669,25 @@ function renderTick({ beatIndex, currentBpm, activeTrackIds }: TickDetail) {
 
   updateStadiumStatus();
 
-  // Steps only rise within a bar, so anything else is a wrap to the next one
-  if (beatIndex <= lastStep) currentBar++;
-  lastStep = beatIndex;
-  patternPosValue.textContent = formatBarStep(currentBar, beatIndex + 1);
-
-  if (beatIndex === 0) footerLatency.textContent = formatLatency(audioNode.visualDelayMs());
-
-  // Beat clock
   const { timeSignature } = state.activePreset;
   const measureLength = state.activePreset.measureLength || 16;
+  const step = stepInBar(beatIndex, measureLength);
+
+  // Steps only rise within a bar, so anything else is a wrap to the next one
+  if (step <= lastStep) currentBar++;
+  lastStep = step;
+  patternPosValue.textContent = formatBarStep(currentBar, step + 1);
+
+  if (step === 0) footerLatency.textContent = formatLatency(audioNode.visualDelayMs());
+
+  // Beat clock
   const beats = getBeatsPerMeasure(timeSignature, measureLength);
   const stepDuration = 60 / Number(currentBpm) / 4; // Engine runs 4 steps per BPM beat
-  highlightBeat(getBeatForStep(beatIndex, measureLength, beats));
+  highlightBeat(getBeatForStep(step, measureLength, beats));
   gsap.killTweensOf(clockHand);
   gsap.fromTo(clockHand,
-    { rotation: (beatIndex / measureLength) * 360, svgOrigin: '0 0' },
-    { rotation: ((beatIndex + 1) / measureLength) * 360, duration: stepDuration, ease: 'none' }
+    { rotation: (step / measureLength) * 360, svgOrigin: '0 0' },
+    { rotation: ((step + 1) / measureLength) * 360, duration: stepDuration, ease: 'none' }
   );
 
   // Orbs keep a steady color and only nudge in size, avoiding luminance flashes
@@ -833,6 +837,7 @@ btnSave.onclick = () => {
     bpm: state.activePreset.bpm,
     timeSignature: state.activePreset.timeSignature,
     measureLength: state.activePreset.measureLength || 16,
+    bars: barCount(state.activePreset),
     gridData: JSON.parse(JSON.stringify(state.activePreset.gridData)),
     trainerSettings: JSON.parse(JSON.stringify(state.activePreset.trainerSettings))
   };
