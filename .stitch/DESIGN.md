@@ -113,7 +113,7 @@ The product promise is "rock-solid timing accuracy", so the interface has to fee
 
 ### Product Shape
 
-The native object is **a pattern of 1 or 4 bars on a loop**: 11 tracks (Click, Kick, Snare, Hi-hat, Open Hat, Ride, Ride Bell, Crash, China, High Tom, Floor Tom) multiplied by up to 32 steps, where a step is a sixteenth. Each cell holds `0` (off), `1` (normal), `2` (accent) or `3` (ghost, drum tracks only). The product has no feed, only this one matrix shown two ways, plus the Grooves screen that loads a song into it:
+The native object is **a pattern of 1 or 4 bars on a loop**: 13 tracks (Click, Kick, Snare, Hi-hat, Open Hat, Ride, Ride Bell, Crash, China, High Tom, Mid Tom, Low Tom, Floor Tom) multiplied by up to 32 steps, where a step is a sixteenth. Each cell holds `0` (off), `1` (normal), `2` (accent) or `3` (ghost, drum tracks only). The product has no feed, only this one matrix shown two ways, plus the Grooves screen that loads a song into it:
 
 | View | Projection | Purpose | Lead element |
 |:---|:---|:---|:---|
@@ -153,7 +153,7 @@ The `surface-container*` and `outline*` values in the frontmatter are these flat
 
 ### Track Colours
 
-Eleven fixed identities, bound through `data-track`. Each colour appears on the track label, its step cells and its mix card. The Stadium's 4 groups take the first four colours, by position.
+Thirteen fixed identities, bound through `data-track`. Each colour appears on the track label, its step cells and its mix card. The Stadium's 4 groups take the first four colours, by position.
 
 | Track | ID | Name | Hex |
 |:---|:---|:---|:---|
@@ -167,6 +167,8 @@ Eleven fixed identities, bound through `data-track`. Each colour appears on the 
 | Crash | 7 | **Orange Crash** | `#FF8A3D` |
 | China | 8 | **Pink China** | `#FF5CA8` |
 | High Tom | 9 | **Blue High Tom** | `#4D9DFF` |
+| Mid Tom | 11 | **Cornflower Mid Tom** | `#5D97FF` |
+| Low Tom | 12 | **Cobalt-Periwinkle Low Tom** | `#6C92FF` |
 | Floor Tom | 10 | **Periwinkle Floor Tom** | `#7C8CFF` |
 
 Never reassign these to other meanings. Red here is the Kick; it doesn't mean danger.
@@ -233,7 +235,7 @@ Genre tabs (`All`, `Rock`, `Metal`, `Metalcore`, `Blues`) above a grid of glass 
 
 ### Status Bar
 
-A hairline-topped footer in both modes, mono and small. Left: a lit dot and `AUDIO CLOCK: 44.1 kHz 128 SPLS (2.9ms)`. Right: `LATENCY: --` until the first tick, then the value the browser reports. It shows real values only.
+A hairline-topped footer in both modes, mono and small. Left: a lit dot and `AUDIO CLOCK: 44.1 kHz 128 SPLS (2.9ms)`. Right: `LATENCY: --` until the first tick, then the value the browser reports. It shows real values only. A third line reads `Kick, snare and toms: The House Kit by Better Mixes — thanks!`, with `Better Mixes` an underlined link to https://www.youtube.com/@BetterMixes that opens in a new tab; it takes the full width of the bar, so it wraps on narrow screens. The credit shows on every screen.
 
 ### Inputs & Forms
 
@@ -245,7 +247,7 @@ A hairline-topped footer in both modes, mono and small. Left: a lit dot and `AUD
 
 ### Sequencer Grid (hero)
 
-Row 1 starts with `BEAT/SUB`, then the count: `1 e & a 2 e & a 3 e & a 4 e & a`, or `1 & 2 &` when a beat has two steps. Beat numbers are bold at full opacity. Below are eleven rows, each starting with a rectangular outlined track label on a faint tint. Columns are `auto` then equal `1fr` steps with a 0.4rem gap, and a 0.5rem spacer between beats makes the pulse readable at a glance. Cells are 32px tall, at least 14px wide, with a 6px radius and 0.15s transitions.
+Row 1 starts with `BEAT/SUB`, then the count: `1 e & a 2 e & a 3 e & a 4 e & a`, or `1 & 2 &` when a beat has two steps. Beat numbers are bold at full opacity. Below are thirteen rows, each starting with a rectangular outlined track label on a faint tint. Columns are `auto` then equal `1fr` steps with a 0.4rem gap, and a 0.5rem spacer between beats makes the pulse readable at a glance. Cells are 32px tall, at least 14px wide, with a 6px radius and 0.15s transitions.
 
 | Cell state | Value | Treatment |
 |:---|:---|:---|
@@ -269,7 +271,7 @@ A mono line under the grid: `PAT: <preset name>`, `STEPS: 16/128`, `RESOLUTION: 
 
 ### Track Mix
 
-Eleven small cards under the sequencer, one per track: a track dot, the name, then `M` and `S`. A pressed button takes the track colour. Several tracks can be soloed, Solo wins over Mute, and the state lasts until the page reloads. It is never saved in a preset.
+Thirteen small cards under the sequencer, one per track: a track dot, the name, then `M` and `S`. They sit four to a row (two on narrow screens); since 13 fills no row evenly, the last card takes a full row. A pressed button takes the track colour. Several tracks can be soloed, Solo wins over Mute, and the state lasts until the page reloads. It is never saved in a preset.
 
 ### Figure Palette
 
@@ -289,7 +291,7 @@ Not a floating notification. It's an inline card in the control column, between 
 
 ### Beat Clock
 
-The hero of Stadium: an SVG up to 700px wide (`min(70vh, 90vw)`). Four concentric rings run outside in as `CLICK`, `KICK`, `SNARE/TOMS` (Snare, High Tom, Floor Tom) and `CYMBALS` (Hi-hat, Open Hat, Ride, Ride Bell, Crash, China), each with one annular slice per step, lit when any track of its group hits, and a small gap between rings. Empty Kick and Snare slices merge into a continuous ring. Slice fills are track colour when on, a 30% mix when sustained, and Dead Slice when empty, separated by thin Studio Black strokes. Faint lines mark each beat, a small bevelled disc fills the centre around a green hub, and mono numerals sit outside the rings, turning neon on the current beat. A thin white hand at 70% opacity sweeps linearly from the hub, step by step, with a small dot at its tip. A dotted legend sits below the clock. On 4 bars the clock draws only the bar in play, changing at each bar, and bar 1 when stopped.
+The hero of Stadium: an SVG up to 700px wide (`min(70vh, 90vw)`). Four concentric rings run outside in as `CLICK`, `KICK`, `SNARE/TOMS` (Snare, High Tom, Mid Tom, Low Tom, Floor Tom) and `CYMBALS` (Hi-hat, Open Hat, Ride, Ride Bell, Crash, China), each with one annular slice per step, lit when any track of its group hits, and a small gap between rings. Empty Kick and Snare slices merge into a continuous ring. Slice fills are track colour when on, a 30% mix when sustained, and Dead Slice when empty, separated by thin Studio Black strokes. Faint lines mark each beat, a small bevelled disc fills the centre around a green hub, and mono numerals sit outside the rings, turning neon on the current beat. A thin white hand at 70% opacity sweeps linearly from the hub, step by step, with a small dot at its tip. A dotted legend sits below the clock. On 4 bars the clock draws only the bar in play, changing at each bar, and bar 1 when stopped.
 
 ### Stadium Readout
 
@@ -369,7 +371,7 @@ Don't invent copy, stats, session history, accounts or genres. Practice logs are
 
 **Editor Mode**
 
-> A dark desktop audio plugin called MetroRig on a near-black #080810 background. Sticky glass header: neon green #39FF14 monospaced logo with a small outlined PRO badge, two dark selectors reading "Click: Digital" and "4/4 Metronome". Below, two columns at 2:1. The left glass panel dominates: a muted mono header "4/4 Metronome · 4/4 · 120 BPM", a row of small figure chips (Step, Quarter ●···, Eighths ●·●·, Gallop ●·●●, Rev. Gallop ●●·●, 16ths ●●●●, Rest ····), then a 16-step sequencer with a count row "BEAT/SUB 1 e & a 2 e & a…" and eleven rows with rectangular labels CLICK amber #FFB800, KICK coral #FF2D55, SNARE cyan #00D4FF, HI-HAT mint #00FF94, OPEN HAT #7CFFC4, RIDE #B388FF, RIDE BELL #E0B3FF, CRASH #FF8A3D, CHINA #FF5CA8, HIGH TOM #4D9DFF, FLOOR TOM #7C8CFF. Portrait cells with 6px corners, small gaps grouping them in fours. Show Rock Groove: hits as tinted glowing cells with a dot, the first Click as a solid accent with ▲. Under the grid, a mono line "PAT: Rock Groove STEPS: 16/128 RESOLUTION: 1/16th POS: BAR 01 · STEP 01", then eleven small cards with M and S buttons, one per track. The right column stacks glass cards: "TEMPO BUS" with a huge 64px neon "120 BPM", a thin slider, an outlined "▶ PLAY" button; a "MEASURE" card; an open "TEMPO TRAINER" card. A thin mono footer reads "AUDIO CLOCK: 44.1 kHz 128 SPLS (2.9ms)" and "LATENCY: --". Smoked glass cards with 12px corners and 1px white-at-8% borders.
+> A dark desktop audio plugin called MetroRig on a near-black #080810 background. Sticky glass header: neon green #39FF14 monospaced logo with a small outlined PRO badge, two dark selectors reading "Click: Digital" and "4/4 Metronome". Below, two columns at 2:1. The left glass panel dominates: a muted mono header "4/4 Metronome · 4/4 · 120 BPM", a row of small figure chips (Step, Quarter ●···, Eighths ●·●·, Gallop ●·●●, Rev. Gallop ●●·●, 16ths ●●●●, Rest ····), then a 16-step sequencer with a count row "BEAT/SUB 1 e & a 2 e & a…" and thirteen rows with rectangular labels CLICK amber #FFB800, KICK coral #FF2D55, SNARE cyan #00D4FF, HI-HAT mint #00FF94, OPEN HAT #7CFFC4, RIDE #B388FF, RIDE BELL #E0B3FF, CRASH #FF8A3D, CHINA #FF5CA8, HIGH TOM #4D9DFF, MID TOM #5D97FF, LOW TOM #6C92FF, FLOOR TOM #7C8CFF. Portrait cells with 6px corners, small gaps grouping them in fours. Show Rock Groove: hits as tinted glowing cells with a dot, the first Click as a solid accent with ▲. Under the grid, a mono line "PAT: Rock Groove STEPS: 16/128 RESOLUTION: 1/16th POS: BAR 01 · STEP 01", then thirteen small cards with M and S buttons, one per track. The right column stacks glass cards: "TEMPO BUS" with a huge 64px neon "120 BPM", a thin slider, an outlined "▶ PLAY" button; a "MEASURE" card; an open "TEMPO TRAINER" card. A thin mono footer reads "AUDIO CLOCK: 44.1 kHz 128 SPLS (2.9ms)" and "LATENCY: --", then a credit line "Kick, snare and toms: The House Kit by Better Mixes — thanks!" with Better Mixes underlined as a link. Smoked glass cards with 12px corners and 1px white-at-8% borders.
 
 **Practice Stadium Mode**
 

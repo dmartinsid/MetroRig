@@ -469,8 +469,8 @@ T19 → T20
 
 **Done when**:
 
-- [ ] `grep` finds Mid Tom and Low Tom
-- [ ] Gate check passes: `npx vitest run && npx vite build`
+- [x] `grep` finds Mid Tom and Low Tom
+- [x] Gate check passes: `npx vitest run && npx vite build`
 
 **Tests**: none
 **Gate**: full
