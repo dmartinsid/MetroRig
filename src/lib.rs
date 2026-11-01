@@ -458,8 +458,8 @@ impl Engine {
             }
 
             // Combine (Left / Right)
-            out_l[i] = click_out_l + drums_l;
-            out_r[i] = click_out_r + drums_r;
+            out_l[i] = (click_out_l + drums_l).clamp(-1.0, 1.0);
+            out_r[i] = (click_out_r + drums_r).clamp(-1.0, 1.0);
         }
     }
 }
@@ -1745,6 +1745,37 @@ mod tests {
         engine_start(run.ptr);
         let (left, right) = stereo_output(run.ptr, 20000);
         assert_eq!(*sounding_frames(&left, &right).last().unwrap(), 19999);
+    }
+
+    #[test]
+    fn kit_05_output_stays_in_range() {
+        for sign in [1.0f32, -1.0] {
+            let grid = [2u8; 16];
+            let run = Run::new(120.0, &grid);
+            let sample = [sign; 64];
+            for track in 1..=10u32 {
+                engine_load_sample(run.ptr, track, sample.as_ptr(), sample.as_ptr(), sample.len());
+                engine_update_grid(run.ptr, track, grid.as_ptr(), 16);
+            }
+            engine_start(run.ptr);
+            let (left, right) = stereo_output(run.ptr, 64);
+            assert_eq!(left[0], sign, "every voice at once reaches full scale and stops there");
+            assert_eq!(right[0], sign);
+            assert!(left.iter().chain(right.iter()).all(|frame| frame.abs() <= 1.0));
+        }
+    }
+
+    #[test]
+    fn kit_07_click_needs_no_drum_samples() {
+        let mut click = [0u8; 16];
+        click[0] = 2;
+        let run = Run::new(120.0, &click); // The harness loads only the click, on slot 0
+        for track in 1..=10u32 {
+            engine_update_grid(run.ptr, track, click.as_ptr(), 16);
+        }
+        engine_start(run.ptr);
+        let (left, _) = stereo_output(run.ptr, 1);
+        assert_eq!(left[0], 1.0);
     }
 
     #[test]
