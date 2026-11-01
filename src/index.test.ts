@@ -1780,4 +1780,135 @@ describe('Grooves Library', () => {
     expect(SONGS).toEqual(original);
     expect(byId('preset-selector').value).toBe(`user:${saved.id}`);
   });
+
+  const songButton = (title: string, selector: string) =>
+    cards().find(card => card.querySelector('.song-title')?.textContent === title)!.querySelector<HTMLElement>(selector)!;
+  const pressPlay = async (title: string) => {
+    songButton(title, '.song-play').click();
+    await flush();
+  };
+
+  it('grv_05 play stays on screen', async () => {
+    await openPage();
+    openScreen('grooves');
+    await pressPlay('Enter Sandman');
+
+    expect(byId('pattern-name').textContent).toBe('PAT: Enter Sandman');
+    expect(calls('start')).toHaveLength(1);
+    expect(byId('btn-play').classList.contains('playing')).toBe(true);
+    expect(shownScreens()).toEqual(['grooves-view']);
+    await clickPlay();
+  });
+
+  it('grv_06 playing mark', async () => {
+    await openPage();
+    expect(songButton('Battery', '.song-play').textContent).toBe('▶');
+    await pressPlay('Battery');
+
+    expect(songButton('Battery', '.song-play').textContent).toBe('■');
+    expect(songButton('Cocaine', '.song-play').textContent).toBe('▶');
+
+    genreTab('Metal').click(); // A redraw keeps the mark
+    expect(songButton('Battery', '.song-play').textContent).toBe('■');
+
+    await clickPlay(); // Stopping from the Editor clears it too
+    expect(songButton('Battery', '.song-play').textContent).toBe('▶');
+  });
+
+  it('grv_07 stop keeps song', async () => {
+    await openPage();
+    await pressPlay('Cocaine');
+    await pressPlay('Cocaine');
+
+    expect(calls('stop')).toHaveLength(1);
+    expect(byId('btn-play').classList.contains('playing')).toBe(false);
+    expect(songButton('Cocaine', '.song-play').textContent).toBe('▶');
+    expect(byId('pattern-name').textContent).toBe('PAT: Cocaine');
+  });
+
+  it('grv_08 switch during playback', async () => {
+    await openPage();
+    await pressPlay('Back in Black');
+    await pressPlay('Master of Puppets');
+
+    expect(calls('start')).toHaveLength(1);
+    expect(calls('stop')).toHaveLength(0);
+    expect(lastCall('setBpm')).toEqual([212]);
+    expect(songButton('Master of Puppets', '.song-play').textContent).toBe('■');
+    expect(songButton('Back in Black', '.song-play').textContent).toBe('▶');
+    await clickPlay();
+  });
+
+  it('grv_11 asks before replacing edits', async () => {
+    const asked = vi.fn(() => true);
+    vi.stubGlobal('confirm', asked);
+    await openPage();
+    await pressPlay('Battery');
+    await pressPlay('Battery');
+    expect(asked).not.toHaveBeenCalled(); // Nothing was edited yet
+
+    cell(1, 1).click();
+    await pressPlay('Cocaine');
+    expect(asked).toHaveBeenCalledOnce();
+    expect(byId('pattern-name').textContent).toBe('PAT: Cocaine');
+    await clickPlay();
+  });
+
+  it('grv_12 decline changes nothing', async () => {
+    vi.stubGlobal('confirm', vi.fn(() => false));
+    await openPage();
+    await pressPlay('Battery');
+    openScreen('editor');
+    cell(8, 1).click();
+    openScreen('grooves');
+    audioCalls.length = 0;
+
+    await pressPlay('Cocaine');
+
+    expect(byId('pattern-name').textContent).toBe('PAT: Battery');
+    expect(cell(8, 1).classList.contains('active')).toBe(true);
+    expect(audioCalls).toEqual([]);
+    expect(byId('btn-play').classList.contains('playing')).toBe(true);
+    expect(shownScreens()).toEqual(['grooves-view']);
+    await clickPlay();
+  });
+
+  it('song_05 load replaces everything', async () => {
+    await openPage();
+    byId('trainer-enable').checked = true;
+    byId('trainer-enable').dispatchEvent(new Event('change'));
+    cell(7, 3).click();
+    vi.stubGlobal('confirm', vi.fn(() => true));
+
+    await pressPlay('Don\'t Need You');
+
+    expect(byId('bpm-slider').value).toBe('154');
+    expect(byId('time-sig-num').value).toBe('4');
+    expect(byId('trainer-enable').checked).toBe(false);
+    expect(cell(7, 3).classList.contains('active')).toBe(false);
+    expect(cell(8, 0).classList.length).toBeGreaterThan(0);
+    expect(cell(1, 3).classList.contains('active')).toBe(true); // The chorus kick
+    await clickPlay();
+  });
+
+  it('song_06 card matches tempo bus', async () => {
+    await openPage();
+    await pressPlay('The Trooper');
+    await clickPlay();
+
+    expect(songButton('The Trooper', '.song-bpm').textContent).toBe(`${byId('bpm-number').innerText} BPM`);
+    expect(byId('bpm-number').innerText).toBe('162');
+  });
+
+  it('edge_02 load keeps the mix', async () => {
+    await openPage();
+    byId<HTMLButtonElement>('solo-2').click();
+    await pressPlay('Cocaine');
+
+    expect(byId('solo-2').getAttribute('aria-pressed')).toBe('true');
+    expect(cell(1, 0).classList.contains('silenced')).toBe(true);
+    const kick = [...calls('updateGrid').filter(([trackId]) => trackId === 1).at(-1)![1]];
+    expect(kick.every(value => value === 0)).toBe(true);
+    await clickPlay();
+  });
 });
