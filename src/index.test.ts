@@ -1573,4 +1573,34 @@ describe('Grooves Library', () => {
     expect(cell(1, 0).classList.contains('silenced')).toBe(true);
     await clickPlay();
   });
+
+  it('edt_04 groove clears other tracks', async () => {
+    await openPage();
+    cell(7, 0).click();
+    cell(1, 2).click();
+
+    const grooves = byId<HTMLSelectElement>('groove-selector');
+    grooves.value = 'factory:rock';
+    grooves.dispatchEvent(new Event('change'));
+
+    expect(cell(7, 0).classList.contains('active')).toBe(false);
+    expect(cell(1, 2).classList.contains('active')).toBe(false);
+    expect(cell(1, 0).classList.contains('active')).toBe(true);
+  });
+
+  it('edt_05 save groove keeps the kit', async () => {
+    const stores = await openPage();
+    cell(7, 0).click();
+    cell(10, 3).click();
+    cell(10, 3).click();
+    vi.stubGlobal('prompt', vi.fn(() => 'Whole kit'));
+    vi.stubGlobal('alert', vi.fn());
+    byId<HTMLButtonElement>('btn-save-groove').click();
+    await flush();
+
+    const saved = [...stores.grooves.values()].find(groove => groove.name === 'Whole kit');
+    expect(Object.keys(saved.gridData)).toEqual(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']);
+    expect(saved.gridData[7][0]).toBe(1);
+    expect(saved.gridData[10][3]).toBe(2);
+  });
 });

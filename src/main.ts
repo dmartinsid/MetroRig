@@ -849,7 +849,7 @@ grooveSelector.onchange = () => {
   const activeLen = state.activePreset.measureLength || 16;
 
   const applyPattern = (length: number, tracks: Record<number, number[]>) => {
-    for (let trackId = 1; trackId < 4; trackId++) {
+    for (const { id: trackId } of TRACKS.slice(1)) {
       const srcPattern = tracks[trackId] || [];
       const destPattern = new Array(activeLen).fill(0);
       for (let i = 0; i < activeLen; i++) {
@@ -881,7 +881,7 @@ btnSaveGroove.onclick = () => {
 
   const activeLen = state.activePreset.measureLength || 16;
   const gridData: Record<number, number[]> = {};
-  for (let trackId = 1; trackId < 4; trackId++) {
+  for (const { id: trackId } of TRACKS.slice(1)) {
     const srcTrack = state.activePreset.gridData[trackId] || [];
     const paddedTrack = new Array(activeLen).fill(0);
     for (let i = 0; i < Math.min(srcTrack.length, activeLen); i++) {
