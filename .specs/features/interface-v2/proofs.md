@@ -1,9 +1,9 @@
 # interface-v2 proofs
 
-**HEAD**: e416efe
+**HEAD**: c80d010
 **Tree**: dirty - .agents/skills/code-review/, .claude/skills/code-review
 **Shell**: /bin/sh
-**Result**: 84 pass, 2 fail
+**Result**: 86 pass, 3 fail
 
 | Check | Proof | Result |
 | --- | --- | --- |
@@ -16,7 +16,7 @@
 | C7 | `run js / ✓ src/index.test.ts > Interface V2 > shell_07 footer latency` | pass |
 | C8 | `run js / ✓ src/index.test.ts > Interface V2 > shell_08 latency placeholder` | pass |
 | C9 | `run js / ✓ src/index.test.ts > Interface V2 > shell_09 no invented telemetry` | pass |
-| C10 | `browser captures/editor.running.png` | **not judged** (screens.md) |
+| C10 | `browser captures/editor.running.png` | **diverges** (screens.md) |
 | C11 | `run js / ✓ src/index.test.ts > Interface V2 > edit_02 opening header` | pass |
 | C12 | `run js / ✓ src/index.test.ts > Interface V2 > edit_03 dot lit playing` | pass |
 | C13 | `run js / ✓ src/index.test.ts > Interface V2 > edit_04 dot unlit stopped` | pass |
@@ -45,7 +45,7 @@
 | C36 | `run js / ✓ src/index.test.ts > Interface V2 > edit_27 steady dot` | pass |
 | C37 | `run js / ✓ src/index.test.ts > Interface V2 > edit_28 toast after edit` | pass |
 | C38 | `run js / ✓ src/index.test.ts > Interface V2 > edit_29 toast hidden` | pass |
-| C39 | `browser captures/stadium.running.png` | **not judged** (screens.md) |
+| C39 | `browser captures/stadium.running.png` | **diverges** (screens.md) |
 | C40 | `run js / ✓ src/index.test.ts > Interface V2 > stad_02 ring order` | pass |
 | C41 | `run js / ✓ src/index.test.ts > Interface V2 > stad_03 legend` | pass |
 | C42 | `run js / ✓ src/index.test.ts > Interface V2 > stad_04 selector label` | pass |
@@ -83,14 +83,17 @@
 | C74 | `walk - at 1023px the clock sits above the readout` | pass (Walked) |
 | C75 | `walk - at 390px each header control is on screen and clickable` | pass (Walked) |
 | C76 | `walk - at 1440px in 8/4 the grid scrollWidth equals clientWidth` | pass (Walked) |
-| C77 | `grep -q 'AUDIO CLOCK' .stitch/DESIGN.md && grep -q 'Track Mix' .stitch/DESIGN.md` | pass |
-| C78 | `! grep -q 'groove-settings-card' .stitch/DESIGN.md` | pass |
+| C77 | `grep -q 'Left: \METRORIG\' .stitch/DESIGN.md && grep -q 'AUDIO CLOCK' .stitch/DESIGN.md && grep -q 'a \▲\ mark` | **fail** |
+| C78 | `! grep -q -e 'groove-settings-card' -e 'Field radii vary' -e 'hard-code' -e 'Default · 4/4' .stitch/DESIGN.md` | pass |
 | C79 | `run js / ✓ src/index.test.ts > Interface V2 > edge_01 stepper limit` | pass |
 | C80 | `run js / ✓ src/index.test.ts > Interface V2 > edge_02 steps follow` | pass |
 | C81 | `run js / ✓ src/index.test.ts > Interface V2 > edge_03 stop resets position` | pass |
 | C82 | `run js / ✓ src/index.test.ts > Interface V2 > edge_04 stadium placeholder` | pass |
 | C83 | `run js / ✓ src/index.test.ts > Interface V2 > edge_05 all muted continues` | pass |
 | C84 | `run js / ✓ src/index.test.ts > Interface V2 > edge_06 groove stays silent` | pass |
+| C86 | `run js / ✓ src/index.test.ts > Interface V2 > edit_30 header follows save` | pass |
+| C87 | `run js / ✓ src/index.test.ts > Interface V2 > edit_31 first click after save` | pass |
+| C88 | `run js / ✓ src/index.test.ts > Interface V2 > stad_13 tempo follows slider and stop` | pass |
 | C85 | `git diff --quiet 5481ab6 -- src/lib.rs public/pkg` | pass |
 | Build | `npx vite build` | pass |
 
@@ -99,8 +102,8 @@
 `Run js` - exit 0
 
 ```
-   Start at  23:50:24
-   Duration  2.72s (transform 340ms, setup 0ms, collect 597ms, tests 2.46s, environment 1.86s, prepare 595ms)
+   Start at  00:00:03
+   Duration  3.00s (transform 436ms, setup 0ms, collect 585ms, tests 2.67s, environment 2.17s, prepare 631ms)
 
 stderr | src/index.test.ts > Integration Test > should handle click sound variation selector changes, race conditions and fetch rejections
 Failed to load click sample, falling back to digital synth: Error: Fetch failed
@@ -116,13 +119,13 @@ Failed to load click sample, falling back to digital synth: Error: Fetch failed
     at run (file:///home/deivid/Projects/Github/MetroRig/node_modules/vitest/dist/chunks/runtime-runBaseTests.oAvMKtQC.js:105:3)
 ```
 
-`grep -q 'AUDIO CLOCK' .stitch/DESIGN.md && grep -q 'Track Mix' .stitch/DESIGN.md` - exit 0
+`grep -q 'Left: \METRORIG\' .stitch/DESIGN.md && grep -q 'AUDIO CLOCK' .stitch/DESIGN.md && grep -q 'a \▲\ mark` - exit 1
 
 ```
 (no output)
 ```
 
-`! grep -q 'groove-settings-card' .stitch/DESIGN.md` - exit 0
+`! grep -q -e 'groove-settings-card' -e 'Field radii vary' -e 'hard-code' -e 'Default · 4/4' .stitch/DESIGN.md` - exit 0
 
 ```
 (no output)

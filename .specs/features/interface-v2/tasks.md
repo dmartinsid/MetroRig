@@ -683,7 +683,7 @@ Proof: walk - at 390px each header control is on screen and clickable
 Proof: walk - at 1440px in 8/4 the grid scrollWidth equals clientWidth
 
 **C77** - `.stitch/DESIGN.md` covers the new footer and Mute/Solo (DOCS-01, AC 1)
-Proof: `grep -q 'Left: \`METRORIG\`' .stitch/DESIGN.md && grep -q 'AUDIO CLOCK' .stitch/DESIGN.md && grep -q 'a \`▲\` mark' .stitch/DESIGN.md && grep -q '60px rounded squares' .stitch/DESIGN.md && grep -q 'Track Mix' .stitch/DESIGN.md`
+Proof: `grep -q 'Left: .METRORIG' .stitch/DESIGN.md && grep -q 'AUDIO CLOCK' .stitch/DESIGN.md && grep -q 'a .▲. mark' .stitch/DESIGN.md && grep -q '60px rounded squares' .stitch/DESIGN.md && grep -q 'Track Mix' .stitch/DESIGN.md`
 
 **C78** - `.stitch/DESIGN.md` drops the fixed drift items (DOCS-02, AC 2)
 Proof: `! grep -q -e 'groove-settings-card' -e 'Field radii vary' -e 'hard-code' -e 'Default · 4/4' .stitch/DESIGN.md`
@@ -725,7 +725,7 @@ Proof: `git diff --quiet 5481ab6 -- src/lib.rs public/pkg`
 The feature's live state, written as it happens - a compaction gives no warning.
 
 **Settled mid-build:** The user answered "aprovo" and did not choose on sub-agents, so batches run inline, as recommended.
-**Dispatched:** Verifier and screens round 1 at `HEAD` e416efe, both returned
+**Dispatched:** Verifier and screens round 1 at `HEAD` e416efe, both returned; screens round 2 over the fixes in 10deb17
 **Walked:** Run `npx vite --port 3000`, open `http://localhost:3000/` in Chrome. Editor capture state, window 1252x1227: choose preset `Rock Groove`, choose `Rock Groove` in the Groove Library, click Kick step 11, turn on `Trainer Active`, click the `Quarter` chip; stopped, the Save Toast shows `Rock Groove`. Stadium capture state, window 1600x1280: choose preset `Calvagada - 148 - 190`, click `GO TO STADIUM MODE`; stopped, with the Play button showing `PLAY`. The capture's green `1` appears only during playback. Rack shell: both modes show the same header and footer, `AUDIO CLOCK: 44.1 kHz 128 SPLS (2.9ms)`, and `LATENCY: 66.7ms` after Play. Editor Mode: real playback of Rock Groove for 2.4s showed `POS: BAR 02 · STEP 03`, timer `00:00:02`, lit sequencer dot. Stadium Mode: during playback the numeral lit, the hand rotated, the tempo read `120.0`; Stop cleared the numeral and kept the timer. Shared timer: the time carried across modes and froze on Stop. Mute and Solo: Mute Kick plus Solo Snare dimmed 48 cells and playback continued. Narrow windows: at 1440 and 1024px the Editor has two columns; at 1023px the controls sit under the sequencer and the clock above the readout; at 390px, in both modes, the page scrollWidth equals clientWidth (390); in the Editor only the grid scrolls; in both modes each header control is on screen and is the top element at its centre, so a click reaches it; at 1440px in 8/4 the 32-step grid scrollWidth equals clientWidth (870).
 
 ---
