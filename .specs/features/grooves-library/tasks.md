@@ -282,18 +282,18 @@ T24 → T25 → T26 → T27 → T28
 
 ### T8: Keep stored presets valid
 
-**What**: `normalizePreset` fills missing tracks and cleans step values
+**What**: `completeKit` fills missing tracks and cleans step values
 **Where**: `src/state.ts`
 **Depends on**: None
-**Reuses**: `normalizePreset`
+**Reuses**: `normalizePreset`, left unchanged so its tests stand
 **Requirement**: EDT-01, DYN-01
 
 **Done when**:
 
-- [ ] Factory presets and speed trainers also pass through it
-- [ ] The tests of the checks for EDT-01, DYN-01 that this task reaches pass
-- [ ] Gate check passes: `npx vitest run`
-- [ ] Test count: at least the previous task's count (no silent deletions)
+- [x] Factory presets and speed trainers also pass through it
+- [x] The tests of the checks for EDT-01, DYN-01 that this task reaches pass
+- [x] Gate check passes: `npx vitest run`
+- [x] Test count: at least the previous task's count (no silent deletions)
 
 **Tests**: unit
 **Gate**: quick
@@ -892,7 +892,7 @@ Proof: run js | ✓ src/index.test.ts > Grooves Library > edt_04 groove clears o
 Proof: run js | ✓ src/index.test.ts > Grooves Library > edt_05 save groove keeps the kit
 
 **C49** - A 4-track preset loads with the new tracks empty (EDT-01, AC 6)
-Proof: run js | ✓ tests/state.test.ts > normalizePreset > edt_06 fills missing tracks
+Proof: run js | ✓ tests/state.test.ts > completeKit > edt_06 fills missing tracks
 
 **C50** - At 1024 and 390px every track shows with no page scroll (EDT-01, AC 7)
 Proof: walk - at 1024px and 390px all 11 tracks show and only the grid scrolls
@@ -931,7 +931,7 @@ Proof: walk - at 1024px and 390px both selectors can be used
 Proof: run js | ✓ src/index.test.ts > Grooves Library > edge_02 load keeps the mix
 
 **C62** - A stored value outside 0 to 3 becomes `normal` (Edge Cases, item 3)
-Proof: run js | ✓ tests/state.test.ts > normalizePreset > edge_03 cleans step values
+Proof: run js | ✓ tests/state.test.ts > completeKit > edge_03 cleans step values
 
 **C63** - The user approves all 14 songs by ear (Success Criteria, item 1)
 Proof: walk - the user played all 14 songs and approved each one, recorded in Handoff

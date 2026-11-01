@@ -1,3 +1,5 @@
+import { STEP_ACCENT, STEP_EMPTY, STEP_GHOST, STEP_NORMAL, TRACKS } from './kit';
+
 export interface Preset {
   id: string;
   name: string;
@@ -61,6 +63,20 @@ export function normalizePreset(preset: StoredPreset): Preset {
     gridData[Number(trackId)] = expanded;
   }
   return { ...normalized, measureLength: 24, gridData, bpm: Math.min(240, Math.round(normalized.bpm * 1.5)) };
+}
+
+// Presets saved before the expanded kit lack the new tracks, and a stored step can hold anything
+export function completeKit(preset: Preset): Preset {
+  const gridData: Record<number, number[]> = {};
+  for (const { id } of TRACKS) {
+    const steps = preset.gridData[id] ?? new Array(preset.measureLength).fill(0);
+    gridData[id] = steps.map(value => (isStepValue(value) ? value : STEP_NORMAL));
+  }
+  return { ...preset, gridData };
+}
+
+function isStepValue(value: number): boolean {
+  return [STEP_EMPTY, STEP_NORMAL, STEP_ACCENT, STEP_GHOST].includes(value);
 }
 
 // The tempo a preset plays its first hit at
