@@ -1,6 +1,6 @@
 # song-bars proofs
 
-**HEAD**: add17e5
+**HEAD**: f56537b
 **Tree**: clean
 **Shell**: /bin/sh
 **Result**: 43 pass, 0 fail
@@ -56,8 +56,8 @@
 `Run js` - exit 0
 
 ```
-   Start at  13:37:59
-   Duration  9.47s (transform 746ms, setup 0ms, collect 1.02s, tests 9.40s, environment 3.47s, prepare 1.12s)
+   Start at  13:55:15
+   Duration  9.48s (transform 462ms, setup 1ms, collect 718ms, tests 9.46s, environment 2.85s, prepare 846ms)
 
 stderr | src/index.test.ts > Integration Test > should handle click sound variation selector changes, race conditions and fetch rejections
 Failed to load click sample, falling back to digital synth: Error: Fetch failed
@@ -81,7 +81,7 @@ test tests::bpm_01_quarter_note_in_every_meter ... ok
 test tests::time_01_hits_within_one_sample ... ok
 test tests::time_02_one_hour_no_drift ... ok
 
-test result: ok. 59 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.00s
+test result: ok. 59 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.92s
 
 
 running 0 tests
