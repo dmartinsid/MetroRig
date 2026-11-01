@@ -357,9 +357,9 @@ T17
 
 **Done when**:
 
-- [ ] Header and footer match both captures in a browser
-- [ ] Gate check passes: `npx vitest run && npx vite build`
-- [ ] Test count: 136 tests pass (no silent deletions)
+- [x] Header and footer match both captures in a browser
+- [x] Gate check passes: `npx vitest run && npx vite build`
+- [x] Test count: 136 tests pass (no silent deletions)
 
 **Tests**: none
 **Gate**: full
