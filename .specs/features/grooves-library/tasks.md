@@ -218,11 +218,11 @@ T24 → T25 → T26 → T27 → T28
 
 **Done when**:
 
-- [ ] `npm run build:wasm` output committed
-- [ ] `tests/metronome-processor.test.ts` covers track 8
-- [ ] The tests of the checks for KIT-01 that this task reaches pass
-- [ ] Gate check passes: `cargo test && npx vitest run && npx vite build`
-- [ ] Test count: at least the previous task's count (no silent deletions)
+- [x] `npm run build:wasm` output committed
+- [x] `tests/metronome-processor.test.ts` covers track 8
+- [x] The tests of the checks for KIT-01 that this task reaches pass
+- [x] Gate check passes: `cargo test && npx vitest run && npx vite build`
+- [x] Test count: at least the previous task's count (no silent deletions)
 
 **Tests**: unit
 **Gate**: build
