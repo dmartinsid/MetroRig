@@ -81,8 +81,11 @@ const timeSigDen = document.getElementById('time-sig-den') as HTMLSelectElement;
 const grooveSelector = document.getElementById('groove-selector') as HTMLSelectElement;
 const btnSaveGroove = document.getElementById('btn-save-groove') as HTMLButtonElement;
 
+let hasUnsavedEdits = false;
+
 // Helper to show save button when preset is modified
 function markPresetAsModified() {
+  hasUnsavedEdits = true;
   // Pre-populate with the current preset name so user can build on it
   if (!presetNameInput.value) {
     presetNameInput.value = state.activePreset.name;
@@ -464,6 +467,7 @@ function togglePlay() {
       sequencerDot.classList.remove('lit');
       bpmNumber.innerText = String(state.activePreset.bpm);
       stadiumBpm.innerText = state.activePreset.bpm.toFixed(1);
+      updateSongCards();
     } else {
       syncAudioSettings();
       audioNode.start();
@@ -475,6 +479,7 @@ function togglePlay() {
       startTime = Date.now();
       updateTimers(0);
       timerInterval = setInterval(updatePracticeTimer, 1000);
+      updateSongCards();
     }
   });
 }
@@ -795,6 +800,8 @@ function loadPresetIntoUI(storedPreset: StoredPreset) {
 
   stadiumBpm.innerText = shownBpm.toFixed(1);
   updateStadiumStatus();
+  hasUnsavedEdits = false;
+  updateSongCards();
 }
 
 btnSave.onclick = () => {
@@ -817,6 +824,8 @@ btnSave.onclick = () => {
     updatePanelHeader();
     populatePresetsDropdown(`user:${id}`);
     presetNameInput.value = '';
+    hasUnsavedEdits = false;
+    updateSongCards();
     gsap.killTweensOf(saveToast);
     gsap.to(saveToast, {
       y: -20,
@@ -1023,13 +1032,48 @@ function songCard(song: Song) {
     line.innerText = text;
     card.appendChild(line);
   });
+
+  const play = document.createElement('button');
+  play.className = 'song-play';
+  play.setAttribute('data-song', song.id);
+  play.setAttribute('aria-label', `Play ${song.title}`);
+  play.onclick = () => playSong(song);
+  card.appendChild(play);
   return card;
+}
+
+function isSongLoaded(song: Song) {
+  return state.activePreset.id === song.id;
+}
+
+// Loads a song unless the user keeps the edits it would replace
+function useSong(song: Song): boolean {
+  if (isSongLoaded(song)) return true;
+  if (hasUnsavedEdits && !confirm(`Discard your unsaved changes and load ${song.title}?`)) return false;
+  presetSelector.value = `song:${song.id}`;
+  syncStadiumPresetSelector();
+  loadPresetIntoUI(songToPreset(song));
+  return true;
+}
+
+function playSong(song: Song) {
+  const loaded = isSongLoaded(song);
+  if (!useSong(song)) return;
+  if (loaded || !state.isPlaying) togglePlay(); // Playing another song carries on at its tempo
+}
+
+function updateSongCards() {
+  songGrid.querySelectorAll<HTMLElement>('.song-play').forEach(button => {
+    const playing = state.isPlaying && state.activePreset.id === button.dataset.song;
+    button.innerText = playing ? '■' : '▶';
+  });
 }
 
 function drawGroovesScreen() {
   drawGenreTabs();
   songGrid.innerHTML = '';
   songsForGenre(activeGenre).forEach(song => songGrid.appendChild(songCard(song)));
+  updateSongCards();
 }
 
 // Initial draw and population
