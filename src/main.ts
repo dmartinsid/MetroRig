@@ -4,6 +4,7 @@ import { STADIUM_GROUPS, STEP_ACCENT, STEP_GHOST, STEP_NORMAL, TRACKS, groupHit,
 import { VisualScheduler } from './visualSync';
 import { audibleSteps, createTrackMix, isAudible, toggleMute, toggleSolo } from './trackMix';
 import { formatBarStep, formatClock, formatLatency, formatSteps, formatTimer, nextDenominator } from './display';
+import { GENRE_TABS, SONGS, GenreTab, Song, songToPreset, songsForGenre } from './songs';
 import workletUrl from './audio/metronome-processor?url';
 
 declare const gsap: any;
@@ -58,6 +59,8 @@ const trainerVal = document.getElementById('trainer-val') as HTMLInputElement;
 const trainerCurve = document.getElementById('trainer-curve') as HTMLSelectElement;
 
 const trackMixCards = document.getElementById('track-mix') as HTMLElement;
+const genreTabs = document.getElementById('genre-tabs') as HTMLElement;
+const songGrid = document.getElementById('song-grid') as HTMLElement;
 const figurePalette = document.getElementById('figure-palette') as HTMLElement;
 const gridContainer = document.getElementById('grid-container') as HTMLElement;
 
@@ -973,10 +976,55 @@ function drawMixCards() {
   });
 }
 
+let activeGenre: GenreTab = 'All';
+
+function drawGenreTabs() {
+  genreTabs.innerHTML = '';
+  GENRE_TABS.forEach(genre => {
+    const tab = document.createElement('button');
+    tab.className = 'genre-tab';
+    tab.innerText = genre;
+    tab.setAttribute('aria-pressed', String(genre === activeGenre));
+    tab.onclick = () => {
+      activeGenre = genre;
+      drawGroovesScreen();
+    };
+    genreTabs.appendChild(tab);
+  });
+}
+
+function songCard(song: Song) {
+  const card = document.createElement('article');
+  card.className = 'song-card card';
+  card.setAttribute('data-song', song.id);
+
+  const texts: [string, string][] = [
+    ['song-title', song.title],
+    ['song-artist', song.artist],
+    ['song-section', song.section],
+    ['song-bpm', `${song.bpm} BPM`],
+    ['song-meter', song.timeSignature],
+  ];
+  texts.forEach(([className, text]) => {
+    const line = document.createElement('span');
+    line.className = className;
+    line.innerText = text;
+    card.appendChild(line);
+  });
+  return card;
+}
+
+function drawGroovesScreen() {
+  drawGenreTabs();
+  songGrid.innerHTML = '';
+  songsForGenre(activeGenre).forEach(song => songGrid.appendChild(songCard(song)));
+}
+
 // Initial draw and population
 footerClock.textContent = formatClock(audioNode.sampleRate());
 populatePresetsDropdown();
 populateGroovesDropdown();
 drawMixCards();
+drawGroovesScreen();
 drawFigurePalette();
 drawGrid();
