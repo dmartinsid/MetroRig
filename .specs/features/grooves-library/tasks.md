@@ -196,10 +196,10 @@ T24 → T25 → T26 → T27 → T28
 
 **Done when**:
 
-- [ ] Existing output assertions still pass unchanged
-- [ ] The tests of the checks for KIT-01 that this task reaches pass
-- [ ] Gate check passes: `cargo test`
-- [ ] Test count: at least the previous task's count (no silent deletions)
+- [x] Existing output assertions still pass unchanged
+- [x] The tests of the checks for KIT-01 that this task reaches pass
+- [x] Gate check passes: `cargo test`
+- [x] Test count: at least the previous task's count (no silent deletions)
 
 **Tests**: unit
 **Gate**: rust
