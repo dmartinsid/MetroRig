@@ -103,6 +103,22 @@ describe('Songs', () => {
     });
   });
 
+  it('hk_23 toms on four tracks', () => {
+    const tomHits = (id: string) => {
+      const song = SONGS.find(entry => entry.id === id)!;
+      return Object.fromEntries([9, 10, 11, 12].map(track => [track, (song.gridData[track] ?? []).flatMap((value, step) => (value ? [step] : []))]));
+    };
+    // Battery's two hits are the Low Tom, on the last bar's steps 10 and 14
+    expect(tomHits('song_battery')).toEqual({ 9: [], 10: [], 11: [], 12: [58, 62] });
+
+    // No other song has a tom on Mid or Low Tom, and the ones that had a tom keep it where it was
+    SONGS.filter(song => song.id !== 'song_battery').forEach(song => {
+      expect(tomHits(song.id)[11], song.id).toEqual([]);
+      expect(tomHits(song.id)[12], song.id).toEqual([]);
+    });
+    expect(tomHits('song_highway_to_hell')[10]).not.toEqual([]);
+  });
+
   it('bars_03 two different bars', () => {
     SONGS.forEach(song => {
       const bar = (index: number) => JSON.stringify(TRACKS.slice(1).map(track => song.gridData[track.id]?.slice(index * 16, (index + 1) * 16)));
