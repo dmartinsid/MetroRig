@@ -407,6 +407,14 @@ function drawBeatClock() {
     }
   });
 
+  // Drawn over the slices, whose own stroke would thin the gap between the two continuous rings
+  STADIUM_GROUPS.slice(1).forEach((_, index) => {
+    const separator = document.createElementNS(SVG_NS, 'circle');
+    separator.setAttribute('r', String(CLOCK_RING_OUTER - CLOCK_RING_WIDTH * (index + 1) + CLOCK_RING_GAP / 2));
+    separator.setAttribute('class', 'clock-ring-separator');
+    clockFace.appendChild(separator);
+  });
+
   const center = document.createElementNS(SVG_NS, 'circle');
   center.setAttribute('r', String(CLOCK_RING_OUTER - CLOCK_RING_WIDTH * 4));
   center.setAttribute('class', 'clock-center');
