@@ -27,6 +27,7 @@ const stadiumBpm = document.getElementById('stadium-bpm') as HTMLElement;
 const stadiumTimer = document.getElementById('stadium-timer') as HTMLElement;
 const editorTimer = document.getElementById('editor-timer') as HTMLElement;
 const stadiumStatus = document.getElementById('stadium-status') as HTMLElement;
+const stadiumStatusDot = document.getElementById('stadium-status-dot') as HTMLElement;
 const sequencerDot = document.getElementById('sequencer-dot') as HTMLElement;
 const patternName = document.getElementById('pattern-name') as HTMLElement;
 const patternSteps = document.getElementById('pattern-steps') as HTMLElement;
@@ -41,7 +42,7 @@ const trainerBody = document.getElementById('trainer-body') as HTMLElement;
 const trainerChevron = document.getElementById('trainer-chevron') as HTMLElement;
 const trainerDot = document.getElementById('trainer-dot') as HTMLElement;
 const clockFace = document.getElementById('clock-face') as unknown as SVGGElement;
-const clockHand = document.getElementById('clock-hand') as unknown as SVGLineElement;
+const clockHand = document.getElementById('clock-hand') as unknown as SVGGElement;
 const orbs = [0, 1, 2, 3].map(i => document.getElementById(`orb-${i}`) as HTMLElement);
 
 const trainerEnable = document.getElementById('trainer-enable') as HTMLInputElement;
@@ -343,6 +344,7 @@ function updatePatternBar() {
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const CLOCK_RING_OUTER = 80;
 const CLOCK_RING_WIDTH = 12.5;
+const CLOCK_RING_GAP = 1.2;
 const CLOCK_LABEL_RADIUS = 90;
 
 function clockPoint(fraction: number, radius: number): [number, number] {
@@ -358,15 +360,18 @@ function drawBeatClock() {
 
   for (let trackId = 0; trackId < 4; trackId++) {
     const radius = CLOCK_RING_OUTER - CLOCK_RING_WIDTH * trackId;
+    const innerRadius = radius - CLOCK_RING_WIDTH + CLOCK_RING_GAP;
     const trackSteps = gridData[trackId] || [];
     for (let step = 0; step < measureLength; step++) {
       // A slice can't span the full circle, which a single-step measure would need
       const [x1, y1] = clockPoint(step / measureLength, radius);
       const [x2, y2] = clockPoint((step + 1) / measureLength - 0.0001, radius);
+      const [x3, y3] = clockPoint((step + 1) / measureLength - 0.0001, innerRadius);
+      const [x4, y4] = clockPoint(step / measureLength, innerRadius);
       const largeArc = measureLength === 1 ? 1 : 0;
 
       const slice = document.createElementNS(SVG_NS, 'path');
-      slice.setAttribute('d', `M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2} L 0 0 Z`);
+      slice.setAttribute('d', `M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2} L ${x3} ${y3} A ${innerRadius} ${innerRadius} 0 ${largeArc} 0 ${x4} ${y4} Z`);
       const sustained = isSustainedStep(trackSteps, step, measureLength, beats);
       slice.setAttribute('class', trackSteps[step] > 0 ? 'clock-slice on' : sustained ? 'clock-slice sustain' : 'clock-slice');
       slice.setAttribute('data-track', String(trackId));
@@ -595,6 +600,7 @@ function updateStadiumStatus() {
   stadiumStatus.innerText = trainerEnable.checked
     ? `Trainer ${trainerStart.value} → ${trainerTarget.value} BPM · +${trainerInc.value} every ${trainerVal.value} ${unit}`
     : 'Trainer Off';
+  stadiumStatusDot.classList.toggle('lit', trainerEnable.checked);
 }
 
 // Stepped runs read as integers; Smooth runs show their real value

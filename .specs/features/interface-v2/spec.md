@@ -277,17 +277,17 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | EDIT-28 | P1: Editor Mode | Tasks | Implementing |
 | EDIT-29 | P1: Editor Mode | Tasks | Implementing |
 | STAD-01 | P1: Stadium Mode | Tasks | Pending |
-| STAD-02 | P1: Stadium Mode | Tasks | Pending |
+| STAD-02 | P1: Stadium Mode | Tasks | Implementing |
 | STAD-03 | P1: Stadium Mode | Tasks | Implementing |
 | STAD-04 | P1: Stadium Mode | Tasks | Implementing |
 | STAD-05 | P1: Stadium Mode | Tasks | Implementing |
-| STAD-06 | P1: Stadium Mode | Tasks | Pending |
-| STAD-07 | P1: Stadium Mode | Tasks | Pending |
-| STAD-08 | P1: Stadium Mode | Tasks | Pending |
+| STAD-06 | P1: Stadium Mode | Tasks | Implementing |
+| STAD-07 | P1: Stadium Mode | Tasks | Implementing |
+| STAD-08 | P1: Stadium Mode | Tasks | Implementing |
 | STAD-09 | P1: Stadium Mode | Tasks | Implementing |
-| STAD-10 | P1: Stadium Mode | Tasks | Pending |
-| STAD-11 | P1: Stadium Mode | Tasks | Pending |
-| STAD-12 | P1: Stadium Mode | Tasks | Pending |
+| STAD-10 | P1: Stadium Mode | Tasks | Implementing |
+| STAD-11 | P1: Stadium Mode | Tasks | Implementing |
+| STAD-12 | P1: Stadium Mode | Tasks | Implementing |
 | TIME-01 | P1: Shared timer | Tasks | Implementing |
 | TIME-02 | P1: Shared timer | Tasks | Implementing |
 | TIME-03 | P1: Shared timer | Tasks | Implementing |
@@ -319,7 +319,7 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | EDGE-01 | Edge Cases | Tasks | Implementing |
 | EDGE-02 | Edge Cases | Tasks | Implementing |
 | EDGE-03 | Edge Cases | Tasks | Implementing |
-| EDGE-04 | Edge Cases | Tasks | Pending |
+| EDGE-04 | Edge Cases | Tasks | Implementing |
 | EDGE-05 | Edge Cases | Tasks | Implementing |
 | EDGE-06 | Edge Cases | Tasks | Implementing |
 
