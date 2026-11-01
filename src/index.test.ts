@@ -2147,6 +2147,43 @@ describe('Song Bars', () => {
     expect(shown(1)).toEqual(barOf(1, 1));
   });
 
+  it('edit_09 groove stays in the bar', async () => {
+    await openSong();
+    pressBar(2);
+    const click = shown(0);
+    const grooves = byId<HTMLSelectElement>('groove-selector');
+    grooves.value = 'factory:rock';
+    grooves.dispatchEvent(new Event('change'));
+
+    const rock = shown(1);
+    expect(rock).not.toEqual(barOf(1, 2));
+    expect(rock.filter(Boolean).length).toBeGreaterThan(0);
+    expect(shown(0)).toEqual(click); // Click belongs to the meter
+    for (const bar of [1, 3, 4]) {
+      pressBar(bar);
+      expect(shown(1), `bar ${bar}`).toEqual(barOf(1, bar));
+      expect(shown(7), `bar ${bar}`).toEqual(barOf(7, bar));
+    }
+    pressBar(2);
+    expect(shown(1)).toEqual(rock);
+    expect(shown(7)).toEqual(new Array(16).fill(0)); // A groove clears the other tracks of its bar
+  });
+
+  it('edit_10 save groove takes the bar', async () => {
+    const stores = await openSong();
+    pressBar(4);
+    vi.stubGlobal('prompt', vi.fn(() => 'Battery fill'));
+    vi.stubGlobal('alert', vi.fn());
+    byId<HTMLButtonElement>('btn-save-groove').click();
+    await flush();
+
+    const saved = [...stores.grooves.values()].find(groove => groove.name === 'Battery fill');
+    expect(saved.measureLength).toBe(16);
+    expect(saved.gridData[1]).toEqual(barOf(1, 4));
+    expect(saved.gridData[2]).toEqual(barOf(2, 4));
+    expect(saved.gridData[0]).toBeUndefined();
+  });
+
   it('the page holds a hidden selector of 4 bars', async () => {
     await openPage();
     expect(barButtons().map(button => button.textContent)).toEqual(['1', '2', '3', '4']);
