@@ -164,6 +164,42 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: KIT-01.3 (public/kit/LICENSE.md) (specs)
 - last seen: 2026-11-01T18:13:35Z
 
+### L-026 - When display order differs from id order, place rows by list position, and test the drawn rows rather than the data array.
+- signal: `ac_gap` · recurrence: 1 feature(s) · harmful: 0
+- features: house-kit
+- evidence: C16
+- last seen: 2026-11-01T22:10:54Z
+
+### L-027 - Pin each measured level per recording; floors on one pair of recordings let the levels drift.
+- signal: `weak_test` · recurrence: 1 feature(s) · harmful: 0
+- features: house-kit
+- evidence: C10
+- last seen: 2026-11-01T22:10:54Z
+
+### L-028 - A rule that says everything else stays the same needs a pin of the old value of every item, not a check on the changed fields.
+- signal: `weak_test` · recurrence: 1 feature(s) · harmful: 0
+- features: house-kit
+- evidence: C24
+- last seen: 2026-11-01T22:10:54Z
+
+### L-029 - Mute and Solo tests press every control on every new track, not one control per track.
+- signal: `weak_test` · recurrence: 1 feature(s) · harmful: 0
+- features: house-kit
+- evidence: C20
+- last seen: 2026-11-01T22:10:54Z
+
+### L-030 - Test a sample builder by running it on made-up sources and comparing each output to its exact mix, not by reading its constants.
+- signal: `weak_test` · recurrence: 1 feature(s) · harmful: 0
+- features: house-kit
+- evidence: C37
+- last seen: 2026-11-01T22:10:54Z
+
+### L-031 - A rule worded for any track must name the Click, which has its own code path in the engine.
+- signal: `ac_gap` · recurrence: 1 feature(s) · harmful: 0
+- features: house-kit
+- evidence: HK-07
+- last seen: 2026-11-01T22:10:54Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
