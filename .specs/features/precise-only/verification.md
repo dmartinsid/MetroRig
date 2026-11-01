@@ -2,7 +2,7 @@
 
 **Verdict**: PASS
 **Round 1 verdict**: FAIL with one finding, closed by 37696ab
-**Proofs**: proofs.md at fee8fc7
+**Proofs**: proofs.md at d2c562c
 **Verifier**: independent sub-agent (author != verifier)
 
 ## Checks
