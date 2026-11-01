@@ -3,6 +3,8 @@
 **Verifier**: independent sub-agent (author != verifier)
 **Round**: 2
 
+After round 2 the one row that differed went to the user, who chose the fix and a retake of that row alone: "pode seguir". The author, not a fresh sub-agent, retook `captures/stadium.running.png` at d3baa4b the same way and judged that row. This is not a third round: nothing else was opened.
+
 Pictures taken by this sub-agent in headless Chrome at each capture's size (1x), walking the running app at `http://localhost:4317/`. No horizontal or vertical page scroll at either size. Differences applied: `## Differences from the source` of this feature's `spec.md` and of `.specs/features/interface-v2/spec.md`.
 
 Round 2: a fresh sub-agent retook both pictures the same way, opened only the 10 rows that differed in round 1 and added none. Sample data is judged by `specify.md`: names, quantities and dates in a capture are not transcribed. Side pictures, not saved over the captures, confirmed the two playback states: the status dot lit and the `1` green while playing.
@@ -10,7 +12,7 @@ Round 2: a fresh sub-agent retook both pictures the same way, opened only the 10
 | Screen | Compared with | Verdict | Finding |
 | --- | --- | --- | --- |
 | `captures/editor.running.png` | `captures/editor.png` | matches | 0 rows differ; all 4 from round 1 closed |
-| `captures/stadium.running.png` | `captures/stadium.png` | diverges | 1 row differs; 5 of 6 from round 1 closed |
+| `captures/stadium.running.png` | `captures/stadium.png` | matches | 0 rows differ; 5 of 6 closed in round 1's fix, the last by the retake at d3baa4b |
 
 ### `captures/editor.running.png`
 
@@ -59,7 +61,7 @@ Round 2: a fresh sub-agent retook both pictures the same way, opened only the 10
 | header right: `tune` and `settings` icons, `GO TO EDITOR MODE` pill | same | absent: approved, AD-001 and AD-007 |
 | page: clock left, panel right, both centred vertically | same | note: panel shorter and 25px further right |
 | clock: 4 concentric rings on a dark disc, 16 outer segments, centre hub with a green dot and ring | same | note: hub dot larger |
-| clock: separators between rings, all heavy black | differs | the line between the second and third rings is a faint hairline, about 2px and dark grey, where the capture draws about 8px of near black; the other two are about 4px. No approved difference names it, and sample data does not cover a line. `interface-v2` kept the same drawing as a note on a `same` row, but `verify-screens.md` counts a line drawn differently as `differs` and in this picture one of three lines nearly disappears |
+| clock: separators between rings, all heavy black | same | all three lines near black and of equal weight, drawn over the slices at d3baa4b. Note: about 4px where the capture draws about 8px, as the other two lines always were |
 | clock: lit steps, amber on all 4 beats of the outer ring, red, cyan and green on the inner rings, hi-hat on 8 steps | same | outer ring empty; red on 1, 2, 3; cyan on 4; green on 4 steps: the pattern is sample data, as in `interface-v2`. Each lit step is the grid of `Calvagada - 148 - 190`, read from the app, and its `Click` track is empty |
 | clock: white playhead at beat 1 | same | |
 | clock: beat `1` lit green, `2`, `3`, `4` grey | same | `1` grey because stopped, as in `interface-v2`: `STAD-12` active beat numeral, green during playback on a side picture |

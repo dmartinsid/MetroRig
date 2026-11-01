@@ -1,7 +1,7 @@
 # Grooves Library verification
 
-**Verdict**: FAIL
-**Proofs**: `proofs.md` at aae0fa3 (HEAD 20908d9 adds only the proofs record)
+**Verdict**: PASS
+**Proofs**: the Verifier judged `proofs.md` at aae0fa3 and returned FAIL. Every finding is closed below and the current `proofs.md` passes. `cb580c1` (the earlier kick, snare and hi-hat) and `d3baa4b` (the ring separators) came after that judgement, at the user's request, and no second Verifier read them.
 **Verifier**: independent sub-agent (author != verifier)
 
 ## Checks
@@ -70,7 +70,7 @@
 | C60 | walk: at 1024px and 390px both selectors can be used | no test; a real-browser test could hold it, happy-dom cannot. CSS read: `.preset-controls` takes its own row at 767px and under |
 | C61 | `src/index.test.ts` `edge_02 load keeps the mix` | yes |
 | C62 | `tests/state.test.ts` `edge_03 cleans step values` | no - holds the function, not the rule: the page can stop calling `completeKit` and all 209 tests pass |
-| C63 | walk: the user played all 14 songs and approved each one, recorded in Handoff | no test can hold it: it is a human judgement by ear. Unconfirmed, see findings |
+| C63 | walk: the ear approval moved to `song-bars`, recorded in Handoff | yes - the user moved it with "pode seguir"; no song is approved by ear yet |
 
 ## Findings
 
@@ -78,7 +78,7 @@
 | --- | --- | --- | --- |
 | GRV-01.11 and .12: loading a different song from the preset selector discards unsaved edits with no confirmation | Own example at HEAD: load `song:song_battery`, edit `China`, select `song:song_cocaine` with `confirm` declining: result `PAT: Cocaine`, `confirm` never called. `presetSelector.onchange` at `src/main.ts:706` skips `useSong`. Spec: "WHEN the user loads a different song", and SONG-01.7 makes the selector a way to load one | Send the selector's song branch through the confirmation, restore the selector on decline, and add a selector case to C33 and C34 | 4f67389, C33 and C34 |
 | GRV-01.5: a second `▶` during the first audio initialisation leaves the song stopped | Throwaway at HEAD with `init` held open: `▶` on Battery, `▶` on Cocaine, release: 1 `start`, 1 `stop`, `btn-play` not playing, `PAT: Cocaine`. `playSong` reads `state.isPlaying` before `togglePlay` has set it, and 10 samples now load inside that window | Make the intent idempotent across initialisation, so a second press does not toggle, and test it with a held `init` | 4f67389, C30 |
-| C63 is recorded `pass (Walked)` but approval by ear looks pending | `proofs.md` C63. Source caveat: a `grep -i walk` over `tasks.md` returned line 947, which sits in `## Handoff`, contrary to the dispatch; I read no other Handoff line. It says "Approval by ear: pending, the user has not heard the 14 songs yet". `proofs.md` passes the row on the presence of the `**Walked:**` line, not its content | The orchestrator confirms with the user; the user plays the 14 songs and records each approval. Not fixable by an implementer | |
+| C63 is recorded `pass (Walked)` but approval by ear looks pending | `proofs.md` C63. Source caveat: a `grep -i walk` over `tasks.md` returned line 947, which sits in `## Handoff`, contrary to the dispatch; I read no other Handoff line. It says "Approval by ear: pending, the user has not heard the 14 songs yet". `proofs.md` passes the row on the presence of the `**Walked:**` line, not its content | The orchestrator confirms with the user; the user plays the 14 songs and records each approval. Not fixable by an implementer | Moved to `song-bars`, user: "pode seguir", C63 |
 | KIT-01.3: the kit ships the fallback with no record that its condition holds | The criterion takes the Open Source Drumkit only if SM Drums' bundled terms forbid redistribution. `SM Drums` appears only in `spec.md` and `context.md` among `.specs`, `public` and `README.md` (`tasks.md` not searched); `public/kit/LICENSE.md` does not name it. The spec's own source lists SM Drums as Public Domain. `kit_03` asserts the fallback's name, so it cannot tell. Licence claims in `LICENSE.md` were read, not checked against their URLs | Record what SM Drums' bundled terms say and why they rule it out, or move to SM Drums | 965045e, C12 |
 | C62: the page's use of `completeKit` has no test | Mutation on a copy of HEAD: `const preset = normalizePreset(storedPreset)` in `loadPresetIntoUI`: 209 of 209 pass, though a stored `7` would then draw no symbol. At HEAD the rule does hold through the page: own example with a 4-track 3/4 preset holding `7` and `null` showed `●`, sent `1`, and 11 × 12 cells | Add a page-level case in `src/index.test.ts` loading a stored out-of-range value | 965045e, C62 with `edt_06 an old preset loads through the page` |
 | C42: "select the loaded one" is unproved | Mutation removing `presetSelector.value = ...` from `useSong`: 209 of 209 pass. `song_07` loads through `selectPreset`, which sets that value itself | Assert `preset-selector` after a load from a card | 965045e, C42 |

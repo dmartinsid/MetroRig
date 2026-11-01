@@ -27,7 +27,7 @@ Round 1. Answers quoted from the user: "q1 recomendacao q2 recomendacao q3 recom
 - Each song is a transcription on the step grid, played by MetroRig's samples. No audio from recordings.
 - Each entry holds 1 bar. A section that deserves it becomes another entry, such as `Verse` and `Chorus`.
 - An entry needs a transcription and a BPM from a published source, cited in the data. No source, no entry.
-- The user approves each groove by ear before the feature closes, because the agent cannot hear the recordings.
+- The user approves each groove by ear, because the agent cannot hear the recordings. Moved to `song-bars` on 2026-11-01, user: "pode seguir": the songs there grow to 4 bars, so approving the 1-bar loops would be wasted.
 
 ### Kit and dynamics (Q4, Q5)
 
