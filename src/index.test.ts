@@ -631,3 +631,129 @@ describe('Precise page', () => {
     expect(card?.querySelector('.card-section-title')?.textContent).toBe('Measure');
   });
 });
+
+describe('Interface V2', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    delete (globalThis as any).indexedDB;
+    mockGsap.to.mockClear();
+    mockGsap.set.mockClear();
+    mockGsap.fromTo.mockClear();
+  });
+
+  const text = (selector: string) => document.querySelector(selector)?.textContent?.trim();
+
+  it('shell_01 header controls', async () => {
+    await openPage();
+
+    const header = document.querySelector('header')!;
+    expect(header.closest('main')).toBeNull();
+    expect(header.querySelector('.logo')?.firstChild?.textContent).toBe('METRORIG');
+    expect(header.querySelector('.badge')?.textContent).toBe('PRO');
+    ['click-sound-selector', 'preset-selector', 'btn-toggle-view'].forEach(id => {
+      expect(header.contains(byId(id))).toBe(true);
+    });
+  });
+
+  it('shell_02 no dead controls', async () => {
+    await openPage();
+
+    const header = document.querySelector('header')!;
+    expect(header.querySelectorAll('a, nav')).toHaveLength(0);
+    expect(header.querySelectorAll('button')).toHaveLength(1);
+    ['Grooves', 'Presets', 'tune', 'settings'].forEach(word => {
+      const visible = [...header.childNodes].map(node => node.nodeName === 'DIV' ? '' : node.textContent).join(' ');
+      expect(visible).not.toContain(word);
+    });
+  });
+
+  it('shell_03 preset groups', async () => {
+    await openPage();
+
+    const groups = [...byId('preset-selector').querySelectorAll('optgroup')];
+    expect(groups.map(group => group.label)).toEqual(['Time Signatures', 'Drum Grooves', 'Speed Trainer', 'User Presets']);
+    groups.forEach(group => expect(group.children.length).toBeGreaterThan(0));
+  });
+
+  it('shell_09 no invented telemetry', async () => {
+    await openPage();
+
+    const footer = text('footer')!;
+    expect(footer).not.toMatch(/V2\.4\.8|CPU|Hardware Parity|ENGINE/i);
+  });
+
+  it('edit_02 opening header', async () => {
+    await openPage();
+    expect(byId('panel-header-text').textContent).toBe('4/4 Metronome  ·  4/4  ·  120 BPM');
+  });
+
+  it('edit_16 tempo bus title', async () => {
+    await openPage();
+
+    const card = byId('bpm-number').closest('.card')!;
+    expect(card.querySelector('.card-section-title')?.textContent).toBe('TEMPO BUS');
+    expect(document.body.textContent).not.toContain('MASTER');
+  });
+
+  it('edit_19 no measure code', async () => {
+    await openPage();
+    expect(byId('time-sig-num').closest('.card')?.textContent).not.toContain('MTR-04');
+  });
+
+  it('edit_22 groove label', async () => {
+    await openPage();
+    expect(text('label[for="groove-selector"]')).toBe('Groove Library');
+  });
+
+  it('stad_03 legend', async () => {
+    await openPage();
+
+    const entries = [...document.querySelectorAll<HTMLElement>('.clock-legend [data-track]')];
+    expect(entries.map(entry => [entry.dataset.track, entry.textContent])).toEqual([
+      ['0', 'CLICK'], ['1', 'KICK'], ['2', 'SNARE'], ['3', 'HI-HAT'],
+    ]);
+  });
+
+  it('stad_04 selector label', async () => {
+    await openPage();
+    expect(text('label[for="stadium-preset-selector"]')).toBe('SPEED TRAINER ROUTINE');
+  });
+
+  it('stad_05 timer label', async () => {
+    await openPage();
+
+    const block = byId('stadium-timer').parentElement!;
+    expect(block.textContent).toContain('ELAPSED REHEARSAL');
+  });
+
+  it('stad_09 orb markup', async () => {
+    await openPage();
+
+    const names = ['CLICK', 'KICK', 'SNARE', 'HI-HAT'];
+    names.forEach((name, trackId) => {
+      const orb = byId(`orb-${trackId}`);
+      expect(orb.dataset.track).toBe(String(trackId));
+      expect(orb.querySelector('svg')).not.toBeNull();
+      expect(orb.parentElement?.querySelector('.orb-name')?.textContent).toBe(name);
+    });
+  });
+
+  it('mute_01 controls', async () => {
+    await openPage();
+
+    [0, 1, 2, 3].forEach(trackId => {
+      expect(byId(`mute-${trackId}`).textContent).toBe('M');
+      expect(byId(`solo-${trackId}`).textContent).toBe('S');
+      expect(byId(`mute-${trackId}`).closest('[data-track]')?.getAttribute('data-track')).toBe(String(trackId));
+    });
+  });
+
+  it('time_02 timer in both modes', async () => {
+    await openPage();
+
+    expect(byId('editor-view').contains(byId('editor-timer'))).toBe(true);
+    expect(byId('stadium-view').contains(byId('stadium-timer'))).toBe(true);
+    expect(byId('editor-timer').textContent).toBe('00:00:00');
+    expect(byId('stadium-timer').textContent).toBe('00:00:00');
+  });
+});

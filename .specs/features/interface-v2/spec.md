@@ -238,17 +238,17 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| SHELL-01 | P1: Rack shell | Tasks | Pending |
-| SHELL-02 | P1: Rack shell | Tasks | Pending |
-| SHELL-03 | P1: Rack shell | Tasks | Pending |
+| SHELL-01 | P1: Rack shell | Tasks | Implementing |
+| SHELL-02 | P1: Rack shell | Tasks | Implementing |
+| SHELL-03 | P1: Rack shell | Tasks | Implementing |
 | SHELL-04 | P1: Rack shell | Tasks | Pending |
 | SHELL-05 | P1: Rack shell | Tasks | Pending |
 | SHELL-06 | P1: Rack shell | Tasks | Pending |
 | SHELL-07 | P1: Rack shell | Tasks | Pending |
 | SHELL-08 | P1: Rack shell | Tasks | Pending |
-| SHELL-09 | P1: Rack shell | Tasks | Pending |
+| SHELL-09 | P1: Rack shell | Tasks | Implementing |
 | EDIT-01 | P1: Editor Mode | Tasks | Pending |
-| EDIT-02 | P1: Editor Mode | Tasks | Pending |
+| EDIT-02 | P1: Editor Mode | Tasks | Implementing |
 | EDIT-03 | P1: Editor Mode | Tasks | Pending |
 | EDIT-04 | P1: Editor Mode | Tasks | Pending |
 | EDIT-05 | P1: Editor Mode | Tasks | Pending |
@@ -262,13 +262,13 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | EDIT-13 | P1: Editor Mode | Tasks | Pending |
 | EDIT-14 | P1: Editor Mode | Tasks | Pending |
 | EDIT-15 | P1: Editor Mode | Tasks | Pending |
-| EDIT-16 | P1: Editor Mode | Tasks | Pending |
+| EDIT-16 | P1: Editor Mode | Tasks | Implementing |
 | EDIT-17 | P1: Editor Mode | Tasks | Pending |
 | EDIT-18 | P1: Editor Mode | Tasks | Pending |
-| EDIT-19 | P1: Editor Mode | Tasks | Pending |
+| EDIT-19 | P1: Editor Mode | Tasks | Implementing |
 | EDIT-20 | P1: Editor Mode | Tasks | Pending |
 | EDIT-21 | P1: Editor Mode | Tasks | Pending |
-| EDIT-22 | P1: Editor Mode | Tasks | Pending |
+| EDIT-22 | P1: Editor Mode | Tasks | Implementing |
 | EDIT-23 | P1: Editor Mode | Tasks | Implementing |
 | EDIT-24 | P1: Editor Mode | Tasks | Pending |
 | EDIT-25 | P1: Editor Mode | Tasks | Pending |
@@ -278,23 +278,23 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | EDIT-29 | P1: Editor Mode | Tasks | Pending |
 | STAD-01 | P1: Stadium Mode | Tasks | Pending |
 | STAD-02 | P1: Stadium Mode | Tasks | Pending |
-| STAD-03 | P1: Stadium Mode | Tasks | Pending |
-| STAD-04 | P1: Stadium Mode | Tasks | Pending |
-| STAD-05 | P1: Stadium Mode | Tasks | Pending |
+| STAD-03 | P1: Stadium Mode | Tasks | Implementing |
+| STAD-04 | P1: Stadium Mode | Tasks | Implementing |
+| STAD-05 | P1: Stadium Mode | Tasks | Implementing |
 | STAD-06 | P1: Stadium Mode | Tasks | Pending |
 | STAD-07 | P1: Stadium Mode | Tasks | Pending |
 | STAD-08 | P1: Stadium Mode | Tasks | Pending |
-| STAD-09 | P1: Stadium Mode | Tasks | Pending |
+| STAD-09 | P1: Stadium Mode | Tasks | Implementing |
 | STAD-10 | P1: Stadium Mode | Tasks | Pending |
 | STAD-11 | P1: Stadium Mode | Tasks | Pending |
 | STAD-12 | P1: Stadium Mode | Tasks | Pending |
 | TIME-01 | P1: Shared timer | Tasks | Implementing |
-| TIME-02 | P1: Shared timer | Tasks | Pending |
+| TIME-02 | P1: Shared timer | Tasks | Implementing |
 | TIME-03 | P1: Shared timer | Tasks | Pending |
 | TIME-04 | P1: Shared timer | Tasks | Pending |
 | TIME-05 | P1: Shared timer | Tasks | Implementing |
 | TIME-06 | P1: Shared timer | Tasks | Pending |
-| MUTE-01 | P2: Mute and Solo | Tasks | Pending |
+| MUTE-01 | P2: Mute and Solo | Tasks | Implementing |
 | MUTE-02 | P2: Mute and Solo | Tasks | Pending |
 | MUTE-03 | P2: Mute and Solo | Tasks | Pending |
 | MUTE-04 | P2: Mute and Solo | Tasks | Implementing |

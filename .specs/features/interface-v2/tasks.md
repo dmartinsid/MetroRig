@@ -179,11 +179,11 @@ T17
 
 **Done when**:
 
-- [ ] No Stitch footer value or dead control survives
-- [ ] All earlier tests still pass
-- [ ] The tests of the checks for SHELL-01, SHELL-02, SHELL-03, SHELL-09, EDIT-16, EDIT-19, EDIT-22, EDIT-02, STAD-03, STAD-04, STAD-05, STAD-09, MUTE-01, TIME-02 pass
-- [ ] Gate check passes: `npx vitest run`
-- [ ] Test count: 83 tests pass (no silent deletions)
+- [x] No Stitch footer value or dead control survives
+- [x] All earlier tests still pass
+- [x] The tests of the checks for SHELL-01, SHELL-02, SHELL-03, SHELL-09, EDIT-16, EDIT-19, EDIT-22, EDIT-02, STAD-03, STAD-04, STAD-05, STAD-09, MUTE-01, TIME-02 pass
+- [x] Gate check passes: `npx vitest run`
+- [x] Test count: 83 tests pass (no silent deletions)
 
 **Tests**: integration
 **Gate**: quick
