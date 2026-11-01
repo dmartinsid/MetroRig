@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 18,
+  "next_id": 26,
   "lessons": [
     {
       "id": "L-001",
@@ -310,6 +310,150 @@
       ],
       "created": "2026-11-01T16:19:20Z",
       "last_seen": "2026-11-01T16:19:20Z"
+    },
+    {
+      "id": "L-018",
+      "key": "ac_gap::reset view state at play as well as at stop when playback drives that view",
+      "text": "Reset view state at Play as well as at Stop when playback drives that view.",
+      "signal": "ac_gap",
+      "scope": "src/main.ts",
+      "status": "candidate",
+      "features": [
+        "song-bars"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "BAR-01 AC 5 (src/main.ts) (src/main.ts)"
+      ],
+      "created": "2026-11-01T18:13:34Z",
+      "last_seen": "2026-11-01T18:13:34Z"
+    },
+    {
+      "id": "L-019",
+      "key": "ac_gap::check whether a value really changed before running a destructive path",
+      "text": "Check whether a value really changed before running a destructive path.",
+      "signal": "ac_gap",
+      "scope": "src/main.ts",
+      "status": "candidate",
+      "features": [
+        "song-bars"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "BAR-05 AC 1 (src/main.ts) (src/main.ts)"
+      ],
+      "created": "2026-11-01T18:13:34Z",
+      "last_seen": "2026-11-01T18:13:34Z"
+    },
+    {
+      "id": "L-020",
+      "key": "ac_gap::when a data model grows walk every legacy migration with the new shape",
+      "text": "When a data model grows, walk every legacy migration with the new shape.",
+      "signal": "ac_gap",
+      "scope": "src/state.ts",
+      "status": "candidate",
+      "features": [
+        "song-bars"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "normalizePreset (src/state.ts) (src/state.ts)"
+      ],
+      "created": "2026-11-01T18:13:34Z",
+      "last_seen": "2026-11-01T18:13:34Z"
+    },
+    {
+      "id": "L-021",
+      "key": "ac_gap::ignore a late event whose index no longer fits the current state",
+      "text": "Ignore a late event whose index no longer fits the current state.",
+      "signal": "ac_gap",
+      "scope": "src/main.ts",
+      "status": "candidate",
+      "features": [
+        "song-bars"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "renderTick (src/main.ts) (src/main.ts)"
+      ],
+      "created": "2026-11-01T18:13:35Z",
+      "last_seen": "2026-11-01T18:13:35Z"
+    },
+    {
+      "id": "L-022",
+      "key": "ac_gap::read what a test actually forbids before calling two requirements a conflict",
+      "text": "Read what a test actually forbids before calling two requirements a conflict.",
+      "signal": "ac_gap",
+      "scope": "src/main.ts",
+      "status": "candidate",
+      "features": [
+        "song-bars"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "BAR-01 AC 4 (src/main.ts) (src/main.ts)"
+      ],
+      "created": "2026-11-01T18:13:35Z",
+      "last_seen": "2026-11-01T18:13:35Z"
+    },
+    {
+      "id": "L-023",
+      "key": "weak_test::assert the stored values after a round trip not only their count",
+      "text": "Assert the stored values after a round trip, not only their count.",
+      "signal": "weak_test",
+      "scope": "tests",
+      "status": "candidate",
+      "features": [
+        "song-bars"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "C7 (src/index.test.ts) (tests)"
+      ],
+      "created": "2026-11-01T18:13:35Z",
+      "last_seen": "2026-11-01T18:13:35Z"
+    },
+    {
+      "id": "L-024",
+      "key": "weak_test::pick test data where the two states compared really differ and assert that first",
+      "text": "Pick test data where the two states compared really differ, and assert that first.",
+      "signal": "weak_test",
+      "scope": "tests",
+      "status": "candidate",
+      "features": [
+        "song-bars"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "C29 (src/index.test.ts) (tests)"
+      ],
+      "created": "2026-11-01T18:13:35Z",
+      "last_seen": "2026-11-01T18:13:35Z"
+    },
+    {
+      "id": "L-025",
+      "key": "spec_precision_gap::trace a file s origin in git history before writing it down",
+      "text": "Trace a file's origin in git history before writing it down.",
+      "signal": "spec_precision_gap",
+      "scope": "specs",
+      "status": "candidate",
+      "features": [
+        "song-bars"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "KIT-01.3 (public/kit/LICENSE.md) (specs)"
+      ],
+      "created": "2026-11-01T18:13:35Z",
+      "last_seen": "2026-11-01T18:13:35Z"
     }
   ]
 }

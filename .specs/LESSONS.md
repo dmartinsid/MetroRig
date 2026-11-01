@@ -116,6 +116,54 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: C3 (src/index.css) (src/index.css)
 - last seen: 2026-11-01T16:19:20Z
 
+### L-018 - Reset view state at Play as well as at Stop when playback drives that view.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `src/main.ts` · harmful: 0
+- features: song-bars
+- evidence: BAR-01 AC 5 (src/main.ts) (src/main.ts)
+- last seen: 2026-11-01T18:13:34Z
+
+### L-019 - Check whether a value really changed before running a destructive path.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `src/main.ts` · harmful: 0
+- features: song-bars
+- evidence: BAR-05 AC 1 (src/main.ts) (src/main.ts)
+- last seen: 2026-11-01T18:13:34Z
+
+### L-020 - When a data model grows, walk every legacy migration with the new shape.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `src/state.ts` · harmful: 0
+- features: song-bars
+- evidence: normalizePreset (src/state.ts) (src/state.ts)
+- last seen: 2026-11-01T18:13:34Z
+
+### L-021 - Ignore a late event whose index no longer fits the current state.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `src/main.ts` · harmful: 0
+- features: song-bars
+- evidence: renderTick (src/main.ts) (src/main.ts)
+- last seen: 2026-11-01T18:13:35Z
+
+### L-022 - Read what a test actually forbids before calling two requirements a conflict.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `src/main.ts` · harmful: 0
+- features: song-bars
+- evidence: BAR-01 AC 4 (src/main.ts) (src/main.ts)
+- last seen: 2026-11-01T18:13:35Z
+
+### L-023 - Assert the stored values after a round trip, not only their count.
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `tests` · harmful: 0
+- features: song-bars
+- evidence: C7 (src/index.test.ts) (tests)
+- last seen: 2026-11-01T18:13:35Z
+
+### L-024 - Pick test data where the two states compared really differ, and assert that first.
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `tests` · harmful: 0
+- features: song-bars
+- evidence: C29 (src/index.test.ts) (tests)
+- last seen: 2026-11-01T18:13:35Z
+
+### L-025 - Trace a file's origin in git history before writing it down.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `specs` · harmful: 0
+- features: song-bars
+- evidence: KIT-01.3 (public/kit/LICENSE.md) (specs)
+- last seen: 2026-11-01T18:13:35Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

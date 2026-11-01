@@ -1,9 +1,9 @@
 # song-bars proofs
 
-**HEAD**: f56537b
+**HEAD**: 64770ea
 **Tree**: clean
 **Shell**: /bin/sh
-**Result**: 43 pass, 0 fail
+**Result**: 45 pass, 0 fail
 
 | Check | Proof | Result |
 | --- | --- | --- |
@@ -49,6 +49,8 @@
 | C40 | `run js / ✓ src/index.test.ts > Song Bars > edge_02 edits in any bar ask` | pass |
 | C41 | `run js / ✓ tests/state.test.ts > Preset normalization > edge_03 bars that do not fit` | pass |
 | C42 | `walk - the user played all 14 songs and approved each one, recorded in Handoff` | pass (Walked) |
+| C43 | `run rust / test tests::restart_returns_to_bar_one_on_the_pulse ... ok` | pass |
+| C44 | `run js / ✓ src/index.test.ts > Song Bars > edit_04 a song loaded during playback starts on bar one` | pass |
 | Build | `npm run build` | pass |
 
 ## Output
@@ -56,12 +58,12 @@
 `Run js` - exit 0
 
 ```
-   Start at  13:55:15
-   Duration  9.48s (transform 462ms, setup 1ms, collect 718ms, tests 9.46s, environment 2.85s, prepare 846ms)
+   Start at  15:12:45
+   Duration  10.05s (transform 595ms, setup 0ms, collect 1.06s, tests 10.02s, environment 2.81s, prepare 856ms)
 
 stderr | src/index.test.ts > Integration Test > should handle click sound variation selector changes, race conditions and fetch rejections
 Failed to load click sample, falling back to digital synth: Error: Fetch failed
-    at /home/deivid/Projects/Github/MetroRig/src/index.test.ts:191:26
+    at /home/deivid/Projects/Github/MetroRig/src/index.test.ts:192:26
     at processTicksAndRejections (node:internal/process/task_queues:104:5)
     at runTest (file:///home/deivid/Projects/Github/MetroRig/node_modules/@vitest/runner/dist/index.js:781:11)
     at runSuite (file:///home/deivid/Projects/Github/MetroRig/node_modules/@vitest/runner/dist/index.js:909:15)
@@ -81,7 +83,7 @@ test tests::bpm_01_quarter_note_in_every_meter ... ok
 test tests::time_01_hits_within_one_sample ... ok
 test tests::time_02_one_hour_no_drift ... ok
 
-test result: ok. 59 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.92s
+test result: ok. 60 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.84s
 
 
 running 0 tests
