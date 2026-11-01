@@ -241,6 +241,13 @@ function drawGrid() {
   }
   gridContainer.style.gridTemplateColumns = templateColumns.join(' ');
 
+  const beatSubLabel = document.createElement('div');
+  beatSubLabel.className = 'step-count-label';
+  beatSubLabel.innerText = 'BEAT/SUB';
+  beatSubLabel.style.gridRow = '1';
+  beatSubLabel.style.gridColumn = '1';
+  gridContainer.appendChild(beatSubLabel);
+
   // Count row: 1 e & a 2 e & a ...
   for (let step = 0; step < measureLength; step++) {
     const beat = getBeatForStep(step, measureLength, beats);
@@ -274,8 +281,14 @@ function drawGrid() {
       cell.style.gridRow = String(trackId + 2);
       cell.style.gridColumn = String(stepColumns[step]);
 
-      if (trackSteps[step] === 1) cell.classList.add('active');
-      if (trackSteps[step] === 2) cell.classList.add('accent');
+      if (trackSteps[step] === 1) {
+        cell.classList.add('active');
+        cell.innerText = '●';
+      }
+      if (trackSteps[step] === 2) {
+        cell.classList.add('accent');
+        cell.innerText = '▲';
+      }
       if (isSustainedStep(trackSteps, step, measureLength, beats)) cell.classList.add('sustain');
 
       cell.onclick = () => {

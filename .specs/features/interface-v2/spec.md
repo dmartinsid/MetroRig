@@ -251,11 +251,11 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | EDIT-02 | P1: Editor Mode | Tasks | Implementing |
 | EDIT-03 | P1: Editor Mode | Tasks | Pending |
 | EDIT-04 | P1: Editor Mode | Tasks | Pending |
-| EDIT-05 | P1: Editor Mode | Tasks | Pending |
-| EDIT-06 | P1: Editor Mode | Tasks | Pending |
-| EDIT-07 | P1: Editor Mode | Tasks | Pending |
-| EDIT-08 | P1: Editor Mode | Tasks | Pending |
-| EDIT-09 | P1: Editor Mode | Tasks | Pending |
+| EDIT-05 | P1: Editor Mode | Tasks | Implementing |
+| EDIT-06 | P1: Editor Mode | Tasks | Implementing |
+| EDIT-07 | P1: Editor Mode | Tasks | Implementing |
+| EDIT-08 | P1: Editor Mode | Tasks | Implementing |
+| EDIT-09 | P1: Editor Mode | Tasks | Implementing |
 | EDIT-10 | P1: Editor Mode | Tasks | Pending |
 | EDIT-11 | P1: Editor Mode | Tasks | Pending |
 | EDIT-12 | P1: Editor Mode | Tasks | Pending |
