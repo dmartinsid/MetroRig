@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { afterEach, describe, it, expect, beforeEach } from 'vitest';
 import { StateManager, FACTORY_PRESETS, FACTORY_GROOVES, SPEED_TRAINER_PRESETS, FIGURES, getBeatsPerMeasure, getBeatForStep, isSustainedStep, applyFigure, measureLengthFor, normalizePreset, completeKit, startBpmFor } from '../src/state';
 import type { Preset } from '../src/state';
 
@@ -277,3 +277,16 @@ describe('completeKit', () => {
   });
 });
 
+describe('StateManager', () => {
+  afterEach(() => localStorage.removeItem('metrorig_view_mode'));
+
+  it('nav_07 grooves mode persists', () => {
+    new StateManager().setViewMode('grooves');
+    expect(new StateManager().activeViewMode).toBe('grooves');
+  });
+
+  it('opens the Editor for an unknown stored mode', () => {
+    localStorage.setItem('metrorig_view_mode', 'presets');
+    expect(new StateManager().activeViewMode).toBe('editor');
+  });
+});
