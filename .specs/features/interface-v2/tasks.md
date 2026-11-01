@@ -441,9 +441,9 @@ T17
 
 **Done when**:
 
-- [ ] `Known Drift` holds only what remains
-- [ ] Gate check passes: `cargo test && npx vitest run && npx vite build`
-- [ ] Test count: 136 tests pass (no silent deletions)
+- [x] `Known Drift` holds only what remains
+- [x] Gate check passes: `cargo test && npx vitest run && npx vite build`
+- [x] Test count: 136 tests pass (no silent deletions)
 
 **Tests**: none
 **Gate**: build
