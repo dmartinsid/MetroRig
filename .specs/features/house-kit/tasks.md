@@ -154,10 +154,10 @@ T19 → T20
 
 **Done when**:
 
-- [ ] Ghost, Normal and Accent each play their own take
-- [ ] A bank hit plays at its recorded level
-- [ ] A single-sample track keeps 0.3, 0.7 and 1.0
-- [ ] Gate check passes: `cargo test`
+- [x] Ghost, Normal and Accent each play their own take
+- [x] A bank hit plays at its recorded level
+- [x] A single-sample track keeps 0.3, 0.7 and 1.0
+- [x] Gate check passes: `cargo test`
 
 **Tests**: unit
 **Gate**: rust
