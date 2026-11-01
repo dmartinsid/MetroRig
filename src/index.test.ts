@@ -836,4 +836,55 @@ describe('Interface V2', () => {
     await clickPlay();
     localStorage.removeItem('metrorig_view_mode');
   });
+
+  const cell = (trackId: number, step: number) =>
+    document.querySelectorAll<HTMLElement>(`.step-cell[data-track="${trackId}"]`)[step];
+
+  it('edit_05 beat sub label', async () => {
+    await openPage();
+
+    const first = byId('grid-container').firstElementChild as HTMLElement;
+    expect(first.innerText).toBe('BEAT/SUB');
+    expect(first.style.gridColumn).toBe('1');
+    expect(first.style.gridRow).toBe('1');
+  });
+
+  it('edit_06 hit mark', async () => {
+    await openPage();
+    await selectPreset('factory:rock');
+
+    expect(cell(1, 0).classList.contains('active')).toBe(true);
+    expect(cell(1, 0).innerText).toBe('●');
+    expect(cell(1, 1).innerText).toBe('');
+  });
+
+  it('edit_07 accent mark', async () => {
+    await openPage();
+
+    expect(cell(0, 0).classList.contains('accent')).toBe(true);
+    expect(cell(0, 0).innerText).toBe('▲');
+    expect(cell(0, 4).innerText).toBe('●');
+
+    cell(0, 1).click(); // Off to hit
+    cell(0, 1).click(); // Hit to accent
+    expect(cell(0, 1).innerText).toBe('▲');
+  });
+
+  it('edit_08 beat spacer', async () => {
+    await openPage();
+
+    const columns = byId('grid-container').style.gridTemplateColumns.split(' ');
+    expect(columns.filter(column => column === '0.5rem')).toHaveLength(3);
+    expect(columns.filter(column => column === '1fr')).toHaveLength(16);
+    expect(columns.slice(0, 7)).toEqual(['auto', '1fr', '1fr', '1fr', '1fr', '0.5rem', '1fr']);
+  });
+
+  it('edit_09 sustain kept', async () => {
+    await openPage();
+    await selectPreset('factory:trainer_gallop');
+
+    expect(cell(1, 1).classList.contains('sustain')).toBe(true); // Eighth of the gallop
+    expect(cell(1, 1).innerText).toBe('');
+    expect(cell(1, 2).classList.contains('sustain')).toBe(false);
+  });
 });

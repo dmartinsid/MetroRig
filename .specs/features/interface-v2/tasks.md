@@ -246,10 +246,10 @@ T17
 
 **Done when**:
 
-- [ ] Accent stays reachable on Click only, as today
-- [ ] The tests of the checks for EDIT-05, EDIT-06, EDIT-07, EDIT-08, EDIT-09 pass
-- [ ] Gate check passes: `npx vitest run && npx vite build`
-- [ ] Test count: 96 tests pass (no silent deletions)
+- [x] Accent stays reachable on Click only, as today
+- [x] The tests of the checks for EDIT-05, EDIT-06, EDIT-07, EDIT-08, EDIT-09 pass
+- [x] Gate check passes: `npx vitest run && npx vite build`
+- [x] Test count: 96 tests pass (no silent deletions)
 
 **Tests**: integration
 **Gate**: full
