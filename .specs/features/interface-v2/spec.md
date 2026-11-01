@@ -290,10 +290,10 @@ Every ambiguity is resolved or recorded here - nothing is left silently unclear.
 | STAD-12 | P1: Stadium Mode | Tasks | Pending |
 | TIME-01 | P1: Shared timer | Tasks | Implementing |
 | TIME-02 | P1: Shared timer | Tasks | Implementing |
-| TIME-03 | P1: Shared timer | Tasks | Pending |
-| TIME-04 | P1: Shared timer | Tasks | Pending |
+| TIME-03 | P1: Shared timer | Tasks | Implementing |
+| TIME-04 | P1: Shared timer | Tasks | Implementing |
 | TIME-05 | P1: Shared timer | Tasks | Implementing |
-| TIME-06 | P1: Shared timer | Tasks | Pending |
+| TIME-06 | P1: Shared timer | Tasks | Implementing |
 | MUTE-01 | P2: Mute and Solo | Tasks | Implementing |
 | MUTE-02 | P2: Mute and Solo | Tasks | Pending |
 | MUTE-03 | P2: Mute and Solo | Tasks | Pending |

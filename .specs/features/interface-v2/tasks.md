@@ -224,10 +224,10 @@ T17
 
 **Done when**:
 
-- [ ] `updateTimers` is the only writer of the timer text
-- [ ] The tests of the checks for TIME-03, TIME-04, TIME-06 pass
-- [ ] Gate check passes: `npx vitest run && npx vite build`
-- [ ] Test count: 91 tests pass (no silent deletions)
+- [x] `updateTimers` is the only writer of the timer text
+- [x] The tests of the checks for TIME-03, TIME-04, TIME-06 pass
+- [x] Gate check passes: `npx vitest run && npx vite build`
+- [x] Test count: 91 tests pass (no silent deletions)
 
 **Tests**: integration
 **Gate**: full
