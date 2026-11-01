@@ -44,6 +44,12 @@ Replace the drum pieces The House Kit by Better Mixes covers with its recordings
 - Q10: credit in `LICENSE.md`, the README and an app footer line linking to the channel: `Kick, snare and toms: The House Kit by Better Mixes — thanks!`.
 - Stated defaults, accepted: takes rotate in a fixed order and restart at Play; a new hit on a track fades the previous one briefly; files are 44.1 kHz, 16-bit, stereo, tails cut at -60 dB, with no per-take normalization.
 
+### Layers, after the first listen
+
+- Q11: "Vamos somar os sons diferentes, acho que vai ser uma boa. gere sim". The user accepted a test version on branch `house-kit-layer`. This reopens Q5 for Kick and Snare until the user hears it; `house-kit` keeps `Blend` alone.
+- The offer named `Blend` + `Close` on both. Measuring changed the Kick: its `Close` is the `Blend` take again (correlation 0.97 to 0.99, same level), so adding it would only double the sound.
+- Test recipe. Kick: `Blend` + `Close` above 2 kHz + `Room` at half level. Snare: `Blend` + `Close`, lined up per take, + `Room` at half level. One gain per piece: Kick -2.3 dB, Snare -4.8 dB. Kick trim 0.85, to match the current Kick's average level.
+
 ---
 
 ## Measured facts

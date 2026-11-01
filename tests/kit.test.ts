@@ -231,6 +231,22 @@ describe('House Kit', () => {
     });
   });
 
+  it('hk_35 kick and snare layers', () => {
+    const builder = fs.readFileSync(path.resolve(__dirname, '../scripts/build_house_kit.py'), 'utf8');
+    const layers = builder.slice(builder.indexOf('LAYERS = {'), builder.indexOf('\n}\n', builder.indexOf('LAYERS = {')));
+    expect(layers).toContain("'kick': (('Kick/Close', 1.0, 'highpass=f=2000:poles=2', False), ('Kick/Room', 0.5, None, False))");
+    expect(layers).toContain("'snare': (('Snare/Close', 1.0, None, True), ('Snare/Room', 0.5, None, False))");
+    expect(layers.match(/^    '/gm)).toHaveLength(2); // Toms have no layers
+
+    ['kick', 'snare'].forEach(piece => {
+      const peaks = houseFiles.filter(file => file.startsWith(`${piece}/`)).map(peakOf);
+      expect(toDb(Math.max(...peaks)), piece).toBeGreaterThanOrEqual(-0.1);
+    });
+
+    const license = fs.readFileSync(path.join(publicDir, 'kit/LICENSE.md'), 'utf8');
+    ['`Kick/Close`', '`Kick/Room`', '`Snare/Close`', '`Snare/Room`'].forEach(source => expect(license).toContain(source));
+  });
+
   it('hk_11 size limit', () => {
     const kitFiles = (fs.readdirSync(path.join(publicDir, 'kit'), { recursive: true }) as string[])
       .filter(file => file.endsWith('.wav'))

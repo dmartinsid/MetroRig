@@ -33,6 +33,7 @@ Kick, snare and toms use one sample each, and a step's dynamic only changes its 
 | Tom layout | 13 tracks; 10" High Tom, 12" Mid Tom, 14" Low Tom, 16" Floor Tom | AD-012; user: "vamos pra 13 trilhas" | y |
 | Dynamics and takes | 3 dynamics × 3 takes of each piece | Q4, user: "recomendacao"; size limit in AD-014 | y |
 | Mic | `Blend` | Q5, user: "recomendacao" | y |
+| Layers on Kick and Snare | Added after the first listen, per HK-35; toms stay on `Blend` alone | AD-015; user: "Vamos somar os sons diferentes, acho que vai ser uma boa. gere sim" and "Pode deixar assim, pode abrir a PR" | y |
 | Recording per dynamic | Kick and toms `Soft`, `Med`, `Hard`; Snare `Soft`, `Hard`, `Crack` | Q7, user: "recomendacoes" | y |
 | Level of the new pieces | Recorded dynamics, one fixed trim per piece, no step gain | Q8, user: "recomendacoes" | y |
 | Takes used | Files numbered 1, 2 and 3 of each recording | The kit does not rank its takes | y |
@@ -139,6 +140,7 @@ Kick, snare and toms use one sample each, and a step's dynamic only changes its 
 
 - HK-33: WHEN the pattern loops THEN the engine SHALL continue the take rotation.
 - HK-34: WHEN a user changes a step's dynamic during playback THEN the engine SHALL play the new dynamic's next take at that step's next hit.
+- HK-35: The Kick samples SHALL mix each `Blend` take with the same take's `Close` above 2 kHz and its `Room` at half level, the Snare samples SHALL mix each `Blend` take with the same take's `Close`, lined up, and its `Room` at half level, and one gain per piece SHALL bring its loudest take to full scale.
 
 ---
 
@@ -146,23 +148,23 @@ Kick, snare and toms use one sample each, and a step's dynamic only changes its 
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| HK-01 | P1: Real recordings at each dynamic | Tasks | Implementing |
-| HK-02 | P1: Real recordings at each dynamic | Tasks | Implementing |
-| HK-03 | P1: Real recordings at each dynamic | Tasks | Implementing |
-| HK-04 | P1: Real recordings at each dynamic | Tasks | Implementing |
-| HK-05 | P1: Real recordings at each dynamic | Tasks | Implementing |
-| HK-06 | P1: Real recordings at each dynamic | Tasks | Implementing |
-| HK-07 | P1: Real recordings at each dynamic | Tasks | Implementing |
-| HK-08 | P1: Real recordings at each dynamic | Tasks | Implementing |
-| HK-09 | P1: Real recordings at each dynamic | Tasks | Implementing |
-| HK-10 | P1: Real recordings at each dynamic | Tasks | Implementing |
-| HK-11 | P1: Real recordings at each dynamic | Tasks | Implementing |
-| HK-12 | P1: Real recordings at each dynamic | Tasks | Implementing |
-| HK-13 | P1: Real recordings at each dynamic | Tasks | Implementing |
-| HK-14 | P1: Real recordings at each dynamic | Tasks | Implementing |
-| HK-15 | P1: Four toms | Tasks | Implementing |
+| HK-01 | P1: Real recordings at each dynamic | Tasks | Implemented |
+| HK-02 | P1: Real recordings at each dynamic | Tasks | Implemented |
+| HK-03 | P1: Real recordings at each dynamic | Tasks | Implemented |
+| HK-04 | P1: Real recordings at each dynamic | Tasks | Implemented |
+| HK-05 | P1: Real recordings at each dynamic | Tasks | Implemented |
+| HK-06 | P1: Real recordings at each dynamic | Tasks | Implemented |
+| HK-07 | P1: Real recordings at each dynamic | Tasks | Implemented |
+| HK-08 | P1: Real recordings at each dynamic | Tasks | Implemented |
+| HK-09 | P1: Real recordings at each dynamic | Tasks | Implemented |
+| HK-10 | P1: Real recordings at each dynamic | Tasks | Implemented |
+| HK-11 | P1: Real recordings at each dynamic | Tasks | Implemented |
+| HK-12 | P1: Real recordings at each dynamic | Tasks | Implemented |
+| HK-13 | P1: Real recordings at each dynamic | Tasks | Implemented |
+| HK-14 | P1: Real recordings at each dynamic | Tasks | Implemented |
+| HK-15 | P1: Four toms | Tasks | Implemented |
 | HK-16 | P1: Four toms | Design | Implementing |
-| HK-17 | P1: Four toms | Tasks | Implementing |
+| HK-17 | P1: Four toms | Tasks | Implemented |
 | HK-18 | P1: Four toms | Design | Implementing |
 | HK-19 | P1: Four toms | Design | Implementing |
 | HK-20 | P1: Four toms | Design | Implementing |
@@ -173,15 +175,16 @@ Kick, snare and toms use one sample each, and a step's dynamic only changes its 
 | HK-25 | P1: Approval by ear | Design | Pending |
 | HK-26 | P1: Approval by ear | Design | Pending |
 | HK-27 | P1: Approval by ear | Design | Implementing |
-| HK-28 | P2: Credit to Better Mixes | Tasks | Implementing |
-| HK-29 | P2: Credit to Better Mixes | Tasks | Implementing |
-| HK-30 | P2: Credit to Better Mixes | Tasks | Implementing |
-| HK-31 | P2: Credit to Better Mixes | Tasks | Implementing |
-| HK-32 | P2: Credit to Better Mixes | Tasks | Implementing |
-| HK-33 | P1: Real recordings at each dynamic | Tasks | Implementing |
-| HK-34 | P1: Real recordings at each dynamic | Tasks | Implementing |
+| HK-28 | P2: Credit to Better Mixes | Tasks | Implemented |
+| HK-29 | P2: Credit to Better Mixes | Tasks | Implemented |
+| HK-30 | P2: Credit to Better Mixes | Tasks | Implemented |
+| HK-31 | P2: Credit to Better Mixes | Tasks | Implemented |
+| HK-32 | P2: Credit to Better Mixes | Tasks | Implemented |
+| HK-33 | P1: Real recordings at each dynamic | Tasks | Implemented |
+| HK-34 | P1: Real recordings at each dynamic | Tasks | Implemented |
+| HK-35 | P1: Real recordings at each dynamic | Tasks | Implemented |
 
-**Coverage:** 34 total, 0 mapped to tasks, 34 unmapped ⚠️
+**Coverage:** 35 total, 35 mapped to tasks, 0 unmapped
 
 ---
 
@@ -196,6 +199,6 @@ Kick, snare and toms use one sample each, and a step's dynamic only changes its 
 
 ## Success Criteria
 
-- [ ] The user approves all 6 new pieces by ear.
-- [ ] All drum samples take at most 20 MB.
-- [ ] Every preset and song from before this feature loads, and only Battery's grid changes.
+- [x] The user approves all 6 new pieces by ear.
+- [x] All drum samples take at most 20 MB.
+- [x] Every preset and song from before this feature loads, and only Battery's grid changes.

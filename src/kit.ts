@@ -5,16 +5,17 @@ interface Bank {
   trim: number; // Set by ear
 }
 
-const BANK_TRIM = 0.7; // The level Normal plays at today; the ear approval settles each piece
+const BANK_TRIM = 0.7; // Approved by ear for Snare and the toms
 const TAKES = 3;
 const KICK_TOM_RECORDINGS: Bank['recordings'] = ['soft', 'med', 'hard'];
-const bankOf = (folder: string, recordings = KICK_TOM_RECORDINGS): Bank => ({ folder, recordings, trim: BANK_TRIM });
+const KICK_TRIM = 0.85; // Approved by ear; the layers lowered the Kick files by 1.8 dB on average
+const bankOf = (folder: string, recordings = KICK_TOM_RECORDINGS, trim = BANK_TRIM): Bank => ({ folder, recordings, trim });
 
 // Every track of the kit, in grid order. Ids 0 to 10 predate the expanded kit, so saved presets keep them,
 // which is why Floor Tom (id 10) comes after Mid Tom (11) and Low Tom (12). Look tracks up by id, not by position.
 export const TRACKS: { id: number; name: string; label: string; sample: string | null; bank?: Bank }[] = [
   { id: 0, name: 'Click', label: 'CLICK', sample: null },
-  { id: 1, name: 'Kick', label: 'KICK', sample: null, bank: bankOf('kick') },
+  { id: 1, name: 'Kick', label: 'KICK', sample: null, bank: bankOf('kick', KICK_TOM_RECORDINGS, KICK_TRIM) },
   { id: 2, name: 'Snare', label: 'SNARE', sample: null, bank: bankOf('snare', ['soft', 'hard', 'crack']) },
   { id: 3, name: 'Hi-hat', label: 'HI-HAT', sample: '/hihat.wav' },
   { id: 4, name: 'Open Hat', label: 'OPEN HAT', sample: '/kit/open-hat.wav' },

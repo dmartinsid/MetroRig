@@ -46,7 +46,7 @@ By Better Mixes. Thank you, Better Mixes, for the kick, snare and toms.
 
 No written terms were found in the zip or on the product pages. The release for general use is the user's account of the video https://www.youtube.com/watch?v=WFS0_5Qsc1w, not a written license.
 
-Every piece uses the `Blend` mic. Each piece was converted with no gain: the files keep their recorded levels, and only the tail was cut at -60 dBFS and faded. `<take>` is 1, 2 or 3 in both columns.
+Every piece starts from the `Blend` mic. The toms were converted with no gain: the files keep their recorded levels, and only the tail was cut at -60 dBFS and faded. Kick adds the same take from `Kick/Close`, above 2 kHz, and from `Kick/Room` at half level. Snare adds the same take from `Snare/Close`, lined up, and from `Snare/Room` at half level. Each of those two pieces then gets one gain for all its takes. `<take>` is 1, 2 or 3 in both columns.
 
 | Piece | Folder |
 | ----- | ------ |

@@ -113,3 +113,11 @@
 - **Scope**: house-kit, kit size
 - **Date**: 2026-11-01
 - **Status**: active (AD-014)
+
+### AD-015
+- **Decision**: Kick mixes `Blend`, `Close` above 2 kHz and `Room` at half level. Snare mixes `Blend`, lined-up `Close` and `Room` at half level. One gain per piece keeps its loudest take at full scale, and Kick's trim is 0.85. Toms stay on `Blend` alone.
+- **Reason**: The user asked for more impact, as a trigger would give. Doubling a sample only raises its level, so different sources are summed. User: "Vamos somar os sons diferentes, acho que vai ser uma boa. gere sim", then, after comparing, "Pode deixar assim, pode abrir a PR". Kick's `Close` is nearly its `Blend` (correlation 0.97 to 0.99), so only its highs add anything.
+- **Trade-off**: Kick and Snare no longer keep their recorded levels, and hits leave less headroom: the output only clamps.
+- **Scope**: house-kit, Kick and Snare samples. Narrows Q5, which chose `Blend` alone
+- **Date**: 2026-11-01
+- **Status**: active (AD-015)
