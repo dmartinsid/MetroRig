@@ -242,6 +242,42 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: verification.md C32; src/pad.rs new_voice (pad-engine)
 - last seen: 2026-11-02T20:28:55Z
 
+### L-039 - Insert CSS rules between complete selectors, and walk the neighbouring screens that share a media block
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `css` · harmful: 0
+- features: chord-library
+- evidence: verification.md Grooves padding; src/index.css (css)
+- last seen: 2026-11-02T21:30:40Z
+
+### L-040 - State the lowest width a layout criterion covers, and measure it with a classic scrollbar
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `css` · harmful: 0
+- features: chord-library
+- evidence: verification.md 320 px; CHD-29 (css)
+- last seen: 2026-11-02T21:30:40Z
+
+### L-041 - Hold a rule over a whole set by an independent oracle, not by a few literal samples
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `chord-tests` · harmful: 0
+- features: chord-library
+- evidence: verification.md C4, C5 (chord-tests)
+- last seen: 2026-11-02T21:30:40Z
+
+### L-042 - Prove a rule that reads state from a state other than the default
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `chord-tests` · harmful: 0
+- features: chord-library
+- evidence: verification.md C19, C20 (chord-tests)
+- last seen: 2026-11-02T21:30:40Z
+
+### L-043 - Name each bank a file-listing test must cover, so a new file cannot slip past it
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `pad-tests` · harmful: 0
+- features: chord-library
+- evidence: verification.md C13; tests/padBank.test.ts tim_40 (pad-tests)
+- last seen: 2026-11-02T21:30:40Z
+
+### L-044 - Add a new requirement for a bound found after approval, and never edit the approved criterion
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `specs` · harmful: 0
+- features: chord-library
+- evidence: verification.md CHD-07 (specs)
+- last seen: 2026-11-02T21:30:40Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 39,
+  "next_id": 45,
   "lessons": [
     {
       "id": "L-001",
@@ -688,6 +688,114 @@
       ],
       "created": "2026-11-02T20:28:55Z",
       "last_seen": "2026-11-02T20:28:55Z"
+    },
+    {
+      "id": "L-039",
+      "key": "ac_gap::insert css rules between complete selectors and walk the neighbouring screens that share a media block",
+      "text": "Insert CSS rules between complete selectors, and walk the neighbouring screens that share a media block",
+      "signal": "ac_gap",
+      "scope": "css",
+      "status": "candidate",
+      "features": [
+        "chord-library"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "verification.md Grooves padding; src/index.css (css)"
+      ],
+      "created": "2026-11-02T21:30:40Z",
+      "last_seen": "2026-11-02T21:30:40Z"
+    },
+    {
+      "id": "L-040",
+      "key": "ac_gap::state the lowest width a layout criterion covers and measure it with a classic scrollbar",
+      "text": "State the lowest width a layout criterion covers, and measure it with a classic scrollbar",
+      "signal": "ac_gap",
+      "scope": "css",
+      "status": "candidate",
+      "features": [
+        "chord-library"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "verification.md 320 px; CHD-29 (css)"
+      ],
+      "created": "2026-11-02T21:30:40Z",
+      "last_seen": "2026-11-02T21:30:40Z"
+    },
+    {
+      "id": "L-041",
+      "key": "weak_test::hold a rule over a whole set by an independent oracle not by a few literal samples",
+      "text": "Hold a rule over a whole set by an independent oracle, not by a few literal samples",
+      "signal": "weak_test",
+      "scope": "chord-tests",
+      "status": "candidate",
+      "features": [
+        "chord-library"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "verification.md C4, C5 (chord-tests)"
+      ],
+      "created": "2026-11-02T21:30:40Z",
+      "last_seen": "2026-11-02T21:30:40Z"
+    },
+    {
+      "id": "L-042",
+      "key": "weak_test::prove a rule that reads state from a state other than the default",
+      "text": "Prove a rule that reads state from a state other than the default",
+      "signal": "weak_test",
+      "scope": "chord-tests",
+      "status": "candidate",
+      "features": [
+        "chord-library"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "verification.md C19, C20 (chord-tests)"
+      ],
+      "created": "2026-11-02T21:30:40Z",
+      "last_seen": "2026-11-02T21:30:40Z"
+    },
+    {
+      "id": "L-043",
+      "key": "weak_test::name each bank a file listing test must cover so a new file cannot slip past it",
+      "text": "Name each bank a file-listing test must cover, so a new file cannot slip past it",
+      "signal": "weak_test",
+      "scope": "pad-tests",
+      "status": "candidate",
+      "features": [
+        "chord-library"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "verification.md C13; tests/padBank.test.ts tim_40 (pad-tests)"
+      ],
+      "created": "2026-11-02T21:30:40Z",
+      "last_seen": "2026-11-02T21:30:40Z"
+    },
+    {
+      "id": "L-044",
+      "key": "spec_precision_gap::add a new requirement for a bound found after approval and never edit the approved criterion",
+      "text": "Add a new requirement for a bound found after approval, and never edit the approved criterion",
+      "signal": "spec_precision_gap",
+      "scope": "specs",
+      "status": "candidate",
+      "features": [
+        "chord-library"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "verification.md CHD-07 (specs)"
+      ],
+      "created": "2026-11-02T21:30:40Z",
+      "last_seen": "2026-11-02T21:30:40Z"
     }
   ]
 }
