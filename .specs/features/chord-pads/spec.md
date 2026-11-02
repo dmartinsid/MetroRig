@@ -240,15 +240,15 @@ Every ambiguity is resolved or recorded here.
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| PAD-01 | P1: Hold a chord | Design | Pending |
-| PAD-02 | P1: Hold a chord | Design | Pending |
-| PAD-03 | P1: Hold a chord | Design | Pending |
+| PAD-01 | P1: Hold a chord | Design | Implementing |
+| PAD-02 | P1: Hold a chord | Design | Implementing |
+| PAD-03 | P1: Hold a chord | Design | Implementing |
 | PAD-04 | P1: Hold a chord | Design | Pending |
 | PAD-05 | P1: Hold a chord | Design | Pending |
 | PAD-06 | P1: Hold a chord | Design | Pending |
 | PAD-07 | P1: Hold a chord | Design | Pending |
 | PAD-08 | P1: Hold a chord | Design | Pending |
-| PAD-09 | P1: Hold a chord | Design | Pending |
+| PAD-09 | P1: Hold a chord | Design | Implementing |
 | PAD-10 | P1: Hold a chord | Design | Pending |
 | PAD-11 | P1: Hold a chord | Design | Pending |
 | PAD-12 | P1: Hold a chord | Design | Pending |
