@@ -64,7 +64,7 @@ flowchart LR
 - **Dependencies**: `ffmpeg`, Python standard library
 - **Reuses**: the dev-tool shape of `scripts/generate_clicks.py`
 
-Converts to 44.1 kHz, 16-bit, stereo, cuts after the last frame reaching -60 dBFS, and fades the final 5 ms. It applies no gain. Output: `public/kit/house/<piece>/<recording>-<take>.wav`, such as `snare/crack-2.wav`. Pieces are `kick`, `snare`, `tom-10`, `tom-12`, `tom-14` and `tom-16`.
+Converts to 44.1 kHz, 16-bit, stereo, cuts after the last frame reaching -60 dBFS, and fades the final 5 ms. It applies no gain to the toms; Kick and Snare take their layers and one gain per piece, as AD-015 and HK-35 set. Output: `public/kit/house/<piece>/<recording>-<take>.wav`, such as `snare/crack-2.wav`. Pieces are `kick`, `snare`, `tom-10`, `tom-12`, `tom-14` and `tom-16`.
 
 ### Engine bank
 

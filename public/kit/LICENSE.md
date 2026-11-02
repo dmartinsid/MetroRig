@@ -1,6 +1,6 @@
 # Drum kit samples
 
-Each file in this folder is one hit, trimmed and faded, at 44.1 kHz, 16-bit, stereo. The files here are peak-normalized to -1 dBFS; the files in `house/` are not, since they keep their recorded levels (see The House Kit below).
+Each file in this folder is one hit, trimmed and faded, at 44.1 kHz, 16-bit, stereo. The files here are peak-normalized to -1 dBFS; the files in `house/` are not (see The House Kit below).
 
 ## Earlier samples
 
