@@ -2,7 +2,7 @@ import { createHash } from 'crypto';
 import { describe, it, expect } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
-import { CHORD_TYPES, PAD_BANK, PAD_TIMBRES, ROOTS, chordMidi, timbreNotes } from '../src/chords';
+import { CHORD_TYPES, PAD_TIMBRES, ROOTS, chordMidi, timbreNotes } from '../src/chords';
 
 const padsDir = path.resolve(__dirname, '../public/pads');
 const licensePath = path.resolve(__dirname, '../public/kit/LICENSE.md');
@@ -40,9 +40,11 @@ function sizeOf(folder: string): number {
   }, 0);
 }
 
+const newAgeFiles = () => PAD_TIMBRES.find(({ name }) => name === 'New Age')!.files;
+
 describe('Pad bank', () => {
   it('pad_21 files and license', () => {
-    expect(PAD_BANK).toEqual(NEW_AGE.map(([key, name, , loopStart, loopEnd]) =>
+    expect(newAgeFiles()).toEqual(NEW_AGE.map(([key, name, , loopStart, loopEnd]) =>
       ({ key, url: `/pads/new-age/${name}.flac`, loopStart, loopEnd })));
     expect(fs.readdirSync(path.join(padsDir, 'new-age')).sort())
       .toEqual(NEW_AGE.map(([, name]) => `${name}.flac`).sort());
@@ -61,7 +63,7 @@ describe('Pad bank', () => {
     expect(license).toContain('Creative Commons CC0');
 
     // Every chord note reads a file at most 2 semitones away, which is what the design's interpolation relies on
-    const keys = PAD_BANK.map(entry => entry.key);
+    const keys = newAgeFiles().map(entry => entry.key);
     for (const note of ROOTS.flatMap((_, root) => CHORD_TYPES.flatMap((_, type) => chordMidi(root, type)))) {
       expect(Math.min(...keys.map(key => Math.abs(key - note)))).toBeLessThanOrEqual(2);
     }

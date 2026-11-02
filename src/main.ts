@@ -6,7 +6,7 @@ import { VisualScheduler } from './visualSync';
 import { audibleSteps, createTrackMix, isAudible, toggleMute, toggleSolo } from './trackMix';
 import { formatBarStep, formatClock, formatLatency, formatSteps, formatTimer, nextDenominator } from './display';
 import { GENRE_TABS, SONGS, GenreTab, Song, songToPreset, songsForGenre } from './songs';
-import { CHORD_TYPES, ChordId, PAD_BANK, PAD_TIMBRES, ROOTS, chordName, chordNotes, nextChord, parseTimbre, parseVolume, timbreNotes } from './chords';
+import { CHORD_TYPES, ChordId, PAD_TIMBRES, PadFile, ROOTS, chordName, chordNotes, nextChord, parseTimbre, parseVolume, timbreNotes } from './chords';
 import workletUrl from './audio/metronome-processor?url';
 
 declare const gsap: any;
@@ -596,7 +596,7 @@ state.subscribe((s) => {
 viewLinks.forEach(link => {
   link.onclick = () => {
     state.setViewMode(link.dataset.view as ViewMode);
-    if (state.activeViewMode === 'improv') openImprov();
+    if (state.activeViewMode === 'improv') loadSelectedTimbre();
   };
 });
 
@@ -1252,39 +1252,44 @@ async function pressChord(chord: ChordId) {
   settleChord();
 }
 
-// Every file at first, then only the ones that failed
-let padFilesToLoad = PAD_BANK;
-let padFilesFailed = 0;
-let isBankLoading = false;
+// Per timbre: every file at first, then only the ones that failed
+const padLoads = PAD_TIMBRES.map(({ files }) => ({ toLoad: files, failed: 0, isLoading: false }));
+let padLoadQueue = Promise.resolve();
 
-// One file at a time, so no audio block carries more than one copy
-async function loadBank() {
-  if (isBankLoading) return;
-  isBankLoading = true;
-  const failed: typeof PAD_BANK = [];
-  for (const file of padFilesToLoad) {
-    try {
-      await audioNode.padLoad(file.key, file.url, file.loopStart, file.loopEnd);
-    } catch (err) {
-      console.error(`Failed to load ${file.url}:`, err);
-      failed.push(file);
+// One file at a time across the timbres, so no audio block carries more than one copy
+function loadTimbre(timbre: number) {
+  const load = padLoads[timbre];
+  if (load.isLoading) return;
+  load.isLoading = true;
+  padLoadQueue = padLoadQueue.then(async () => {
+    const failed: PadFile[] = [];
+    for (const file of load.toLoad) {
+      try {
+        await audioNode.padLoad(timbre, file.key, file.url, file.loopStart, file.loopEnd);
+      } catch (err) {
+        console.error(`Failed to load ${file.url}:`, err);
+        failed.push(file);
+      }
     }
-  }
-  padFilesToLoad = failed;
-  padFilesFailed = failed.length;
-  isBankLoading = false;
+    load.toLoad = failed;
+    load.failed = failed.length;
+    load.isLoading = false;
+    renderImprov();
+  });
 }
 
 // Makes no sound, and leaves the kit to Play
-async function openImprov() {
-  if (await engineReady()) await loadBank();
+async function loadSelectedTimbre() {
+  if (await engineReady()) loadTimbre(selectedTimbre());
   renderImprov();
 }
 
 function padNoticeText() {
   if (audioFailed) return 'Audio unavailable';
-  if (padFilesFailed === 0) return '';
-  return padFilesFailed === PAD_BANK.length ? 'Samples unavailable · synth only' : 'Some samples unavailable';
+  const timbre = selectedTimbre();
+  const { failed } = padLoads[timbre];
+  if (failed === 0) return '';
+  return failed === PAD_TIMBRES[timbre].files.length ? 'Samples unavailable · synth only' : 'Some samples unavailable';
 }
 
 function renderImprov() {
@@ -1308,6 +1313,7 @@ padStop.onclick = () => {
 padTimbreSelect.onchange = () => {
   localStorage.setItem('metrorig_pad_timbre', padTimbreSelect.value);
   if (soundingChord) playChord(soundingChord);
+  loadSelectedTimbre();
 };
 
 padVolumeSlider.oninput = () => {
@@ -1373,4 +1379,4 @@ drawTimbreSelect();
 padVolumeSlider.value = String(parseVolume(localStorage.getItem('metrorig_pad_volume')));
 padVolumeValue.textContent = padVolumeSlider.value;
 renderImprov();
-if (state.activeViewMode === 'improv') openImprov();
+if (state.activeViewMode === 'improv') loadSelectedTimbre();

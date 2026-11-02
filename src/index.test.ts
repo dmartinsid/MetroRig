@@ -3202,9 +3202,9 @@ describe('Improv', () => {
     }
   });
 
-  const BANK_URLS = ['Gs2', 'C3', 'E3', 'Gs3', 'C4', 'E4', 'Gs4', 'C5'].map(note => `/pads/new-age/${note}.flac`);
-  const loadedUrls = () => mockPadLoad.mock.calls.map(([, url]) => url);
-  const failFiles = (urls: string[]) => mockPadLoad.mockImplementation((_key: number, url: string) =>
+  const BANK_URLS = ['C3', 'Fs3', 'C4', 'Fs4', 'C5'].map(note => `/pads/choir/${note}.flac`);
+  const loadedUrls = () => mockPadLoad.mock.calls.map(([, , url]) => url);
+  const failFiles = (urls: string[]) => mockPadLoad.mockImplementation((_timbre: number, _key: number, url: string) =>
     urls.includes(url) ? Promise.reject(new Error('404')) : Promise.resolve());
 
   beforeEach(() => {
@@ -3217,15 +3217,15 @@ describe('Improv', () => {
     await openImprov();
 
     expect(loadedUrls()).toEqual(BANK_URLS);
-    expect(mockPadLoad.mock.calls[0]).toEqual([44, '/pads/new-age/Gs2.flac', 164330, 388482]);
-    expect(mockPadLoad.mock.calls[7]).toEqual([72, '/pads/new-age/C5.flac', 104269, 265523]);
+    expect(mockPadLoad.mock.calls[0]).toEqual([0, 48, '/pads/choir/C3.flac', 119520, 299519]);
+    expect(mockPadLoad.mock.calls[4]).toEqual([0, 72, '/pads/choir/C5.flac', 119520, 299519]);
     expect(notice()).toBeNull();
     expect(calls('padPlay')).toEqual([]);
     expect(mockLoadTake).not.toHaveBeenCalled();
 
     byId<HTMLButtonElement>('nav-editor').click();
     await openImprov();
-    expect(mockPadLoad).toHaveBeenCalledTimes(8); // Nothing failed, so nothing is fetched again
+    expect(mockPadLoad).toHaveBeenCalledTimes(5); // Nothing failed, so nothing is fetched again
   });
 
   it('pad_46 each file awaits the last, and a chord does not wait for them', async () => {
@@ -3246,7 +3246,7 @@ describe('Improv', () => {
     await openImprov(); // A second visit during the load starts no second one
     expect(mockPadLoad).toHaveBeenCalledTimes(2);
 
-    for (let index = 1; index < 8; index++) {
+    for (let index = 1; index < 5; index++) {
       finish[index]();
       await flush();
     }
@@ -3283,27 +3283,27 @@ describe('Improv', () => {
   it('pad_50 logs a failed file', async () => {
     const logged = vi.spyOn(console, 'error').mockImplementation(() => {});
     const failure = new Error('404');
-    mockPadLoad.mockImplementation((_key: number, url: string) =>
-      url === '/pads/new-age/C3.flac' ? Promise.reject(failure) : Promise.resolve());
+    mockPadLoad.mockImplementation((_timbre: number, _key: number, url: string) =>
+      url === '/pads/choir/C3.flac' ? Promise.reject(failure) : Promise.resolve());
     await openPage();
     await openImprov();
 
-    expect(logged).toHaveBeenCalledWith('Failed to load /pads/new-age/C3.flac:', failure);
+    expect(logged).toHaveBeenCalledWith('Failed to load /pads/choir/C3.flac:', failure);
     expect(logged.mock.calls.filter(([message]) => String(message).startsWith('Failed to load'))).toHaveLength(1);
-    expect(loadedUrls()).toEqual(BANK_URLS); // The other 7 were still requested
+    expect(loadedUrls()).toEqual(BANK_URLS); // The other 4 were still requested
     logged.mockRestore();
   });
 
   it('pad_51 failure notices', async () => {
     const logged = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    failFiles(BANK_URLS.slice(0, 7));
+    failFiles(BANK_URLS.slice(0, 4));
     await openPage();
     await openImprov();
     expect(notice()).toBe('Some samples unavailable');
 
     localStorage.removeItem('metrorig_view_mode');
-    failFiles(BANK_URLS.slice(7));
+    failFiles(BANK_URLS.slice(4));
     await openPage();
     await openImprov();
     expect(notice()).toBe('Some samples unavailable');
@@ -3328,7 +3328,7 @@ describe('Improv', () => {
     await openImprov();
     expect(notice()).toBe('Samples unavailable · synth only');
 
-    // Six come back: only the 8 that failed are asked for, and two still fail
+    // Three come back: only the 5 that failed are asked for, and two still fail
     mockPadLoad.mockClear();
     failFiles(BANK_URLS.slice(2, 4));
     byId<HTMLButtonElement>('nav-editor').click();
@@ -3515,5 +3515,235 @@ describe('Timbres', () => {
 
     await clickChord('Am7');
     expect(chordCommands()).toEqual([{ method: 'padPlay', args: [[21, 33, 45, 48, 52, 55], 2] }]);
+  });
+
+  const CHOIR_NOTES = ['C3', 'Fs3', 'C4', 'Fs4', 'C5'];
+  const SWEEP_NOTES = ['Gs2', 'C3', 'E3', 'Gs3', 'C4', 'E4', 'Gs4', 'C5'];
+  const ORCHESTRA_NOTES = ['B0', 'Ds1', 'G1', 'B1', 'Ds2', 'G2', 'B2', 'Ds3', 'G3', 'B3', 'Ds4', 'G4', 'B4'];
+  const urlsOf = (folder: string, notes: string[]) => notes.map(note => `/pads/${folder}/${note}.flac`);
+  const CHOIR_URLS = urlsOf('choir', CHOIR_NOTES);
+  const SWEEP_URLS = urlsOf('sweep', SWEEP_NOTES);
+  const ORCHESTRA_URLS = urlsOf('orchestra', ORCHESTRA_NOTES);
+  const loadedUrls = () => mockPadLoad.mock.calls.map(([, , url]) => url);
+  const failFiles = (urls: string[]) => mockPadLoad.mockImplementation((_timbre: number, _key: number, url: string) =>
+    urls.includes(url) ? Promise.reject(new Error('404')) : Promise.resolve());
+  const notice = () => (byId('pad-notice').hidden ? null : byId('pad-notice').textContent);
+  const leaveAndReturn = async () => {
+    byId<HTMLButtonElement>('nav-editor').click();
+    await openImprov();
+  };
+
+  it('tim_26 loads the selected timbre', async () => {
+    await openPage();
+    await openImprov();
+    expect(loadedUrls()).toEqual(CHOIR_URLS);
+
+    localStorage.removeItem('metrorig_view_mode');
+    localStorage.setItem('metrorig_pad_timbre', 'Sweep');
+    mockPadLoad.mockClear();
+    await openPage();
+    expect(mockPadLoad).not.toHaveBeenCalled(); // Not before Improv opens
+
+    await openImprov();
+    expect(loadedUrls()).toEqual(SWEEP_URLS);
+    expect(mockPadLoad.mock.calls[0]).toEqual([3, 44, '/pads/sweep/Gs2.flac', 27903, 329471]);
+    expect(calls('padPlay')).toEqual([]);
+  });
+
+  it('tim_27 loads on first pick', async () => {
+    await openPage();
+    await openImprov();
+    mockPadLoad.mockClear();
+
+    await pickTimbre('Orchestra');
+
+    expect(loadedUrls()).toEqual(ORCHESTRA_URLS);
+    expect(mockPadLoad.mock.calls[0]).toEqual([2, 23, '/pads/orchestra/B0.flac', 0, 176400]);
+    expect(mockPadLoad.mock.calls.every(([timbre]) => timbre === 2)).toBe(true);
+    expect(chordCommands()).toEqual([]);
+  });
+
+  it('tim_27 a pick waits for the file in flight, so one file loads at a time', async () => {
+    const finish: (() => void)[] = [];
+    mockPadLoad.mockImplementation(() => new Promise<void>(resolve => finish.push(resolve)));
+    await openPage();
+    await openImprov();
+    await pickTimbre('Sweep');
+    expect(mockPadLoad).toHaveBeenCalledTimes(1);
+
+    for (let index = 0; index < CHOIR_URLS.length + SWEEP_URLS.length; index++) {
+      expect(mockPadLoad).toHaveBeenCalledTimes(index + 1);
+      finish[index]();
+      await flush();
+    }
+    expect(loadedUrls()).toEqual([...CHOIR_URLS, ...SWEEP_URLS]);
+  });
+
+  it('tim_27 a pick after the engine failed starts it and loads', async () => {
+    mockInit.mockRejectedValueOnce(new Error('no audio'));
+    await openPage();
+    await openImprov();
+    expect(notice()).toBe('Audio unavailable');
+
+    await pickTimbre('Sweep');
+
+    expect(notice()).toBeNull();
+    expect(loadedUrls()).toEqual(SWEEP_URLS);
+  });
+
+  it('tim_28 fetches nothing again', async () => {
+    await openPage();
+    await openImprov();
+    await pickTimbre('Sweep');
+    mockPadLoad.mockClear();
+
+    await pickTimbre('Choir');
+    await pickTimbre('Sweep');
+    await leaveAndReturn();
+
+    expect(mockPadLoad).not.toHaveBeenCalled();
+  });
+
+  it('tim_28 a pick during its own load starts no second one', async () => {
+    const finish: (() => void)[] = [];
+    mockPadLoad.mockImplementation(() => new Promise<void>(resolve => finish.push(resolve)));
+    await openPage();
+    await openImprov();
+    await pickTimbre('Sweep');
+    await pickTimbre('Choir');
+    await pickTimbre('Sweep');
+
+    for (let index = 0; finish[index]; index++) {
+      finish[index]();
+      await flush();
+    }
+
+    expect(loadedUrls()).toEqual([...CHOIR_URLS, ...SWEEP_URLS]);
+  });
+
+  it('tim_29 Analog fetches nothing', async () => {
+    localStorage.setItem('metrorig_pad_timbre', 'Analog');
+    await openPage();
+    await openImprov();
+    await clickChord('C');
+    expect(mockPadLoad).not.toHaveBeenCalled();
+    expect(calls('padPlay')).toEqual([[[48, 52, 55], 4]]);
+    expect(notice()).toBeNull();
+
+    localStorage.removeItem('metrorig_pad_timbre');
+    localStorage.removeItem('metrorig_view_mode');
+    await openPage();
+    await openImprov();
+    mockPadLoad.mockClear();
+    await pickTimbre('Analog');
+    expect(mockPadLoad).not.toHaveBeenCalled();
+    expect(notice()).toBeNull();
+  });
+
+  it('tim_34 failure notices', async () => {
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => {});
+    failFiles([ORCHESTRA_URLS[6], ...SWEEP_URLS]);
+    await openPage();
+    await openImprov();
+    expect(notice()).toBeNull();
+
+    await pickTimbre('Orchestra');
+    expect(logged).toHaveBeenCalledWith(`Failed to load ${ORCHESTRA_URLS[6]}:`, expect.any(Error));
+    expect(notice()).toBe('Some samples unavailable');
+
+    await pickTimbre('Sweep');
+    expect(logged).toHaveBeenCalledWith(`Failed to load ${SWEEP_URLS[0]}:`, expect.any(Error));
+    expect(notice()).toBe('Samples unavailable · synth only');
+
+    await pickTimbre('Choir'); // A notice describes the selected timbre
+    expect(notice()).toBeNull();
+    await pickTimbre('Analog');
+    expect(notice()).toBeNull();
+
+    await clickChord('C'); // The synth plays on
+    await pickTimbre('Sweep');
+    expect(notice()).toBe('Samples unavailable · synth only');
+    expect(shownChord()).toBe('C · C E G');
+    logged.mockRestore();
+  });
+
+  it('tim_34 a failure of another timbre waits until it is selected', async () => {
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const finish: (() => void)[] = [];
+    let fail!: (error: Error) => void;
+    mockPadLoad.mockImplementation((_timbre: number, _key: number, url: string) => new Promise<void>((resolve, reject) => {
+      finish.push(resolve);
+      if (url === SWEEP_URLS[7]) fail = reject;
+    }));
+    localStorage.setItem('metrorig_pad_timbre', 'Sweep');
+    await openPage();
+    await openImprov();
+    await pickTimbre('Choir');
+    for (let index = 0; index < 7; index++) {
+      finish[index]();
+      await flush();
+    }
+
+    fail(new Error('404'));
+    await flush();
+
+    expect(logged).toHaveBeenCalledWith(`Failed to load ${SWEEP_URLS[7]}:`, expect.any(Error));
+    expect(notice()).toBeNull();
+
+    await pickTimbre('Sweep');
+    expect(notice()).toBe('Some samples unavailable');
+    logged.mockRestore();
+  });
+
+  it('tim_35 retries failed files', async () => {
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => {});
+    failFiles(CHOIR_URLS.slice(0, 2));
+    await openPage();
+    await openImprov();
+    expect(notice()).toBe('Some samples unavailable');
+
+    // Opening Improv again asks only for what failed
+    mockPadLoad.mockClear();
+    failFiles([CHOIR_URLS[0]]);
+    await leaveAndReturn();
+    expect(loadedUrls()).toEqual(CHOIR_URLS.slice(0, 2));
+    expect(notice()).toBe('Some samples unavailable');
+
+    // Picking it again does too
+    await pickTimbre('Sweep');
+    mockPadLoad.mockClear();
+    failFiles([]);
+    await pickTimbre('Choir');
+    expect(loadedUrls()).toEqual([CHOIR_URLS[0]]);
+    expect(mockPadLoad.mock.calls[0][0]).toBe(0);
+    expect(notice()).toBeNull();
+
+    mockPadLoad.mockClear();
+    await pickTimbre('Sweep');
+    await pickTimbre('Choir');
+    expect(mockPadLoad).not.toHaveBeenCalled();
+    logged.mockRestore();
+  });
+
+  it('tim_43 load after stop stays silent', async () => {
+    await openPage();
+    await openImprov();
+    await clickChord('Am7');
+    const finish: (() => void)[] = [];
+    mockPadLoad.mockClear();
+    mockPadLoad.mockImplementation(() => new Promise<void>(resolve => finish.push(resolve)));
+    await pickTimbre('Orchestra');
+    await stopPad();
+    audioCalls.length = 0;
+
+    for (let index = 0; index < ORCHESTRA_URLS.length; index++) {
+      finish[index]();
+      await flush();
+    }
+
+    expect(loadedUrls()).toEqual(ORCHESTRA_URLS); // The load finished
+    expect(chordCommands()).toEqual([]);
+    expect(shownChord()).toBe('No chord playing');
+    expect(pressedChords()).toEqual([]);
   });
 });
