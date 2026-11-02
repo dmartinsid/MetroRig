@@ -384,8 +384,8 @@ T19 → T20
 
 **Done when**:
 
-- [ ] Each listed check passes
-- [ ] Gate passes
+- [x] Each listed check passes
+- [x] Gate passes
 
 **Tests**: integration
 **Gate**: quick

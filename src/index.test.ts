@@ -2915,4 +2915,203 @@ describe('Improv', () => {
     expect(mockNode.resumeContext).toHaveBeenCalledTimes(2);
     await flush();
   });
+
+  const stopPad = () => byId<HTMLButtonElement>('pad-stop').click();
+  const dotLit = () => byId('nav-improv').querySelector('.status-dot')!.classList.contains('lit');
+  const padCommands = () => audioCalls.filter(call => call.method.startsWith('pad'));
+
+  // A chord sounding, with the log cleared, for a path that must leave it alone
+  const holdChord = async () => {
+    await openPage();
+    await openImprov();
+    await clickChord('C7M(9)');
+    audioCalls.length = 0;
+  };
+  const expectChordKept = () => {
+    expect(padCommands()).toEqual([]);
+    expect(shownChord()).toBe('C7M(9) · C E G B D');
+    expect(pressedChords()).toEqual(['C7M(9)']);
+    expect(dotLit()).toBe(true);
+  };
+
+  it('pad_31 grid of 168 buttons', async () => {
+    await openPage();
+    await openImprov();
+    const types = ['major', 'm', '7', '7M', 'm7', 'sus4', 'sus2', 'add9', '9', 'm9', '7M(9)', '6', 'dim', 'aug'];
+    const roots = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
+
+    expect([...document.querySelectorAll('#chord-grid th[scope="col"]')].map(header => header.textContent)).toEqual(types);
+    const rows = [...document.querySelectorAll('#chord-grid tbody tr')];
+    expect(rows.map(row => row.querySelector('th[scope="row"]')!.textContent)).toEqual(roots);
+    rows.forEach((row, index) => {
+      const names = types.map(type => roots[index] + (type === 'major' ? '' : type));
+      expect([...row.querySelectorAll('button')].map(button => button.textContent)).toEqual(names);
+    });
+    const buttons = [...document.querySelectorAll('#chord-grid button')];
+    expect(buttons).toHaveLength(168);
+    expect(new Set(buttons.map(button => button.textContent)).size).toBe(168);
+    buttons.forEach(button => expect(button.getAttribute('aria-pressed')).toBe('false'));
+  });
+
+  it('pad_32 shows the sounding chord', async () => {
+    await openPage();
+    await openImprov();
+
+    await clickChord('C7M(9)');
+    expect(shownChord()).toBe('C7M(9) · C E G B D');
+    expect(pressedChords()).toEqual(['C7M(9)']);
+
+    await clickChord('Ebm');
+    expect(shownChord()).toBe('Ebm · Eb Gb Bb');
+    expect(pressedChords()).toEqual(['Ebm']);
+    expect(calls('padPlay')).toEqual([[[48, 52, 55, 59, 62]], [[51, 54, 58]]]);
+    expect(calls('padStop')).toEqual([]);
+  });
+
+  it('pad_33 idle text', async () => {
+    await openPage();
+    await openImprov();
+    expect(shownChord()).toBe('No chord playing');
+
+    await clickChord('Cm7');
+    await clickChord('Cm7'); // The sounding chord stops
+    expect(shownChord()).toBe('No chord playing');
+    expect(pressedChords()).toEqual([]);
+    expect(calls('padStop')).toHaveLength(1);
+    expect(calls('padPlay')).toHaveLength(1);
+
+    await clickChord('Cm7'); // And starts again
+    expect(shownChord()).toBe('Cm7 · C Eb G Bb');
+    expect(calls('padPlay')).toHaveLength(2);
+  });
+
+  it('pad_35 stop button', async () => {
+    await openPage();
+    await openImprov();
+    const stop = byId<HTMLButtonElement>('pad-stop');
+    expect(stop.textContent).toBe('Stop');
+    await clickChord('F7');
+
+    stop.click();
+    await flush();
+
+    expect(calls('padStop')).toHaveLength(1);
+    expect(calls('padPlay')).toHaveLength(1);
+    expect(shownChord()).toBe('No chord playing');
+    expect(pressedChords()).toEqual([]);
+
+    await clickChord('F7'); // Stop left nothing behind for the click rule
+    expect(shownChord()).toBe('F7 · F A C Eb');
+    expect(calls('padPlay')).toHaveLength(2);
+  });
+
+  it('pad_36 stop disabled', async () => {
+    await openPage();
+    await openImprov();
+    const stop = byId<HTMLButtonElement>('pad-stop');
+    expect(stop.disabled).toBe(true);
+
+    await clickChord('C');
+    expect(stop.disabled).toBe(false);
+
+    stopPad();
+    expect(stop.disabled).toBe(true);
+
+    await clickChord('C');
+    await clickChord('C');
+    expect(stop.disabled).toBe(true);
+  });
+
+  it('pad_40 link dot', async () => {
+    await openPage();
+    expect(dotLit()).toBe(false);
+    await openImprov();
+    expect(dotLit()).toBe(false);
+
+    await clickChord('C');
+    expect(dotLit()).toBe(true);
+    for (const screen of ['editor', 'stadium', 'grooves', 'improv']) {
+      byId<HTMLButtonElement>(`nav-${screen}`).click();
+      await flush();
+      expect(dotLit(), screen).toBe(true);
+    }
+
+    stopPad();
+    expect(dotLit()).toBe(false);
+  });
+
+  it('pad_40 no dot when the engine fails', async () => {
+    mockInit.mockRejectedValue(new Error('no audio'));
+    await openPage();
+    await openImprov();
+    await clickChord('C');
+    expect(dotLit()).toBe(false);
+  });
+
+  it('pad_24 transport sends no pad command', async () => {
+    await holdChord();
+
+    await clickPlay();
+    expect(calls('start')).toHaveLength(1);
+    expectChordKept();
+
+    await clickPlay();
+    expect(calls('stop')).toHaveLength(1);
+    expectChordKept();
+
+    byId<HTMLButtonElement>('btn-stadium-play').click();
+    await flush();
+    byId<HTMLButtonElement>('btn-stadium-play').click();
+    await flush();
+    expect(calls('stop')).toHaveLength(2);
+    expectChordKept();
+  });
+
+  it('pad_25 loading a pattern sends no pad command', async () => {
+    await holdChord();
+
+    await selectPreset('factory:rock');
+    expect(byId('pattern-name').textContent).toBe('PAT: Rock Groove');
+    expectChordKept();
+
+    await selectPreset(`song:${SONGS[0].id}`);
+    expect(byId('pattern-name').textContent).toBe(`PAT: ${SONGS[0].title}`);
+    expectChordKept();
+
+    const grooves = byId<HTMLSelectElement>('groove-selector');
+    grooves.value = 'factory:metal';
+    grooves.dispatchEvent(new Event('change'));
+    await flush();
+    expectChordKept();
+  });
+
+  it('pad_26 screens send no pad command', async () => {
+    await holdChord();
+
+    for (const screen of ['editor', 'stadium', 'grooves', 'improv', 'editor', 'improv']) {
+      byId<HTMLButtonElement>(`nav-${screen}`).click();
+      await flush();
+      expectChordKept();
+    }
+  });
+
+  it('pad_45 opens silent', async () => {
+    await holdChord();
+    expect(localStorage.getItem('metrorig_view_mode')).toBe('improv');
+
+    await openPage(); // A reload on the saved screen, after a chord sounded
+    await flush();
+
+    expect(calls('padPlay')).toEqual([]);
+    expect(calls('padStop')).toEqual([]);
+    expect(shownChord()).toBe('No chord playing');
+    expect(pressedChords()).toEqual([]);
+    expect(dotLit()).toBe(false);
+    expect(mockNode.resumeContext).not.toHaveBeenCalled();
+
+    byId<HTMLButtonElement>('nav-editor').click();
+    await openPage();
+    expect(calls('padPlay')).toEqual([]);
+    expect(dotLit()).toBe(false);
+  });
 });
