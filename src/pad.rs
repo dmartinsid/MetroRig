@@ -45,7 +45,8 @@ const SYNTH_GAIN: f32 = 0.0375;
 const SAMPLE_GAIN: f32 = 0.3375;
 
 // Each timbre's layers, as multiples of the gains above, and the share of its samples that takes the effects.
-// New Age's are 1, so its output stays what `chord-pads` shipped. Analog has no samples, and Orchestra no synth.
+// New Age's are 1, so its output stays what `chord-pads` shipped. Analog has no samples, and Orchestra no synth
+// but Analog's until its files arrive.
 // Each timbre sits at New Age's level. Choir and Sweep keep the samples about 2 dB above the synth, as in their demos
 struct Mix {
     synth: f32,
@@ -63,6 +64,8 @@ const MIXES: [Mix; TIMBRES] = [
 
 const NO_FILE: usize = usize::MAX;
 pub const NEW_AGE: u8 = 1;
+const FALLBACK: usize = 4; // Analog, whose synth stands in for a timbre with none
+const LOWEST_CHORD_NOTE: u8 = 45; // Below it are the notes a timbre adds, which that synth leaves out: it holds the chord
 
 // A pad sample keeps its onset, so `Sample` and its trimming are not reused: they would shift the loop points
 struct PadSample {
@@ -493,12 +496,19 @@ impl Pad {
             let bank = &self.banks[slot.timbre as usize];
             let mix = &MIXES[slot.timbre as usize];
             for voice in &mut slot.voices[..slot.count] {
+                // SPEC_DEVIATION: a cosine, where the design says 1 - file_gain
+                // Reason: it mirrors the sine the files rise on, so the swap keeps its level, as every other crossfade here does
+                let synth_gain = if mix.synth == 0.0 && voice.file_gain < 1.0 && voice.note >= LOWEST_CHORD_NOTE {
+                    MIXES[FALLBACK].synth * (voice.file_gain * FRAC_PI_2).cos()
+                } else {
+                    mix.synth
+                };
                 for saw in 0..SAWS {
                     let phase = voice.phases[saw] + voice.steps[saw];
                     let phase = if phase >= 1.0 { phase - 1.0 } else { phase };
                     voice.phases[saw] = phase;
                     let pan = saw as f32 / (SAWS - 1) as f32;
-                    let value = (phase * 2.0 - 1.0) * gain * mix.synth;
+                    let value = (phase * 2.0 - 1.0) * gain * synth_gain;
                     left += value * (1.0 - pan);
                     right += value * pan;
                 }
@@ -2079,6 +2089,128 @@ mod tests {
             let highest = crossfade_peak(&picks);
             assert!(db(highest) <= -12.0, "a crossfade peaks at {} dBFS", db(highest));
         }
+    }
+
+    #[test]
+    fn tim_30_synth_holds_while_loading() {
+        // With no file every timbre sounds, whatever it plays once loaded
+        for timbre in 0..TIMBRES as u8 {
+            let notes = timbre_notes(&C7M9, timbre);
+            let mut pad = Pad::new(RATE);
+            pad.play(&notes, timbre);
+            let (left, right) = render(&mut pad, 6.0);
+            assert!(db(rms(after(&left, FADE_END, RATE))) > -45.0, "timbre {timbre} is silent");
+            let signal = hann(&mono(after(&left, FADE_END, RATE), after(&right, FADE_END, RATE)));
+            let powers: Vec<f64> = C7M9.iter().map(|&note| sweep(&signal, note_hz(note as f32), 25.0, RATE).iter().map(|(_, power)| power).sum()).collect();
+            let loudest = powers.iter().cloned().fold(0.0, f64::max);
+            assert!(powers.iter().all(|power| *power > loudest / 20.0), "timbre {timbre} misses a note: {powers:?}");
+        }
+
+        // Each timbre keeps its own synth layer, so Orchestra's is the Analog synth, to the bit
+        let bits = |signal: &[f32]| signal.iter().map(|value| value.to_bits()).collect::<Vec<u32>>();
+        let held = |timbre: u8| {
+            let mut pad = Pad::new(RATE);
+            pad.play(&C7M9, timbre);
+            render(&mut pad, 4.0)
+        };
+        assert_eq!(bits(&held(ORCHESTRA).0), bits(&held(ANALOG).0));
+        assert_ne!(bits(&held(CHOIR).0), bits(&held(ANALOG).0));
+
+        // It holds the chord alone, at the level and under the peak of every timbre: the saws of a bass would ring the reverb
+        let held: Vec<Held> = all_chords().into_iter().map(|chord| {
+            let mut pad = Pad::new(RATE);
+            pad.play(&timbre_notes(&chord, ORCHESTRA), ORCHESTRA);
+            let (left, right) = render(&mut pad, 16.0);
+            let (held_left, held_right) = (after(&left, FADE_END, RATE), after(&right, FADE_END, RATE));
+            Held {
+                power: db(((rms(held_left).powi(2) + rms(held_right).powi(2)) / 2.0).sqrt()),
+                summed: db(rms(&mono(held_left, held_right))),
+                peak: peak(&left).max(peak(&right)),
+                chord,
+            }
+        }).collect();
+        for level in [(|chord: &Held| chord.power) as fn(&Held) -> f32, |chord| chord.summed] {
+            let levels = || held.iter().map(level);
+            let (lowest, highest) = (levels().fold(f32::MAX, f32::min), levels().fold(f32::MIN, f32::max));
+            assert!(highest - lowest <= 3.0, "chords sit from {lowest} to {highest} dB on the synth");
+        }
+        let loudest = held.iter().max_by(|a, b| a.peak.total_cmp(&b.peak)).unwrap();
+        assert!(db(loudest.peak) <= -12.0, "{:?} peaks at {} dBFS on the synth", loudest.chord, db(loudest.peak));
+    }
+
+    #[test]
+    fn tim_31_late_files_fade_in() {
+        let loaded_at = 2.0;
+        for (timbre, hz) in [(CHOIR, 700.0), (SWEEP, 700.0), (NEW_AGE, 700.0)] {
+            let run = |with_file: bool| {
+                let mut pad = Pad::new(RATE);
+                pad.play(&TIMBRE_NOTE, timbre);
+                let frames = |seconds: f32| (seconds * RATE) as usize;
+                let mut layers: Vec<_> = (0..frames(loaded_at)).map(|_| pad.layers()).collect();
+                if with_file {
+                    let tone = sine(hz, 40.0, RATE);
+                    pad.load(timbre, TIMBRE_NOTE[0], &tone, &tone, 0, tone.len() - 1);
+                }
+                layers.extend((0..frames(3.0)).map(|_| pad.layers()));
+                layers
+            };
+            let (loaded, bare) = (run(true), run(false));
+            let files: Vec<f32> = loaded.iter().map(|(_, (bus, _), (past, _))| bus + past).collect();
+            let full = tone_level(&files, hz, loaded_at + 2.5);
+            assert!(full > 0.0);
+            assert_eq!(tone_level(&files, hz, loaded_at - 0.02), 0.0);
+            for into_fade in [0.02, 0.75, 1.2] {
+                let level = tone_level(&files, hz, loaded_at + into_fade) / full;
+                assert!((level - equal_power(into_fade)).abs() < 0.02, "timbre {timbre}: {level} at {into_fade} s");
+            }
+            assert!(tone_level(&files, hz, loaded_at + 1.3) / full < 0.985, "full level came before 1.5 s");
+            assert!((tone_level(&files, hz, loaded_at + 1.52) / full - 1.0).abs() < 0.02);
+
+            // The synth carries on, untouched
+            let synth = |layers: &[((f32, f32), (f32, f32), (f32, f32))]| layers.iter().map(|((left, _), _, _)| left.to_bits()).collect::<Vec<u32>>();
+            assert_eq!(synth(&loaded), synth(&bare), "timbre {timbre}: the files moved the synth");
+        }
+    }
+
+    #[test]
+    fn tim_32_orchestra_replaces_the_synth() {
+        let (loaded_at, hz) = (2.0, 700.0);
+        let run = |with_file: bool| {
+            let mut pad = Pad::new(RATE);
+            pad.play(&TIMBRE_NOTE, ORCHESTRA);
+            let frames = |seconds: f32| (seconds * RATE) as usize;
+            let mut layers: Vec<_> = (0..frames(loaded_at)).map(|_| pad.layers()).collect();
+            if with_file {
+                let tone = sine(hz, 40.0, RATE);
+                pad.load(ORCHESTRA, TIMBRE_NOTE[0], &tone, &tone, 0, tone.len() - 1);
+            }
+            layers.extend((0..frames(3.0)).map(|_| pad.layers()));
+            layers
+        };
+        let (loaded, bare) = (run(true), run(false));
+        let synth: Vec<f32> = loaded.iter().map(|((left, _), _, _)| *left).collect();
+        let bare_synth: Vec<f32> = bare.iter().map(|((left, _), _, _)| *left).collect();
+        let files: Vec<f32> = loaded.iter().map(|(_, (bus, _), (past, _))| bus + past).collect();
+
+        // The synth's level against the same synth left alone, so the filter's slow swing does not count
+        let synth_level = |second: f32| {
+            let (start, end) = (((second - 0.02) * RATE) as usize, ((second + 0.02) * RATE) as usize);
+            rms(&synth[start..end]) / rms(&bare_synth[start..end])
+        };
+        let full_files = tone_level(&files, hz, loaded_at + 2.5);
+        assert_eq!(synth_level(loaded_at - 0.03), 1.0);
+        assert_eq!(tone_level(&files, hz, loaded_at - 0.02), 0.0);
+        for into_fade in [0.3, 0.75, 1.2] {
+            let (leaving, rising) = (synth_level(loaded_at + into_fade), tone_level(&files, hz, loaded_at + into_fade) / full_files);
+            assert!((rising - equal_power(into_fade)).abs() < 0.02, "the sections stand at {rising} after {into_fade} s");
+            assert!((leaving - equal_power(FADE_SECONDS - into_fade)).abs() < 0.03, "the synth stands at {leaving} after {into_fade} s");
+            assert!((leaving * leaving + rising * rising - 1.0).abs() < 0.06, "the swap dips or swells");
+        }
+        assert!(synth_level(loaded_at + 1.3) > 0.1, "the synth left before 1.5 s");
+
+        // Nothing of the synth stays, past what the filter still rings with
+        let past_fade = ((loaded_at + 1.6) * RATE) as usize;
+        assert!(synth[past_fade..].iter().all(|value| *value == 0.0 || value.abs() < 1e-30));
     }
 
     #[test]

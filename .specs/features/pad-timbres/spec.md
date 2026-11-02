@@ -215,9 +215,9 @@ The Improv pad has one sound. The user liked what they heard, and their favourit
 | TIM-27 | P1: Download only what is chosen | Design | Pending |
 | TIM-28 | P1: Download only what is chosen | Design | Pending |
 | TIM-29 | P1: Download only what is chosen | Design | Pending |
-| TIM-30 | P1: Download only what is chosen | Design | Pending |
-| TIM-31 | P1: Download only what is chosen | Design | Pending |
-| TIM-32 | P1: Download only what is chosen | Design | Pending |
+| TIM-30 | P1: Download only what is chosen | Design | Implementing |
+| TIM-31 | P1: Download only what is chosen | Design | Implementing |
+| TIM-32 | P1: Download only what is chosen | Design | Implementing |
 | TIM-33 | P1: Download only what is chosen | Design | Implementing |
 | TIM-34 | P1: Download only what is chosen | Design | Pending |
 | TIM-35 | P1: Download only what is chosen | Design | Pending |
