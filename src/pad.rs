@@ -44,6 +44,23 @@ const SILENCE: f32 = 3.2e-5; // -90 dBFS
 const SYNTH_GAIN: f32 = 0.0375;
 const SAMPLE_GAIN: f32 = 0.3375;
 
+// Each timbre's layers, as multiples of the gains above, and the share of its samples that takes the effects.
+// New Age's are 1, so its output stays what `chord-pads` shipped. Analog has no samples, and Orchestra no synth.
+// Each timbre sits at New Age's level. Choir and Sweep keep the samples about 2 dB above the synth, as in their demos
+struct Mix {
+    synth: f32,
+    samples: f32,
+    chorus: f32,
+}
+
+const MIXES: [Mix; TIMBRES] = [
+    Mix { synth: 0.82, samples: 0.57, chorus: 1.0 }, // Choir
+    Mix { synth: 1.0, samples: 1.0, chorus: 1.0 }, // New Age
+    Mix { synth: 0.0, samples: 2.0, chorus: 0.3 }, // Orchestra
+    Mix { synth: 0.82, samples: 0.63, chorus: 1.0 }, // Sweep
+    Mix { synth: 1.32, samples: 0.0, chorus: 1.0 }, // Analog
+];
+
 const NO_FILE: usize = usize::MAX;
 pub const NEW_AGE: u8 = 1;
 
@@ -372,6 +389,9 @@ impl Pad {
         if loop_start >= loop_end || timbre as usize >= TIMBRES {
             return; // A rounded loop point must not reach the audio thread as an out-of-bounds read
         }
+        if MIXES[timbre as usize].samples == 0.0 {
+            return;
+        }
         let sample = PadSample { key, left: left[..frames].to_vec(), right: right[..frames].to_vec(), loop_start, loop_end };
         self.banks[timbre as usize].push(sample);
         for slot in 0..MAX_CHORDS {
@@ -399,11 +419,14 @@ impl Pad {
         let mut peak = 0f32;
         let volume_step = 1.0 / (VOLUME_SECONDS * self.sample_rate);
         for (out_left, out_right) in left.iter_mut().zip(right.iter_mut()) {
-            let ((synth_left, synth_right), (file_left, file_right)) = self.layers();
+            let ((synth_left, synth_right), (bus_left, bus_right), (past_left, past_right)) = self.layers();
             // SPEC_DEVIATION: the chorus takes the sample layer alone, where PAD-19 says the pad
             // Reason: as in demo 4. Over the synth too, its comb puts 6 dB between chords, against PAD-14's 3 dB
-            let (file_left, file_right) = self.chorus.run(file_left, file_right);
+            let (file_left, file_right) = self.chorus.run(bus_left, bus_right);
             let (pad_left, pad_right) = self.reverb.run(synth_left + file_left, synth_right + file_right);
+            // SPEC_DEVIATION: the samples past the chorus also pass the reverb by, where the design sends them through it
+            // Reason: its combs ring on the tuned low notes of the Orchestra, which put 6 dB between chords against TIM-18's 3 dB
+            let (pad_left, pad_right) = (pad_left + past_left * REVERB_DRY, pad_right + past_right * REVERB_DRY);
             peak = peak.max(pad_left.abs()).max(pad_right.abs());
             self.volume += (self.volume_target - self.volume).clamp(-volume_step, volume_step);
             *out_left += pad_left * self.volume;
@@ -457,22 +480,25 @@ impl Pad {
             .unwrap_or(NO_FILE)
     }
 
-    // One frame of every chord, before the effects and the volume: the synth layer, then the sample layer
-    fn layers(&mut self) -> ((f32, f32), (f32, f32)) {
+    // One frame of every chord, before the effects and the volume: the synth layer, the samples for the effects,
+    // and the samples that pass them by
+    fn layers(&mut self) -> ((f32, f32), (f32, f32), (f32, f32)) {
         let (mut left, mut right) = (0.0, 0.0);
-        let (mut file_left, mut file_right) = (0.0, 0.0);
+        let (mut bus_left, mut bus_right) = (0.0, 0.0);
+        let (mut past_left, mut past_right) = (0.0, 0.0);
         let file_rise = 1.0 / (FADE_SECONDS * self.sample_rate);
         let file_fall = 1.0 / (EVICTION_SECONDS * self.sample_rate);
         for slot in &mut self.slots {
             let gain = slot.fade_gain();
             let bank = &self.banks[slot.timbre as usize];
+            let mix = &MIXES[slot.timbre as usize];
             for voice in &mut slot.voices[..slot.count] {
                 for saw in 0..SAWS {
                     let phase = voice.phases[saw] + voice.steps[saw];
                     let phase = if phase >= 1.0 { phase - 1.0 } else { phase };
                     voice.phases[saw] = phase;
                     let pan = saw as f32 / (SAWS - 1) as f32;
-                    let value = (phase * 2.0 - 1.0) * gain;
+                    let value = (phase * 2.0 - 1.0) * gain * mix.synth;
                     left += value * (1.0 - pan);
                     right += value * pan;
                 }
@@ -480,8 +506,12 @@ impl Pad {
                 if let Some(sample) = bank.get(voice.file) {
                     let file_gain = if voice.file_gain < 1.0 { (voice.file_gain * FRAC_PI_2).sin() } else { 1.0 };
                     let (sample_left, sample_right) = voice.read(sample);
-                    file_left += sample_left * gain * file_gain;
-                    file_right += sample_right * gain * file_gain;
+                    let file_left = sample_left * gain * file_gain * mix.samples;
+                    let file_right = sample_right * gain * file_gain * mix.samples;
+                    bus_left += file_left * mix.chorus;
+                    bus_right += file_right * mix.chorus;
+                    past_left += file_left * (1.0 - mix.chorus);
+                    past_right += file_right * (1.0 - mix.chorus);
                 }
             }
         }
@@ -501,7 +531,8 @@ impl Pad {
         low_pass(&mut self.filter_right, right, smoothing);
         (
             (self.filter_left[1] * SYNTH_GAIN, self.filter_right[1] * SYNTH_GAIN),
-            (file_left * SAMPLE_GAIN, file_right * SAMPLE_GAIN),
+            (bus_left * SAMPLE_GAIN, bus_right * SAMPLE_GAIN),
+            (past_left * SAMPLE_GAIN, past_right * SAMPLE_GAIN),
         )
     }
 }
@@ -562,13 +593,14 @@ mod tests {
     impl Pad {
         // Both layers before the effects
         fn dry_frame(&mut self) -> (f32, f32) {
-            let ((synth_left, synth_right), (file_left, file_right)) = self.layers();
-            (synth_left + file_left, synth_right + file_right)
+            let ((synth_left, synth_right), (bus_left, bus_right), (past_left, past_right)) = self.layers();
+            (synth_left + bus_left + past_left, synth_right + bus_right + past_right)
         }
 
         // The sample layer alone, before the effects
         fn file_frame(&mut self) -> (f32, f32) {
-            self.layers().1
+            let (_, (bus_left, bus_right), (past_left, past_right)) = self.layers();
+            (bus_left + past_left, bus_right + past_right)
         }
     }
 
@@ -657,6 +689,58 @@ mod tests {
             assert_eq!(files.len(), 8);
             files
         })
+    }
+
+    struct TimbreFile {
+        key: u8,
+        left: Vec<f32>,
+        right: Vec<f32>,
+        loop_start: usize,
+        loop_end: usize,
+    }
+
+    // Every bank's real files, in stereo, as PAD_TIMBRES lists them
+    fn timbre_banks() -> &'static [Vec<TimbreFile>; TIMBRES] {
+        static BANKS: OnceLock<[Vec<TimbreFile>; TIMBRES]> = OnceLock::new();
+        BANKS.get_or_init(|| {
+            let root = env!("CARGO_MANIFEST_DIR");
+            let source = std::fs::read_to_string(format!("{root}/src/chords.ts")).unwrap();
+            let folders = ["/pads/choir/", "/pads/new-age/", "/pads/orchestra/", "/pads/sweep/"];
+            let banks = std::array::from_fn(|timbre| {
+                let Some(folder) = folders.get(timbre) else { return Vec::new() };
+                let lines = source.lines().filter(|line| line.contains(&format!("url: '{folder}")));
+                lines.map(|line| {
+                    let parts: Vec<&str> = line.split('\'').collect();
+                    let (key, loops) = (numbers(parts[0]), numbers(parts[2]));
+                    let output = Command::new("ffmpeg")
+                        .args(["-v", "error", "-i", &format!("{root}/public{}", parts[1]), "-f", "f32le", "-ac", "2", "-"])
+                        .output()
+                        .expect("ffmpeg decodes the bank");
+                    assert!(output.status.success());
+                    let audio: Vec<f32> = output.stdout.chunks_exact(4).map(|bytes| f32::from_le_bytes(bytes.try_into().unwrap())).collect();
+                    let channel = |side: usize| audio.iter().skip(side).step_by(2).copied().collect();
+                    TimbreFile { key: key[0] as u8, left: channel(0), right: channel(1), loop_start: loops[0], loop_end: loops[1] }
+                }).collect()
+            });
+            let counts = [5, 8, 13, 8];
+            for (bank, count) in banks.iter().zip(counts) {
+                let bank: &Vec<TimbreFile> = bank;
+                assert_eq!(bank.len(), count);
+            }
+            banks
+        })
+    }
+
+    fn load_timbre(pad: &mut Pad, timbre: u8) {
+        for file in &timbre_banks()[timbre as usize] {
+            pad.load(timbre, file.key, &file.left, &file.right, file.loop_start, file.loop_end);
+        }
+    }
+
+    // What a timbre plays for a chord, as timbreNotes in src/chords.ts says
+    fn timbre_notes(chord: &[u8], timbre: u8) -> Vec<u8> {
+        let bass = if timbre == ORCHESTRA { vec![chord[0] - 24, chord[0] - 12] } else { Vec::new() };
+        [&bass[..], chord].concat()
     }
 
     fn load_bank(pad: &mut Pad) {
@@ -1791,6 +1875,209 @@ mod tests {
                 let peak = peak_cents(&signal, note as f32, rate);
                 assert!(peak.abs() <= 5.0, "timbre {timbre}, note {note} is {peak} cents off");
             }
+        }
+    }
+
+    struct Held {
+        chord: Vec<u8>,
+        power: f32, // Of both channels, in dB, as a listener hears a stereo pad
+        summed: f32, // Of left plus right, in dB, as PAD-14 measures
+        peak: f32,
+    }
+
+    // Each of the 168 chords held in each timbre, with its real files, at the default volume
+    fn held_chords() -> &'static [Vec<Held>; TIMBRES] {
+        static HELD: OnceLock<[Vec<Held>; TIMBRES]> = OnceLock::new();
+        HELD.get_or_init(|| {
+            std::thread::scope(|scope| {
+                let renders: Vec<_> = (0..TIMBRES as u8).map(|timbre| scope.spawn(move || {
+                    all_chords().into_iter().map(|chord| {
+                        let mut pad = Pad::new(RATE);
+                        load_timbre(&mut pad, timbre);
+                        pad.play(&timbre_notes(&chord, timbre), timbre);
+                        let (left, right) = render(&mut pad, 16.0);
+                        let (held_left, held_right) = (after(&left, FADE_END, RATE), after(&right, FADE_END, RATE));
+                        Held {
+                            power: db(((rms(held_left).powi(2) + rms(held_right).powi(2)) / 2.0).sqrt()),
+                            summed: db(rms(&mono(held_left, held_right))),
+                            peak: peak(&left).max(peak(&right)),
+                            chord,
+                        }
+                    }).collect::<Vec<Held>>()
+                })).collect();
+                let held: Vec<Vec<Held>> = renders.into_iter().map(|render| render.join().unwrap()).collect();
+                held.try_into().unwrap_or_else(|_| unreachable!())
+            })
+        })
+    }
+
+    #[test]
+    fn tim_09_choir_balance() {
+        let held = |pad: &mut Pad| { pad.play(&C7M9, CHOIR); render(pad, 24.0) };
+        let (sample_left, _) = sample_layer(|pad| load_timbre(pad, CHOIR), RATE, held);
+        let (synth_left, _) = held(&mut Pad::new(RATE));
+        let difference = db(rms(after(&sample_left, 4.0, RATE))) - db(rms(after(&synth_left, 4.0, RATE)));
+        assert!((1.0..=3.0).contains(&difference), "the samples sit {difference} dB above the synth");
+    }
+
+    #[test]
+    fn tim_11_sweep_mixes_both_layers() {
+        let held = |pad: &mut Pad| { pad.play(&C7M9, SWEEP); render(pad, 24.0) };
+        let (sample_left, _) = sample_layer(|pad| load_timbre(pad, SWEEP), RATE, held);
+        let (synth_left, _) = held(&mut Pad::new(RATE));
+        let (sample, synth) = (db(rms(after(&sample_left, 4.0, RATE))), db(rms(after(&synth_left, 4.0, RATE))));
+        assert!(sample > -60.0 && synth > -60.0, "a layer is missing: samples {sample} dB, synth {synth} dB");
+        assert!((1.0..=3.0).contains(&(sample - synth)), "the samples sit {} dB above the synth", sample - synth);
+    }
+
+    #[test]
+    fn tim_12_analog_reads_no_file() {
+        let bits = |signal: &[f32]| signal.iter().map(|value| value.to_bits()).collect::<Vec<u32>>();
+        let run = |with_files: bool| {
+            let mut pad = Pad::new(RATE);
+            if with_files {
+                for bank in timbre_banks().iter().take(2) {
+                    for file in bank {
+                        pad.load(ANALOG, file.key, &file.left, &file.right, file.loop_start, file.loop_end);
+                    }
+                }
+                assert!(pad.banks[ANALOG as usize].is_empty(), "Analog took a file");
+            }
+            pad.play(&C7M9, ANALOG);
+            render(&mut pad, 4.0)
+        };
+        let ((bare_left, bare_right), (left, right)) = (run(false), run(true));
+        assert_eq!(bits(&bare_left), bits(&left));
+        assert_eq!(bits(&bare_right), bits(&right));
+        assert!(db(rms(after(&left, FADE_END, RATE))) > -40.0, "the synth is missing");
+    }
+
+    #[test]
+    fn tim_13_orchestra_has_no_synth() {
+        let mut pad = Pad::new(RATE);
+        load_timbre(&mut pad, ORCHESTRA);
+        pad.play(&timbre_notes(&C7M9, ORCHESTRA), ORCHESTRA);
+        let frames = (5.0 * RATE) as usize;
+        let layers: Vec<_> = (0..frames).map(|_| pad.layers()).collect();
+        assert!(layers.iter().all(|((left, right), _, _)| *left == 0.0 && *right == 0.0), "the synth sounds");
+        let files: Vec<f32> = layers.iter().map(|(_, (bus, _), (past, _))| bus + past).collect();
+        assert!(db(rms(after(&files, FADE_END, RATE))) > -40.0, "the sections are missing");
+    }
+
+    // Where a listener puts a note: the mean of the centres of its first harmonics, each counted once, so that a
+    // comb favouring one saw of one harmonic does not stand for the whole note
+    fn heard_centre_cents(signal: &[f32], note: f32, rate: f32) -> f32 {
+        const HARMONICS: usize = 6;
+        let windowed = hann(signal);
+        (1..=HARMONICS).map(|harmonic| {
+            let spectrum = sweep(&windowed, note_hz(note) * harmonic as f32, 30.0, rate);
+            let total: f64 = spectrum.iter().map(|(_, power)| power).sum();
+            spectrum.iter().map(|(offset, power)| *offset as f64 * power).sum::<f64>() / total
+        }).sum::<f64>() as f32 / HARMONICS as f32
+    }
+
+    #[test]
+    fn tim_16_notes_within_5_cents() {
+        // The meter: a tone 4 cents sharp on 6 harmonics reads as 4 cents, so the checks below can fail
+        let hz = note_hz(60.0) * 2f32.powf(4.0 / 1200.0);
+        let tone: Vec<f32> = (0..(8.0 * RATE) as usize).map(|frame| {
+            (1..=6).map(|harmonic| (TAU * ((hz * harmonic as f32 / RATE * frame as f32) % 1.0)).sin() / harmonic as f32).sum()
+        }).collect();
+        let reading = heard_centre_cents(&tone, 60.0, RATE);
+        assert!((reading - 4.0).abs() < 0.5, "a tone 4 cents sharp reads {reading}");
+
+        std::thread::scope(|scope| {
+            for timbre in [CHOIR, NEW_AGE, SWEEP, ANALOG] {
+                scope.spawn(move || {
+                    for note in 45..=70u8 {
+                        let held = || {
+                            let mut pad = Pad::new(RATE);
+                            load_timbre(&mut pad, timbre);
+                            pad.play(&[note], timbre);
+                            pad
+                        };
+                        // Each voice as it leaves the note, before the effects
+                        let (left, right) = render_dry(&mut held(), 16.0);
+                        let signal = mono(after(&left, FADE_END, RATE), after(&right, FADE_END, RATE));
+                        let centre = cluster_centre_cents(&signal, note as f32, RATE);
+                        assert!(centre.abs() <= 5.0, "timbre {timbre}, note {note} leaves {centre} cents off");
+
+                        // What is heard. The reverb's combs lean a lone harmonic's centre up to 9.5 cents, New Age's too,
+                        // though they move no frequency. Heard over the harmonics the note stays where it left
+                        let (left, right) = render(&mut held(), 16.0);
+                        let signal = mono(after(&left, FADE_END, RATE), after(&right, FADE_END, RATE));
+                        let centre = heard_centre_cents(&signal, note as f32, RATE);
+                        assert!(centre.abs() <= 5.0, "timbre {timbre}, note {note} is heard {centre} cents off");
+                    }
+                });
+            }
+        });
+    }
+
+    #[test]
+    fn tim_18_chords_match_within_3_db() {
+        for (timbre, held) in held_chords().iter().enumerate() {
+            assert_eq!(held.len(), 168);
+            for (name, level) in [("power", (|chord: &Held| chord.power) as fn(&Held) -> f32), ("sum", |chord| chord.summed)] {
+                let lowest = held.iter().min_by(|a, b| level(a).total_cmp(&level(b))).unwrap();
+                let highest = held.iter().max_by(|a, b| level(a).total_cmp(&level(b))).unwrap();
+                assert!(level(highest) - level(lowest) <= 3.0, "timbre {timbre}, {name}: {:?} at {} against {:?} at {}",
+                    lowest.chord, level(lowest), highest.chord, level(highest));
+            }
+        }
+    }
+
+    #[test]
+    fn tim_19_timbres_match_within_3_db() {
+        let held = held_chords();
+        for chord in 0..168 {
+            let levels: Vec<f32> = held.iter().map(|timbre| timbre[chord].power).collect();
+            let (lowest, highest) = (levels.iter().cloned().fold(f32::MAX, f32::min), levels.iter().cloned().fold(f32::MIN, f32::max));
+            assert!(highest - lowest <= 3.0, "{:?}: {levels:?}", held[0][chord].chord);
+        }
+    }
+
+    #[test]
+    fn tim_20_default_peak() {
+        let held = held_chords();
+        for (timbre, chords) in held.iter().enumerate() {
+            let loudest = chords.iter().max_by(|a, b| a.peak.total_cmp(&b.peak)).unwrap();
+            assert!(db(loudest.peak) <= -12.0, "timbre {timbre}: {:?} peaks at {} dBFS", loudest.chord, db(loudest.peak));
+        }
+
+        // Every crossfade doubles the chords sounding, each on the hot start of its files, within a timbre and across them
+        let loudest_of = |timbre: usize| {
+            let mut chords: Vec<&Held> = held[timbre].iter().collect();
+            chords.sort_by(|a, b| b.peak.total_cmp(&a.peak));
+            chords
+        };
+        let crossfade_peak = |picks: &[(Vec<u8>, u8)]| {
+            let mut pad = Pad::new(RATE);
+            for timbre in [CHOIR, NEW_AGE, ORCHESTRA, SWEEP] {
+                load_timbre(&mut pad, timbre);
+            }
+            let (mut left, mut right) = ([0.0f32; 128], [0.0f32; 128]);
+            let mut highest = 0f32;
+            for (notes, timbre) in picks {
+                pad.play(notes, *timbre);
+                for _ in 0..(2.0 * RATE / 128.0) as usize {
+                    left.fill(0.0);
+                    right.fill(0.0);
+                    pad.mix_into(&mut left, &mut right);
+                    highest = highest.max(peak(&left)).max(peak(&right));
+                }
+            }
+            highest
+        };
+        let across: Vec<(Vec<u8>, u8)> = (0..TIMBRES).flat_map(|from| {
+            loudest_of(from).into_iter().take(6).flat_map(move |chord| (0..TIMBRES as u8).map(move |timbre| (timbre_notes(&chord.chord, timbre), timbre)))
+        }).collect();
+        let within = (0..TIMBRES as u8).map(|timbre| {
+            loudest_of(timbre as usize).into_iter().take(40).map(|chord| (timbre_notes(&chord.chord, timbre), timbre)).collect::<Vec<_>>()
+        });
+        for picks in within.chain([across]) {
+            let highest = crossfade_peak(&picks);
+            assert!(db(highest) <= -12.0, "a crossfade peaks at {} dBFS", db(highest));
         }
     }
 
