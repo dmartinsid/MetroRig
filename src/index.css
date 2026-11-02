@@ -341,52 +341,57 @@ header {
   color: var(--neon-green);
 }
 
-.chord-scroller {
-  overflow-x: auto;
+.chord-roots {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 4px;
 }
 
-.chord-grid {
-  width: 100%;
-  border-collapse: collapse;
+.chord-roots .chord-btn {
+  font-size: 0.85rem;
+  font-weight: 700;
 }
 
-.chord-grid th[scope="col"] {
-  padding: 0 2px 0.4rem;
-  font-family: var(--mono);
+.chord-types {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--glass-border);
+}
+
+.chord-family {
+  display: grid;
+  grid-template-columns: 6.5rem minmax(0, 1fr);
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.chord-family h2 {
+  margin: 0;
   font-size: 0.7rem;
-  font-weight: 400;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--text-muted);
 }
 
-/* An opaque fill, so the chords scrolling under the roots don't show through */
-.chord-grid th[scope="row"],
-.chord-grid thead td {
-  position: sticky;
-  left: 0;
-  z-index: 1;
-  background: var(--surface-flat);
+.chord-family-types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 
-.chord-grid th[scope="row"] {
+.chord-family-types .chord-btn {
+  flex: 0 0 auto;
+  min-width: 4.25rem;
   padding: 0 0.5rem;
-  font-family: var(--mono);
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-align: left;
-  color: var(--text);
-}
-
-.chord-grid td {
-  padding: 2px;
 }
 
 .chord-btn {
-  width: 100%;
-  min-width: 3.75rem;
-  height: 2rem;
-  padding: 0 0.25rem;
+  height: 2.25rem;
   font-family: var(--mono);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   white-space: nowrap;
   color: var(--text-muted);
   background: rgba(255, 255, 255, 0.03);
@@ -406,7 +411,12 @@ header {
   outline-offset: -1px;
 }
 
-.chord-btn[aria-pressed="true"] {
+.chord-btn[data-state="selected"] {
+  color: var(--text);
+  border-color: var(--neon-green-dim);
+}
+
+.chord-btn[data-state="sounding"] {
   color: var(--neon-green);
   border-color: var(--neon-green);
   box-shadow: 0 0 8px rgba(57, 255, 20, 0.25);
@@ -1730,6 +1740,29 @@ select:focus {
   }
 
   #grooves-view,
+  /* Its 147 px would cover the roots, which must stay in view while the types scroll */
+  body:has(#improv-view:not(.hidden)) header {
+    position: static;
+  }
+
+  .chord-roots {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    padding: 4px 0;
+    background: var(--surface-flat);
+  }
+
+  .chord-family {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.35rem;
+  }
+
+  .chord-btn {
+    height: 44px;
+  }
+
   #improv-view {
     padding: 1rem;
   }
