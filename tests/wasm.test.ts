@@ -78,4 +78,79 @@ describe('Shipped WASM', () => {
     engine.engine_process(ptr, left, right, 4);
     expect(new Float32Array(engine.memory.buffer, left, 4)[0]).toBe(0.25);
   });
+
+  // The loudest sample of each channel over some blocks, as the worklet renders them
+  function padRenderer() {
+    const wasm = fs.readFileSync(path.resolve(__dirname, '../public/pkg/metrorig_audio_bg.wasm'));
+    const engine = new WebAssembly.Instance(new WebAssembly.Module(wasm)).exports as any;
+    const ptr = engine.engine_new(44100);
+    const size = 128;
+    const left = engine.engine_alloc(size * 4);
+    const right = engine.engine_alloc(size * 4);
+
+    const render = (seconds: number) => {
+      const peaks = [0, 0];
+      for (let block = 0; block < seconds * 44100 / size; block++) {
+        engine.engine_process(ptr, left, right, size);
+        [left, right].forEach((channel, index) => {
+          for (const sample of new Float32Array(engine.memory.buffer, channel, size)) {
+            peaks[index] = Math.max(peaks[index], Math.abs(sample));
+          }
+        });
+      }
+      return peaks;
+    };
+    return { engine, ptr, render };
+  }
+
+  it('pad_23 renders while stopped', () => {
+    const { engine, ptr, render } = padRenderer();
+    expect(render(0.1)).toEqual([0, 0]);
+
+    engine.engine_pad_play(ptr, 48, 52, 55, 59, 62, 5);
+    render(2);
+
+    const [left, right] = render(1);
+    expect(left).toBeGreaterThan(0.003);
+    expect(right).toBeGreaterThan(0.003);
+    expect(left).toBeLessThanOrEqual(1);
+    expect(right).toBeLessThanOrEqual(1);
+  });
+
+  it('pad_42 follows the shipped volume, and stop fades to silence', () => {
+    const { engine, ptr, render } = padRenderer();
+    engine.engine_pad_play(ptr, 48, 52, 55, 0, 0, 3);
+    render(2);
+
+    engine.engine_pad_set_volume(ptr, 0);
+    render(0.1);
+    expect(render(0.1)).toEqual([0, 0]);
+
+    engine.engine_pad_set_volume(ptr, 1);
+    render(0.1);
+    expect(render(0.5)[0]).toBeGreaterThan(0.003);
+
+    engine.engine_pad_stop(ptr);
+    render(30);
+    expect(render(0.1)).toEqual([0, 0]);
+  });
+
+  it('pad_17 layers a sample through the shipped load', () => {
+    const synthAlone = padRenderer();
+    synthAlone.engine.engine_pad_play(synthAlone.ptr, 48, 52, 55, 0, 0, 3);
+    synthAlone.render(2);
+    const [synthPeak] = synthAlone.render(1);
+
+    const { engine, ptr, render } = padRenderer();
+    const frames = 4000;
+    const samplePtr = engine.engine_alloc(frames * 4);
+    new Float32Array(engine.memory.buffer, samplePtr, frames).forEach((_, frame, sample) => {
+      sample[frame] = frame % 40 < 20 ? 0.5 : -0.5;
+    });
+    engine.engine_pad_load(ptr, 48, 0, frames - 1, samplePtr, samplePtr, frames);
+    engine.engine_pad_play(ptr, 48, 52, 55, 0, 0, 3);
+    render(2);
+
+    expect(render(1)[0]).toBeGreaterThan(synthPeak * 1.5);
+  });
 });

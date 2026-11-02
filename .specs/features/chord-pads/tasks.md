@@ -283,8 +283,8 @@ T19 → T20
 
 **Done when**:
 
-- [ ] `tests/wasm.test.ts` proves `engine_pad_play` renders sound while stopped
-- [ ] Gate passes
+- [x] `tests/wasm.test.ts` proves `engine_pad_play` renders sound while stopped
+- [x] Gate passes
 
 **Tests**: unit
 **Gate**: build
