@@ -221,9 +221,9 @@ T19 → T20
 
 **Done when**:
 
-- [ ] Stereo and 48 kHz tests pass
-- [ ] `is_silent` turns true after the tail
-- [ ] Gate passes
+- [x] Stereo and 48 kHz tests pass
+- [x] `is_silent` turns true after the tail
+- [x] Gate passes
 
 **Tests**: unit
 **Gate**: rust

@@ -259,7 +259,7 @@ Every ambiguity is resolved or recorded here.
 | PAD-59 | P1: Hold a chord | Design | Implementing |
 | PAD-17 | P1: A pad that sounds professional | Design | Implementing |
 | PAD-18 | P1: A pad that sounds professional | Design | Implementing |
-| PAD-19 | P1: A pad that sounds professional | Design | Pending |
+| PAD-19 | P1: A pad that sounds professional | Design | Implementing |
 | PAD-20 | P1: A pad that sounds professional | Design | Implementing |
 | PAD-21 | P1: A pad that sounds professional | Design | Implementing |
 | PAD-22 | P1: A pad that sounds professional | Design | Implementing |
@@ -298,7 +298,7 @@ Every ambiguity is resolved or recorded here.
 | PAD-39 | Edge Cases | Design | Implementing |
 | PAD-56 | Edge Cases | Design | Pending |
 | PAD-57 | Edge Cases | Design | Pending |
-| PAD-58 | Edge Cases | Design | Pending |
+| PAD-58 | Edge Cases | Design | Implementing |
 
 **Coverage:** 59 total, 0 mapped to tasks, 59 unmapped until Tasks.
 
