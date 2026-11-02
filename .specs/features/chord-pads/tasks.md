@@ -363,9 +363,9 @@ T19 → T20
 
 **Done when**:
 
-- [ ] A chord does not wait for the kit
-- [ ] Engine failure and a resume are covered
-- [ ] Gate passes
+- [x] A chord does not wait for the kit
+- [x] Engine failure and a resume are covered
+- [x] Gate passes
 
 **Tests**: integration
 **Gate**: quick

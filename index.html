@@ -301,6 +301,13 @@
     <main id="improv-view" class="hidden">
       <section class="improv-panel card">
         <h1 class="improv-title">Improv · Chord Pads</h1>
+        <div class="improv-readout">
+          <span class="improv-chord" id="pad-status" aria-live="polite">No chord playing</span>
+          <span class="improv-notice" id="pad-notice" role="status" hidden></span>
+        </div>
+        <div class="chord-scroller">
+          <table class="chord-grid" id="chord-grid"></table>
+        </div>
       </section>
     </main>
 

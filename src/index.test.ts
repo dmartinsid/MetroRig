@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 import { MetronomeNode } from './audio/MetronomeNode';
@@ -35,6 +35,8 @@ vi.mock('./audio/MetronomeNode', () => {
       loadSample = mockLoadSample;
       loadTake = mockLoadTake;
       setClickMode = mockSetClickMode;
+      padPlay = recorded('padPlay');
+      padStop = recorded('padStop');
       visualDelayMs = () => mockVisualDelay;
       sampleRate = () => 44100;
 
@@ -2746,10 +2748,38 @@ describe('House Kit', () => {
 });
 
 describe('Improv', () => {
+  beforeEach(() => {
+    for (const mock of [mockInit, mockLoadSample, mockLoadTake]) {
+      mock.mockReset();
+      mock.mockResolvedValue(undefined);
+    }
+  });
+
   afterEach(() => {
     delete (globalThis as any).indexedDB;
     localStorage.removeItem('metrorig_view_mode');
   });
+
+  const chordButton = (name: string) =>
+    [...document.querySelectorAll<HTMLButtonElement>('#chord-grid button')].find(button => button.textContent === name)!;
+  const clickChord = async (name: string) => {
+    chordButton(name).click();
+    await flush();
+  };
+  const openImprov = async () => {
+    byId<HTMLButtonElement>('nav-improv').click();
+    await flush();
+  };
+  const pressedChords = () =>
+    [...document.querySelectorAll<HTMLButtonElement>('#chord-grid button[aria-pressed="true"]')].map(button => button.textContent);
+  const shownChord = () => byId('pad-status').textContent;
+  const notice = () => (byId('pad-notice').hidden ? null : byId('pad-notice').textContent);
+  // Resolves the engine start by hand
+  const holdEngine = () => {
+    let release!: () => void;
+    mockInit.mockImplementationOnce(() => new Promise<void>(resolve => { release = resolve; }));
+    return () => release();
+  };
 
   const shownScreens = () => ['editor-view', 'stadium-view', 'grooves-view', 'improv-view'].filter(id => !byId(id).classList.contains('hidden'));
 
@@ -2775,5 +2805,114 @@ describe('Improv', () => {
 
     expect(shownScreens()).toEqual(['improv-view']);
     expect(byId('nav-improv').getAttribute('aria-current')).toBe('page');
+  });
+
+  it('pad_15 chord does not wait for the kit', async () => {
+    mockLoadTake.mockImplementation(() => new Promise<void>(() => {})); // The kit never finishes
+    await openPage();
+    await clickPlay();
+    expect(mockLoadTake).toHaveBeenCalled();
+    expect(byId('btn-play').classList.contains('playing')).toBe(false);
+
+    await openImprov();
+    await clickChord('C7M(9)');
+
+    expect(calls('padPlay')).toEqual([[[48, 52, 55, 59, 62]]]);
+    expect(shownChord()).toBe('C7M(9) · C E G B D');
+    expect(pressedChords()).toEqual(['C7M(9)']);
+    expect(byId('btn-play').classList.contains('playing')).toBe(false);
+  });
+
+  it('pad_15 Improv starts the engine and leaves the kit alone', async () => {
+    await openPage();
+    expect(mockInit).not.toHaveBeenCalled();
+
+    await openImprov();
+    await clickChord('Cm7');
+
+    expect(mockInit).toHaveBeenCalledTimes(1);
+    expect(mockLoadTake).not.toHaveBeenCalled();
+    expect(mockLoadSample).not.toHaveBeenCalled();
+  });
+
+  it('pad_15 the chord shows once the engine started', async () => {
+    const release = holdEngine();
+    await openPage();
+    await openImprov();
+
+    await clickChord('Cm7');
+    expect(calls('padPlay')).toEqual([]);
+    expect(shownChord()).toBe('No chord playing');
+    expect(pressedChords()).toEqual([]);
+
+    release();
+    await flush();
+    expect(calls('padPlay')).toEqual([[[48, 51, 55, 58]]]);
+    expect(shownChord()).toBe('Cm7 · C Eb G Bb');
+    expect(pressedChords()).toEqual(['Cm7']);
+  });
+
+  it('pad_15 the last click wins while the engine starts', async () => {
+    const release = holdEngine();
+    await openPage();
+    await openImprov();
+
+    await clickChord('Cm7');
+    await clickChord('D');
+    await clickChord('F7');
+    release();
+    await flush();
+
+    expect(calls('padPlay')).toEqual([[[53, 57, 60, 63]]]);
+    expect(pressedChords()).toEqual(['F7']);
+  });
+
+  it('pad_15 Play after Improv shares the engine and loads the kit', async () => {
+    await openPage();
+    await openImprov();
+    await clickPlay();
+
+    expect(mockInit).toHaveBeenCalledTimes(1);
+    expect(mockLoadTake).toHaveBeenCalledTimes(54);
+    expect(calls('start')).toHaveLength(1);
+    expect(byId('btn-play').classList.contains('playing')).toBe(true);
+    await clickPlay();
+  });
+
+  it('pad_16 engine failure', async () => {
+    mockInit.mockRejectedValue(new Error('no audio'));
+    await openPage();
+    await openImprov();
+    expect(notice()).toBe('Audio unavailable');
+
+    await clickChord('C');
+    expect(notice()).toBe('Audio unavailable');
+    expect(shownChord()).toBe('No chord playing');
+    expect(pressedChords()).toEqual([]);
+    expect(calls('padPlay')).toEqual([]);
+
+    // A later click retries
+    mockInit.mockResolvedValue(undefined);
+    await clickChord('C');
+    expect(mockInit).toHaveBeenCalledTimes(3);
+    expect(notice()).toBeNull();
+    expect(shownChord()).toBe('C · C E G');
+    expect(calls('padPlay')).toEqual([[[48, 52, 55]]]);
+  });
+
+  it('pad_56 resumes audio', async () => {
+    const release = holdEngine();
+    await openPage();
+    await openImprov();
+    expect(mockNode.resumeContext).not.toHaveBeenCalled();
+
+    chordButton('C').click(); // No await: the browser only honours it within the click
+    expect(mockNode.resumeContext).toHaveBeenCalledTimes(1);
+
+    release();
+    await flush();
+    chordButton('D').click();
+    expect(mockNode.resumeContext).toHaveBeenCalledTimes(2);
+    await flush();
   });
 });

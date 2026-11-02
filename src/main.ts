@@ -6,6 +6,7 @@ import { VisualScheduler } from './visualSync';
 import { audibleSteps, createTrackMix, isAudible, toggleMute, toggleSolo } from './trackMix';
 import { formatBarStep, formatClock, formatLatency, formatSteps, formatTimer, nextDenominator } from './display';
 import { GENRE_TABS, SONGS, GenreTab, Song, songToPreset, songsForGenre } from './songs';
+import { CHORD_TYPES, ChordId, ROOTS, chordMidi, chordName, chordNotes, nextChord } from './chords';
 import workletUrl from './audio/metronome-processor?url';
 
 declare const gsap: any;
@@ -84,6 +85,10 @@ const timeSigDen = document.getElementById('time-sig-den') as HTMLSelectElement;
 
 const grooveSelector = document.getElementById('groove-selector') as HTMLSelectElement;
 const btnSaveGroove = document.getElementById('btn-save-groove') as HTMLButtonElement;
+
+const padStatus = document.getElementById('pad-status') as HTMLElement;
+const padNotice = document.getElementById('pad-notice') as HTMLElement;
+const chordGrid = document.getElementById('chord-grid') as HTMLTableElement;
 
 let hasUnsavedEdits = false;
 let selectedPresetValue = 'factory:default'; // Where the selector returns when a load is declined
@@ -188,13 +193,28 @@ async function loadKit() {
   });
 }
 
+async function launchEngine() {
+  // Compile Wasm and launch worklet using assets loaded through Vite
+  await audioNode.init('/pkg/metrorig_audio_bg.wasm', workletUrl);
+}
+
+// Runs once; a failure clears it, so the next use retries
+let enginePromise: Promise<void> | null = null;
+
+function startEngine(): Promise<void> {
+  enginePromise ??= launchEngine().catch(err => {
+    enginePromise = null;
+    throw err;
+  });
+  return enginePromise;
+}
+
 // Initialize Metronome Engine
 let isAudioInit = false;
 async function initAudio() {
   if (isAudioInit) return;
-  // Compile Wasm and launch worklet using assets loaded through Vite
-  await audioNode.init('/pkg/metrorig_audio_bg.wasm', workletUrl);
-  
+  await startEngine();
+
   await loadKit();
 
   isAudioInit = true;
@@ -563,7 +583,10 @@ state.subscribe((s) => {
 
 // UI Event Bindings
 viewLinks.forEach(link => {
-  link.onclick = () => state.setViewMode(link.dataset.view as ViewMode);
+  link.onclick = () => {
+    state.setViewMode(link.dataset.view as ViewMode);
+    if (state.activeViewMode === 'improv') openImprov();
+  };
 });
 
 bpmSlider.oninput = () => {
@@ -1176,6 +1199,89 @@ function drawGroovesScreen() {
   updateSongCards();
 }
 
+// What the engine holds, which is what the screen shows
+let soundingChord: ChordId | null = null;
+// Where the clicks lead, ahead of soundingChord while the engine starts, so the last click wins
+let clickedChord: ChordId | null = null;
+let audioFailed = false;
+const chordButtons = new Map<ChordId, HTMLButtonElement>();
+
+async function engineReady(): Promise<boolean> {
+  try {
+    await startEngine();
+    audioFailed = false;
+    return true;
+  } catch {
+    audioFailed = true;
+    return false;
+  }
+}
+
+function settleChord() {
+  if (clickedChord !== soundingChord) {
+    soundingChord = clickedChord;
+    if (soundingChord) audioNode.padPlay(chordMidi(soundingChord.root, soundingChord.type));
+    else audioNode.padStop();
+  }
+  renderImprov();
+}
+
+async function pressChord(chord: ChordId) {
+  audioNode.resumeContext(); // A browser only honours it within the click
+  clickedChord = nextChord(clickedChord, chord);
+  if (!(await engineReady())) clickedChord = null;
+  settleChord();
+}
+
+// Makes no sound, and leaves the kit to Play
+async function openImprov() {
+  await engineReady();
+  renderImprov();
+}
+
+function renderImprov() {
+  chordButtons.forEach((button, chord) => button.setAttribute('aria-pressed', String(chord === soundingChord)));
+  padStatus.textContent = soundingChord
+    ? `${chordName(soundingChord.root, soundingChord.type)} · ${chordNotes(soundingChord.root, soundingChord.type).join(' ')}`
+    : 'No chord playing';
+  padNotice.textContent = audioFailed ? 'Audio unavailable' : '';
+  padNotice.hidden = !audioFailed;
+}
+
+function chordHeader(text: string, scope: 'col' | 'row') {
+  const header = document.createElement('th');
+  header.setAttribute('scope', scope);
+  header.textContent = text;
+  return header;
+}
+
+function drawChordGrid() {
+  const headerRow = document.createElement('tr');
+  headerRow.append(document.createElement('td'), ...CHORD_TYPES.map(({ suffix }) => chordHeader(suffix || 'major', 'col')));
+  const head = document.createElement('thead');
+  head.appendChild(headerRow);
+
+  const body = document.createElement('tbody');
+  ROOTS.forEach((root, rootIndex) => {
+    const row = document.createElement('tr');
+    row.appendChild(chordHeader(root, 'row'));
+    CHORD_TYPES.forEach((_, type) => {
+      const chord = { root: rootIndex, type };
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'chord-btn';
+      button.textContent = chordName(rootIndex, type);
+      button.onclick = () => pressChord(chord);
+      chordButtons.set(chord, button);
+      const cell = document.createElement('td');
+      cell.appendChild(button);
+      row.appendChild(cell);
+    });
+    body.appendChild(row);
+  });
+  chordGrid.append(head, body);
+}
+
 // Initial draw and population
 footerClock.textContent = formatClock(audioNode.sampleRate());
 populatePresetsDropdown();
@@ -1184,3 +1290,6 @@ drawMixCards();
 drawGroovesScreen();
 drawFigurePalette();
 drawGrid();
+drawChordGrid();
+renderImprov();
+if (state.activeViewMode === 'improv') openImprov();
