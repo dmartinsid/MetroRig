@@ -14,9 +14,30 @@ const CUTOFF_HZ: f32 = 900.0;
 const CUTOFF_SWING_HZ: f32 = 350.0;
 const CUTOFF_LFO_HZ: f32 = 0.13;
 
+// Demo 2's ffmpeg chorus, `0.6:0.9:45|60|75:0.35|0.3|0.3:0.15|0.23|0.31:2|2.5|3`, in opposite phase left and right.
+// Each tap's delay swings from its base up by its depth. The taps sit at half the demo's level, and the reverb
+// below demo 3's: both colour some notes more than others, against PAD-14's level and PAD-07's pitch.
+const CHORUS_TAPS: usize = 3;
+const CHORUS_DELAY_MS: [f32; CHORUS_TAPS] = [45.0, 60.0, 75.0];
+const CHORUS_DEPTH_MS: [f32; CHORUS_TAPS] = [2.0, 2.5, 3.0];
+const CHORUS_RATE_HZ: [f32; CHORUS_TAPS] = [0.15, 0.23, 0.31];
+const CHORUS_TAP_GAIN: [f32; CHORUS_TAPS] = [0.175, 0.15, 0.15];
+const CHORUS_DRY: f32 = 0.6;
+const CHORUS_OUTPUT: f32 = 0.9;
+
+// Demo 3's reverb, its lengths in frames at 44.1 kHz
+const COMB_FRAMES: [[usize; 4]; 2] = [[3114, 3234, 2982, 2844], [3160, 3280, 3028, 2890]];
+const ALL_PASS_FRAMES: [[usize; 2]; 2] = [[556, 441], [579, 464]];
+const COMB_FEEDBACK: f32 = 0.87;
+const COMB_DAMPING: f32 = 0.4;
+const REVERB_DRY: f32 = 0.7;
+const REVERB_WET: f32 = 0.08;
+
+const SILENCE: f32 = 3.2e-5; // -90 dBFS
+
 // Set by ear. Demo 4 keeps the sample layer about 2 dB above the synth
 const SYNTH_GAIN: f32 = 0.1;
-const SAMPLE_GAIN: f32 = 0.63;
+const SAMPLE_GAIN: f32 = 0.9;
 
 const NO_FILE: usize = usize::MAX;
 
@@ -98,6 +119,127 @@ impl Slot {
     }
 }
 
+struct Chorus {
+    left: Vec<f32>,
+    right: Vec<f32>,
+    write: usize,
+    phases: [f32; CHORUS_TAPS],
+    steps: [f32; CHORUS_TAPS], // Phase per frame
+    delays: [f32; CHORUS_TAPS], // Frames
+    depths: [f32; CHORUS_TAPS], // Frames
+}
+
+impl Chorus {
+    fn new(sample_rate: f32) -> Chorus {
+        let frames = |ms: f32| ms * sample_rate / 1000.0;
+        let length = (frames(CHORUS_DELAY_MS[2] + CHORUS_DEPTH_MS[2]) as usize) + 2;
+        Chorus {
+            left: vec![0.0; length],
+            right: vec![0.0; length],
+            write: 0,
+            phases: [0.0; CHORUS_TAPS],
+            steps: CHORUS_RATE_HZ.map(|hz| hz / sample_rate),
+            delays: CHORUS_DELAY_MS.map(frames),
+            depths: CHORUS_DEPTH_MS.map(frames),
+        }
+    }
+
+    fn run(&mut self, left: f32, right: f32) -> (f32, f32) {
+        self.left[self.write] = left;
+        self.right[self.write] = right;
+        let (mut wet_left, mut wet_right) = (0.0, 0.0);
+        for tap in 0..CHORUS_TAPS {
+            self.phases[tap] = (self.phases[tap] + self.steps[tap]).fract();
+            let swing = (TAU * self.phases[tap]).sin();
+            let delay_left = self.delays[tap] + self.depths[tap] * (1.0 + swing) * 0.5;
+            let delay_right = self.delays[tap] + self.depths[tap] * (1.0 - swing) * 0.5;
+            wet_left += CHORUS_TAP_GAIN[tap] * read_delayed(&self.left, self.write, delay_left);
+            wet_right += CHORUS_TAP_GAIN[tap] * read_delayed(&self.right, self.write, delay_right);
+        }
+        self.write = (self.write + 1) % self.left.len();
+        ((left * CHORUS_DRY + wet_left) * CHORUS_OUTPUT, (right * CHORUS_DRY + wet_right) * CHORUS_OUTPUT)
+    }
+
+    fn clear(&mut self) {
+        self.left.fill(0.0);
+        self.right.fill(0.0);
+    }
+}
+
+fn read_delayed(line: &[f32], write: usize, delay: f32) -> f32 {
+    let length = line.len();
+    let whole = delay as usize;
+    let fraction = delay - whole as f32;
+    let nearer = line[(write + length - whole) % length];
+    let farther = line[(write + 2 * length - whole - 1) % length];
+    nearer + fraction * (farther - nearer)
+}
+
+struct Comb {
+    line: Vec<f32>,
+    index: usize,
+    damped: f32,
+}
+
+impl Comb {
+    fn run(&mut self, input: f32) -> f32 {
+        let output = self.line[self.index];
+        self.damped = output * (1.0 - COMB_DAMPING) + self.damped * COMB_DAMPING;
+        self.line[self.index] = input + self.damped * COMB_FEEDBACK;
+        self.index = (self.index + 1) % self.line.len();
+        output
+    }
+}
+
+struct AllPass {
+    line: Vec<f32>,
+    index: usize,
+}
+
+impl AllPass {
+    fn run(&mut self, input: f32) -> f32 {
+        let delayed = self.line[self.index];
+        self.line[self.index] = input + delayed * 0.5;
+        self.index = (self.index + 1) % self.line.len();
+        delayed - input
+    }
+}
+
+struct Reverb {
+    combs: [[Comb; 4]; 2], // Left, right
+    all_passes: [[AllPass; 2]; 2],
+}
+
+impl Reverb {
+    fn new(sample_rate: f32) -> Reverb {
+        let scaled = |frames: usize| (frames as f32 * sample_rate / 44100.0) as usize;
+        Reverb {
+            combs: COMB_FRAMES.map(|lengths| lengths.map(|length| Comb { line: vec![0.0; scaled(length)], index: 0, damped: 0.0 })),
+            all_passes: ALL_PASS_FRAMES.map(|lengths| lengths.map(|length| AllPass { line: vec![0.0; scaled(length)], index: 0 })),
+        }
+    }
+
+    fn run(&mut self, left: f32, right: f32) -> (f32, f32) {
+        let input = (left + right) * 0.5;
+        let mut channel = |side: usize| {
+            let wet: f32 = self.combs[side].iter_mut().map(|comb| comb.run(input)).sum();
+            self.all_passes[side].iter_mut().fold(wet, |signal, all_pass| all_pass.run(signal))
+        };
+        let (wet_left, wet_right) = (channel(0), channel(1));
+        (left * REVERB_DRY + wet_left * REVERB_WET, right * REVERB_DRY + wet_right * REVERB_WET)
+    }
+
+    fn clear(&mut self) {
+        for comb in self.combs.iter_mut().flatten() {
+            comb.line.fill(0.0);
+            comb.damped = 0.0;
+        }
+        for all_pass in self.all_passes.iter_mut().flatten() {
+            all_pass.line.fill(0.0);
+        }
+    }
+}
+
 pub struct Pad {
     sample_rate: f32,
     slots: [Slot; MAX_CHORDS],
@@ -108,7 +250,10 @@ pub struct Pad {
     filter_left: [f32; 2],
     filter_right: [f32; 2],
     cutoff_phase: f32,
+    chorus: Chorus,
+    reverb: Reverb,
     random: u32,
+    silent: bool,
 }
 
 impl Pad {
@@ -123,12 +268,16 @@ impl Pad {
             filter_left: [0.0; 2],
             filter_right: [0.0; 2],
             cutoff_phase: 0.0,
+            chorus: Chorus::new(sample_rate),
+            reverb: Reverb::new(sample_rate),
             random: 12345,
+            silent: true,
         }
     }
 
     pub fn play(&mut self, notes: &[u8]) {
         let notes = &notes[..notes.len().min(MAX_NOTES)];
+        self.silent = false;
         self.pending_count = 0;
         let returning = self.slots.iter().position(|slot| slot.holds(notes));
         for slot in &mut self.slots {
@@ -167,11 +316,31 @@ impl Pad {
         self.samples.push(sample);
     }
 
+    pub fn is_silent(&self) -> bool {
+        self.silent
+    }
+
     pub fn mix_into(&mut self, left: &mut [f32], right: &mut [f32]) {
+        if self.silent {
+            return;
+        }
+        let mut peak = 0f32;
         for (out_left, out_right) in left.iter_mut().zip(right.iter_mut()) {
-            let (pad_left, pad_right) = self.dry_frame();
+            let ((synth_left, synth_right), (file_left, file_right)) = self.layers();
+            // SPEC_DEVIATION: the chorus takes the sample layer alone, where PAD-19 says the pad
+            // Reason: as in demo 4. Over the synth too, its comb puts 6 dB between chords, against PAD-14's 3 dB
+            let (file_left, file_right) = self.chorus.run(file_left, file_right);
+            let (pad_left, pad_right) = self.reverb.run(synth_left + file_left, synth_right + file_right);
+            peak = peak.max(pad_left.abs()).max(pad_right.abs());
             *out_left += pad_left;
             *out_right += pad_right;
+        }
+        if peak < SILENCE && self.slots.iter().all(|slot| slot.count == 0) {
+            self.silent = true;
+            self.chorus.clear();
+            self.reverb.clear();
+            self.filter_left = [0.0; 2];
+            self.filter_right = [0.0; 2];
         }
     }
 
@@ -213,8 +382,8 @@ impl Pad {
             .unwrap_or(NO_FILE)
     }
 
-    // One frame of every chord, before the effects and the volume
-    fn dry_frame(&mut self) -> (f32, f32) {
+    // One frame of every chord, before the effects and the volume: the synth layer, then the sample layer
+    fn layers(&mut self) -> ((f32, f32), (f32, f32)) {
         let (mut left, mut right) = (0.0, 0.0);
         let (mut file_left, mut file_right) = (0.0, 0.0);
         for slot in &mut self.slots {
@@ -251,8 +420,8 @@ impl Pad {
         low_pass(&mut self.filter_left, left, smoothing);
         low_pass(&mut self.filter_right, right, smoothing);
         (
-            self.filter_left[1] * SYNTH_GAIN + file_left * SAMPLE_GAIN,
-            self.filter_right[1] * SYNTH_GAIN + file_right * SAMPLE_GAIN,
+            (self.filter_left[1] * SYNTH_GAIN, self.filter_right[1] * SYNTH_GAIN),
+            (file_left * SAMPLE_GAIN, file_right * SAMPLE_GAIN),
         )
     }
 }
@@ -303,6 +472,14 @@ mod tests {
 
     #[global_allocator]
     static ALLOCATOR: CountingAllocator = CountingAllocator;
+
+    impl Pad {
+        // Both layers before the effects
+        fn dry_frame(&mut self) -> (f32, f32) {
+            let ((synth_left, synth_right), (file_left, file_right)) = self.layers();
+            (synth_left + file_left, synth_right + file_right)
+        }
+    }
 
     type Stereo = (Vec<f32>, Vec<f32>);
 
@@ -802,11 +979,125 @@ mod tests {
     }
 
     #[test]
-    fn pad_17_note_mixes_both_layers() {
-        // A tone no harmonic of the note can reach marks the sample layer
-        let (marker, note) = (700.0, 69);
+    fn pad_19_output_is_stereo() {
+        let correlation = |left: &[f32], right: &[f32]| {
+            let dot = |a: &[f32], b: &[f32]| a.iter().zip(b).map(|(x, y)| (x * y) as f64).sum::<f64>();
+            dot(left, right) / (dot(left, left) * dot(right, right)).sqrt()
+        };
         let mut pad = Pad::new(RATE);
-        load_tone(&mut pad, note, marker);
+        load_bank(&mut pad);
+        pad.play(&C7M9);
+        let (left, right) = render(&mut pad, 12.0);
+        let similarity = correlation(after(&left, FADE_END, RATE), after(&right, FADE_END, RATE));
+        assert!(similarity < 0.95, "left and right correlate at {similarity}");
+
+        // The files are mono, so what differs in the sample layer comes from the effects
+        let (left, right) = sample_layer(load_bank, RATE, |pad| { pad.play(&C7M9); render(pad, 12.0) });
+        let similarity = correlation(after(&left, FADE_END, RATE), after(&right, FADE_END, RATE));
+        assert!(similarity < 0.95, "the sample layer correlates at {similarity}");
+
+        // A lone impulse shows the chorus: each channel repeats it about 45 ms later, at its own moment
+        for rate in [RATE, 48000.0] {
+            let impulse_at = (2.0 * rate) as usize;
+            let mut file = vec![0.0; 3 * impulse_at];
+            file[impulse_at] = 1.0;
+            let (left, right) = sample_layer(
+                |pad| pad.load(60, &file, &file, 0, file.len() - 1),
+                rate,
+                |pad| { pad.play(&[60]); render(pad, 2.3) },
+            );
+            let echo = |signal: &[f32]| {
+                let frame = |ms: f32| impulse_at + (ms * rate / 1000.0) as usize;
+                let tallest = (frame(44.0)..frame(48.0)).max_by(|a, b| signal[*a].abs().total_cmp(&signal[*b].abs())).unwrap();
+                ((tallest - impulse_at) as f32 * 1000.0 / rate, signal[tallest].abs() / signal[impulse_at].abs())
+            };
+            let (time_left, height_left) = echo(&left);
+            let (time_right, height_right) = echo(&right);
+            assert!(height_left > 0.2 && height_right > 0.2, "echoes of {height_left} and {height_right}");
+            assert!((time_left - time_right).abs() > 0.5, "echoes at {time_left} and {time_right} ms");
+
+            // The reverb answers at 64.5 ms at any rate: after the gap between the first two taps, not inside it
+            let frame = |ms: f32| impulse_at + (ms * rate / 1000.0) as usize;
+            let tallest_in = |from: f32, to: f32| left[frame(from)..frame(to)].iter().fold(0f32, |peak, value| peak.max(value.abs()));
+            assert!(tallest_in(49.0, 59.8) < 1e-3 * left[impulse_at].abs(), "something answers between the taps");
+            assert!(tallest_in(63.5, 65.5) > 1e-3 * left[impulse_at].abs(), "the reverb does not answer");
+        }
+
+        // After the fade the reverb still rings, where the voices have stopped
+        let mut pad = Pad::new(RATE);
+        pad.play(&C7M9);
+        render(&mut pad, 3.0);
+        pad.stop();
+        let (left, _) = render(&mut pad, 2.0);
+        assert!(db(rms(after(&left, 1.6, RATE))) > -70.0, "no reverb tail");
+    }
+
+    #[test]
+    fn pad_tail_ends_in_silence() {
+        let tail_seconds = |rate: f32| {
+            let mut pad = Pad::new(rate);
+            assert!(pad.is_silent());
+            pad.play(&C7M9);
+            assert!(!pad.is_silent());
+            render(&mut pad, 3.0);
+            pad.stop();
+            let mut seconds = 0.0;
+            while !pad.is_silent() {
+                render(&mut pad, 0.1);
+                seconds += 0.1;
+                assert!(seconds < 30.0, "the tail never ended");
+            }
+            assert!(seconds > FADE_SECONDS, "silent after {seconds} s, before the fade ended");
+
+            // Silent, it leaves the buffers alone, and a new chord sounds again
+            let (mut left, mut right) = ([0.25f32; 128], [-0.25f32; 128]);
+            pad.mix_into(&mut left, &mut right);
+            assert!(left.iter().all(|value| *value == 0.25) && right.iter().all(|value| *value == -0.25));
+            pad.play(&C7M9);
+            assert!(!pad.is_silent());
+            let (left, _) = render(&mut pad, 3.0);
+            assert!(db(rms(after(&left, FADE_END, rate))) > -40.0);
+            seconds
+        };
+        // About the same tail in seconds at either rate
+        let (at_44100, at_48000) = (tail_seconds(RATE), tail_seconds(48000.0));
+        assert!((at_44100 - at_48000).abs() < 0.1 * at_44100, "{at_44100} s against {at_48000} s");
+    }
+
+    #[test]
+    fn pad_58_pitch_holds_at_48_khz() {
+        let rate = 48000.0;
+        for chord in [&[45u8][..], &[70], &C7M9] {
+            let mut pad = Pad::new(rate);
+            pad.play(chord);
+            let (left, right) = render(&mut pad, 16.0);
+            let signal = mono(after(&left, FADE_END, rate), after(&right, FADE_END, rate));
+            for &note in chord {
+                let centre = cluster_centre_cents(&signal, note as f32, rate);
+                assert!(centre.abs() <= 5.0, "note {note} is {centre} cents off");
+            }
+
+            // decodeAudioData hands the engine files at its own rate
+            let (left, right) = sample_layer(
+                |pad| for key in [44, 48, 52, 56, 60, 64, 68, 72] { load_tone(pad, key, note_hz(key as f32)) },
+                rate,
+                |pad| { pad.play(chord); render(pad, 16.0) },
+            );
+            let signal = mono(after(&left, FADE_END, rate), after(&right, FADE_END, rate));
+            for &note in chord {
+                let peak = peak_cents(&signal, note as f32, rate);
+                assert!(peak.abs() <= 5.0, "note {note} is {peak} cents off");
+            }
+        }
+    }
+
+    #[test]
+    fn pad_17_note_mixes_both_layers() {
+        // A tone no harmonic of the note can reach marks the sample layer, at the -16 dBFS RMS of the real loops
+        let (marker, note) = (700.0, 69);
+        let tone: Vec<f32> = sine(marker, 40.0, RATE).iter().map(|value| value * 0.45).collect();
+        let mut pad = Pad::new(RATE);
+        pad.load(note, &tone, &tone, 0, tone.len() - 1);
         pad.play(&[note]);
         let (left, right) = render(&mut pad, 6.0);
         let signal = mono(after(&left, FADE_END, RATE), after(&right, FADE_END, RATE));
