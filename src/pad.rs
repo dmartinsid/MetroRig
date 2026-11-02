@@ -55,11 +55,11 @@ struct Mix {
 }
 
 const MIXES: [Mix; TIMBRES] = [
-    Mix { synth: 0.82, samples: 0.57, chorus: 1.0 }, // Choir
+    Mix { synth: 0.87, samples: 0.60, chorus: 1.0 }, // Choir
     Mix { synth: 1.0, samples: 1.0, chorus: 1.0 }, // New Age
-    Mix { synth: 0.0, samples: 2.0, chorus: 0.3 }, // Orchestra
-    Mix { synth: 0.82, samples: 0.63, chorus: 1.0 }, // Sweep
-    Mix { synth: 1.32, samples: 0.0, chorus: 1.0 }, // Analog
+    Mix { synth: 0.0, samples: 2.12, chorus: 0.3 }, // Orchestra
+    Mix { synth: 0.93, samples: 0.54, chorus: 1.0 }, // Sweep
+    Mix { synth: 1.40, samples: 0.0, chorus: 1.0 }, // Analog
 ];
 
 const NO_FILE: usize = usize::MAX;
@@ -713,7 +713,7 @@ mod tests {
         loop_end: usize,
     }
 
-    // Every bank's real files, in stereo, as PAD_TIMBRES lists them
+    // Every bank's real files, as PAD_TIMBRES lists them and the worklet receives them
     fn timbre_banks() -> &'static [Vec<TimbreFile>; TIMBRES] {
         static BANKS: OnceLock<[Vec<TimbreFile>; TIMBRES]> = OnceLock::new();
         BANKS.get_or_init(|| {
@@ -726,13 +726,21 @@ mod tests {
                 lines.map(|line| {
                     let parts: Vec<&str> = line.split('\'').collect();
                     let (key, loops) = (numbers(parts[0]), numbers(parts[2]));
+                    let path = format!("{root}/public{}", parts[1]);
                     let output = Command::new("ffmpeg")
-                        .args(["-v", "error", "-i", &format!("{root}/public{}", parts[1]), "-f", "f32le", "-ac", "2", "-"])
+                        .args(["-v", "error", "-i", &path, "-f", "f32le", "-"])
                         .output()
                         .expect("ffmpeg decodes the bank");
                     assert!(output.status.success());
                     let audio: Vec<f32> = output.stdout.chunks_exact(4).map(|bytes| f32::from_le_bytes(bytes.try_into().unwrap())).collect();
-                    let channel = |side: usize| audio.iter().skip(side).step_by(2).copied().collect();
+                    // A mono file plays on both sides at its own level, as decodeResponse hands it to the worklet.
+                    // ffmpeg's -ac 2 would scale it 3 dB down
+                    let probe = Command::new("ffprobe")
+                        .args(["-v", "error", "-show_entries", "stream=channels", "-of", "csv=p=0", &path])
+                        .output()
+                        .expect("ffprobe reads the bank");
+                    let channels = numbers(&String::from_utf8_lossy(&probe.stdout))[0];
+                    let channel = |side: usize| audio.iter().skip(side % channels).step_by(channels).copied().collect();
                     TimbreFile { key: key[0] as u8, left: channel(0), right: channel(1), loop_start: loops[0], loop_end: loops[1] }
                 }).collect()
             });
