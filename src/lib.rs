@@ -747,14 +747,14 @@ pub extern "C" fn engine_set_click_mode(ptr: *mut Engine, mode: u32) {
     engine.click_mode = mode;
 }
 
-// Holds the first `count` notes. A chord has at most 5, and the rest of the arguments are ignored
+// Holds the first `count` notes in a timbre. A chord has at most 7, and the rest of the arguments are ignored
 #[no_mangle]
-pub extern "C" fn engine_pad_play(ptr: *mut Engine, n0: u8, n1: u8, n2: u8, n3: u8, n4: u8, count: usize) {
+pub extern "C" fn engine_pad_play(ptr: *mut Engine, n0: u8, n1: u8, n2: u8, n3: u8, n4: u8, n5: u8, n6: u8, count: usize, timbre: u8) {
     if ptr.is_null() { return; }
-    let notes = [n0, n1, n2, n3, n4];
+    let notes = [n0, n1, n2, n3, n4, n5, n6];
     let Some(notes) = notes.get(..count) else { return };
     let engine = unsafe { &mut *ptr };
-    engine.pad.play(notes, pad::NEW_AGE);
+    engine.pad.play(notes, timbre);
 }
 
 #[no_mangle]
@@ -774,6 +774,7 @@ pub extern "C" fn engine_pad_set_volume(ptr: *mut Engine, volume: f32) {
 #[no_mangle]
 pub extern "C" fn engine_pad_load(
     ptr: *mut Engine,
+    timbre: u8,
     key: u8,
     loop_start: usize,
     loop_end: usize,
@@ -785,7 +786,7 @@ pub extern "C" fn engine_pad_load(
     let engine = unsafe { &mut *ptr };
     let left_slice = unsafe { slice::from_raw_parts(left_ptr, length) };
     let right_slice = unsafe { slice::from_raw_parts(right_ptr, length) };
-    engine.pad.load(pad::NEW_AGE, key, left_slice, right_slice, loop_start, loop_end);
+    engine.pad.load(timbre, key, left_slice, right_slice, loop_start, loop_end);
 }
 
 #[no_mangle]
@@ -2746,13 +2747,15 @@ mod tests {
 
     const CHORD: [u8; 5] = [48, 52, 55, 59, 62];
     const OTHER_CHORD: [u8; 3] = [45, 48, 52];
+    const NEW_AGE: u8 = 1;
+    const TIMBRES: u8 = 5;
     const FADED_IN: usize = 2 * SR as usize; // Past the 1.5 s fade
     // drum_session on the sample click, hashed on the engine of df52c58, before the pad reached it
     const DRUMS_BEFORE_THE_PAD: u64 = 0xe6cb5f9d31ccc6ed;
 
     fn pad_play(ptr: *mut Engine, notes: &[u8]) {
         let note = |index: usize| notes.get(index).copied().unwrap_or(0);
-        engine_pad_play(ptr, note(0), note(1), note(2), note(3), note(4), notes.len());
+        engine_pad_play(ptr, note(0), note(1), note(2), note(3), note(4), note(5), note(6), notes.len(), NEW_AGE);
     }
 
     fn peak(channel: &[f32]) -> f32 {
@@ -2967,11 +2970,58 @@ mod tests {
     }
 
     #[test]
+    fn tim_45_timbre_leaves_the_drums_alone() {
+        let file = buzz(4000, 0.2);
+        for click_mode in [0, 1] {
+            let never_used = engine_new(SR);
+            let (left, right) = drum_session(never_used, click_mode);
+            engine_free(never_used);
+            if click_mode == 1 {
+                assert_eq!(session_hash(&left, &right), DRUMS_BEFORE_THE_PAD);
+            }
+
+            for timbre in 0..TIMBRES {
+                // Selected and loaded, with no chord
+                let selected = engine_new(SR);
+                engine_pad_load(selected, timbre, 48, 0, 3999, file.as_ptr(), file.as_ptr(), file.len());
+                let (selected_left, selected_right) = drum_session(selected, click_mode);
+                assert_eq!(bits(&left), bits(&selected_left), "timbre {timbre}");
+                assert_eq!(bits(&right), bits(&selected_right), "timbre {timbre}");
+                engine_free(selected);
+
+                // A chord that sounded in it and fell silent leaves nothing behind
+                let played = engine_new(SR);
+                engine_pad_load(played, timbre, 48, 0, 3999, file.as_ptr(), file.as_ptr(), file.len());
+                engine_pad_play(played, 24, 36, 48, 52, 55, 59, 62, 7, timbre);
+                assert_eq!(unsafe { &*played }.pad.is_silent(), false);
+                stereo_output(played, FADED_IN);
+                engine_pad_stop(played);
+                let mut tail_seconds = 0;
+                while !unsafe { &*played }.pad.is_silent() {
+                    stereo_output(played, SR as usize);
+                    tail_seconds += 1;
+                    assert!(tail_seconds < 60, "the tail never ended");
+                }
+                let (after_left, after_right) = drum_session(played, click_mode);
+                assert_eq!(bits(&left), bits(&after_left), "timbre {timbre}");
+                assert_eq!(bits(&right), bits(&after_right), "timbre {timbre}");
+                engine_free(played);
+            }
+        }
+
+        // A timbre outside the list is refused, and leaves the pad as silent as it was
+        let ptr = engine_new(SR);
+        engine_pad_play(ptr, 48, 52, 55, 0, 0, 0, 0, 3, TIMBRES);
+        assert!(unsafe { &*ptr }.pad.is_silent());
+        engine_free(ptr);
+    }
+
+    #[test]
     fn pad_shares_the_output_clamp() {
         // Far past full scale, so the sum reaches the clamp on both paths
         let hot: Vec<f32> = (0..4000).map(|i| if i % 40 < 20 { 40.0 } else { -40.0 }).collect();
         let ptr = engine_new(SR);
-        engine_pad_load(ptr, 48, 0, 3999, hot.as_ptr(), hot.as_ptr(), hot.len());
+        engine_pad_load(ptr, NEW_AGE, 48, 0, 3999, hot.as_ptr(), hot.as_ptr(), hot.len());
         engine_pad_set_volume(ptr, 1.0);
         pad_play(ptr, &CHORD);
 

@@ -237,9 +237,9 @@ T14 → T15
 
 **Done when**:
 
-- [ ] `tests/wasm.test.ts` plays a timbre
-- [ ] Every drum test passes
-- [ ] Gate passes
+- [x] `tests/wasm.test.ts` plays a timbre
+- [x] Every drum test passes
+- [x] Gate passes
 
 **Tests**: unit
 **Gate**: build

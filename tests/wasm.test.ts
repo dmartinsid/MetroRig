@@ -79,6 +79,12 @@ describe('Shipped WASM', () => {
     expect(new Float32Array(engine.memory.buffer, left, 4)[0]).toBe(0.25);
   });
 
+  // Timbre ids, as PAD_TIMBRES orders them
+  const NEW_AGE = 1;
+  const ORCHESTRA = 2;
+  const SWEEP = 3;
+  const ANALOG = 4;
+
   // The loudest sample of each channel over some blocks, as the worklet renders them
   function padRenderer() {
     const wasm = fs.readFileSync(path.resolve(__dirname, '../public/pkg/metrorig_audio_bg.wasm'));
@@ -107,7 +113,7 @@ describe('Shipped WASM', () => {
     const { engine, ptr, render } = padRenderer();
     expect(render(0.1)).toEqual([0, 0]);
 
-    engine.engine_pad_play(ptr, 48, 52, 55, 59, 62, 5);
+    engine.engine_pad_play(ptr, 48, 52, 55, 59, 62, 0, 0, 5, NEW_AGE);
     render(2);
 
     const [left, right] = render(1);
@@ -119,7 +125,7 @@ describe('Shipped WASM', () => {
 
   it('pad_42 follows the shipped volume, and stop fades to silence', () => {
     const { engine, ptr, render } = padRenderer();
-    engine.engine_pad_play(ptr, 48, 52, 55, 0, 0, 3);
+    engine.engine_pad_play(ptr, 48, 52, 55, 0, 0, 0, 0, 3, NEW_AGE);
     render(2);
 
     engine.engine_pad_set_volume(ptr, 0);
@@ -137,7 +143,7 @@ describe('Shipped WASM', () => {
 
   it('pad_17 layers a sample through the shipped load', () => {
     const synthAlone = padRenderer();
-    synthAlone.engine.engine_pad_play(synthAlone.ptr, 48, 52, 55, 0, 0, 3);
+    synthAlone.engine.engine_pad_play(synthAlone.ptr, 48, 52, 55, 0, 0, 0, 0, 3, NEW_AGE);
     synthAlone.render(2);
     const [synthPeak] = synthAlone.render(1);
 
@@ -147,10 +153,48 @@ describe('Shipped WASM', () => {
     new Float32Array(engine.memory.buffer, samplePtr, frames).forEach((_, frame, sample) => {
       sample[frame] = frame % 40 < 20 ? 0.5 : -0.5;
     });
-    engine.engine_pad_load(ptr, 48, 0, frames - 1, samplePtr, samplePtr, frames);
-    engine.engine_pad_play(ptr, 48, 52, 55, 0, 0, 3);
+    engine.engine_pad_load(ptr, NEW_AGE, 48, 0, frames - 1, samplePtr, samplePtr, frames);
+    engine.engine_pad_play(ptr, 48, 52, 55, 0, 0, 0, 0, 3, NEW_AGE);
     render(2);
 
     expect(render(1)[0]).toBeGreaterThan(synthPeak * 1.5);
+  });
+
+  describe('Timbres', () => {
+    const frames = 4000;
+
+    // A renderer with one file of the given height, in the given timbre
+    function withFile(timbre: number, height: number) {
+      const renderer = padRenderer();
+      const { engine, ptr } = renderer;
+      const samplePtr = engine.engine_alloc(frames * 4);
+      new Float32Array(engine.memory.buffer, samplePtr, frames).forEach((_, frame, sample) => {
+        sample[frame] = frame % 40 < 20 ? height : -height;
+      });
+      engine.engine_pad_load(ptr, timbre, 48, 0, frames - 1, samplePtr, samplePtr, frames);
+      return renderer;
+    }
+
+    const heldPeak = ({ engine, ptr, render }: ReturnType<typeof padRenderer>, timbre: number) => {
+      engine.engine_pad_play(ptr, 24, 36, 48, 52, 55, 59, 62, 7, timbre);
+      render(2);
+      return render(1)[0];
+    };
+
+    it('a file sounds only in its own timbre', () => {
+      const elsewhere = heldPeak(withFile(SWEEP, 0.5), NEW_AGE);
+      const synthAlone = heldPeak(padRenderer(), NEW_AGE);
+      expect(elsewhere).toBe(synthAlone);
+      expect(heldPeak(withFile(SWEEP, 0.5), SWEEP)).toBeGreaterThan(synthAlone * 1.5);
+    });
+
+    it('Orchestra sounds its files with no synth, and a synth with none', () => {
+      expect(heldPeak(withFile(ORCHESTRA, 0), ORCHESTRA)).toBe(0);
+      expect(heldPeak(padRenderer(), ORCHESTRA)).toBeGreaterThan(0.003);
+    });
+
+    it('Analog takes no file', () => {
+      expect(heldPeak(withFile(ANALOG, 0.5), ANALOG)).toBe(heldPeak(padRenderer(), ANALOG));
+    });
   });
 });
