@@ -1,10 +1,12 @@
 // The chord pad: held chords mixed over the drums. The page says which notes to hold; everything else
 // runs here, on the audio thread, so nothing below allocates once `Pad::new` has returned.
-use std::f32::consts::TAU;
+use std::f32::consts::{FRAC_PI_2, TAU};
 
 const MAX_CHORDS: usize = 3;
 const MAX_NOTES: usize = 5;
 const SAWS: usize = 7;
+const FADE_SECONDS: f32 = 1.5;
+const EVICTION_SECONDS: f32 = 0.02;
 
 // The sound of demo 3
 const DETUNE: [f32; SAWS] = [-0.19, -0.11, -0.05, 0.0, 0.05, 0.11, 0.19]; // Semitones
@@ -56,18 +58,52 @@ impl Voice {
 
 #[derive(Clone, Copy)]
 struct Slot {
+    notes: [u8; MAX_NOTES],
     voices: [Voice; MAX_NOTES],
-    count: usize,
+    count: usize, // 0 while the slot is free
     gain: f32, // Keeps chords of any size at one level
+    level: f32, // Linear, from 0 to 1, so a fade continues from wherever it stands
+    target: f32,
+    fade_step: f32, // Level per frame
+    order: u64, // Higher is newer
 }
 
 impl Slot {
-    const OFF: Slot = Slot { voices: [Voice::OFF; MAX_NOTES], count: 0, gain: 0.0 };
+    const OFF: Slot = Slot {
+        notes: [0; MAX_NOTES],
+        voices: [Voice::OFF; MAX_NOTES],
+        count: 0,
+        gain: 0.0,
+        level: 0.0,
+        target: 0.0,
+        fade_step: 0.0,
+        order: 0,
+    };
+
+    fn holds(&self, notes: &[u8]) -> bool {
+        self.count > 0 && &self.notes[..self.count] == notes
+    }
+
+    // Equal power, because two chords are unrelated: a crossfade keeps its loudness
+    fn fade_gain(&mut self) -> f32 {
+        self.level = if self.level < self.target {
+            (self.level + self.fade_step).min(self.target)
+        } else {
+            (self.level - self.fade_step).max(self.target)
+        };
+        if self.level == 0.0 && self.target == 0.0 {
+            self.count = 0;
+        }
+        self.gain * (self.level * FRAC_PI_2).sin()
+    }
 }
 
 pub struct Pad {
     sample_rate: f32,
     slots: [Slot; MAX_CHORDS],
+    pending: [u8; MAX_NOTES], // The newest click, waiting for a free slot
+    pending_count: usize,
+    order: u64,
     samples: Vec<PadSample>,
     filter_left: [f32; 2],
     filter_right: [f32; 2],
@@ -80,6 +116,9 @@ impl Pad {
         Pad {
             sample_rate,
             slots: [Slot::OFF; MAX_CHORDS],
+            pending: [0; MAX_NOTES],
+            pending_count: 0,
+            order: 0,
             samples: Vec::new(),
             filter_left: [0.0; 2],
             filter_right: [0.0; 2],
@@ -89,13 +128,33 @@ impl Pad {
     }
 
     pub fn play(&mut self, notes: &[u8]) {
-        let count = notes.len().min(MAX_NOTES);
-        for (index, &note) in notes[..count].iter().enumerate() {
-            let voice = self.new_voice(note);
-            self.slots[0].voices[index] = voice;
+        let notes = &notes[..notes.len().min(MAX_NOTES)];
+        self.pending_count = 0;
+        let returning = self.slots.iter().position(|slot| slot.holds(notes));
+        for slot in &mut self.slots {
+            slot.target = 0.0;
         }
-        self.slots[0].count = count;
-        self.slots[0].gain = 1.0 / (count.max(1) as f32).sqrt();
+        if let Some(index) = returning {
+            self.order += 1;
+            let slot = &mut self.slots[index];
+            slot.target = 1.0;
+            slot.fade_step = 1.0 / (FADE_SECONDS * self.sample_rate);
+            slot.order = self.order; // It stopped being the oldest, so the next eviction must not cut it
+        } else if let Some(free) = self.slots.iter().position(|slot| slot.count == 0) {
+            self.start(free, notes);
+        } else {
+            self.pending[..notes.len()].copy_from_slice(notes);
+            self.pending_count = notes.len();
+            let oldest = (0..MAX_CHORDS).min_by_key(|&index| self.slots[index].order).unwrap_or(0);
+            self.slots[oldest].fade_step = 1.0 / (EVICTION_SECONDS * self.sample_rate);
+        }
+    }
+
+    pub fn stop(&mut self) {
+        self.pending_count = 0;
+        for slot in &mut self.slots {
+            slot.target = 0.0;
+        }
     }
 
     pub fn load(&mut self, key: u8, left: &[f32], right: &[f32], loop_start: usize, loop_end: usize) {
@@ -114,6 +173,21 @@ impl Pad {
             *out_left += pad_left;
             *out_right += pad_right;
         }
+    }
+
+    fn start(&mut self, index: usize, notes: &[u8]) {
+        for (voice, &note) in notes.iter().enumerate() {
+            self.slots[index].voices[voice] = self.new_voice(note);
+        }
+        self.order += 1;
+        let slot = &mut self.slots[index];
+        slot.notes[..notes.len()].copy_from_slice(notes);
+        slot.count = notes.len();
+        slot.gain = 1.0 / (notes.len().max(1) as f32).sqrt();
+        slot.level = 0.0;
+        slot.target = 1.0;
+        slot.fade_step = 1.0 / (FADE_SECONDS * self.sample_rate);
+        slot.order = self.order;
     }
 
     // Saws start at random phases, or a chord would open with a thump
@@ -144,21 +218,30 @@ impl Pad {
         let (mut left, mut right) = (0.0, 0.0);
         let (mut file_left, mut file_right) = (0.0, 0.0);
         for slot in &mut self.slots {
+            let gain = slot.fade_gain();
             for voice in &mut slot.voices[..slot.count] {
                 for saw in 0..SAWS {
                     let phase = voice.phases[saw] + voice.steps[saw];
                     let phase = if phase >= 1.0 { phase - 1.0 } else { phase };
                     voice.phases[saw] = phase;
                     let pan = saw as f32 / (SAWS - 1) as f32;
-                    let value = (phase * 2.0 - 1.0) * slot.gain;
+                    let value = (phase * 2.0 - 1.0) * gain;
                     left += value * (1.0 - pan);
                     right += value * pan;
                 }
                 if let Some(sample) = self.samples.get(voice.file) {
                     let (sample_left, sample_right) = voice.read(sample);
-                    file_left += sample_left * slot.gain;
-                    file_right += sample_right * slot.gain;
+                    file_left += sample_left * gain;
+                    file_right += sample_right * gain;
                 }
+            }
+        }
+
+        if self.pending_count > 0 {
+            if let Some(free) = self.slots.iter().position(|slot| slot.count == 0) {
+                let (pending, count) = (self.pending, self.pending_count);
+                self.pending_count = 0;
+                self.start(free, &pending[..count]);
             }
         }
 
@@ -182,6 +265,8 @@ fn low_pass(poles: &mut [f32; 2], input: f32, smoothing: f32) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::alloc::{GlobalAlloc, Layout, System};
+    use std::cell::Cell;
     use std::process::Command;
     use std::sync::OnceLock;
 
@@ -189,7 +274,89 @@ mod tests {
     const FADE_END: f32 = 2.0; // Past the 1.5 s fade
     const C7M9: [u8; 5] = [48, 52, 55, 59, 62]; // The chord of the demos
 
+    // Per thread, so tests running beside this one cannot disturb its count
+    thread_local! {
+        static ALLOCATIONS: Cell<usize> = const { Cell::new(0) };
+    }
+
+    struct CountingAllocator;
+
+    fn count_allocation() {
+        let _ = ALLOCATIONS.try_with(|count| count.set(count.get() + 1));
+    }
+
+    unsafe impl GlobalAlloc for CountingAllocator {
+        unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
+            count_allocation();
+            unsafe { System.alloc(layout) }
+        }
+
+        unsafe fn dealloc(&self, pointer: *mut u8, layout: Layout) {
+            unsafe { System.dealloc(pointer, layout) }
+        }
+
+        unsafe fn realloc(&self, pointer: *mut u8, layout: Layout, size: usize) -> *mut u8 {
+            count_allocation();
+            unsafe { System.realloc(pointer, layout, size) }
+        }
+    }
+
+    #[global_allocator]
+    static ALLOCATOR: CountingAllocator = CountingAllocator;
+
     type Stereo = (Vec<f32>, Vec<f32>);
+
+    // One-note chords, each marked by a file holding its own tone, so that one signal shows every chord's level
+    const CHORD_A: [u8; 1] = [50];
+    const CHORD_B: [u8; 1] = [57];
+    const CHORD_C: [u8; 1] = [64];
+    const CHORD_D: [u8; 1] = [71];
+    const CHORD_E: [u8; 1] = [45];
+    const TONES: [(u8, f32); 5] = [(50, 700.0), (57, 1500.0), (64, 2300.0), (71, 3100.0), (45, 3900.0)];
+
+    fn tone_of(chord: [u8; 1]) -> f32 {
+        TONES.iter().find(|(key, _)| *key == chord[0]).unwrap().1
+    }
+
+    // The sample layer before the effects, calling each cue at its time. A cue with no notes is a stop
+    fn cued_tones(cues: &[(f32, &[u8])], seconds: f32) -> Vec<f32> {
+        let (left, _) = sample_layer(
+            |pad| for (key, hz) in TONES { load_tone(pad, key, hz) },
+            RATE,
+            |pad| {
+                let mut signal: Stereo = (Vec::new(), Vec::new());
+                for frame in 0..(seconds * RATE) as usize {
+                    for (_, notes) in cues.iter().filter(|(second, _)| (second * RATE) as usize == frame) {
+                        if notes.is_empty() { pad.stop() } else { pad.play(notes) }
+                    }
+                    let (left, right) = pad.dry_frame();
+                    signal.0.push(left);
+                    signal.1.push(right);
+                }
+                signal
+            },
+        );
+        left
+    }
+
+    // A chord's level around a moment, read from its tone: 1 is a chord alone at full level
+    fn level_at(signal: &[f32], chord: [u8; 1], second: f32) -> f32 {
+        let half = (0.01 * RATE) as usize;
+        let centre = (second * RATE) as usize;
+        let windowed = hann(&signal[centre - half..centre + half]);
+        let weight = (half as f32) * 2.0 * 0.5;
+        let amplitude = 2.0 * (power_at(&windowed, tone_of(chord), RATE).sqrt() as f32) / weight;
+        amplitude / (0.5 * SAMPLE_GAIN)
+    }
+
+    fn equal_power(seconds_of_fade: f32) -> f32 {
+        (seconds_of_fade / FADE_SECONDS * FRAC_PI_2).sin()
+    }
+
+    fn assert_level(signal: &[f32], chord: [u8; 1], second: f32, expected: f32) {
+        let level = level_at(signal, chord, second);
+        assert!((level - expected).abs() < 0.02, "at {second} s: level {level}, expected {expected}");
+    }
 
     struct BankFile {
         key: u8,
@@ -339,6 +506,25 @@ mod tests {
     }
 
     #[test]
+    fn pad_04_first_chord_fades_in_over_1_5_s() {
+        let signal = cued_tones(&[(0.0, &CHORD_A)], 3.0);
+        assert_level(&signal, CHORD_A, 0.02, equal_power(0.02));
+        assert_level(&signal, CHORD_A, 0.75, equal_power(0.75));
+        assert_level(&signal, CHORD_A, 1.2, equal_power(1.2));
+        assert!(level_at(&signal, CHORD_A, 1.3) < 0.985, "full level came before 1.5 s");
+        assert_level(&signal, CHORD_A, 1.52, 1.0);
+        assert_level(&signal, CHORD_A, 2.5, 1.0);
+
+        // The synth layer follows the same fade
+        let mut pad = Pad::new(RATE);
+        pad.play(&C7M9);
+        let (left, _) = render_dry(&mut pad, 3.0);
+        let level = |second: f32| db(rms(&left[(second * RATE) as usize..((second + 0.2) * RATE) as usize]));
+        assert!(level(0.0) < level(2.5) - 12.0);
+        assert!(level(0.0) < level(0.4) && level(0.4) < level(0.8) && level(0.8) < level(1.2));
+    }
+
+    #[test]
     fn pad_05_held_chord_never_ends() {
         let mut pad = Pad::new(RATE);
         pad.play(&C7M9);
@@ -415,6 +601,204 @@ mod tests {
                 assert!(peak.abs() <= 5.0, "note {note} is {peak} cents off");
             }
         }
+    }
+
+    #[test]
+    fn pad_08_crossfades_over_1_5_s() {
+        let signal = cued_tones(&[(0.0, &CHORD_A), (2.0, &CHORD_B)], 4.0);
+        assert_level(&signal, CHORD_A, 1.98, 1.0);
+        assert_level(&signal, CHORD_B, 1.98, 0.0);
+        for into_fade in [0.3, 0.75, 1.2] {
+            let second = 2.0 + into_fade;
+            assert_level(&signal, CHORD_B, second, equal_power(into_fade));
+            assert_level(&signal, CHORD_A, second, equal_power(FADE_SECONDS - into_fade));
+            let power = level_at(&signal, CHORD_A, second).powi(2) + level_at(&signal, CHORD_B, second).powi(2);
+            assert!((power - 1.0).abs() < 0.05, "the crossfade dips or swells: {power}");
+        }
+        assert_level(&signal, CHORD_A, 3.52, 0.0);
+        assert_level(&signal, CHORD_B, 3.52, 1.0);
+    }
+
+    #[test]
+    fn pad_09_stop_fades_over_1_5_s() {
+        let signal = cued_tones(&[(0.0, &CHORD_A), (2.0, &[])], 4.0);
+        assert_level(&signal, CHORD_A, 1.98, 1.0);
+        assert_level(&signal, CHORD_A, 2.75, equal_power(0.75));
+        assert_level(&signal, CHORD_A, 3.2, equal_power(0.3));
+        assert_level(&signal, CHORD_A, 3.52, 0.0);
+
+        // Both layers reach silence once the filter has rung out
+        let mut pad = Pad::new(RATE);
+        load_tone(&mut pad, 50, 700.0);
+        pad.play(&C7M9);
+        render_dry(&mut pad, 2.0);
+        pad.stop();
+        let (left, right) = render_dry(&mut pad, 2.0);
+        assert!(rms(&left[..(0.5 * RATE) as usize]) > 0.0);
+        assert!(db(rms(after(&left, 1.6, RATE)).max(rms(after(&right, 1.6, RATE)))) < -100.0);
+    }
+
+    #[test]
+    fn pad_10_settles_on_the_last_chord() {
+        let clicks: [(f32, &[u8]); 5] = [(0.0, &CHORD_A), (0.3, &CHORD_B), (0.6, &CHORD_C), (0.9, &CHORD_D), (1.2, &CHORD_E)];
+        let signal = cued_tones(&clicks, 3.5);
+        assert_level(&signal, CHORD_E, 3.0, 1.0);
+        for chord in [CHORD_A, CHORD_B, CHORD_C, CHORD_D] {
+            assert_level(&signal, chord, 3.0, 0.0);
+        }
+    }
+
+    #[test]
+    fn pad_11_fade_continues_from_its_level() {
+        // Replaced at 0.5 s while rising, then replaced again at 0.75 s
+        let signal = cued_tones(&[(0.0, &CHORD_A), (0.5, &CHORD_B), (0.75, &CHORD_C)], 2.5);
+        let level_of_a_at = |second: f32| 1.0 / 3.0 - (second - 0.5) / FADE_SECONDS;
+        assert_level(&signal, CHORD_A, 0.48, equal_power(0.48));
+        assert_level(&signal, CHORD_A, 0.52, (level_of_a_at(0.52) * FRAC_PI_2).sin());
+        assert_level(&signal, CHORD_A, 0.77, (level_of_a_at(0.77) * FRAC_PI_2).sin());
+        assert_level(&signal, CHORD_A, 1.02, 0.0);
+
+        let level_of_b_at = |second: f32| 1.0 / 6.0 - (second - 0.75) / FADE_SECONDS;
+        assert_level(&signal, CHORD_B, 0.73, equal_power(0.23));
+        assert_level(&signal, CHORD_B, 0.77, (level_of_b_at(0.77) * FRAC_PI_2).sin());
+        assert_level(&signal, CHORD_C, 1.5, equal_power(0.75));
+
+        // A click leaves no step in the signal itself
+        let step = |range: std::ops::Range<f32>| {
+            let (start, end) = ((range.start * RATE) as usize, (range.end * RATE) as usize);
+            signal[start..end].windows(2).map(|pair| (pair[1] - pair[0]).abs()).fold(0.0, f32::max)
+        };
+        for click in [0.5, 0.75] {
+            assert!(step(click - 0.002..click + 0.002) <= 1.2 * step(click - 0.02..click - 0.002));
+        }
+    }
+
+    #[test]
+    fn pad_12_at_most_3_chords() {
+        let clicks: [(f32, &[u8]); 5] = [(0.0, &CHORD_A), (1.2, &CHORD_B), (1.3, &CHORD_C), (1.35, &CHORD_D), (1.36, &CHORD_E)];
+        let signal = cued_tones(&clicks, 3.5);
+
+        // The oldest is still well up when the fourth click comes, and has left 20 ms later
+        assert!(level_at(&signal, CHORD_A, 1.335) > 0.5);
+        assert_level(&signal, CHORD_A, 1.385, 0.0);
+
+        // A newer click took the place of the fourth, which never sounds
+        for tenth_of_ms in (13000..16000).step_by(25) {
+            assert_level(&signal, CHORD_D, tenth_of_ms as f32 / 10000.0, 0.0);
+        }
+        // It starts as soon as the slot is free, on its 1.5 s fade
+        assert!(level_at(&signal, CHORD_E, 1.335) < 0.01);
+        assert_level(&signal, CHORD_E, 1.75, equal_power(1.75 - 1.37));
+
+        let audible = |second: f32| {
+            [CHORD_A, CHORD_B, CHORD_C, CHORD_D, CHORD_E].iter().filter(|chord| level_at(&signal, **chord, second) > 0.0005).count()
+        };
+        // The meter spans 20 ms, so it blurs the instant the new chord takes the old one's slot
+        let swap = 13600..13800;
+        let most = (11000..30000).step_by(25).filter(|tenth_of_ms| !swap.contains(tenth_of_ms))
+            .map(|tenth_of_ms| audible(tenth_of_ms as f32 / 10000.0)).max();
+        assert_eq!(most, Some(3));
+    }
+
+    #[test]
+    fn pad_13_one_chord_after_fades() {
+        let all = [CHORD_A, CHORD_B, CHORD_C, CHORD_D, CHORD_E];
+        let sounding = |signal: &[f32], second: f32| all.iter().filter(|chord| level_at(signal, **chord, second) > 0.005).count();
+
+        let signal = cued_tones(&[(0.0, &CHORD_A), (2.0, &CHORD_B), (2.5, &CHORD_C)], 5.0);
+        assert_eq!(sounding(&signal, 1.8), 1);
+        assert_eq!(sounding(&signal, 2.2), 2);
+        assert_eq!(sounding(&signal, 4.2), 1);
+
+        let signal = cued_tones(&[(0.0, &CHORD_A), (2.0, &CHORD_B), (2.5, &[])], 5.0);
+        assert_eq!(sounding(&signal, 4.2), 0);
+    }
+
+    #[test]
+    fn pad_14_chords_match_within_3_db() {
+        const TYPES: [&[u8]; 14] = [
+            &[0, 4, 7], &[0, 3, 7], &[0, 4, 7, 10], &[0, 4, 7, 11], &[0, 3, 7, 10], &[0, 5, 7], &[0, 2, 7],
+            &[0, 4, 7, 14], &[0, 4, 7, 10, 14], &[0, 3, 7, 10, 14], &[0, 4, 7, 11, 14], &[0, 4, 7, 9], &[0, 3, 6], &[0, 4, 8],
+        ];
+        let mut levels: Vec<(f32, Vec<u8>)> = Vec::new();
+        for root in 45..=56u8 {
+            for semitones in TYPES {
+                let chord: Vec<u8> = semitones.iter().map(|semitone| root + semitone).collect();
+                let mut pad = Pad::new(RATE);
+                load_bank(&mut pad);
+                pad.play(&chord);
+                let (left, right) = render(&mut pad, 12.0);
+                let held = mono(after(&left, FADE_END, RATE), after(&right, FADE_END, RATE));
+                levels.push((db(rms(&held)), chord));
+            }
+        }
+        levels.sort_by(|a, b| a.0.total_cmp(&b.0));
+        let (quietest, loudest) = (&levels[0], &levels[levels.len() - 1]);
+        assert!(loudest.0 - quietest.0 <= 3.0, "{quietest:?} against {loudest:?}");
+        // Without files too, as during loading
+        let synth_level = |chord: &[u8]| {
+            let mut pad = Pad::new(RATE);
+            pad.play(chord);
+            let (left, _) = render(&mut pad, 12.0);
+            db(rms(after(&left, FADE_END, RATE)))
+        };
+        let triad = synth_level(&[56, 60, 63]);
+        let five_notes = synth_level(&[45, 49, 52, 55, 59]);
+        assert!((triad - five_notes).abs() <= 3.0, "triad {triad} dB, 5 notes {five_notes} dB");
+    }
+
+    #[test]
+    fn pad_39_fading_chord_returns() {
+        // Halfway down its fade it comes back from there, on the same voices
+        let signal = cued_tones(&[(0.0, &CHORD_A), (2.0, &[]), (2.75, &CHORD_A)], 5.0);
+        assert_level(&signal, CHORD_A, 2.73, equal_power(0.77));
+        assert_level(&signal, CHORD_A, 2.77, equal_power(0.77));
+        assert_level(&signal, CHORD_A, 3.0, equal_power(1.0));
+        assert!(level_at(&signal, CHORD_A, 3.3) < 0.985, "full level came too soon");
+        assert_level(&signal, CHORD_A, 3.52, 1.0);
+        assert_level(&signal, CHORD_A, 4.5, 1.0);
+
+        // Back from under a crossfade: the chord that replaced it leaves again
+        let signal = cued_tones(&[(0.0, &CHORD_A), (2.0, &CHORD_B), (2.75, &CHORD_A)], 5.0);
+        assert_level(&signal, CHORD_A, 2.77, equal_power(0.77));
+        assert_level(&signal, CHORD_A, 3.6, 1.0);
+        assert_level(&signal, CHORD_B, 3.6, 0.0);
+    }
+
+    #[test]
+    fn pad_59_no_allocation() {
+        let allocations = || ALLOCATIONS.with(Cell::get);
+
+        // The meter works
+        let before = allocations();
+        std::hint::black_box(vec![0u8; 16]);
+        assert!(allocations() > before);
+
+        let mut pad = Pad::new(RATE);
+        load_bank(&mut pad);
+        let (mut left, mut right) = ([0.0f32; 128], [0.0f32; 128]);
+        let chords: [&[u8]; 5] = [&C7M9, &[45, 49, 52], &[56, 60, 63, 67, 70], &[46, 50, 53, 57], &[47, 50, 54]];
+
+        let before = allocations();
+        let mut blocks = |pad: &mut Pad, count: usize| {
+            for _ in 0..count {
+                pad.mix_into(&mut left, &mut right);
+            }
+        };
+        pad.play(chords[0]); // Starts
+        blocks(&mut pad, 100);
+        pad.play(chords[1]); // Changes
+        blocks(&mut pad, 10);
+        pad.play(chords[2]);
+        pad.play(chords[3]); // Waits for a slot
+        pad.play(chords[4]); // Replaces the one waiting
+        blocks(&mut pad, 100);
+        pad.play(chords[3]);
+        pad.play(chords[4]); // Returns while fading
+        blocks(&mut pad, 10);
+        pad.stop(); // Stops
+        blocks(&mut pad, 1000);
+        assert_eq!(allocations(), before);
     }
 
     #[test]

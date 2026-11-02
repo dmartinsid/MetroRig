@@ -200,9 +200,9 @@ T19 → T20
 
 **Done when**:
 
-- [ ] Each fade test passes
-- [ ] The allocation test counts allocations with a test allocator
-- [ ] Gate passes
+- [x] Each fade test passes
+- [x] The allocation test counts allocations with a test allocator
+- [x] Gate passes
 
 **Tests**: unit
 **Gate**: rust
