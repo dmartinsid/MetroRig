@@ -278,8 +278,8 @@ T14 → T15
 
 **Done when**:
 
-- [ ] `tests/MetronomeNode.test.ts` covers both
-- [ ] Gate passes
+- [x] `tests/MetronomeNode.test.ts` covers both
+- [x] Gate passes
 
 **Tests**: unit
 **Gate**: quick

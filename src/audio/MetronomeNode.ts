@@ -187,8 +187,8 @@ export class MetronomeNode extends EventTarget {
     this.workletNode?.port.postMessage({ type: 'SET_CLICK_MODE', mode });
   }
 
-  padPlay(notes: number[]) {
-    this.workletNode?.port.postMessage({ type: 'PAD_PLAY', notes });
+  padPlay(notes: number[], timbre: number) {
+    this.workletNode?.port.postMessage({ type: 'PAD_PLAY', notes, timbre });
   }
 
   padStop() {
@@ -201,7 +201,7 @@ export class MetronomeNode extends EventTarget {
 
   // Loop points are frames of the 44.1 kHz file, and decoding converts it to the context's rate.
   // Rejects when the file fails, so the caller can log it and use the nearest file.
-  async padLoad(key: number, url: string, loopStart: number, loopEnd: number) {
+  async padLoad(timbre: number, key: number, url: string, loopStart: number, loopEnd: number) {
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`Failed to fetch ${url}: ${response.status}`);
@@ -211,6 +211,7 @@ export class MetronomeNode extends EventTarget {
 
     this.workletNode?.port.postMessage({
       type: 'PAD_LOAD',
+      timbre,
       key,
       loopStart: Math.round(loopStart * scale),
       loopEnd: Math.round(loopEnd * scale),
