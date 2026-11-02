@@ -2820,7 +2820,7 @@ describe('Improv', () => {
     await openImprov();
     await clickChord('C7M(9)');
 
-    expect(calls('padPlay')).toEqual([[[48, 52, 55, 59, 62]]]);
+    expect(calls('padPlay')).toEqual([[[48, 52, 55, 59, 62], 0]]);
     expect(shownChord()).toBe('C7M(9) · C E G B D');
     expect(pressedChords()).toEqual(['C7M(9)']);
     expect(byId('btn-play').classList.contains('playing')).toBe(false);
@@ -2850,7 +2850,7 @@ describe('Improv', () => {
 
     release();
     await flush();
-    expect(calls('padPlay')).toEqual([[[48, 51, 55, 58]]]);
+    expect(calls('padPlay')).toEqual([[[48, 51, 55, 58], 0]]);
     expect(shownChord()).toBe('Cm7 · C Eb G Bb');
     expect(pressedChords()).toEqual(['Cm7']);
   });
@@ -2866,7 +2866,7 @@ describe('Improv', () => {
     release();
     await flush();
 
-    expect(calls('padPlay')).toEqual([[[53, 57, 60, 63]]]);
+    expect(calls('padPlay')).toEqual([[[53, 57, 60, 63], 0]]);
     expect(pressedChords()).toEqual(['F7']);
   });
 
@@ -2900,7 +2900,7 @@ describe('Improv', () => {
     expect(mockInit).toHaveBeenCalledTimes(3);
     expect(notice()).toBeNull();
     expect(shownChord()).toBe('C · C E G');
-    expect(calls('padPlay')).toEqual([[[48, 52, 55]]]);
+    expect(calls('padPlay')).toEqual([[[48, 52, 55], 0]]);
   });
 
   it('pad_56 resumes audio', async () => {
@@ -2967,7 +2967,7 @@ describe('Improv', () => {
     await clickChord('Ebm');
     expect(shownChord()).toBe('Ebm · Eb Gb Bb');
     expect(pressedChords()).toEqual(['Ebm']);
-    expect(calls('padPlay')).toEqual([[[48, 52, 55, 59, 62]], [[51, 54, 58]]]);
+    expect(calls('padPlay')).toEqual([[[48, 52, 55, 59, 62], 0], [[51, 54, 58], 0]]);
     expect(calls('padStop')).toEqual([]);
   });
 
@@ -3363,5 +3363,157 @@ describe('Improv', () => {
     expect(mockNode.resumeContext).not.toHaveBeenCalled();
     expect(mockLoadTake).not.toHaveBeenCalled();
     expect(mockLoadSample).not.toHaveBeenCalled();
+  });
+});
+
+describe('Timbres', () => {
+  beforeEach(() => {
+    for (const mock of [mockInit, mockLoadSample, mockLoadTake, mockPadLoad]) {
+      mock.mockReset();
+      mock.mockResolvedValue(undefined);
+    }
+  });
+
+  afterEach(() => {
+    delete (globalThis as any).indexedDB;
+    localStorage.removeItem('metrorig_view_mode');
+    localStorage.removeItem('metrorig_pad_timbre');
+  });
+
+  const timbreSelect = () => byId<HTMLSelectElement>('pad-timbre');
+  const shownTimbre = () => timbreSelect().selectedOptions[0].textContent;
+  const openImprov = async () => {
+    byId<HTMLButtonElement>('nav-improv').click();
+    await flush();
+  };
+  const clickChord = async (name: string) => {
+    [...document.querySelectorAll<HTMLButtonElement>('#chord-grid button')].find(button => button.textContent === name)!.click();
+    await flush();
+  };
+  const pickTimbre = async (name: string) => {
+    timbreSelect().value = name;
+    timbreSelect().dispatchEvent(new Event('change'));
+    await flush();
+  };
+  const stopPad = async () => {
+    byId<HTMLButtonElement>('pad-stop').click();
+    await flush();
+  };
+  const shownChord = () => byId('pad-status').textContent;
+  const pressedChords = () =>
+    [...document.querySelectorAll<HTMLButtonElement>('#chord-grid button[aria-pressed="true"]')].map(button => button.textContent);
+  const chordCommands = () => audioCalls.filter(call => call.method === 'padPlay' || call.method === 'padStop');
+
+  it('tim_01 select lists the timbres', async () => {
+    await openPage();
+    await openImprov();
+
+    expect(document.querySelectorAll('#improv-view select')).toHaveLength(1);
+    expect(document.querySelector<HTMLLabelElement>('label[for="pad-timbre"]')?.textContent).toBe('Timbre');
+    expect([...timbreSelect().options].map(option => option.textContent)).toEqual(['Choir', 'New Age', 'Orchestra', 'Sweep', 'Analog']);
+  });
+
+  it('tim_02 starts on Choir', async () => {
+    await openPage();
+    expect(shownTimbre()).toBe('Choir');
+
+    for (const stored of ['Bowed', '', '2']) {
+      localStorage.setItem('metrorig_pad_timbre', stored);
+      await openPage();
+      expect(shownTimbre(), stored).toBe('Choir');
+    }
+  });
+
+  it('tim_03 replays the chord in the new timbre', async () => {
+    await openPage();
+    await openImprov();
+    await clickChord('Am7');
+    expect(calls('padPlay')).toEqual([[[45, 48, 52, 55], 0]]);
+    audioCalls.length = 0;
+
+    await pickTimbre('Sweep');
+    expect(chordCommands()).toEqual([{ method: 'padPlay', args: [[45, 48, 52, 55], 3] }]);
+
+    await pickTimbre('Orchestra'); // The same chord, with the bass this timbre adds
+    expect(lastCall('padPlay')).toEqual([[21, 33, 45, 48, 52, 55], 2]);
+
+    await pickTimbre('Analog');
+    await pickTimbre('New Age'); // Fast picks: the engine settles on the last message it took
+    expect(lastCall('padPlay')).toEqual([[45, 48, 52, 55], 1]);
+
+    expect(calls('padStop')).toEqual([]);
+    expect(shownChord()).toBe('Am7 · A C E G');
+    expect(pressedChords()).toEqual(['Am7']);
+  });
+
+  it('tim_04 silent until the next chord', async () => {
+    await openPage();
+    await openImprov();
+
+    await pickTimbre('Sweep');
+    expect(chordCommands()).toEqual([]);
+    expect(shownChord()).toBe('No chord playing');
+    expect(pressedChords()).toEqual([]);
+
+    await clickChord('C7M(9)');
+    expect(chordCommands()).toEqual([{ method: 'padPlay', args: [[48, 52, 55, 59, 62], 3] }]);
+  });
+
+  it('tim_04 a chord waiting for the engine takes the timbre picked meanwhile', async () => {
+    let release!: () => void;
+    mockInit.mockImplementationOnce(() => new Promise<void>(resolve => { release = resolve; }));
+    await openPage();
+    await openImprov();
+    await clickChord('Cm7');
+
+    await pickTimbre('Sweep');
+    expect(chordCommands()).toEqual([]);
+
+    release();
+    await flush();
+    expect(chordCommands()).toEqual([{ method: 'padPlay', args: [[48, 51, 55, 58], 3] }]);
+    expect(shownChord()).toBe('Cm7 · C Eb G Bb');
+  });
+
+  it('tim_06 remembers the timbre', async () => {
+    await openPage();
+    await openImprov();
+    await pickTimbre('Sweep');
+    expect(localStorage.getItem('metrorig_pad_timbre')).toBe('Sweep');
+
+    await openPage(); // A reload, and the next chord takes the timbre without a pick
+    await openImprov();
+    expect(shownTimbre()).toBe('Sweep');
+
+    await clickChord('C');
+    expect(calls('padPlay')).toEqual([[[48, 52, 55], 3]]);
+  });
+
+  it('tim_08 opens silent', async () => {
+    localStorage.setItem('metrorig_pad_timbre', 'Orchestra');
+    localStorage.setItem('metrorig_view_mode', 'improv');
+
+    await openPage();
+
+    expect(shownTimbre()).toBe('Orchestra');
+    expect(chordCommands()).toEqual([]);
+    expect(shownChord()).toBe('No chord playing');
+    expect(pressedChords()).toEqual([]);
+    expect(mockNode.resumeContext).not.toHaveBeenCalled();
+  });
+
+  it('tim_42 pick during a fade', async () => {
+    await openPage();
+    await openImprov();
+    await clickChord('Am7');
+    await stopPad(); // The engine fades the chord out
+    audioCalls.length = 0;
+
+    await pickTimbre('Orchestra');
+    expect(chordCommands()).toEqual([]); // Nothing reaches the fade, and no chord returns
+    expect(shownChord()).toBe('No chord playing');
+
+    await clickChord('Am7');
+    expect(chordCommands()).toEqual([{ method: 'padPlay', args: [[21, 33, 45, 48, 52, 55], 2] }]);
   });
 });

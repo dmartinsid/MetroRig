@@ -298,8 +298,8 @@ T14 → T15
 
 **Done when**:
 
-- [ ] Tests use the gesture
-- [ ] Gate passes
+- [x] Tests use the gesture
+- [x] Gate passes
 
 **Tests**: integration
 **Gate**: quick

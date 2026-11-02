@@ -6,7 +6,7 @@ import { VisualScheduler } from './visualSync';
 import { audibleSteps, createTrackMix, isAudible, toggleMute, toggleSolo } from './trackMix';
 import { formatBarStep, formatClock, formatLatency, formatSteps, formatTimer, nextDenominator } from './display';
 import { GENRE_TABS, SONGS, GenreTab, Song, songToPreset, songsForGenre } from './songs';
-import { CHORD_TYPES, ChordId, PAD_BANK, ROOTS, chordMidi, chordName, chordNotes, nextChord, parseVolume } from './chords';
+import { CHORD_TYPES, ChordId, PAD_BANK, PAD_TIMBRES, ROOTS, chordName, chordNotes, nextChord, parseTimbre, parseVolume, timbreNotes } from './chords';
 import workletUrl from './audio/metronome-processor?url';
 
 declare const gsap: any;
@@ -93,6 +93,7 @@ const padStop = document.getElementById('pad-stop') as HTMLButtonElement;
 const improvDot = document.getElementById('improv-dot') as HTMLElement;
 const padVolumeSlider = document.getElementById('pad-volume') as HTMLInputElement;
 const padVolumeValue = document.getElementById('pad-volume-value') as HTMLElement;
+const padTimbreSelect = document.getElementById('pad-timbre') as HTMLSelectElement;
 
 let hasUnsavedEdits = false;
 let selectedPresetValue = 'factory:default'; // Where the selector returns when a load is declined
@@ -1227,10 +1228,18 @@ async function engineReady(): Promise<boolean> {
   }
 }
 
+function selectedTimbre() {
+  return parseTimbre(padTimbreSelect.value);
+}
+
+function playChord({ root, type }: ChordId) {
+  audioNode.padPlay(timbreNotes(root, type, selectedTimbre()), selectedTimbre());
+}
+
 function settleChord() {
   if (clickedChord !== soundingChord) {
     soundingChord = clickedChord;
-    if (soundingChord) audioNode.padPlay(chordMidi(soundingChord.root, soundingChord.type));
+    if (soundingChord) playChord(soundingChord);
     else audioNode.padStop();
   }
   renderImprov();
@@ -1295,6 +1304,12 @@ padStop.onclick = () => {
   settleChord();
 };
 
+// The engine crossfades to the same chord in the new timbre. With no chord, the next one takes it
+padTimbreSelect.onchange = () => {
+  localStorage.setItem('metrorig_pad_timbre', padTimbreSelect.value);
+  if (soundingChord) playChord(soundingChord);
+};
+
 padVolumeSlider.oninput = () => {
   padVolumeValue.textContent = padVolumeSlider.value;
   localStorage.setItem('metrorig_pad_volume', padVolumeSlider.value);
@@ -1335,6 +1350,16 @@ function drawChordGrid() {
   chordGrid.append(head, body);
 }
 
+function drawTimbreSelect() {
+  PAD_TIMBRES.forEach(({ name }) => {
+    const option = document.createElement('option');
+    option.value = name;
+    option.textContent = name;
+    padTimbreSelect.appendChild(option);
+  });
+  padTimbreSelect.value = PAD_TIMBRES[parseTimbre(localStorage.getItem('metrorig_pad_timbre'))].name;
+}
+
 // Initial draw and population
 footerClock.textContent = formatClock(audioNode.sampleRate());
 populatePresetsDropdown();
@@ -1344,6 +1369,7 @@ drawGroovesScreen();
 drawFigurePalette();
 drawGrid();
 drawChordGrid();
+drawTimbreSelect();
 padVolumeSlider.value = String(parseVolume(localStorage.getItem('metrorig_pad_volume')));
 padVolumeValue.textContent = padVolumeSlider.value;
 renderImprov();

@@ -186,14 +186,14 @@ The Improv pad has one sound. The user liked what they heard, and their favourit
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| TIM-01 | P1: Choose a timbre | Design | Pending |
-| TIM-02 | P1: Choose a timbre | Design | Pending |
+| TIM-01 | P1: Choose a timbre | Design | Implementing |
+| TIM-02 | P1: Choose a timbre | Design | Implementing |
 | TIM-03 | P1: Choose a timbre | Design | Implementing |
-| TIM-04 | P1: Choose a timbre | Design | Pending |
+| TIM-04 | P1: Choose a timbre | Design | Implementing |
 | TIM-05 | P1: Choose a timbre | Design | Implementing |
-| TIM-06 | P1: Choose a timbre | Design | Pending |
+| TIM-06 | P1: Choose a timbre | Design | Implementing |
 | TIM-07 | P1: Choose a timbre | Design | Implementing |
-| TIM-08 | P1: Choose a timbre | Design | Pending |
+| TIM-08 | P1: Choose a timbre | Design | Implementing |
 | TIM-09 | P1: Five sounds | Design | Implementing |
 | TIM-10 | P1: Five sounds | Design | Implementing |
 | TIM-11 | P1: Five sounds | Design | Implementing |
@@ -227,7 +227,7 @@ The Improv pad has one sound. The user liked what they heard, and their favourit
 | TIM-39 | P1: Approval by ear | Design | Pending |
 | TIM-40 | P3: Credit | Design | Pending |
 | TIM-41 | P3: Credit | Design | Pending |
-| TIM-42 | Edge Cases | Design | Pending |
+| TIM-42 | Edge Cases | Design | Implementing |
 | TIM-43 | Edge Cases | Design | Pending |
 | TIM-44 | Edge Cases | Design | Implementing |
 | TIM-45 | Edge Cases | Design | Implementing |
