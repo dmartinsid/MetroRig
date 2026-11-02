@@ -78,9 +78,9 @@ T7
 
 **Done when**:
 
-- [ ] `tests/chords.test.ts` proves the table, read from the spec's values
-- [ ] `pad_31` still names every chord until T5 replaces the grid
-- [ ] Gate passes
+- [x] `tests/chords.test.ts` proves the table, read from the spec's values
+- [x] `pad_31` still names every chord until T5 replaces the grid
+- [x] Gate passes
 
 **Tests**: unit
 **Gate**: quick

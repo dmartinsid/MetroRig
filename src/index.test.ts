@@ -4,6 +4,7 @@ import * as path from 'path';
 import { MetronomeNode } from './audio/MetronomeNode';
 import { SONGS } from './songs';
 import { STADIUM_GROUPS, TRACKS } from './kit';
+import { CHORD_TYPES } from './chords';
 
 const mockInit = vi.fn().mockResolvedValue(undefined);
 const mockLoadSample = vi.fn().mockResolvedValue(undefined);
@@ -2940,7 +2941,7 @@ describe('Improv', () => {
   it('pad_31 grid of 168 buttons', async () => {
     await openPage();
     await openImprov();
-    const types = ['major', 'm', '7', '7M', 'm7', 'sus4', 'sus2', 'add9', '9', 'm9', '7M(9)', '6', 'dim', 'aug'];
+    const types = CHORD_TYPES.map(type => type.suffix || 'major');
     const roots = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
 
     expect([...document.querySelectorAll('#chord-grid th[scope="col"]')].map(header => header.textContent)).toEqual(types);
@@ -2951,8 +2952,8 @@ describe('Improv', () => {
       expect([...row.querySelectorAll('button')].map(button => button.textContent)).toEqual(names);
     });
     const buttons = [...document.querySelectorAll('#chord-grid button')];
-    expect(buttons).toHaveLength(168);
-    expect(new Set(buttons.map(button => button.textContent)).size).toBe(168);
+    expect(buttons).toHaveLength(408);
+    expect(new Set(buttons.map(button => button.textContent)).size).toBe(408);
     buttons.forEach(button => expect(button.getAttribute('aria-pressed')).toBe('false'));
   });
 
