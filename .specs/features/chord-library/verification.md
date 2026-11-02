@@ -38,7 +38,7 @@
 | C28 | walk | yes - the Walked line settles it at 1280 px; my own Chrome run reads scrollWidth 1280 = clientWidth 1280 |
 | C29 | walk | yes at 390 px, as walked and as my run reads; 767 px also holds. 320 px does not: see the finding on it |
 | C30 | walk | yes - the Walked line settles it, the CSS sets 44 px below 768 px, and my run reads 44 px at 320, 390 and 767 |
-| C31 | walk | yes - the user, in the running app at 93831af: "aprovado". 29a8e67 differs from 93831af only in `spec.md` and `tasks.md` |
+| C31 | walk | yes - the user, in the running app at 93831af: "aprovado". After the fixes the user added: "eu escutei os acordes e parecem todos OK". 29a8e67 differs from 93831af only in `spec.md` and `tasks.md` |
 | C32 | walk | yes - the Walked line records no rejection, so nothing had to be offered again |
 | C33 | `src/index.test.ts` `chd_33 settles on the last chord` | yes - mixed root and type clicks, one chord sent |
 | C34 | `src/index.test.ts` `chd_34 a timbre pick replays a new chord` | yes - exact notes with bass, timbre id, no stop |
