@@ -254,8 +254,8 @@ Every ambiguity is resolved or recorded here.
 | PAD-12 | P1: Hold a chord | Design | Implementing |
 | PAD-13 | P1: Hold a chord | Design | Implementing |
 | PAD-14 | P1: Hold a chord | Design | Implementing |
-| PAD-15 | P1: Hold a chord | Design | Pending |
-| PAD-16 | P1: Hold a chord | Design | Pending |
+| PAD-15 | P1: Hold a chord | Design | Implementing |
+| PAD-16 | P1: Hold a chord | Design | Implementing |
 | PAD-59 | P1: Hold a chord | Design | Implementing |
 | PAD-17 | P1: A pad that sounds professional | Design | Implementing |
 | PAD-18 | P1: A pad that sounds professional | Design | Implementing |
@@ -296,7 +296,7 @@ Every ambiguity is resolved or recorded here.
 | PAD-54 | P3: Credit and documentation | Design | Pending |
 | PAD-55 | P3: Credit and documentation | Design | Pending |
 | PAD-39 | Edge Cases | Design | Implementing |
-| PAD-56 | Edge Cases | Design | Pending |
+| PAD-56 | Edge Cases | Design | Implementing |
 | PAD-57 | Edge Cases | Design | Implementing |
 | PAD-58 | Edge Cases | Design | Implementing |
 
