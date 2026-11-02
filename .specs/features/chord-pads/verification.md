@@ -1,7 +1,7 @@
 # Chord Pads verification
 
-**Verdict**: FAIL
-**Proofs**: `proofs.md` at bc0e593
+**Verdict**: PASS
+**Proofs**: `proofs.md` at the commit that closes the findings
 **Verifier**: independent sub-agent (author != verifier)
 
 ## Checks
@@ -88,5 +88,5 @@ PAD-37, in the running app, 2026-11-02. On hearing the pad, the user: "Gostei, o
 | --- | --- | --- | --- |
 | PAD-20's balance holds on about half the chords, and C22 proves it on one. The sample layer falls below the synth on some chords | Measured as `pad_20_layer_balance` does: over 24 s, `C7M(9)` +1.86 dB, `Asus2` (45 47 52) -2.05 dB, `Gaug` (55 59 63) +3.84 dB. Over 12 s, 87 of 168 chords are inside 1 to 3 dB | Decide what "about 2 dB" covers. Either balance the layers per note, or append a criterion that fixes the range the owner approved. Then assert it on all 168 chords | 430d4c6, C67: PAD-60 holds all 168 chords at -2.5 to +4.5 dB, the sound the user heard; measured -2.0 to +4.0, median +1.6 |
 | C14 does not hold PAD-12's 20 ms | `src/pad.rs` `pad_12_at_most_3_chords` asserts level 0 in a 20 ms window centred on 1.385 s. `EVICTION_SECONDS` of 0.015 and 0.03 pass; 0.012 and 0.04 fail. `fade_step` is also a fixed rate, so a chord at level 0.7 leaves in 14 ms | Measure the eviction directly, from a chord at level 1, and at the level the test uses. If 20 ms is a duration, derive the step from the current level | 430d4c6, C66: the step comes from the level at eviction, proved at 3 levels, and a later click does not restart it |
-| PAD-37's approval is not quoted in this file | C41's proof and PAD-37 require the owner's answer here. This Verifier does not read the Handoff, and the commit `bc0e593` only reports the approval, without its words | Quote the owner's answer verbatim in this file | This commit: quoted under `## Owner approval`, C41 |
+| PAD-37's approval is not quoted in this file | C41's proof and PAD-37 require the owner's answer here. This Verifier does not read the Handoff, and the commit `bc0e593` only reports the approval, without its words | Quote the owner's answer verbatim in this file | a8730ac: quoted under `## Owner approval`, C41 |
 | `Pad::load` has a rule with no test | `src/pad.rs:354-357` clamps `loop_end` and refuses a bad loop, to keep the audio thread from an out-of-bounds read. With those lines removed, all 109 `cargo test --lib` tests still pass; no test passes such a loop | Add a test with `loop_end` past the file and with `loop_start >= loop_end` | 430d4c6, C68 and C69: PAD-61 |
