@@ -161,9 +161,9 @@ T7
 
 **Done when**:
 
-- [ ] Tests click the buttons and read the screen
-- [ ] Every `chord-pads` and `pad-timbres` screen test keeps its rule
-- [ ] Gate passes
+- [x] Tests click the buttons and read the screen
+- [x] Every `chord-pads` and `pad-timbres` screen test keeps its rule
+- [x] Gate passes
 
 **Tests**: integration
 **Gate**: quick
