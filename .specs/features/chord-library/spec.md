@@ -40,7 +40,7 @@ The Improv pad offers 14 chord types, with no 11th, no half-diminished and no al
 | Selection on opening | `C` and `maj` selected, nothing sounding | One root and one type must be selected for a single click to play | y, presented with the spec, user: "Aprovado" |
 | Delivery | On `feat/pad-timbres`, as the last part of the pad | User: "pra finalizar a feature do pad" | y, presented with the spec, user: "Aprovado" |
 | Size | `public/pads/` stays at most 12 MB | AD-019, and it holds 10.9 MB | y |
-| Note 71 past the reverb | 7 cents, on that note alone | It leaves the voice within 0.5 cents, its harmonics sit on the reverb's combs, and TIM-10 keeps that reverb | y, presented at T7, user: "aprovado" |
+| Note 71 past the reverb | 7 cents, on that note alone, as CHD-37 and AD-024 set | It leaves the voice within 1 cent, its harmonics sit on the reverb's combs, and TIM-10 keeps that reverb | y, AD-024 |
 | Auth, rate limits, external dependencies, concurrency, data expiry | N/A because the chords are static data and the rules of `chord-pads` keep applying | Sweep | y |
 
 **Open questions:** none - all resolved or logged above.
@@ -113,7 +113,7 @@ The Improv pad offers 14 chord types, with no 11th, no half-diminished and no al
 **Acceptance Criteria**:
 
 1. CHD-06: Each note of the 408 chords in `Orchestra` SHALL sound from a file within 2 semitones of it, once its bank has loaded.
-2. CHD-07: Each note of `Choir`, `New Age`, `Sweep` and `Analog` up to MIDI 77 SHALL sound within 5 cents of equal temperament at A = 440 Hz, and within 7 cents past the reverb on note 71 alone.
+2. CHD-07: Each note of `Choir`, `New Age`, `Sweep` and `Analog` up to MIDI 77 SHALL sound within 5 cents of equal temperament at A = 440 Hz.
 3. CHD-08: The pitch centre of each `Orchestra` note up to MIDI 77 SHALL sit within 10 cents of equal temperament at A = 440 Hz.
 4. CHD-09: Within a timbre, any two of the 408 chords SHALL sound within 3 dB RMS.
 5. CHD-10: On each of the 408 chords, any two timbres SHALL sound within 3 dB RMS.
@@ -176,6 +176,7 @@ The Improv pad offers 14 chord types, with no 11th, no half-diminished and no al
 - WHEN a user picks a timbre while a new chord sounds THEN the pad SHALL crossfade to that chord in the timbre, with its bass where the timbre adds one. (CHD-34)
 - IF the browser has suspended audio THEN a click on a root or type SHALL resume it. (CHD-35)
 - WHEN a chord is fading out and a user clicks a root or type THEN the pad SHALL treat it as no chord sounding, so CHD-19 and CHD-20 apply. (CHD-36)
+- WHILE note 71 is measured past the reverb it SHALL sit within 7 cents of equal temperament, in place of CHD-07's 5 cents for that note and that measure alone; each note leaves the voice within CHD-07's 5 cents. (CHD-37)
 
 ---
 
@@ -183,44 +184,45 @@ The Improv pad offers 14 chord types, with no 11th, no half-diminished and no al
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| CHD-01 | P1: A complete chord list | Design | Pending |
-| CHD-02 | P1: A complete chord list | Design | Pending |
-| CHD-03 | P1: A complete chord list | Design | Pending |
-| CHD-04 | P1: A complete chord list | Design | Pending |
-| CHD-05 | P1: A complete chord list | Design | Pending |
-| CHD-06 | P1: Every timbre plays every chord | Design | Pending |
-| CHD-07 | P1: Every timbre plays every chord | Design | Pending |
-| CHD-08 | P1: Every timbre plays every chord | Design | Pending |
-| CHD-09 | P1: Every timbre plays every chord | Design | Pending |
-| CHD-10 | P1: Every timbre plays every chord | Design | Pending |
-| CHD-11 | P1: Every timbre plays every chord | Design | Pending |
-| CHD-12 | P1: Every timbre plays every chord | Design | Pending |
-| CHD-13 | P1: Every timbre plays every chord | Design | Pending |
-| CHD-14 | P1: Every timbre plays every chord | Design | Pending |
-| CHD-15 | P1: Choose by root and type | Design | Pending |
-| CHD-16 | P1: Choose by root and type | Design | Pending |
-| CHD-17 | P1: Choose by root and type | Design | Pending |
-| CHD-18 | P1: Choose by root and type | Design | Pending |
-| CHD-19 | P1: Choose by root and type | Design | Pending |
-| CHD-20 | P1: Choose by root and type | Design | Pending |
-| CHD-21 | P1: Choose by root and type | Design | Pending |
-| CHD-22 | P1: Choose by root and type | Design | Pending |
-| CHD-23 | P1: Choose by root and type | Design | Pending |
-| CHD-24 | P1: Choose by root and type | Design | Pending |
-| CHD-25 | P1: Choose by root and type | Design | Pending |
-| CHD-26 | P1: Choose by root and type | Design | Pending |
-| CHD-27 | P1: Choose by root and type | Design | Pending |
-| CHD-28 | P1: Choose by root and type | Design | Pending |
-| CHD-29 | P1: Choose by root and type | Design | Pending |
-| CHD-30 | P1: Choose by root and type | Design | Pending |
-| CHD-31 | P1: Approval in the running app | Design | Pending |
-| CHD-32 | P1: Approval in the running app | Design | Pending |
-| CHD-33 | Edge Cases | Design | Pending |
-| CHD-34 | Edge Cases | Design | Pending |
-| CHD-35 | Edge Cases | Design | Pending |
-| CHD-36 | Edge Cases | Design | Pending |
+| CHD-01 | P1: A complete chord list | Tasks | Verified |
+| CHD-02 | P1: A complete chord list | Tasks | Verified |
+| CHD-03 | P1: A complete chord list | Tasks | Verified |
+| CHD-04 | P1: A complete chord list | Tasks | Verified |
+| CHD-05 | P1: A complete chord list | Tasks | Verified |
+| CHD-06 | P1: Every timbre plays every chord | Tasks | Verified |
+| CHD-07 | P1: Every timbre plays every chord | Tasks | Verified |
+| CHD-08 | P1: Every timbre plays every chord | Tasks | Verified |
+| CHD-09 | P1: Every timbre plays every chord | Tasks | Verified |
+| CHD-10 | P1: Every timbre plays every chord | Tasks | Verified |
+| CHD-11 | P1: Every timbre plays every chord | Tasks | Verified |
+| CHD-12 | P1: Every timbre plays every chord | Tasks | Verified |
+| CHD-13 | P1: Every timbre plays every chord | Tasks | Verified |
+| CHD-14 | P1: Every timbre plays every chord | Tasks | Verified |
+| CHD-15 | P1: Choose by root and type | Tasks | Verified |
+| CHD-16 | P1: Choose by root and type | Tasks | Verified |
+| CHD-17 | P1: Choose by root and type | Tasks | Verified |
+| CHD-18 | P1: Choose by root and type | Tasks | Verified |
+| CHD-19 | P1: Choose by root and type | Tasks | Verified |
+| CHD-20 | P1: Choose by root and type | Tasks | Verified |
+| CHD-21 | P1: Choose by root and type | Tasks | Verified |
+| CHD-22 | P1: Choose by root and type | Tasks | Verified |
+| CHD-23 | P1: Choose by root and type | Tasks | Verified |
+| CHD-24 | P1: Choose by root and type | Tasks | Verified |
+| CHD-25 | P1: Choose by root and type | Tasks | Verified |
+| CHD-26 | P1: Choose by root and type | Tasks | Verified |
+| CHD-27 | P1: Choose by root and type | Tasks | Verified |
+| CHD-28 | P1: Choose by root and type | Tasks | Verified |
+| CHD-29 | P1: Choose by root and type | Tasks | Verified |
+| CHD-30 | P1: Choose by root and type | Tasks | Verified |
+| CHD-31 | P1: Approval in the running app | Tasks | Verified |
+| CHD-32 | P1: Approval in the running app | Tasks | Verified |
+| CHD-33 | Edge Cases | Tasks | Verified |
+| CHD-34 | Edge Cases | Tasks | Verified |
+| CHD-35 | Edge Cases | Tasks | Verified |
+| CHD-36 | Edge Cases | Tasks | Verified |
+| CHD-37 | Edge Cases | Tasks | Verified |
 
-**Coverage:** 36 total, 0 mapped to tasks, 36 unmapped until Tasks.
+**Coverage:** 37 total, all mapped to tasks. CHD-37 came from the Verifier's findings.
 
 ---
 
