@@ -6,7 +6,7 @@ import { VisualScheduler } from './visualSync';
 import { audibleSteps, createTrackMix, isAudible, toggleMute, toggleSolo } from './trackMix';
 import { formatBarStep, formatClock, formatLatency, formatSteps, formatTimer, nextDenominator } from './display';
 import { GENRE_TABS, SONGS, GenreTab, Song, songToPreset, songsForGenre } from './songs';
-import { CHORD_TYPES, ChordId, ROOTS, chordMidi, chordName, chordNotes, nextChord } from './chords';
+import { CHORD_TYPES, ChordId, ROOTS, chordMidi, chordName, chordNotes, nextChord, parseVolume } from './chords';
 import workletUrl from './audio/metronome-processor?url';
 
 declare const gsap: any;
@@ -91,6 +91,8 @@ const padNotice = document.getElementById('pad-notice') as HTMLElement;
 const chordGrid = document.getElementById('chord-grid') as HTMLTableElement;
 const padStop = document.getElementById('pad-stop') as HTMLButtonElement;
 const improvDot = document.getElementById('improv-dot') as HTMLElement;
+const padVolumeSlider = document.getElementById('pad-volume') as HTMLInputElement;
+const padVolumeValue = document.getElementById('pad-volume-value') as HTMLElement;
 
 let hasUnsavedEdits = false;
 let selectedPresetValue = 'factory:default'; // Where the selector returns when a load is declined
@@ -198,6 +200,12 @@ async function loadKit() {
 async function launchEngine() {
   // Compile Wasm and launch worklet using assets loaded through Vite
   await audioNode.init('/pkg/metrorig_audio_bg.wasm', workletUrl);
+  sendPadVolume();
+}
+
+// The slider runs from 0 to 100, the engine from 0 to 1
+function sendPadVolume() {
+  audioNode.padVolume(Number(padVolumeSlider.value) / 100);
 }
 
 // Runs once; a failure clears it, so the next use retries
@@ -1257,6 +1265,12 @@ padStop.onclick = () => {
   settleChord();
 };
 
+padVolumeSlider.oninput = () => {
+  padVolumeValue.textContent = padVolumeSlider.value;
+  localStorage.setItem('metrorig_pad_volume', padVolumeSlider.value);
+  sendPadVolume();
+};
+
 function chordHeader(text: string, scope: 'col' | 'row') {
   const header = document.createElement('th');
   header.setAttribute('scope', scope);
@@ -1300,5 +1314,7 @@ drawGroovesScreen();
 drawFigurePalette();
 drawGrid();
 drawChordGrid();
+padVolumeSlider.value = String(parseVolume(localStorage.getItem('metrorig_pad_volume')));
+padVolumeValue.textContent = padVolumeSlider.value;
 renderImprov();
 if (state.activeViewMode === 'improv') openImprov();
