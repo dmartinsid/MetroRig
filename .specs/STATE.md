@@ -185,3 +185,11 @@
 - **Scope**: chord-library, the `Improv` screen
 - **Date**: 2026-11-02
 - **Status**: active (AD-023)
+
+### AD-024
+- **Decision**: Measured past the reverb, note 71 may sit 7 cents from equal temperament, where CHD-07 allows 5. CHD-37 records it, and CHD-07 keeps its approved text.
+- **Reason**: The note leaves the voice within 1 cent, and the reverb's combs lean the reading on its harmonics, to -6.0 cents in Analog. TIM-10 keeps that reverb. The user was told before answering at T7, and answered "aprovado". That word names no bound, so the record cites the message that preceded it.
+- **Trade-off**: One note carries a wider bound on one measure.
+- **Scope**: chord-library, CHD-07 and CHD-37
+- **Date**: 2026-11-02
+- **Status**: active (AD-024)
