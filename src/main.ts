@@ -89,6 +89,8 @@ const btnSaveGroove = document.getElementById('btn-save-groove') as HTMLButtonEl
 const padStatus = document.getElementById('pad-status') as HTMLElement;
 const padNotice = document.getElementById('pad-notice') as HTMLElement;
 const chordGrid = document.getElementById('chord-grid') as HTMLTableElement;
+const padStop = document.getElementById('pad-stop') as HTMLButtonElement;
+const improvDot = document.getElementById('improv-dot') as HTMLElement;
 
 let hasUnsavedEdits = false;
 let selectedPresetValue = 'factory:default'; // Where the selector returns when a load is declined
@@ -1246,7 +1248,14 @@ function renderImprov() {
     : 'No chord playing';
   padNotice.textContent = audioFailed ? 'Audio unavailable' : '';
   padNotice.hidden = !audioFailed;
+  padStop.disabled = !soundingChord;
+  improvDot.classList.toggle('lit', soundingChord !== null);
 }
+
+padStop.onclick = () => {
+  clickedChord = null;
+  settleChord();
+};
 
 function chordHeader(text: string, scope: 'col' | 'row') {
   const header = document.createElement('th');

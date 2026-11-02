@@ -265,26 +265,26 @@ Every ambiguity is resolved or recorded here.
 | PAD-22 | P1: A pad that sounds professional | Design | Implementing |
 | PAD-23 | P1: The pad and the metronome stay independent | Design | Implementing |
 | PAD-24 | P1: The pad and the metronome stay independent | Design | Implementing |
-| PAD-25 | P1: The pad and the metronome stay independent | Design | Pending |
-| PAD-26 | P1: The pad and the metronome stay independent | Design | Pending |
+| PAD-25 | P1: The pad and the metronome stay independent | Design | Implementing |
+| PAD-26 | P1: The pad and the metronome stay independent | Design | Implementing |
 | PAD-27 | P1: The pad and the metronome stay independent | Design | Implementing |
 | PAD-28 | P1: The pad and the metronome stay independent | Design | Implementing |
 | PAD-29 | P1: The pad and the metronome stay independent | Design | Implementing |
 | PAD-30 | P1: The Improv screen | Design | Implementing |
-| PAD-31 | P1: The Improv screen | Design | Pending |
-| PAD-32 | P1: The Improv screen | Design | Pending |
-| PAD-33 | P1: The Improv screen | Design | Pending |
+| PAD-31 | P1: The Improv screen | Design | Implementing |
+| PAD-32 | P1: The Improv screen | Design | Implementing |
+| PAD-33 | P1: The Improv screen | Design | Implementing |
 | PAD-34 | P1: The Improv screen | Design | Implementing |
-| PAD-35 | P1: The Improv screen | Design | Pending |
-| PAD-36 | P1: The Improv screen | Design | Pending |
-| PAD-40 | P1: The Improv screen | Design | Pending |
+| PAD-35 | P1: The Improv screen | Design | Implementing |
+| PAD-36 | P1: The Improv screen | Design | Implementing |
+| PAD-40 | P1: The Improv screen | Design | Implementing |
 | PAD-41 | P1: The Improv screen | Design | Pending |
 | PAD-37 | P1: Approval by ear | Design | Pending |
 | PAD-38 | P1: Approval by ear | Design | Pending |
 | PAD-42 | P2: Pad volume | Design | Implementing |
 | PAD-43 | P2: Pad volume | Design | Pending |
 | PAD-44 | P2: Pad volume | Design | Implementing |
-| PAD-45 | P2: Pad volume | Design | Pending |
+| PAD-45 | P2: Pad volume | Design | Implementing |
 | PAD-46 | P2: Loading and failure | Design | Pending |
 | PAD-47 | P2: Loading and failure | Design | Pending |
 | PAD-48 | P2: Loading and failure | Design | Implementing |
