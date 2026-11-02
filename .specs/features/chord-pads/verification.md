@@ -1,6 +1,6 @@
 # Chord Pads verification
 
-**Verdict**: PASS
+**Verdict**: PASS after fixes. Round 1 was FAIL with 4 findings, all closed below; C66 to C69 and the fixes had no second Verifier, as the process sets
 **Proofs**: `proofs.md` at the commit that closes the findings
 **Verifier**: independent sub-agent (author != verifier)
 
