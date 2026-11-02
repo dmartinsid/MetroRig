@@ -243,20 +243,20 @@ Every ambiguity is resolved or recorded here.
 | PAD-01 | P1: Hold a chord | Design | Implementing |
 | PAD-02 | P1: Hold a chord | Design | Implementing |
 | PAD-03 | P1: Hold a chord | Design | Implementing |
-| PAD-04 | P1: Hold a chord | Design | Pending |
+| PAD-04 | P1: Hold a chord | Design | Implementing |
 | PAD-05 | P1: Hold a chord | Design | Implementing |
 | PAD-06 | P1: Hold a chord | Design | Implementing |
 | PAD-07 | P1: Hold a chord | Design | Implementing |
-| PAD-08 | P1: Hold a chord | Design | Pending |
+| PAD-08 | P1: Hold a chord | Design | Implementing |
 | PAD-09 | P1: Hold a chord | Design | Implementing |
-| PAD-10 | P1: Hold a chord | Design | Pending |
-| PAD-11 | P1: Hold a chord | Design | Pending |
-| PAD-12 | P1: Hold a chord | Design | Pending |
-| PAD-13 | P1: Hold a chord | Design | Pending |
-| PAD-14 | P1: Hold a chord | Design | Pending |
+| PAD-10 | P1: Hold a chord | Design | Implementing |
+| PAD-11 | P1: Hold a chord | Design | Implementing |
+| PAD-12 | P1: Hold a chord | Design | Implementing |
+| PAD-13 | P1: Hold a chord | Design | Implementing |
+| PAD-14 | P1: Hold a chord | Design | Implementing |
 | PAD-15 | P1: Hold a chord | Design | Pending |
 | PAD-16 | P1: Hold a chord | Design | Pending |
-| PAD-59 | P1: Hold a chord | Design | Pending |
+| PAD-59 | P1: Hold a chord | Design | Implementing |
 | PAD-17 | P1: A pad that sounds professional | Design | Implementing |
 | PAD-18 | P1: A pad that sounds professional | Design | Implementing |
 | PAD-19 | P1: A pad that sounds professional | Design | Pending |
@@ -295,7 +295,7 @@ Every ambiguity is resolved or recorded here.
 | PAD-53 | P2: Loading and failure | Design | Pending |
 | PAD-54 | P3: Credit and documentation | Design | Pending |
 | PAD-55 | P3: Credit and documentation | Design | Pending |
-| PAD-39 | Edge Cases | Design | Pending |
+| PAD-39 | Edge Cases | Design | Implementing |
 | PAD-56 | Edge Cases | Design | Pending |
 | PAD-57 | Edge Cases | Design | Pending |
 | PAD-58 | Edge Cases | Design | Pending |
