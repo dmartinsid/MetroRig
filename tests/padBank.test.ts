@@ -2,11 +2,12 @@ import { createHash } from 'crypto';
 import { describe, it, expect } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
-import { CHORD_TYPES, PAD_BANK, PAD_TIMBRES, ROOTS, chordMidi } from '../src/chords';
+import { CHORD_TYPES, PAD_BANK, PAD_TIMBRES, ROOTS, chordMidi, timbreNotes } from '../src/chords';
 
 const padsDir = path.resolve(__dirname, '../public/pads');
 const licensePath = path.resolve(__dirname, '../public/kit/LICENSE.md');
 const readmePath = path.resolve(__dirname, '../README.md');
+const builderPath = path.resolve(__dirname, '../scripts/build_orchestra_bank.py');
 
 // The files as FreePats ships them: MIDI key, name in the repository, SHA-256 and loop points
 const NEW_AGE: [number, string, string, number, number][] = [
@@ -88,6 +89,63 @@ describe('Pad bank', () => {
 
 describe('Timbre banks', () => {
   const listed = PAD_TIMBRES.flatMap(timbre => timbre.files.map(file => file.url));
+  const orchestra = PAD_TIMBRES[PAD_TIMBRES.findIndex(timbre => timbre.name === 'Orchestra')].files;
+
+  // The file a note reads, as the engine picks it: the nearest key, and on a tie the higher one
+  const nearestKey = (note: number) => orchestra.map(file => file.key)
+    .reduce((best, key) => {
+      const [distance, bestDistance] = [Math.abs(key - note), Math.abs(best - note)];
+      return distance < bestDistance || (distance === bestDistance && key > best) ? key : best;
+    });
+
+  // The sections each key of the builder's table mixes
+  function sectionsOfKeys() {
+    const table = fs.readFileSync(builderPath, 'utf8').match(/^BANK = \{\n([\s\S]*?)^\}/m)![1];
+    return new Map([...table.matchAll(/^\s+(\d+): (.*)$/gm)].map(([, key, row]) =>
+      [Number(key), row.match(/\b(CELLO|VIOLA|VIOLIN|CONTRABASS)\b/g)!] as [number, string[]]));
+  }
+
+  it('tim_13 orchestra sections', () => {
+    const keys = [23, 27, 31, 35, 39, 43, 47, 51, 55, 59, 63, 67, 71];
+    expect(orchestra.map(file => file.key)).toEqual(keys);
+
+    const sections = sectionsOfKeys();
+    expect([...sections.keys()]).toEqual(keys);
+    for (const key of [23, 27, 31]) expect(sections.get(key)).toEqual(['CONTRABASS']);
+    for (const key of [35, 39, 43]) expect(sections.get(key)).toEqual(['CELLO', 'CONTRABASS']);
+    expect(sections.get(47)).toEqual(['CELLO']);
+    for (const key of [51, 55]) expect(sections.get(key)).toEqual(['VIOLA']);
+    for (const key of [59, 63, 67, 71]) expect(sections.get(key)).toEqual(['VIOLIN']);
+
+    // Every note of every chord, from low to high: the sections never go back down, and no note reads far from its key
+    const order = ['CONTRABASS', 'CELLO', 'VIOLA', 'VIOLIN'];
+    const notes = [...new Set(ROOTS.flatMap((_, root) => CHORD_TYPES.flatMap((_, type) =>
+      timbreNotes(root, type, PAD_TIMBRES.findIndex(timbre => timbre.name === 'Orchestra')))))].sort((a, b) => a - b);
+    expect(notes[0]).toBe(21);
+    expect(notes[notes.length - 1]).toBe(70);
+    const highestOf = (note: number) => Math.max(...sections.get(nearestKey(note))!.map(name => order.indexOf(name)));
+    notes.slice(1).forEach((note, index) => {
+      expect(highestOf(note)).toBeGreaterThanOrEqual(highestOf(notes[index]));
+      expect(Math.abs(nearestKey(note) - note)).toBeLessThanOrEqual(2);
+    });
+    // The chord itself sits on cello, viola and violin, and the bass an octave down adds the contrabass
+    expect(sections.get(nearestKey(45))).toEqual(['CELLO']);
+    expect(sections.get(nearestKey(52))).toEqual(['VIOLA']);
+    expect(sections.get(nearestKey(70))).toEqual(['VIOLIN']);
+    expect(sections.get(nearestKey(36))).toEqual(['CELLO', 'CONTRABASS']);
+    expect(sections.get(nearestKey(24))).toEqual(['CONTRABASS']);
+  });
+
+  it('tim_24 orchestra format', () => {
+    expect(orchestra).toHaveLength(13);
+    for (const file of orchestra) {
+      const info = readStreamInfo(fs.readFileSync(path.join(padsDir, '..', file.url)));
+      expect(info).toEqual({ sampleRate: 44100, channels: 2, bits: 16, frames: 176401 });
+      expect(file.loopStart).toBe(0);
+      expect(file.loopEnd).toBe(4 * 44100);
+      expect(file.loopEnd).toBe(info.frames - 1);
+    }
+  });
 
   it('tim_36 size limit', () => {
     // The limit covers what ships, so every listed file has to be there

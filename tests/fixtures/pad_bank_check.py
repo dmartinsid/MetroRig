@@ -14,7 +14,7 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 ENTRY = re.compile(r"\{\s*key:\s*(\d+),\s*url:\s*'([^']+)',\s*loopStart:\s*(\d+),\s*loopEnd:\s*(\d+)\s*\}")
 TIMBRE = re.compile(r"\{\s*name:\s*'([^']+)',\s*files:\s*(\w+|\[\]),\s*bass:\s*(?:true|false)\s*\}")
-BANK_SIZES = {'Choir': 5, 'New Age': 8, 'Orchestra': 0, 'Sweep': 8, 'Analog': 0}
+BANK_SIZES = {'Choir': 5, 'New Age': 8, 'Orchestra': 13, 'Sweep': 8, 'Analog': 0}
 EXACT_BANKS = ('New Age',)
 TEN_MS = 441
 
