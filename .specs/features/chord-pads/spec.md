@@ -244,9 +244,9 @@ Every ambiguity is resolved or recorded here.
 | PAD-02 | P1: Hold a chord | Design | Implementing |
 | PAD-03 | P1: Hold a chord | Design | Implementing |
 | PAD-04 | P1: Hold a chord | Design | Pending |
-| PAD-05 | P1: Hold a chord | Design | Pending |
+| PAD-05 | P1: Hold a chord | Design | Implementing |
 | PAD-06 | P1: Hold a chord | Design | Implementing |
-| PAD-07 | P1: Hold a chord | Design | Pending |
+| PAD-07 | P1: Hold a chord | Design | Implementing |
 | PAD-08 | P1: Hold a chord | Design | Pending |
 | PAD-09 | P1: Hold a chord | Design | Implementing |
 | PAD-10 | P1: Hold a chord | Design | Pending |
@@ -258,7 +258,7 @@ Every ambiguity is resolved or recorded here.
 | PAD-16 | P1: Hold a chord | Design | Pending |
 | PAD-59 | P1: Hold a chord | Design | Pending |
 | PAD-17 | P1: A pad that sounds professional | Design | Pending |
-| PAD-18 | P1: A pad that sounds professional | Design | Pending |
+| PAD-18 | P1: A pad that sounds professional | Design | Implementing |
 | PAD-19 | P1: A pad that sounds professional | Design | Pending |
 | PAD-20 | P1: A pad that sounds professional | Design | Pending |
 | PAD-21 | P1: A pad that sounds professional | Design | Implementing |
@@ -287,11 +287,11 @@ Every ambiguity is resolved or recorded here.
 | PAD-45 | P2: Pad volume | Design | Pending |
 | PAD-46 | P2: Loading and failure | Design | Pending |
 | PAD-47 | P2: Loading and failure | Design | Pending |
-| PAD-48 | P2: Loading and failure | Design | Pending |
+| PAD-48 | P2: Loading and failure | Design | Implementing |
 | PAD-49 | P2: Loading and failure | Design | Pending |
 | PAD-50 | P2: Loading and failure | Design | Pending |
 | PAD-51 | P2: Loading and failure | Design | Pending |
-| PAD-52 | P2: Loading and failure | Design | Pending |
+| PAD-52 | P2: Loading and failure | Design | Implementing |
 | PAD-53 | P2: Loading and failure | Design | Pending |
 | PAD-54 | P3: Credit and documentation | Design | Pending |
 | PAD-55 | P3: Credit and documentation | Design | Pending |

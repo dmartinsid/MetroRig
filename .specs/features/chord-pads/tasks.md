@@ -160,8 +160,8 @@ T19 → T20
 
 **Done when**:
 
-- [ ] Pitch, endurance and synth-only tests pass
-- [ ] Gate passes
+- [x] Pitch, endurance and synth-only tests pass
+- [x] Gate passes
 
 **Tests**: unit
 **Gate**: rust
