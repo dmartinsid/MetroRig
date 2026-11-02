@@ -161,3 +161,11 @@
 - **Scope**: pad-timbres, engine
 - **Date**: 2026-11-02
 - **Status**: active (AD-020)
+
+### AD-021
+- **Decision**: The pad's output takes a fixed gain of 2.0, 6 dB, on every timbre, and the default volume may peak at -6 dBFS. The slider stays at 70 by default. This supersedes PAD-27's and TIM-20's -12 dBFS.
+- **Reason**: After hearing the leveled timbres, the user answered: "Sim, so o volume que to achando baixo comparado ao da bateria, se poderiamos aumentar mais eles todos". The pad held at about -31 dBFS RMS against drums that reach full scale, and the slider has only 3 dB above 70.
+- **Trade-off**: The output only clamps (AD-015), so a pad under a full-scale drum hit reaches the clamp more often.
+- **Scope**: pad-timbres, supersedes PAD-27 of chord-pads and the bound of TIM-20
+- **Date**: 2026-11-02
+- **Status**: active (AD-021)
