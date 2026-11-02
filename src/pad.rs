@@ -9,7 +9,7 @@ const SAWS: usize = 7;
 const FADE_SECONDS: f32 = 1.5;
 const EVICTION_SECONDS: f32 = 0.02;
 const VOLUME_SECONDS: f32 = 0.02;
-const OUTPUT_GAIN: f32 = 2.0; // AD-021: every timbre 6 dB up, set by ear against the drums. A power of 2 keeps each sample's bits
+const OUTPUT_GAIN: f32 = 2.5119; // AD-022: every timbre 8 dB up, set by ear against the drums
 const DEFAULT_VOLUME: f32 = 0.7;
 
 // The sound of demo 3
@@ -316,6 +316,7 @@ pub struct Pad {
     banks: [Vec<PadSample>; TIMBRES],
     volume: f32,
     volume_target: f32,
+    output_gain: f32,
     filter_left: [f32; 2],
     filter_right: [f32; 2],
     cutoff_phase: f32,
@@ -337,6 +338,7 @@ impl Pad {
             banks: std::array::from_fn(|_| Vec::new()),
             volume: DEFAULT_VOLUME,
             volume_target: DEFAULT_VOLUME,
+            output_gain: OUTPUT_GAIN,
             filter_left: [0.0; 2],
             filter_right: [0.0; 2],
             cutoff_phase: 0.0,
@@ -433,8 +435,8 @@ impl Pad {
             let (pad_left, pad_right) = (pad_left + past_left * REVERB_DRY, pad_right + past_right * REVERB_DRY);
             peak = peak.max(pad_left.abs()).max(pad_right.abs());
             self.volume += (self.volume_target - self.volume).clamp(-volume_step, volume_step);
-            *out_left += pad_left * self.volume * OUTPUT_GAIN;
-            *out_right += pad_right * self.volume * OUTPUT_GAIN;
+            *out_left += pad_left * self.volume * self.output_gain;
+            *out_right += pad_right * self.volume * self.output_gain;
         }
         if peak < SILENCE && self.slots.iter().all(|slot| slot.count == 0) {
             self.silent = true;
@@ -574,7 +576,7 @@ mod tests {
     const ANALOG: u8 = 4;
     // `new_age_hash`, taken on the engine of 65319e9, before any timbre reached it
     const NEW_AGE_BEFORE_TIMBRES: u64 = 0x6dc4d4d93e118ee4;
-    const PEAK_LIMIT: f32 = -6.0; // dBFS at the default volume, as AD-021 sets
+    const PEAK_LIMIT: f32 = -4.0; // dBFS at the default volume, as AD-022 sets
 
     // Per thread, so tests running beside this one cannot disturb its count
     thread_local! {
@@ -1616,6 +1618,7 @@ mod tests {
     // values any change a listener could hear still moves many samples across it
     fn new_age_hash(play: impl Fn(&mut Pad, &[u8]), load: impl Fn(&mut Pad)) -> u64 {
         let mut pad = Pad::new(RATE);
+        pad.output_gain = 1.0; // The chord-pads output, before the gain AD-022 adds
         load(&mut pad);
         play(&mut pad, &C7M9);
         let (mut left, mut right) = render(&mut pad, 5.0);
@@ -1632,14 +1635,27 @@ mod tests {
         hold(&mut pad, 2.5);
         pad.stop();
         hold(&mut pad, 3.0);
-        // The chord-pads output, before the gain AD-021 adds
-        left.iter().chain(&right).flat_map(|value| ((value / OUTPUT_GAIN * 1024.0).round() as i32).to_le_bytes())
+        left.iter().chain(&right).flat_map(|value| ((value * 1024.0).round() as i32).to_le_bytes())
             .fold(0xcbf29ce484222325u64, |hash, byte| (hash ^ byte as u64).wrapping_mul(0x100000001b3))
     }
 
     #[test]
     fn tim_10_new_age_is_unchanged() {
         assert_eq!(new_age_hash(|pad, notes| pad.play(notes, NEW_AGE), load_bank), NEW_AGE_BEFORE_TIMBRES);
+    }
+
+    #[test]
+    fn ad_022_every_timbre_rises_8_db() {
+        for timbre in 0..TIMBRES as u8 {
+            let held = |gain: f32| {
+                let mut pad = Pad::new(RATE);
+                pad.output_gain = gain;
+                pad.play(&C7M9, timbre);
+                render(&mut pad, 4.0).0
+            };
+            let (raised, plain) = (db(rms(&held(OUTPUT_GAIN))), db(rms(&held(1.0))));
+            assert!((raised - plain - 8.0).abs() < 0.01, "timbre {timbre} rises {} dB", raised - plain);
+        }
     }
 
     // One note in each timbre, each marked by a tone in its own file
