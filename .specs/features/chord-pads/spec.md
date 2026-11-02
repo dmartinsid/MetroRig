@@ -243,67 +243,67 @@ Every ambiguity is resolved or recorded here.
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| PAD-01 | P1: Hold a chord | Design | Implementing |
-| PAD-02 | P1: Hold a chord | Design | Implementing |
-| PAD-03 | P1: Hold a chord | Design | Implementing |
-| PAD-04 | P1: Hold a chord | Design | Implementing |
-| PAD-05 | P1: Hold a chord | Design | Implementing |
-| PAD-06 | P1: Hold a chord | Design | Implementing |
-| PAD-07 | P1: Hold a chord | Design | Implementing |
-| PAD-08 | P1: Hold a chord | Design | Implementing |
-| PAD-09 | P1: Hold a chord | Design | Implementing |
-| PAD-10 | P1: Hold a chord | Design | Implementing |
-| PAD-11 | P1: Hold a chord | Design | Implementing |
-| PAD-12 | P1: Hold a chord | Design | Implementing |
-| PAD-13 | P1: Hold a chord | Design | Implementing |
-| PAD-14 | P1: Hold a chord | Design | Implementing |
-| PAD-15 | P1: Hold a chord | Design | Implementing |
-| PAD-16 | P1: Hold a chord | Design | Implementing |
-| PAD-59 | P1: Hold a chord | Design | Implementing |
-| PAD-17 | P1: A pad that sounds professional | Design | Implementing |
-| PAD-18 | P1: A pad that sounds professional | Design | Implementing |
-| PAD-19 | P1: A pad that sounds professional | Design | Implementing |
-| PAD-20 | P1: A pad that sounds professional | Design | Implementing |
-| PAD-21 | P1: A pad that sounds professional | Design | Implementing |
-| PAD-22 | P1: A pad that sounds professional | Design | Implementing |
-| PAD-60 | P1: A pad that sounds professional | Design | Implementing |
-| PAD-61 | P1: A pad that sounds professional | Design | Implementing |
-| PAD-23 | P1: The pad and the metronome stay independent | Design | Implementing |
-| PAD-24 | P1: The pad and the metronome stay independent | Design | Implementing |
-| PAD-25 | P1: The pad and the metronome stay independent | Design | Implementing |
-| PAD-26 | P1: The pad and the metronome stay independent | Design | Implementing |
-| PAD-27 | P1: The pad and the metronome stay independent | Design | Implementing |
-| PAD-28 | P1: The pad and the metronome stay independent | Design | Implementing |
-| PAD-29 | P1: The pad and the metronome stay independent | Design | Implementing |
-| PAD-30 | P1: The Improv screen | Design | Implementing |
-| PAD-31 | P1: The Improv screen | Design | Implementing |
-| PAD-32 | P1: The Improv screen | Design | Implementing |
-| PAD-33 | P1: The Improv screen | Design | Implementing |
-| PAD-34 | P1: The Improv screen | Design | Implementing |
-| PAD-35 | P1: The Improv screen | Design | Implementing |
-| PAD-36 | P1: The Improv screen | Design | Implementing |
-| PAD-40 | P1: The Improv screen | Design | Implementing |
-| PAD-41 | P1: The Improv screen | Design | Implementing |
-| PAD-37 | P1: Approval by ear | Design | Pending |
-| PAD-38 | P1: Approval by ear | Design | Pending |
-| PAD-42 | P2: Pad volume | Design | Implementing |
-| PAD-43 | P2: Pad volume | Design | Implementing |
-| PAD-44 | P2: Pad volume | Design | Implementing |
-| PAD-45 | P2: Pad volume | Design | Implementing |
-| PAD-46 | P2: Loading and failure | Design | Implementing |
-| PAD-47 | P2: Loading and failure | Design | Implementing |
-| PAD-48 | P2: Loading and failure | Design | Implementing |
-| PAD-49 | P2: Loading and failure | Design | Implementing |
-| PAD-50 | P2: Loading and failure | Design | Implementing |
-| PAD-51 | P2: Loading and failure | Design | Implementing |
-| PAD-52 | P2: Loading and failure | Design | Implementing |
-| PAD-53 | P2: Loading and failure | Design | Implementing |
-| PAD-54 | P3: Credit and documentation | Tasks | Implementing |
-| PAD-55 | P3: Credit and documentation | Tasks | Implementing |
-| PAD-39 | Edge Cases | Design | Implementing |
-| PAD-56 | Edge Cases | Design | Implementing |
-| PAD-57 | Edge Cases | Design | Implementing |
-| PAD-58 | Edge Cases | Design | Implementing |
+| PAD-01 | P1: Hold a chord | Tasks | Verified |
+| PAD-02 | P1: Hold a chord | Tasks | Verified |
+| PAD-03 | P1: Hold a chord | Tasks | Verified |
+| PAD-04 | P1: Hold a chord | Tasks | Verified |
+| PAD-05 | P1: Hold a chord | Tasks | Verified |
+| PAD-06 | P1: Hold a chord | Tasks | Verified |
+| PAD-07 | P1: Hold a chord | Tasks | Verified |
+| PAD-08 | P1: Hold a chord | Tasks | Verified |
+| PAD-09 | P1: Hold a chord | Tasks | Verified |
+| PAD-10 | P1: Hold a chord | Tasks | Verified |
+| PAD-11 | P1: Hold a chord | Tasks | Verified |
+| PAD-12 | P1: Hold a chord | Tasks | Verified |
+| PAD-13 | P1: Hold a chord | Tasks | Verified |
+| PAD-14 | P1: Hold a chord | Tasks | Verified |
+| PAD-15 | P1: Hold a chord | Tasks | Verified |
+| PAD-16 | P1: Hold a chord | Tasks | Verified |
+| PAD-59 | P1: Hold a chord | Tasks | Verified |
+| PAD-17 | P1: A pad that sounds professional | Tasks | Verified |
+| PAD-18 | P1: A pad that sounds professional | Tasks | Verified |
+| PAD-19 | P1: A pad that sounds professional | Tasks | Verified |
+| PAD-20 | P1: A pad that sounds professional | Tasks | Verified |
+| PAD-21 | P1: A pad that sounds professional | Tasks | Verified |
+| PAD-22 | P1: A pad that sounds professional | Tasks | Verified |
+| PAD-60 | P1: A pad that sounds professional | Tasks | Verified |
+| PAD-61 | P1: A pad that sounds professional | Tasks | Verified |
+| PAD-23 | P1: The pad and the metronome stay independent | Tasks | Verified |
+| PAD-24 | P1: The pad and the metronome stay independent | Tasks | Verified |
+| PAD-25 | P1: The pad and the metronome stay independent | Tasks | Verified |
+| PAD-26 | P1: The pad and the metronome stay independent | Tasks | Verified |
+| PAD-27 | P1: The pad and the metronome stay independent | Tasks | Verified |
+| PAD-28 | P1: The pad and the metronome stay independent | Tasks | Verified |
+| PAD-29 | P1: The pad and the metronome stay independent | Tasks | Verified |
+| PAD-30 | P1: The Improv screen | Tasks | Verified |
+| PAD-31 | P1: The Improv screen | Tasks | Verified |
+| PAD-32 | P1: The Improv screen | Tasks | Verified |
+| PAD-33 | P1: The Improv screen | Tasks | Verified |
+| PAD-34 | P1: The Improv screen | Tasks | Verified |
+| PAD-35 | P1: The Improv screen | Tasks | Verified |
+| PAD-36 | P1: The Improv screen | Tasks | Verified |
+| PAD-40 | P1: The Improv screen | Tasks | Verified |
+| PAD-41 | P1: The Improv screen | Tasks | Verified |
+| PAD-37 | P1: Approval by ear | Tasks | Verified |
+| PAD-38 | P1: Approval by ear | Tasks | Verified |
+| PAD-42 | P2: Pad volume | Tasks | Verified |
+| PAD-43 | P2: Pad volume | Tasks | Verified |
+| PAD-44 | P2: Pad volume | Tasks | Verified |
+| PAD-45 | P2: Pad volume | Tasks | Verified |
+| PAD-46 | P2: Loading and failure | Tasks | Verified |
+| PAD-47 | P2: Loading and failure | Tasks | Verified |
+| PAD-48 | P2: Loading and failure | Tasks | Verified |
+| PAD-49 | P2: Loading and failure | Tasks | Verified |
+| PAD-50 | P2: Loading and failure | Tasks | Verified |
+| PAD-51 | P2: Loading and failure | Tasks | Verified |
+| PAD-52 | P2: Loading and failure | Tasks | Verified |
+| PAD-53 | P2: Loading and failure | Tasks | Verified |
+| PAD-54 | P3: Credit and documentation | Tasks | Verified |
+| PAD-55 | P3: Credit and documentation | Tasks | Verified |
+| PAD-39 | Edge Cases | Tasks | Verified |
+| PAD-56 | Edge Cases | Tasks | Verified |
+| PAD-57 | Edge Cases | Tasks | Verified |
+| PAD-58 | Edge Cases | Tasks | Verified |
 
 **Coverage:** 61 total. PAD-60 and PAD-61 came from the Verifier's findings.
 
