@@ -704,7 +704,7 @@ mod tests {
                 let audio = output.stdout.chunks_exact(4).map(|bytes| f32::from_le_bytes(bytes.try_into().unwrap())).collect();
                 BankFile { key: key[0] as u8, audio, loop_start: loops[0], loop_end: loops[1] }
             }).collect();
-            assert_eq!(files.len(), 8);
+            assert_eq!(files.len(), 9);
             files
         })
     }
@@ -748,7 +748,7 @@ mod tests {
                     TimbreFile { key: key[0] as u8, left: channel(0), right: channel(1), loop_start: loops[0], loop_end: loops[1] }
                 }).collect()
             });
-            let counts = [5, 8, 13, 8];
+            let counts = [5, 9, 14, 9];
             for (bank, count) in banks.iter().zip(counts) {
                 let bank: &Vec<TimbreFile> = bank;
                 assert_eq!(bank.len(), count);

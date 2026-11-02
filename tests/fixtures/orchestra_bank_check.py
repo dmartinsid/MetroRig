@@ -27,7 +27,7 @@ BUILDER = ROOT / 'scripts/build_orchestra_bank.py'
 DEFAULT_VSCO = pathlib.Path.home() / '.cache/metrorig/vsco-2-ce'
 ENTRY = re.compile(r"\{\s*key:\s*(\d+),\s*url:\s*'([^']+)',\s*loopStart:\s*(\d+),\s*loopEnd:\s*(\d+)\s*\}")
 ORCHESTRA = re.compile(r"\{\s*name:\s*'Orchestra',\s*files:\s*(\w+),")
-BANK_SIZE = 13
+BANK_SIZE = 14
 SAMPLE_RATE = 44100
 
 PITCH_LIMIT_CENTS = 10

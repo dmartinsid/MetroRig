@@ -39,6 +39,7 @@ const NEW_AGE_FILES: PadFile[] = [
   { key: 64, url: '/pads/new-age/E4.flac', loopStart: 115725, loopEnd: 303615 },
   { key: 68, url: '/pads/new-age/Gs4.flac', loopStart: 103656, loopEnd: 257543 },
   { key: 72, url: '/pads/new-age/C5.flac', loopStart: 104269, loopEnd: 265523 },
+  { key: 76, url: '/pads/new-age/E5.flac', loopStart: 106254, loopEnd: 252287 },
 ];
 
 // FreePats Synth Pad Choir: stereo 44.1 kHz FLAC, `F#` written `Fs`, loop points as the New Age bank has them
@@ -60,6 +61,7 @@ const SWEEP_FILES: PadFile[] = [
   { key: 64, url: '/pads/sweep/E4.flac', loopStart: 33791, loopEnd: 346623 },
   { key: 68, url: '/pads/sweep/Gs4.flac', loopStart: 31207, loopEnd: 309247 },
   { key: 72, url: '/pads/sweep/C5.flac', loopStart: 17382, loopEnd: 302079 },
+  { key: 76, url: '/pads/sweep/E5.flac', loopStart: 46591, loopEnd: 329727 },
 ];
 
 // VSCO 2 string sections, built by scripts/build_orchestra_bank.py: stereo 44.1 kHz FLAC with a 4 s loop
@@ -77,6 +79,7 @@ const ORCHESTRA_FILES: PadFile[] = [
   { key: 63, url: '/pads/orchestra/Ds4.flac', loopStart: 0, loopEnd: 176400 },
   { key: 67, url: '/pads/orchestra/G4.flac', loopStart: 0, loopEnd: 176400 },
   { key: 71, url: '/pads/orchestra/B4.flac', loopStart: 0, loopEnd: 176400 },
+  { key: 75, url: '/pads/orchestra/Ds5.flac', loopStart: 0, loopEnd: 176400 },
 ];
 
 // In select order, and the index is the timbre's id in the engine. Storage keeps the name, so a reorder saves nothing wrong
