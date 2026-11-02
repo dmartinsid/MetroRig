@@ -261,4 +261,100 @@ describe('Worklet', () => {
     const ticks = processor.port.postMessage.mock.calls.filter(([msg]) => msg.type === 'TICK');
     expect(ticks.map(([msg]) => msg.currentBpm)).toEqual([120, 120]);
   });
+
+  function padEngine() {
+    const engine = fakeEngine();
+    const pad = {
+      engine_pad_play: vi.fn(),
+      engine_pad_stop: vi.fn(),
+      engine_pad_set_volume: vi.fn(),
+      engine_pad_load: vi.fn(),
+    };
+    Object.assign(engine.exports, pad);
+    return { engine, pad };
+  }
+
+  // What engine_pad_load finds in the heap at its pointers
+  function hearLoad(engine: ReturnType<typeof fakeEngine>, pad: ReturnType<typeof padEngine>['pad']) {
+    const heard = { left: [] as number[], right: [] as number[] };
+    pad.engine_pad_load.mockImplementation((_ptr: number, _key: number, _start: number, _end: number, l: number, r: number, length: number) => {
+      const heap = new RealFloat32Array(engine.exports.memory.buffer);
+      heard.left = Array.from(heap.subarray(l / 4, l / 4 + length));
+      heard.right = Array.from(heap.subarray(r / 4, r / 4 + length));
+    });
+    return heard;
+  }
+
+  it('pad_23 sends PAD_PLAY to the engine, filling the unused notes', async () => {
+    const { engine, pad } = padEngine();
+    const { send } = await startProcessor(engine);
+
+    send({ type: 'PAD_PLAY', notes: [48, 52, 55] });
+    expect(pad.engine_pad_play).toHaveBeenLastCalledWith(1, 48, 52, 55, 0, 0, 3);
+
+    send({ type: 'PAD_PLAY', notes: [48, 52, 55, 58] });
+    expect(pad.engine_pad_play).toHaveBeenLastCalledWith(1, 48, 52, 55, 58, 0, 4);
+
+    send({ type: 'PAD_PLAY', notes: [48, 52, 55, 59, 62] });
+    expect(pad.engine_pad_play).toHaveBeenLastCalledWith(1, 48, 52, 55, 59, 62, 5);
+    expect(pad.engine_pad_play).toHaveBeenCalledTimes(3);
+    expect(engine.exports.engine_start).not.toHaveBeenCalled();
+  });
+
+  it('pad_09 sends PAD_STOP to the engine', async () => {
+    const { engine, pad } = padEngine();
+    const { send } = await startProcessor(engine);
+
+    send({ type: 'PAD_STOP' });
+
+    expect(pad.engine_pad_stop).toHaveBeenCalledOnce();
+    expect(pad.engine_pad_stop).toHaveBeenCalledWith(1);
+  });
+
+  it('pad_42 sends PAD_VOLUME to the engine', async () => {
+    const { engine, pad } = padEngine();
+    const { send } = await startProcessor(engine);
+
+    send({ type: 'PAD_VOLUME', volume: 0.3 });
+
+    expect(pad.engine_pad_set_volume).toHaveBeenCalledOnce();
+    expect(pad.engine_pad_set_volume).toHaveBeenCalledWith(1, 0.3);
+  });
+
+  it('pad_17 sends PAD_LOAD to the engine with its samples in the heap', async () => {
+    const { engine, pad } = padEngine();
+    const heard = hearLoad(engine, pad);
+    const { send } = await startProcessor(engine);
+
+    send({ type: 'PAD_LOAD', key: 56, loopStart: 1, loopEnd: 2, leftChannel: new RealFloat32Array([0.5, 0.25, -0.25]), rightChannel: new RealFloat32Array([-0.5, -0.25, 0.25]) });
+
+    expect(pad.engine_pad_load).toHaveBeenCalledWith(1, 56, 1, 2, expect.any(Number), expect.any(Number), 3);
+    expect(heard.left).toEqual([0.5, 0.25, -0.25]);
+    expect(heard.right).toEqual([-0.5, -0.25, 0.25]);
+    expect(engine.exports.engine_free_buf).toHaveBeenCalledTimes(2);
+  });
+
+  it('pad_17 keeps rendering when a PAD_LOAD grows the WASM memory', async () => {
+    const { engine, pad } = padEngine();
+    const heard = hearLoad(engine, pad);
+    const { send, output, runBlock } = await startProcessor(engine);
+    runBlock();
+
+    const alloc = engine.exports.engine_alloc;
+    engine.exports.engine_alloc = (size: number) => {
+      engine.exports.memory.grow(1);
+      return alloc(size);
+    };
+    const frames = 20000; // Two channels of this fill more than the 2 pages the memory starts with
+    const left = new RealFloat32Array(frames).fill(0.5);
+    const right = new RealFloat32Array(frames).fill(-0.5);
+    send({ type: 'PAD_LOAD', key: 48, loopStart: 0, loopEnd: frames - 1, leftChannel: left, rightChannel: right });
+
+    expect(heard.left).toEqual(Array.from(left));
+    expect(heard.right).toEqual(Array.from(right));
+
+    runBlock();
+    expect(output[0]).toEqual(new RealFloat32Array(BLOCK).fill(2));
+    expect(output[1]).toEqual(new RealFloat32Array(BLOCK).fill(-2));
+  });
 });
