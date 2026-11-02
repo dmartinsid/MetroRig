@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { CHORD_FAMILIES, CHORD_TYPES, DEFAULT_TIMBRE, PAD_TIMBRES, ROOTS, chordMidi, chordName, chordNotes, nextChord, parseTimbre, parseVolume, timbreNotes } from '../src/chords';
+import { CHORD_FAMILIES, CHORD_TYPES, chordOfRoot, chordOfType, DEFAULT_TIMBRE, PAD_TIMBRES, ROOTS, chordMidi, chordName, chordNotes, nextChord, parseTimbre, parseVolume, timbreNotes } from '../src/chords';
 
 // The roots and types as the spec lists them, in PAD-01 and PAD-02
 const SPEC_ROOTS = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
@@ -125,6 +125,35 @@ describe('Chord library', () => {
     expect(notesOf('Ab', 'm')).toBe('Ab Cb Eb');
     expect(notesOf('Eb', 'dim')).toBe('Eb Gb A');
     expect(notesOf('C', '7M(9)')).toBe('C E G B D');
+  });
+});
+
+describe('Chord clicks', () => {
+  const Am7 = { root: ROOTS.indexOf('A'), type: typeIndex('m7') };
+  const D = ROOTS.indexOf('D');
+  const m9 = typeIndex('m9');
+
+  it('chd_19 a root keeps the selected type', () => {
+    expect(chordOfRoot(Am7, D)).toEqual({ root: D, type: Am7.type });
+    expect(nextChord(null, chordOfRoot(Am7, D))).toEqual({ root: D, type: Am7.type });
+  });
+
+  it('chd_20 a type keeps the selected root', () => {
+    expect(chordOfType(Am7, m9)).toEqual({ root: Am7.root, type: m9 });
+    expect(nextChord(null, chordOfType(Am7, m9))).toEqual({ root: Am7.root, type: m9 });
+  });
+
+  it('chd_21 another root changes the sounding chord', () => {
+    expect(nextChord(Am7, chordOfRoot(Am7, D))).toEqual({ root: D, type: Am7.type });
+  });
+
+  it('chd_22 another type changes the sounding chord', () => {
+    expect(nextChord(Am7, chordOfType(Am7, m9))).toEqual({ root: Am7.root, type: m9 });
+  });
+
+  it('chd_23 the sounding root or type stops it', () => {
+    expect(nextChord(Am7, chordOfRoot(Am7, Am7.root))).toBeNull();
+    expect(nextChord(Am7, chordOfType(Am7, Am7.type))).toBeNull();
   });
 });
 

@@ -147,6 +147,15 @@ export function nextChord(current: ChordId | null, clicked: ChordId): ChordId | 
   return current?.root === clicked.root && current.type === clicked.type ? null : clicked;
 }
 
+// A click on a root or type keeps the other half of the selected chord
+export function chordOfRoot(selected: ChordId, root: number): ChordId {
+  return { root, type: selected.type };
+}
+
+export function chordOfType(selected: ChordId, type: number): ChordId {
+  return { root: selected.root, type };
+}
+
 export function parseVolume(stored: string | null): number {
   const volume = stored?.trim() ? Number(stored) : NaN;
   return volume >= 0 && volume <= 100 ? volume : DEFAULT_VOLUME;
