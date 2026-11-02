@@ -9,6 +9,7 @@ const mockInit = vi.fn().mockResolvedValue(undefined);
 const mockLoadSample = vi.fn().mockResolvedValue(undefined);
 const mockLoadTake = vi.fn().mockResolvedValue(undefined);
 const mockSetClickMode = vi.fn();
+const mockPadLoad = vi.fn().mockResolvedValue(undefined);
 
 // Every message the page sends the audio node, in order
 const audioCalls: { method: string; args: any[] }[] = [];
@@ -38,6 +39,7 @@ vi.mock('./audio/MetronomeNode', () => {
       padPlay = recorded('padPlay');
       padStop = recorded('padStop');
       padVolume = recorded('padVolume');
+      padLoad = mockPadLoad;
       visualDelayMs = () => mockVisualDelay;
       sampleRate = () => 44100;
 
@@ -3198,5 +3200,168 @@ describe('Improv', () => {
       expect(calls('padVolume'), stored).toEqual([[0.7]]);
       localStorage.removeItem('metrorig_view_mode');
     }
+  });
+
+  const BANK_URLS = ['Gs2', 'C3', 'E3', 'Gs3', 'C4', 'E4', 'Gs4', 'C5'].map(note => `/pads/new-age/${note}.flac`);
+  const loadedUrls = () => mockPadLoad.mock.calls.map(([, url]) => url);
+  const failFiles = (urls: string[]) => mockPadLoad.mockImplementation((_key: number, url: string) =>
+    urls.includes(url) ? Promise.reject(new Error('404')) : Promise.resolve());
+
+  beforeEach(() => {
+    mockPadLoad.mockReset();
+    mockPadLoad.mockResolvedValue(undefined);
+  });
+
+  it('pad_46 loads on first open', async () => {
+    await openPage();
+    await openImprov();
+
+    expect(loadedUrls()).toEqual(BANK_URLS);
+    expect(mockPadLoad.mock.calls[0]).toEqual([44, '/pads/new-age/Gs2.flac', 164330, 388482]);
+    expect(mockPadLoad.mock.calls[7]).toEqual([72, '/pads/new-age/C5.flac', 104269, 265523]);
+    expect(notice()).toBeNull();
+    expect(calls('padPlay')).toEqual([]);
+    expect(mockLoadTake).not.toHaveBeenCalled();
+
+    byId<HTMLButtonElement>('nav-editor').click();
+    await openImprov();
+    expect(mockPadLoad).toHaveBeenCalledTimes(8); // Nothing failed, so nothing is fetched again
+  });
+
+  it('pad_46 each file awaits the last, and a chord does not wait for them', async () => {
+    const finish: (() => void)[] = [];
+    mockPadLoad.mockImplementation(() => new Promise<void>(resolve => finish.push(resolve)));
+    await openPage();
+    await openImprov();
+    expect(mockPadLoad).toHaveBeenCalledTimes(1);
+
+    await clickChord('C');
+    expect(shownChord()).toBe('C · C E G'); // The synth covers the load (PAD-48)
+
+    finish[0]();
+    await flush();
+    expect(mockPadLoad).toHaveBeenCalledTimes(2);
+
+    byId<HTMLButtonElement>('nav-editor').click();
+    await openImprov(); // A second visit during the load starts no second one
+    expect(mockPadLoad).toHaveBeenCalledTimes(2);
+
+    for (let index = 1; index < 8; index++) {
+      finish[index]();
+      await flush();
+    }
+    expect(loadedUrls()).toEqual(BANK_URLS);
+  });
+
+  it('pad_46 loads after the engine, and a failed engine loads on the next visit', async () => {
+    mockInit.mockRejectedValueOnce(new Error('no audio'));
+    await openPage();
+    await openImprov();
+    expect(mockPadLoad).not.toHaveBeenCalled();
+    expect(notice()).toBe('Audio unavailable');
+
+    byId<HTMLButtonElement>('nav-editor').click();
+    await openImprov();
+
+    expect(notice()).toBeNull();
+    expect(loadedUrls()).toEqual(BANK_URLS);
+  });
+
+  it('pad_47 loads nothing before', async () => {
+    await openPage();
+    for (const screen of ['stadium', 'grooves', 'editor']) {
+      byId<HTMLButtonElement>(`nav-${screen}`).click();
+      await flush();
+    }
+    await clickPlay();
+    await clickPlay();
+
+    expect(mockLoadTake).toHaveBeenCalled(); // The kit loaded, the bank did not
+    expect(mockPadLoad).not.toHaveBeenCalled();
+  });
+
+  it('pad_50 logs a failed file', async () => {
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const failure = new Error('404');
+    mockPadLoad.mockImplementation((_key: number, url: string) =>
+      url === '/pads/new-age/C3.flac' ? Promise.reject(failure) : Promise.resolve());
+    await openPage();
+    await openImprov();
+
+    expect(logged).toHaveBeenCalledWith('Failed to load /pads/new-age/C3.flac:', failure);
+    expect(logged.mock.calls.filter(([message]) => String(message).startsWith('Failed to load'))).toHaveLength(1);
+    expect(loadedUrls()).toEqual(BANK_URLS); // The other 7 were still requested
+    logged.mockRestore();
+  });
+
+  it('pad_51 failure notices', async () => {
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    failFiles(BANK_URLS.slice(0, 7));
+    await openPage();
+    await openImprov();
+    expect(notice()).toBe('Some samples unavailable');
+
+    localStorage.removeItem('metrorig_view_mode');
+    failFiles(BANK_URLS.slice(7));
+    await openPage();
+    await openImprov();
+    expect(notice()).toBe('Some samples unavailable');
+
+    localStorage.removeItem('metrorig_view_mode');
+    failFiles(BANK_URLS);
+    await openPage();
+    expect(notice()).toBeNull(); // Not before a load failed
+    await openImprov();
+    expect(notice()).toBe('Samples unavailable · synth only');
+
+    await clickChord('C'); // The synth plays on
+    expect(shownChord()).toBe('C · C E G');
+    expect(notice()).toBe('Samples unavailable · synth only');
+    logged.mockRestore();
+  });
+
+  it('pad_53 retries failed files', async () => {
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => {});
+    failFiles(BANK_URLS);
+    await openPage();
+    await openImprov();
+    expect(notice()).toBe('Samples unavailable · synth only');
+
+    // Six come back: only the 8 that failed are asked for, and two still fail
+    mockPadLoad.mockClear();
+    failFiles(BANK_URLS.slice(2, 4));
+    byId<HTMLButtonElement>('nav-editor').click();
+    await openImprov();
+    expect(loadedUrls()).toEqual(BANK_URLS);
+    expect(notice()).toBe('Some samples unavailable');
+
+    mockPadLoad.mockClear();
+    failFiles([]);
+    byId<HTMLButtonElement>('nav-editor').click();
+    await openImprov();
+    expect(loadedUrls()).toEqual(BANK_URLS.slice(2, 4));
+    expect(notice()).toBeNull();
+
+    mockPadLoad.mockClear();
+    byId<HTMLButtonElement>('nav-editor').click();
+    await openImprov();
+    expect(mockPadLoad).not.toHaveBeenCalled();
+    logged.mockRestore();
+  });
+
+  it('pad_57 saved screen', async () => {
+    localStorage.setItem('metrorig_view_mode', 'improv');
+    await openPage();
+
+    expect(byId('improv-view').classList.contains('hidden')).toBe(false);
+    expect(mockInit).toHaveBeenCalledTimes(1);
+    expect(loadedUrls()).toEqual(BANK_URLS);
+    expect(calls('padPlay')).toEqual([]);
+    expect(calls('padStop')).toEqual([]);
+    expect(shownChord()).toBe('No chord playing');
+    expect(mockNode.resumeContext).not.toHaveBeenCalled();
+    expect(mockLoadTake).not.toHaveBeenCalled();
+    expect(mockLoadSample).not.toHaveBeenCalled();
   });
 });

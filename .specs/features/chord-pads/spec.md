@@ -285,14 +285,14 @@ Every ambiguity is resolved or recorded here.
 | PAD-43 | P2: Pad volume | Design | Implementing |
 | PAD-44 | P2: Pad volume | Design | Implementing |
 | PAD-45 | P2: Pad volume | Design | Implementing |
-| PAD-46 | P2: Loading and failure | Design | Pending |
-| PAD-47 | P2: Loading and failure | Design | Pending |
+| PAD-46 | P2: Loading and failure | Design | Implementing |
+| PAD-47 | P2: Loading and failure | Design | Implementing |
 | PAD-48 | P2: Loading and failure | Design | Implementing |
 | PAD-49 | P2: Loading and failure | Design | Implementing |
 | PAD-50 | P2: Loading and failure | Design | Implementing |
-| PAD-51 | P2: Loading and failure | Design | Pending |
+| PAD-51 | P2: Loading and failure | Design | Implementing |
 | PAD-52 | P2: Loading and failure | Design | Implementing |
-| PAD-53 | P2: Loading and failure | Design | Pending |
+| PAD-53 | P2: Loading and failure | Design | Implementing |
 | PAD-54 | P3: Credit and documentation | Design | Pending |
 | PAD-55 | P3: Credit and documentation | Design | Pending |
 | PAD-39 | Edge Cases | Design | Implementing |
