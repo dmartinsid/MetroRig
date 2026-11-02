@@ -536,8 +536,8 @@ Proof: run rust | test tests::tim_45_timbre_leaves_the_drums_alone ... ok
 
 ## Handoff
 
-**Settled mid-build:** none
-**Dispatched:** batch 1 (T1 to T8), from the planning commit
+**Settled mid-build:** Orchestra register follows measured pitch (TIM-17), an octave below the approved demo, which read VSCO names with C3 = 48; the user decides at T15. Orchestra keys 23 to 31 are contrabass alone. Samples past the chorus also skip the reverb, effects share 0.3 for Orchestra. The fallback synth fades on a cosine and voices notes from 45 up. `tim_16` uses dry fundamental and heard pitch at the output; the Verifier judges that metric.
+**Dispatched:** batch 1 (T1 to T8), from the planning commit, done at 74096ad; batch 2 (T9 to T13), from 74096ad
 **Walked:** none
 
 ---
