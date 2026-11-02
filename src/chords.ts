@@ -26,6 +26,19 @@ export const CHORD_TYPES: { suffix: string; semitones: number[]; degrees: number
 // Indexes into ROOTS and CHORD_TYPES
 export interface ChordId { root: number; type: number }
 
+// FreePats New Age: mono 44.1 kHz FLAC, `G#` written `Gs` because `#` breaks URLs. Loop points are in
+// frames, and loopEnd is inclusive: its sample equals loopStart's, so a wrap is seamless.
+export const PAD_BANK: { key: number; url: string; loopStart: number; loopEnd: number }[] = [
+  { key: 44, url: '/pads/new-age/Gs2.flac', loopStart: 164330, loopEnd: 388482 },
+  { key: 48, url: '/pads/new-age/C3.flac', loopStart: 165283, loopEnd: 395775 },
+  { key: 52, url: '/pads/new-age/E3.flac', loopStart: 147455, loopEnd: 374783 },
+  { key: 56, url: '/pads/new-age/Gs3.flac', loopStart: 145307, loopEnd: 345079 },
+  { key: 60, url: '/pads/new-age/C4.flac', loopStart: 112173, loopEnd: 330803 },
+  { key: 64, url: '/pads/new-age/E4.flac', loopStart: 115725, loopEnd: 303615 },
+  { key: 68, url: '/pads/new-age/Gs4.flac', loopStart: 103656, loopEnd: 257543 },
+  { key: 72, url: '/pads/new-age/C5.flac', loopStart: 104269, loopEnd: 265523 },
+];
+
 export function chordName(root: number, type: number): string {
   return ROOTS[root] + CHORD_TYPES[type].suffix;
 }
