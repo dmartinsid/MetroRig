@@ -754,7 +754,7 @@ pub extern "C" fn engine_pad_play(ptr: *mut Engine, n0: u8, n1: u8, n2: u8, n3: 
     let notes = [n0, n1, n2, n3, n4];
     let Some(notes) = notes.get(..count) else { return };
     let engine = unsafe { &mut *ptr };
-    engine.pad.play(notes);
+    engine.pad.play(notes, pad::NEW_AGE);
 }
 
 #[no_mangle]
@@ -785,7 +785,7 @@ pub extern "C" fn engine_pad_load(
     let engine = unsafe { &mut *ptr };
     let left_slice = unsafe { slice::from_raw_parts(left_ptr, length) };
     let right_slice = unsafe { slice::from_raw_parts(right_ptr, length) };
-    engine.pad.load(key, left_slice, right_slice, loop_start, loop_end);
+    engine.pad.load(pad::NEW_AGE, key, left_slice, right_slice, loop_start, loop_end);
 }
 
 #[no_mangle]

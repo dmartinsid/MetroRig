@@ -3,7 +3,8 @@
 use std::f32::consts::{FRAC_PI_2, TAU};
 
 const MAX_CHORDS: usize = 3;
-const MAX_NOTES: usize = 5;
+const MAX_NOTES: usize = 7; // 5 of a chord, and the 2 bass notes of a timbre that adds them
+const TIMBRES: usize = 5; // In the order of PAD_TIMBRES in src/chords.ts, whose index is the timbre's id
 const SAWS: usize = 7;
 const FADE_SECONDS: f32 = 1.5;
 const EVICTION_SECONDS: f32 = 0.02;
@@ -44,6 +45,7 @@ const SYNTH_GAIN: f32 = 0.0375;
 const SAMPLE_GAIN: f32 = 0.3375;
 
 const NO_FILE: usize = usize::MAX;
+pub const NEW_AGE: u8 = 1;
 
 // A pad sample keeps its onset, so `Sample` and its trimming are not reused: they would shift the loop points
 struct PadSample {
@@ -59,7 +61,7 @@ struct Voice {
     note: u8,
     phases: [f32; SAWS],
     steps: [f32; SAWS], // Phase per frame
-    file: usize, // Index into `samples`, or NO_FILE
+    file: usize, // Index into the bank of its slot's timbre, or NO_FILE
     next_file: usize, // A nearer file that came in while the voice sounds
     // SPEC_DEVIATION: on the voice, where the design keeps one sample gain per slot
     // Reason: files arrive one by one, and a held note must move to the nearer file without a click
@@ -118,6 +120,7 @@ impl Voice {
 
 #[derive(Clone, Copy)]
 struct Slot {
+    timbre: u8, // Part of what a slot holds, so the same notes in another timbre are another chord to fade to
     notes: [u8; MAX_NOTES],
     voices: [Voice; MAX_NOTES],
     count: usize, // 0 while the slot is free
@@ -131,6 +134,7 @@ struct Slot {
 
 impl Slot {
     const OFF: Slot = Slot {
+        timbre: 0,
         notes: [0; MAX_NOTES],
         voices: [Voice::OFF; MAX_NOTES],
         count: 0,
@@ -142,8 +146,8 @@ impl Slot {
         order: 0,
     };
 
-    fn holds(&self, notes: &[u8]) -> bool {
-        self.count > 0 && &self.notes[..self.count] == notes
+    fn holds(&self, notes: &[u8], timbre: u8) -> bool {
+        self.count > 0 && self.timbre == timbre && &self.notes[..self.count] == notes
     }
 
     // Equal power, because two chords are unrelated: a crossfade keeps its loudness
@@ -286,8 +290,9 @@ pub struct Pad {
     slots: [Slot; MAX_CHORDS],
     pending: [u8; MAX_NOTES], // The newest click, waiting for a free slot
     pending_count: usize,
+    pending_timbre: u8,
     order: u64,
-    samples: Vec<PadSample>,
+    banks: [Vec<PadSample>; TIMBRES],
     volume: f32,
     volume_target: f32,
     filter_left: [f32; 2],
@@ -306,8 +311,9 @@ impl Pad {
             slots: [Slot::OFF; MAX_CHORDS],
             pending: [0; MAX_NOTES],
             pending_count: 0,
+            pending_timbre: 0,
             order: 0,
-            samples: Vec::new(),
+            banks: std::array::from_fn(|_| Vec::new()),
             volume: DEFAULT_VOLUME,
             volume_target: DEFAULT_VOLUME,
             filter_left: [0.0; 2],
@@ -320,11 +326,14 @@ impl Pad {
         }
     }
 
-    pub fn play(&mut self, notes: &[u8]) {
+    pub fn play(&mut self, notes: &[u8], timbre: u8) {
+        if timbre as usize >= TIMBRES {
+            return;
+        }
         let notes = &notes[..notes.len().min(MAX_NOTES)];
         self.silent = false;
         self.pending_count = 0;
-        let returning = self.slots.iter().position(|slot| slot.holds(notes));
+        let returning = self.slots.iter().position(|slot| slot.holds(notes, timbre));
         for slot in &mut self.slots {
             slot.target = 0.0;
         }
@@ -336,10 +345,11 @@ impl Pad {
             slot.evicting = false;
             slot.order = self.order; // It stopped being the oldest, so the next eviction must not cut it
         } else if let Some(free) = self.slots.iter().position(|slot| slot.count == 0) {
-            self.start(free, notes);
+            self.start(free, notes, timbre);
         } else {
             self.pending[..notes.len()].copy_from_slice(notes);
             self.pending_count = notes.len();
+            self.pending_timbre = timbre;
             let oldest = (0..MAX_CHORDS).min_by_key(|&index| self.slots[index].order).unwrap_or(0);
             // From any level, so the slot is free 20 ms from now however far its fade has gone
             if !self.slots[oldest].evicting {
@@ -356,17 +366,20 @@ impl Pad {
         }
     }
 
-    pub fn load(&mut self, key: u8, left: &[f32], right: &[f32], loop_start: usize, loop_end: usize) {
+    pub fn load(&mut self, timbre: u8, key: u8, left: &[f32], right: &[f32], loop_start: usize, loop_end: usize) {
         let frames = left.len().min(right.len());
         let loop_end = loop_end.min(frames.saturating_sub(1));
-        if loop_start >= loop_end {
+        if loop_start >= loop_end || timbre as usize >= TIMBRES {
             return; // A rounded loop point must not reach the audio thread as an out-of-bounds read
         }
         let sample = PadSample { key, left: left[..frames].to_vec(), right: right[..frames].to_vec(), loop_start, loop_end };
-        self.samples.push(sample);
+        self.banks[timbre as usize].push(sample);
         for slot in 0..MAX_CHORDS {
+            if self.slots[slot].timbre != timbre {
+                continue;
+            }
             for voice in 0..self.slots[slot].count {
-                self.slots[slot].voices[voice].next_file = self.nearest_file(self.slots[slot].voices[voice].note);
+                self.slots[slot].voices[voice].next_file = self.nearest_file(timbre, self.slots[slot].voices[voice].note);
             }
         }
     }
@@ -405,12 +418,13 @@ impl Pad {
         }
     }
 
-    fn start(&mut self, index: usize, notes: &[u8]) {
+    fn start(&mut self, index: usize, notes: &[u8], timbre: u8) {
         for (voice, &note) in notes.iter().enumerate() {
-            self.slots[index].voices[voice] = self.new_voice(note);
+            self.slots[index].voices[voice] = self.new_voice(note, timbre);
         }
         self.order += 1;
         let slot = &mut self.slots[index];
+        slot.timbre = timbre;
         slot.notes[..notes.len()].copy_from_slice(notes);
         slot.count = notes.len();
         slot.gain = 1.0 / (notes.len().max(1) as f32).sqrt();
@@ -422,7 +436,7 @@ impl Pad {
     }
 
     // Saws start at random phases, or a chord would open with a thump
-    fn new_voice(&mut self, note: u8) -> Voice {
+    fn new_voice(&mut self, note: u8, timbre: u8) -> Voice {
         let mut voice = Voice { note, ..Voice::OFF };
         for saw in 0..SAWS {
             self.random = self.random.wrapping_mul(1664525).wrapping_add(1013904223);
@@ -430,15 +444,16 @@ impl Pad {
             let hz = 440.0 * 2f32.powf((note as f32 + DETUNE[saw] - 69.0) / 12.0);
             voice.steps[saw] = hz / self.sample_rate;
         }
-        voice.use_file(self.nearest_file(note), &self.samples);
+        voice.use_file(self.nearest_file(timbre, note), &self.banks[timbre as usize]);
         voice.file_gain = if voice.file == NO_FILE { 0.0 } else { 1.0 };
         voice
     }
 
     // A tie goes to the higher file, as FreePats maps its keys
-    fn nearest_file(&self, note: u8) -> usize {
-        (0..self.samples.len())
-            .min_by_key(|&file| (self.samples[file].key.abs_diff(note), u8::MAX - self.samples[file].key))
+    fn nearest_file(&self, timbre: u8, note: u8) -> usize {
+        let bank = &self.banks[timbre as usize];
+        (0..bank.len())
+            .min_by_key(|&file| (bank[file].key.abs_diff(note), u8::MAX - bank[file].key))
             .unwrap_or(NO_FILE)
     }
 
@@ -450,6 +465,7 @@ impl Pad {
         let file_fall = 1.0 / (EVICTION_SECONDS * self.sample_rate);
         for slot in &mut self.slots {
             let gain = slot.fade_gain();
+            let bank = &self.banks[slot.timbre as usize];
             for voice in &mut slot.voices[..slot.count] {
                 for saw in 0..SAWS {
                     let phase = voice.phases[saw] + voice.steps[saw];
@@ -460,8 +476,8 @@ impl Pad {
                     left += value * (1.0 - pan);
                     right += value * pan;
                 }
-                voice.approach_file(&self.samples, file_rise, file_fall);
-                if let Some(sample) = self.samples.get(voice.file) {
+                voice.approach_file(bank, file_rise, file_fall);
+                if let Some(sample) = bank.get(voice.file) {
                     let file_gain = if voice.file_gain < 1.0 { (voice.file_gain * FRAC_PI_2).sin() } else { 1.0 };
                     let (sample_left, sample_right) = voice.read(sample);
                     file_left += sample_left * gain * file_gain;
@@ -474,7 +490,7 @@ impl Pad {
             if let Some(free) = self.slots.iter().position(|slot| slot.count == 0) {
                 let (pending, count) = (self.pending, self.pending_count);
                 self.pending_count = 0;
-                self.start(free, &pending[..count]);
+                self.start(free, &pending[..count], self.pending_timbre);
             }
         }
 
@@ -506,6 +522,12 @@ mod tests {
     const RATE: f32 = 44100.0;
     const FADE_END: f32 = 2.0; // Past the 1.5 s fade
     const C7M9: [u8; 5] = [48, 52, 55, 59, 62]; // The chord of the demos
+    const CHOIR: u8 = 0;
+    const ORCHESTRA: u8 = 2;
+    const SWEEP: u8 = 3;
+    const ANALOG: u8 = 4;
+    // `new_age_hash`, taken on the engine of 65319e9, before any timbre reached it
+    const NEW_AGE_BEFORE_TIMBRES: u64 = 0x6dc4d4d93e118ee4;
 
     // Per thread, so tests running beside this one cannot disturb its count
     thread_local! {
@@ -543,6 +565,11 @@ mod tests {
             let ((synth_left, synth_right), (file_left, file_right)) = self.layers();
             (synth_left + file_left, synth_right + file_right)
         }
+
+        // The sample layer alone, before the effects
+        fn file_frame(&mut self) -> (f32, f32) {
+            self.layers().1
+        }
     }
 
     type Stereo = (Vec<f32>, Vec<f32>);
@@ -568,7 +595,7 @@ mod tests {
                 let mut signal: Stereo = (Vec::new(), Vec::new());
                 for frame in 0..(seconds * RATE) as usize {
                     for (_, notes) in cues.iter().filter(|(second, _)| (second * RATE) as usize == frame) {
-                        if notes.is_empty() { pad.stop() } else { pad.play(notes) }
+                        if notes.is_empty() { pad.stop() } else { pad.play(notes, NEW_AGE) }
                     }
                     let (left, right) = pad.dry_frame();
                     signal.0.push(left);
@@ -634,7 +661,7 @@ mod tests {
 
     fn load_bank(pad: &mut Pad) {
         for file in bank() {
-            pad.load(file.key, &file.audio, &file.audio, file.loop_start, file.loop_end);
+            pad.load(NEW_AGE, file.key, &file.audio, &file.audio, file.loop_start, file.loop_end);
         }
     }
 
@@ -645,7 +672,7 @@ mod tests {
     // A file that holds one tone and is too long to reach its loop in these tests
     fn load_tone(pad: &mut Pad, key: u8, hz: f32) {
         let tone = sine(hz, 40.0, pad.sample_rate);
-        pad.load(key, &tone, &tone, 0, tone.len() - 1);
+        pad.load(NEW_AGE, key, &tone, &tone, 0, tone.len() - 1);
     }
 
     // The mix is linear, so the same calls with and without files differ by the sample layer alone
@@ -758,7 +785,7 @@ mod tests {
 
         // The synth layer follows the same fade
         let mut pad = Pad::new(RATE);
-        pad.play(&C7M9);
+        pad.play(&C7M9, NEW_AGE);
         let (left, _) = render_dry(&mut pad, 3.0);
         let level = |second: f32| db(rms(&left[(second * RATE) as usize..((second + 0.2) * RATE) as usize]));
         assert!(level(0.0) < level(2.5) - 12.0);
@@ -768,7 +795,7 @@ mod tests {
     #[test]
     fn pad_05_held_chord_never_ends() {
         let mut pad = Pad::new(RATE);
-        pad.play(&C7M9);
+        pad.play(&C7M9, NEW_AGE);
         let (left, right) = render(&mut pad, 60.0);
         let frame_after_fade = (FADE_END * RATE) as usize;
         assert!(left.iter().zip(&right).skip(frame_after_fade).all(|(l, r)| *l != 0.0 || *r != 0.0));
@@ -782,7 +809,7 @@ mod tests {
         // The files last under 9 s, so the sample layer lives on its loops
         let mut pad = Pad::new(RATE);
         load_bank(&mut pad);
-        pad.play(&C7M9);
+        pad.play(&C7M9, NEW_AGE);
         let (left, right) = render(&mut pad, 60.0);
         assert!(left.iter().zip(&right).skip(frame_after_fade).all(|(l, r)| *l != 0.0 || *r != 0.0));
         let held = after(&left, FADE_END, RATE);
@@ -797,7 +824,7 @@ mod tests {
         for file in bank() {
             for note in [file.key, file.key + 1] {
                 let (signal, _) = sample_layer(load_bank, RATE, |pad| {
-                    pad.play(&[note]);
+                    pad.play(&[note], NEW_AGE);
                     render_dry(pad, 20.0)
                 });
                 let speed = 2f64.powf((note as f64 - file.key as f64) / 12.0);
@@ -822,7 +849,7 @@ mod tests {
     fn pad_07_notes_within_5_cents() {
         for chord in [&[45u8][..], &[56], &[63], &[70], &C7M9] {
             let mut pad = Pad::new(RATE);
-            pad.play(chord);
+            pad.play(chord, NEW_AGE);
             let (left, right) = render(&mut pad, 16.0);
             let signal = mono(after(&left, FADE_END, RATE), after(&right, FADE_END, RATE));
             for &note in chord {
@@ -834,7 +861,7 @@ mod tests {
             let (left, right) = sample_layer(
                 |pad| for key in [44, 48, 52, 56, 60, 64, 68, 72] { load_tone(pad, key, note_hz(key as f32)) },
                 RATE,
-                |pad| { pad.play(chord); render(pad, 16.0) },
+                |pad| { pad.play(chord, NEW_AGE); render(pad, 16.0) },
             );
             let signal = mono(after(&left, FADE_END, RATE), after(&right, FADE_END, RATE));
             for &note in chord {
@@ -871,7 +898,7 @@ mod tests {
         // Both layers reach silence once the filter has rung out
         let mut pad = Pad::new(RATE);
         load_tone(&mut pad, 50, 700.0);
-        pad.play(&C7M9);
+        pad.play(&C7M9, NEW_AGE);
         render_dry(&mut pad, 2.0);
         pad.stop();
         let (left, right) = render_dry(&mut pad, 2.0);
@@ -960,7 +987,7 @@ mod tests {
         let mut levels: Vec<(f32, Vec<u8>)> = all_chords().into_iter().map(|chord| {
             let mut pad = Pad::new(RATE);
             load_bank(&mut pad);
-            pad.play(&chord);
+            pad.play(&chord, NEW_AGE);
             let (left, right) = render(&mut pad, 12.0);
             let held = mono(after(&left, FADE_END, RATE), after(&right, FADE_END, RATE));
             (db(rms(&held)), chord)
@@ -971,7 +998,7 @@ mod tests {
         // Without files too, as during loading
         let synth_level = |chord: &[u8]| {
             let mut pad = Pad::new(RATE);
-            pad.play(chord);
+            pad.play(chord, NEW_AGE);
             let (left, _) = render(&mut pad, 12.0);
             db(rms(after(&left, FADE_END, RATE)))
         };
@@ -1018,16 +1045,16 @@ mod tests {
                 pad.mix_into(&mut left, &mut right);
             }
         };
-        pad.play(chords[0]); // Starts
+        pad.play(chords[0], NEW_AGE); // Starts
         blocks(&mut pad, 100);
-        pad.play(chords[1]); // Changes
+        pad.play(chords[1], NEW_AGE); // Changes
         blocks(&mut pad, 10);
-        pad.play(chords[2]);
-        pad.play(chords[3]); // Waits for a slot
-        pad.play(chords[4]); // Replaces the one waiting
+        pad.play(chords[2], NEW_AGE);
+        pad.play(chords[3], NEW_AGE); // Waits for a slot
+        pad.play(chords[4], NEW_AGE); // Replaces the one waiting
         blocks(&mut pad, 100);
-        pad.play(chords[3]);
-        pad.play(chords[4]); // Returns while fading
+        pad.play(chords[3], NEW_AGE);
+        pad.play(chords[4], NEW_AGE); // Returns while fading
         blocks(&mut pad, 10);
         pad.stop(); // Stops
         blocks(&mut pad, 1000);
@@ -1042,13 +1069,13 @@ mod tests {
         };
         let mut pad = Pad::new(RATE);
         load_bank(&mut pad);
-        pad.play(&C7M9);
+        pad.play(&C7M9, NEW_AGE);
         let (left, right) = render(&mut pad, 12.0);
         let similarity = correlation(after(&left, FADE_END, RATE), after(&right, FADE_END, RATE));
         assert!(similarity < 0.95, "left and right correlate at {similarity}");
 
         // The files are mono, so what differs in the sample layer comes from the effects
-        let (left, right) = sample_layer(load_bank, RATE, |pad| { pad.play(&C7M9); render(pad, 12.0) });
+        let (left, right) = sample_layer(load_bank, RATE, |pad| { pad.play(&C7M9, NEW_AGE); render(pad, 12.0) });
         let similarity = correlation(after(&left, FADE_END, RATE), after(&right, FADE_END, RATE));
         assert!(similarity < 0.95, "the sample layer correlates at {similarity}");
 
@@ -1058,9 +1085,9 @@ mod tests {
             let mut file = vec![0.0; 3 * impulse_at];
             file[impulse_at] = 1.0;
             let (left, right) = sample_layer(
-                |pad| pad.load(60, &file, &file, 0, file.len() - 1),
+                |pad| pad.load(NEW_AGE, 60, &file, &file, 0, file.len() - 1),
                 rate,
-                |pad| { pad.play(&[60]); render(pad, 2.3) },
+                |pad| { pad.play(&[60], NEW_AGE); render(pad, 2.3) },
             );
             let echo = |signal: &[f32]| {
                 let frame = |ms: f32| impulse_at + (ms * rate / 1000.0) as usize;
@@ -1081,7 +1108,7 @@ mod tests {
 
         // After the fade the reverb still rings, where the voices have stopped
         let mut pad = Pad::new(RATE);
-        pad.play(&C7M9);
+        pad.play(&C7M9, NEW_AGE);
         render(&mut pad, 3.0);
         pad.stop();
         let (left, _) = render(&mut pad, 2.0);
@@ -1093,7 +1120,7 @@ mod tests {
         let tail_seconds = |rate: f32| {
             let mut pad = Pad::new(rate);
             assert!(pad.is_silent());
-            pad.play(&C7M9);
+            pad.play(&C7M9, NEW_AGE);
             assert!(!pad.is_silent());
             render(&mut pad, 3.0);
             pad.stop();
@@ -1109,7 +1136,7 @@ mod tests {
             let (mut left, mut right) = ([0.25f32; 128], [-0.25f32; 128]);
             pad.mix_into(&mut left, &mut right);
             assert!(left.iter().all(|value| *value == 0.25) && right.iter().all(|value| *value == -0.25));
-            pad.play(&C7M9);
+            pad.play(&C7M9, NEW_AGE);
             assert!(!pad.is_silent());
             let (left, _) = render(&mut pad, 3.0);
             assert!(db(rms(after(&left, FADE_END, rate))) > -40.0);
@@ -1125,7 +1152,7 @@ mod tests {
         let rate = 48000.0;
         for chord in [&[45u8][..], &[70], &C7M9] {
             let mut pad = Pad::new(rate);
-            pad.play(chord);
+            pad.play(chord, NEW_AGE);
             let (left, right) = render(&mut pad, 16.0);
             let signal = mono(after(&left, FADE_END, rate), after(&right, FADE_END, rate));
             for &note in chord {
@@ -1137,7 +1164,7 @@ mod tests {
             let (left, right) = sample_layer(
                 |pad| for key in [44, 48, 52, 56, 60, 64, 68, 72] { load_tone(pad, key, note_hz(key as f32)) },
                 rate,
-                |pad| { pad.play(chord); render(pad, 16.0) },
+                |pad| { pad.play(chord, NEW_AGE); render(pad, 16.0) },
             );
             let signal = mono(after(&left, FADE_END, rate), after(&right, FADE_END, rate));
             for &note in chord {
@@ -1165,7 +1192,7 @@ mod tests {
         let mut held_peaks: Vec<(f32, Vec<u8>)> = all_chords().into_iter().map(|chord| {
             let mut pad = Pad::new(RATE);
             load_bank(&mut pad);
-            pad.play(&chord);
+            pad.play(&chord, NEW_AGE);
             let (left, right) = render(&mut pad, 16.0);
             (peak(&left).max(peak(&right)), chord)
         }).collect();
@@ -1180,7 +1207,7 @@ mod tests {
         let (mut left, mut right) = ([0.0f32; 128], [0.0f32; 128]);
         let mut crossfade_peak = 0f32;
         for (_, chord) in held_peaks.iter().rev().take(40) {
-            pad.play(chord);
+            pad.play(chord, NEW_AGE);
             for _ in 0..(2.0 * RATE / 128.0) as usize {
                 left.fill(0.0);
                 right.fill(0.0);
@@ -1197,7 +1224,7 @@ mod tests {
         let held = || {
             let mut pad = Pad::new(RATE);
             load_tone(&mut pad, 45, 110.0);
-            pad.play(&[45]);
+            pad.play(&[45], NEW_AGE);
             render(&mut pad, 3.0);
             pad
         };
@@ -1247,7 +1274,7 @@ mod tests {
         let late = |load: fn(&mut Pad)| {
             let run = |with_files: bool| {
                 let mut pad = Pad::new(RATE);
-                pad.play(&CHORD_A);
+                pad.play(&CHORD_A, NEW_AGE);
                 let (mut left, _) = render_dry(&mut pad, loaded_at);
                 if with_files {
                     load(&mut pad);
@@ -1273,7 +1300,7 @@ mod tests {
         let run = || {
             let mut pad = Pad::new(RATE);
             load_tone(&mut pad, 44, 110.0);
-            pad.play(&[50]);
+            pad.play(&[50], NEW_AGE);
             let (before, _) = render_dry(&mut pad, 3.0);
             (pad, before[before.len() - 1])
         };
@@ -1301,8 +1328,8 @@ mod tests {
         let (marker, note) = (700.0, 69);
         let tone: Vec<f32> = sine(marker, 40.0, RATE).iter().map(|value| value * 0.45).collect();
         let mut pad = Pad::new(RATE);
-        pad.load(note, &tone, &tone, 0, tone.len() - 1);
-        pad.play(&[note]);
+        pad.load(NEW_AGE, note, &tone, &tone, 0, tone.len() - 1);
+        pad.play(&[note], NEW_AGE);
         let (left, right) = render(&mut pad, 6.0);
         let signal = mono(after(&left, FADE_END, RATE), after(&right, FADE_END, RATE));
         let sample = band_power(&signal, marker, 15.0, RATE);
@@ -1316,13 +1343,13 @@ mod tests {
         // The oldest chord is at about 0.9, 0.7 and 0.13 when the fourth click comes, with all 3 slots held
         for fading in [0.15, 0.45, 1.3] {
             let mut pad = Pad::new(RATE);
-            pad.play(&CHORD_A);
+            pad.play(&CHORD_A, NEW_AGE);
             render(&mut pad, 2.0);
-            pad.play(&CHORD_B);
+            pad.play(&CHORD_B, NEW_AGE);
             render(&mut pad, fading * 2.0 / 3.0);
-            pad.play(&CHORD_C);
+            pad.play(&CHORD_C, NEW_AGE);
             render(&mut pad, fading / 3.0);
-            pad.play(&CHORD_D);
+            pad.play(&CHORD_D, NEW_AGE);
             assert!(pad.slots.iter().all(|slot| slot.count > 0), "a free slot means no eviction, from {fading} s of fade");
             render(&mut pad, 0.019);
             assert_eq!(pad.slots[0].voices[0].note, CHORD_A[0], "gone before 19 ms, from {fading} s of fade");
@@ -1342,7 +1369,7 @@ mod tests {
         for root in 45..=56u8 {
             for semitones in SEMITONES {
                 let notes: Vec<u8> = semitones.iter().map(|semitone| root + semitone).collect();
-                let held = |pad: &mut Pad| { pad.play(&notes); render(pad, 16.0) };
+                let held = |pad: &mut Pad| { pad.play(&notes, NEW_AGE); render(pad, 16.0) };
                 let mut with_samples = Pad::new(RATE);
                 load_bank(&mut with_samples);
                 let (left, _) = held(&mut with_samples);
@@ -1360,9 +1387,9 @@ mod tests {
     fn pad_61_load_clamps_a_loop_end_past_the_file() {
         let tone = sine(440.0, 1.0, RATE);
         let mut pad = Pad::new(RATE);
-        pad.load(69, &tone, &tone, 1000, tone.len() + 500);
-        assert_eq!(pad.samples[0].loop_end, tone.len() - 1);
-        pad.play(&[69]);
+        pad.load(NEW_AGE, 69, &tone, &tone, 1000, tone.len() + 500);
+        assert_eq!(pad.banks[NEW_AGE as usize][0].loop_end, tone.len() - 1);
+        pad.play(&[69], NEW_AGE);
         render(&mut pad, 3.0); // Reading past the file would panic
     }
 
@@ -1371,17 +1398,17 @@ mod tests {
         let tone = sine(440.0, 1.0, RATE);
         let mut pad = Pad::new(RATE);
         for (start, end) in [(1000, 1000), (2000, 1000), (tone.len(), tone.len() + 500)] {
-            pad.load(69, &tone, &tone, start, end);
+            pad.load(NEW_AGE, 69, &tone, &tone, start, end);
         }
-        pad.load(69, &[], &[], 0, 0);
-        assert!(pad.samples.is_empty());
-        pad.play(&[69]);
+        pad.load(NEW_AGE, 69, &[], &[], 0, 0);
+        assert!(pad.banks[NEW_AGE as usize].is_empty());
+        pad.play(&[69], NEW_AGE);
         render(&mut pad, 3.0);
     }
 
     #[test]
     fn pad_20_layer_balance() {
-        let held = |pad: &mut Pad| { pad.play(&C7M9); render(pad, 24.0) };
+        let held = |pad: &mut Pad| { pad.play(&C7M9, NEW_AGE); render(pad, 24.0) };
         let (sample_left, _) = sample_layer(load_bank, RATE, held);
         let (synth_left, _) = held(&mut Pad::new(RATE));
         let difference = db(rms(after(&sample_left, 4.0, RATE))) - db(rms(after(&synth_left, 4.0, RATE)));
@@ -1396,7 +1423,7 @@ mod tests {
             for &(key, marker) in loaded {
                 load_tone(&mut pad, key, marker);
             }
-            pad.play(&[note]);
+            pad.play(&[note], NEW_AGE);
             let (left, right) = render(&mut pad, 4.0);
             let signal = mono(after(&left, FADE_END, RATE), after(&right, FADE_END, RATE));
             let (heard, not_heard) = (band_power(&signal, expected, 15.0, RATE), band_power(&signal, other, 15.0, RATE));
@@ -1414,7 +1441,7 @@ mod tests {
     #[test]
     fn pad_18_synth_detunes_and_filters() {
         let mut pad = Pad::new(RATE);
-        pad.play(&[69]);
+        pad.play(&[69], NEW_AGE);
         let (left, right) = render_dry(&mut pad, 16.0);
         let signal = mono(after(&left, FADE_END, RATE), after(&right, FADE_END, RATE));
 
@@ -1451,7 +1478,7 @@ mod tests {
     fn pad_48_synth_sounds_without_samples() {
         let chord = C7M9;
         let mut pad = Pad::new(RATE);
-        pad.play(&chord);
+        pad.play(&chord, NEW_AGE);
         let (left, right) = render(&mut pad, 6.0);
         assert!(db(rms(after(&left, FADE_END, RATE))) > -40.0);
 
@@ -1466,7 +1493,7 @@ mod tests {
     #[test]
     fn pad_52_synth_alone() {
         let mut pad = Pad::new(RATE);
-        pad.play(&[69]);
+        pad.play(&[69], NEW_AGE);
         let (left, right) = render(&mut pad, 6.0);
         assert!(db(rms(after(&left, FADE_END, RATE))) > -40.0);
         // Only the harmonics of the note: the bands between them hold nothing
@@ -1474,6 +1501,297 @@ mod tests {
         let fundamental = band_power(&signal, 440.0, 25.0, RATE);
         let between = band_power(&signal, 660.0, 25.0, RATE);
         assert!(between < fundamental / 1000.0, "between {between} fundamental {fundamental}");
+    }
+
+    // The real bank through a start, a crossfade, a replaced chord and a stop, rounded to 1/1024 and hashed with
+    // FNV-1a. So coarse a grid leaves the last bits of a platform's libm out of the hash, and over a million
+    // values any change a listener could hear still moves many samples across it
+    fn new_age_hash(play: impl Fn(&mut Pad, &[u8]), load: impl Fn(&mut Pad)) -> u64 {
+        let mut pad = Pad::new(RATE);
+        load(&mut pad);
+        play(&mut pad, &C7M9);
+        let (mut left, mut right) = render(&mut pad, 5.0);
+        let mut hold = |pad: &mut Pad, seconds: f32| {
+            let (more_left, more_right) = render(pad, seconds);
+            left.extend(more_left);
+            right.extend(more_right);
+        };
+        play(&mut pad, &[45, 49, 52]);
+        hold(&mut pad, 4.0);
+        play(&mut pad, &[56, 60, 63, 67, 70]);
+        hold(&mut pad, 0.7);
+        play(&mut pad, &[46, 50, 53, 57]);
+        hold(&mut pad, 2.5);
+        pad.stop();
+        hold(&mut pad, 3.0);
+        left.iter().chain(&right).flat_map(|value| ((value * 1024.0).round() as i32).to_le_bytes())
+            .fold(0xcbf29ce484222325u64, |hash, byte| (hash ^ byte as u64).wrapping_mul(0x100000001b3))
+    }
+
+    #[test]
+    fn tim_10_new_age_is_unchanged() {
+        assert_eq!(new_age_hash(|pad, notes| pad.play(notes, NEW_AGE), load_bank), NEW_AGE_BEFORE_TIMBRES);
+    }
+
+    // One note in each timbre, each marked by a tone in its own file
+    const TIMBRE_NOTE: [u8; 1] = [50];
+    const TIMBRE_TONES: [(u8, f32); 4] = [(CHOIR, 700.0), (NEW_AGE, 1500.0), (ORCHESTRA, 2300.0), (SWEEP, 3100.0)];
+
+    fn tone_of_timbre(timbre: u8) -> f32 {
+        TIMBRE_TONES.iter().find(|(id, _)| *id == timbre).unwrap().1
+    }
+
+    // The sample layer before the effects, picking a timbre at each cue. Files show each timbre's own level
+    fn cued_timbres(cues: &[(f32, u8)], seconds: f32) -> Vec<f32> {
+        let mut pad = Pad::new(RATE);
+        for (timbre, hz) in TIMBRE_TONES {
+            let tone = sine(hz, 40.0, RATE);
+            pad.load(timbre, TIMBRE_NOTE[0], &tone, &tone, 0, tone.len() - 1);
+        }
+        (0..(seconds * RATE) as usize).map(|frame| {
+            for (_, timbre) in cues.iter().filter(|(second, _)| (second * RATE) as usize == frame) {
+                pad.play(&TIMBRE_NOTE, *timbre);
+            }
+            pad.file_frame().0
+        }).collect()
+    }
+
+    fn tone_level(signal: &[f32], hz: f32, second: f32) -> f32 {
+        let half = (0.01 * RATE) as usize;
+        let centre = (second * RATE) as usize;
+        power_at(&hann(&signal[centre - half..centre + half]), hz, RATE).sqrt() as f32
+    }
+
+    #[test]
+    fn tim_03_timbre_change_crossfades_the_chord() {
+        for (from, to) in [(CHOIR, NEW_AGE), (NEW_AGE, ORCHESTRA), (ORCHESTRA, SWEEP), (SWEEP, CHOIR), (NEW_AGE, CHOIR)] {
+            let signal = cued_timbres(&[(0.0, from), (2.0, to)], 4.0);
+            let (hz_from, hz_to) = (tone_of_timbre(from), tone_of_timbre(to));
+            let full_from = tone_level(&signal, hz_from, 1.98);
+            let full_to = tone_level(&signal, hz_to, 3.8);
+            assert!(tone_level(&signal, hz_to, 1.98) < 0.01 * full_to, "{to} sounds before its pick");
+            for into_fade in [0.3, 0.75, 1.2] {
+                let second = 2.0 + into_fade;
+                let (gone, come) = (tone_level(&signal, hz_from, second) / full_from, tone_level(&signal, hz_to, second) / full_to);
+                assert!((come - equal_power(into_fade)).abs() < 0.02, "{from} to {to}: {come} at {into_fade} s");
+                assert!((gone - equal_power(FADE_SECONDS - into_fade)).abs() < 0.02, "{from} to {to}: {gone} at {into_fade} s");
+                assert!((gone * gone + come * come - 1.0).abs() < 0.05, "the crossfade dips or swells");
+            }
+            assert!(tone_level(&signal, hz_to, 3.3) / full_to < 0.985, "full level came before 1.5 s");
+            assert!(tone_level(&signal, hz_from, 3.52) < 0.01 * full_from, "{from} stayed past 1.5 s");
+        }
+
+        // Into the timbre with no file: the files leave on the same fade
+        let signal = cued_timbres(&[(0.0, CHOIR), (2.0, ANALOG)], 4.0);
+        let (hz, full) = (tone_of_timbre(CHOIR), tone_level(&signal, tone_of_timbre(CHOIR), 1.98));
+        assert!((tone_level(&signal, hz, 2.75) / full - equal_power(0.75)).abs() < 0.02);
+        assert!(tone_level(&signal, hz, 3.52) < 0.01 * full);
+
+        // The same chord, so a second slot holds it, with its own timbre
+        let mut pad = Pad::new(RATE);
+        pad.play(&C7M9, CHOIR);
+        render(&mut pad, 2.0);
+        pad.play(&C7M9, SWEEP);
+        let held: Vec<(u8, f32)> = pad.slots.iter().filter(|slot| slot.count > 0).map(|slot| (slot.timbre, slot.target)).collect();
+        assert_eq!(held, [(CHOIR, 0.0), (SWEEP, 1.0)]);
+    }
+
+    #[test]
+    fn tim_05_settles_on_the_last_timbre() {
+        let picks: [&[(f32, u8)]; 3] = [
+            &[(0.0, CHOIR), (0.3, NEW_AGE), (0.6, ORCHESTRA), (0.9, SWEEP), (1.2, NEW_AGE)],
+            &[(0.0, CHOIR), (0.2, SWEEP), (0.4, ORCHESTRA), (0.6, CHOIR), (0.8, SWEEP)],
+            &[(0.0, NEW_AGE), (0.01, CHOIR), (0.02, ORCHESTRA), (0.03, SWEEP), (0.04, ORCHESTRA)],
+        ];
+        for cues in picks {
+            let signal = cued_timbres(cues, 4.0);
+            let last = cues[cues.len() - 1].1;
+            let full = tone_level(&signal, tone_of_timbre(last), 3.9);
+            assert!(full > 0.0);
+            assert!((tone_level(&signal, tone_of_timbre(last), 3.5) / full - 1.0).abs() < 0.02, "{last} did not settle");
+            for (timbre, hz) in TIMBRE_TONES.iter().filter(|(timbre, _)| *timbre != last) {
+                assert!(tone_level(&signal, *hz, 3.5) < 0.01 * full, "timbre {timbre} is still heard");
+            }
+        }
+    }
+
+    #[test]
+    fn tim_15_seven_notes_keep_the_rules() {
+        const SEVEN: [u8; 7] = [33, 45, 57, 61, 64, 67, 71];
+        const OTHER_SEVEN: [u8; 7] = [30, 42, 54, 58, 61, 64, 68];
+        let tone_of_note = |index: usize| 500.0 + 700.0 * index as f32;
+        let tuned = |pad: &mut Pad| {
+            for (index, key) in SEVEN.into_iter().enumerate() {
+                let tone = sine(tone_of_note(index), 40.0, pad.sample_rate);
+                pad.load(ORCHESTRA, key, &tone, &tone, 0, tone.len() - 1);
+            }
+        };
+
+        // Every note sounds, at the level that keeps a chord of 7 with a chord of 1
+        let mut pad = Pad::new(RATE);
+        tuned(&mut pad);
+        pad.play(&SEVEN, ORCHESTRA);
+        assert_eq!(pad.slots[0].count, 7);
+        let frames = (5.0 * RATE) as usize;
+        let signal: Vec<f32> = (0..frames).map(|_| pad.file_frame().0).collect();
+        let mut one_note = Pad::new(RATE);
+        tuned(&mut one_note);
+        one_note.play(&SEVEN[..1], ORCHESTRA);
+        let lone: Vec<f32> = (0..frames).map(|_| one_note.file_frame().0).collect();
+        let full_lone = tone_level(&lone, tone_of_note(0), 4.0);
+        let notes_level = |second: f32| -> Vec<f32> { (0..7).map(|index| tone_level(&signal, tone_of_note(index), second)).collect() };
+        for level in notes_level(4.0) {
+            assert!((level / full_lone - 1.0 / 7f32.sqrt()).abs() < 0.01, "a note sits at {level} against {full_lone}");
+        }
+        // Their fade is the fade of any chord
+        for (level, full) in notes_level(0.75).iter().zip(notes_level(4.0)) {
+            assert!((level / full - equal_power(0.75)).abs() < 0.02, "the fade reads {}", level / full);
+        }
+
+        // Crossfade, stop and return run on 7 notes as on 5
+        let mut pad = Pad::new(RATE);
+        pad.play(&SEVEN, ORCHESTRA);
+        render(&mut pad, 2.0);
+        pad.play(&OTHER_SEVEN, ORCHESTRA);
+        render(&mut pad, 0.75);
+        assert_eq!(pad.slots[0].target, 0.0);
+        assert!((pad.slots[0].level - 0.5).abs() < 0.01 && (pad.slots[1].level - 0.5).abs() < 0.01);
+        pad.play(&SEVEN, ORCHESTRA); // Back from its own fade, on the same voices
+        assert_eq!((pad.slots[0].target, pad.slots[1].target), (1.0, 0.0));
+        render(&mut pad, 1.6);
+        assert_eq!(pad.slots[1].count, 0);
+        pad.stop();
+        render(&mut pad, 1.6);
+        assert!(pad.slots.iter().all(|slot| slot.count == 0));
+
+        // At most 3 chords of 7, the oldest leaving in 20 ms, and the newest click wins
+        let mut pad = Pad::new(RATE);
+        pad.play(&SEVEN, ORCHESTRA);
+        render(&mut pad, 2.0);
+        pad.play(&OTHER_SEVEN, ORCHESTRA);
+        render(&mut pad, 0.6);
+        pad.play(&SEVEN, CHOIR);
+        render(&mut pad, 0.3);
+        pad.play(&OTHER_SEVEN, CHOIR);
+        pad.play(&OTHER_SEVEN, SWEEP);
+        assert!(pad.slots.iter().all(|slot| slot.count == 7));
+        render(&mut pad, 0.019);
+        assert_eq!(pad.slots[0].timbre, ORCHESTRA, "gone before 19 ms");
+        render(&mut pad, 0.002);
+        assert_eq!((pad.slots[0].timbre, pad.slots[0].notes, pad.slots[0].count), (SWEEP, OTHER_SEVEN, 7));
+
+        // An eighth note finds no room
+        let mut pad = Pad::new(RATE);
+        pad.play(&[33, 45, 57, 61, 64, 67, 71, 74], ORCHESTRA);
+        assert_eq!(&pad.slots[0].notes[..pad.slots[0].count], SEVEN);
+    }
+
+    #[test]
+    fn tim_23_no_allocation() {
+        let allocations = || ALLOCATIONS.with(Cell::get);
+
+        // The meter works
+        let before = allocations();
+        std::hint::black_box(vec![0u8; 16]);
+        assert!(allocations() > before);
+
+        let mut pad = Pad::new(RATE);
+        for timbre in [CHOIR, NEW_AGE, ORCHESTRA, SWEEP] {
+            for file in bank() {
+                pad.load(timbre, file.key, &file.audio, &file.audio, file.loop_start, file.loop_end);
+            }
+        }
+        let (mut left, mut right) = ([0.0f32; 128], [0.0f32; 128]);
+        const SEVEN: [u8; 7] = [33, 45, 57, 61, 64, 67, 71];
+
+        let before = allocations();
+        let mut blocks = |pad: &mut Pad, count: usize| {
+            for _ in 0..count {
+                pad.mix_into(&mut left, &mut right);
+            }
+        };
+        pad.play(&SEVEN, CHOIR); // Starts
+        blocks(&mut pad, 100);
+        pad.play(&SEVEN, ORCHESTRA); // Changes timbre
+        blocks(&mut pad, 10);
+        pad.play(&C7M9, ORCHESTRA); // Changes chord
+        pad.play(&C7M9, ANALOG); // Waits for a slot
+        pad.play(&C7M9, SWEEP); // Replaces the one waiting
+        blocks(&mut pad, 100);
+        pad.play(&SEVEN, ORCHESTRA);
+        pad.play(&C7M9, SWEEP); // Returns while fading
+        blocks(&mut pad, 10);
+        pad.stop(); // Stops
+        blocks(&mut pad, 1000);
+        assert_eq!(allocations(), before);
+    }
+
+    #[test]
+    fn tim_33_other_timbre_load_changes_nothing() {
+        let run = |loaded: Option<u8>| {
+            let mut pad = Pad::new(RATE);
+            load_tone(&mut pad, 48, 700.0);
+            let tone = sine(700.0, 40.0, RATE);
+            pad.load(CHOIR, 48, &tone, &tone, 0, tone.len() - 1);
+            pad.play(&C7M9, CHOIR);
+            render(&mut pad, 2.0);
+            if let Some(timbre) = loaded {
+                let other = sine(900.0, 40.0, RATE);
+                pad.load(timbre, 52, &other, &other, 0, other.len() - 1);
+            }
+            render(&mut pad, 3.0)
+        };
+        let bits = |signal: &[f32]| signal.iter().map(|value| value.to_bits()).collect::<Vec<u32>>();
+        let (left, right) = run(None);
+        for timbre in [NEW_AGE, ORCHESTRA, SWEEP] {
+            let (other_left, other_right) = run(Some(timbre));
+            assert_eq!(bits(&left), bits(&other_left), "a load for timbre {timbre} moved the sound");
+            assert_eq!(bits(&right), bits(&other_right), "a load for timbre {timbre} moved the sound");
+        }
+        // Its own timbre's load does reach it, so the run above can tell
+        assert_ne!(bits(&left), bits(&run(Some(CHOIR)).0));
+
+        // With two timbres fading, each voice looks only in the bank of its own slot
+        let mut pad = Pad::new(RATE);
+        pad.play(&[48], CHOIR);
+        render(&mut pad, 0.5);
+        pad.play(&[48], SWEEP);
+        let tone = sine(700.0, 40.0, RATE);
+        pad.load(SWEEP, 48, &tone, &tone, 0, tone.len() - 1);
+        assert_eq!(pad.slots[0].voices[0].next_file, NO_FILE);
+        assert_eq!(pad.slots[1].voices[0].next_file, 0);
+    }
+
+    #[test]
+    fn tim_44_pitch_holds_at_48_khz() {
+        let rate = 48000.0;
+        for timbre in [CHOIR, NEW_AGE, SWEEP, ANALOG] {
+            let mut pad = Pad::new(rate);
+            pad.play(&C7M9, timbre);
+            let (left, right) = render(&mut pad, 16.0);
+            let signal = mono(after(&left, FADE_END, rate), after(&right, FADE_END, rate));
+            for &note in &C7M9 {
+                let centre = cluster_centre_cents(&signal, note as f32, rate);
+                assert!(centre.abs() <= 5.0, "timbre {timbre}, note {note} is {centre} cents off");
+            }
+        }
+
+        // decodeAudioData hands the engine files at its own rate, stereo or mono, whatever the bank's keys
+        for timbre in [CHOIR, NEW_AGE, ORCHESTRA, SWEEP] {
+            let mut pad = Pad::new(rate);
+            for key in [46, 50, 53, 57, 60, 65] {
+                let tone = sine(note_hz(key as f32), 40.0, rate);
+                pad.load(timbre, key, &tone, &tone, 0, tone.len() - 1);
+            }
+            pad.play(&C7M9, timbre);
+            let frames = (16.0 * rate) as usize;
+            let (left, right): Stereo = (0..frames).map(|_| pad.file_frame()).unzip();
+            let signal = mono(after(&left, FADE_END, rate), after(&right, FADE_END, rate));
+            for &note in &C7M9 {
+                let peak = peak_cents(&signal, note as f32, rate);
+                assert!(peak.abs() <= 5.0, "timbre {timbre}, note {note} is {peak} cents off");
+            }
+        }
     }
 
     #[test]

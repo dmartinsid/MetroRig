@@ -175,9 +175,9 @@ T14 → T15
 
 **Done when**:
 
-- [ ] Every `chord-pads` Rust test still passes, adapted only to the new signature
-- [ ] The hash was taken before the first change
-- [ ] Gate passes
+- [x] Every `chord-pads` Rust test still passes, adapted only to the new signature
+- [x] The hash was taken before the first change
+- [x] Gate passes
 
 **Tests**: unit
 **Gate**: rust
