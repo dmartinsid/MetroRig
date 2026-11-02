@@ -30,7 +30,7 @@ export interface PadFile { key: number; url: string; loopStart: number; loopEnd:
 
 // FreePats New Age: mono 44.1 kHz FLAC, `G#` written `Gs` because `#` breaks URLs. Loop points are in
 // frames, and loopEnd is inclusive: its sample equals loopStart's, so a wrap is seamless.
-export const PAD_BANK: PadFile[] = [
+const NEW_AGE_FILES: PadFile[] = [
   { key: 44, url: '/pads/new-age/Gs2.flac', loopStart: 164330, loopEnd: 388482 },
   { key: 48, url: '/pads/new-age/C3.flac', loopStart: 165283, loopEnd: 395775 },
   { key: 52, url: '/pads/new-age/E3.flac', loopStart: 147455, loopEnd: 374783 },
@@ -82,7 +82,7 @@ const ORCHESTRA_FILES: PadFile[] = [
 // In select order, and the index is the timbre's id in the engine. Storage keeps the name, so a reorder saves nothing wrong
 export const PAD_TIMBRES: { name: string; files: PadFile[]; bass: boolean }[] = [
   { name: 'Choir', files: CHOIR_FILES, bass: false },
-  { name: 'New Age', files: PAD_BANK, bass: false },
+  { name: 'New Age', files: NEW_AGE_FILES, bass: false },
   { name: 'Orchestra', files: ORCHESTRA_FILES, bass: true },
   { name: 'Sweep', files: SWEEP_FILES, bass: false },
   { name: 'Analog', files: [], bass: false },

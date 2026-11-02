@@ -679,7 +679,7 @@ mod tests {
         text.split(|c: char| !c.is_ascii_digit()).filter(|word| !word.is_empty()).map(|word| word.parse().unwrap()).collect()
     }
 
-    // The shipped files, as PAD_BANK lists them. The level of real audio is what PAD-14, PAD-20 and PAD-27 are about
+    // The shipped New Age files, as src/chords.ts lists them. The level of real audio is what PAD-14, PAD-20 and PAD-27 are about
     fn bank() -> &'static [BankFile] {
         static BANK: OnceLock<Vec<BankFile>> = OnceLock::new();
         BANK.get_or_init(|| {

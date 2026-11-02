@@ -318,8 +318,8 @@ T14 → T15
 
 **Done when**:
 
-- [ ] `chord-pads` load tests still hold their rule, on the selected timbre
-- [ ] Gate passes
+- [x] `chord-pads` load tests still hold their rule, on the selected timbre
+- [x] Gate passes
 
 **Tests**: integration
 **Gate**: quick

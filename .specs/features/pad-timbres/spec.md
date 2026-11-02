@@ -211,16 +211,16 @@ The Improv pad has one sound. The user liked what they heard, and their favourit
 | TIM-23 | P1: Five sounds | Design | Implementing |
 | TIM-24 | P1: Orchestra bank build | Design | Implementing |
 | TIM-25 | P1: Orchestra bank build | Design | Implementing |
-| TIM-26 | P1: Download only what is chosen | Design | Pending |
-| TIM-27 | P1: Download only what is chosen | Design | Pending |
-| TIM-28 | P1: Download only what is chosen | Design | Pending |
-| TIM-29 | P1: Download only what is chosen | Design | Pending |
+| TIM-26 | P1: Download only what is chosen | Design | Implementing |
+| TIM-27 | P1: Download only what is chosen | Design | Implementing |
+| TIM-28 | P1: Download only what is chosen | Design | Implementing |
+| TIM-29 | P1: Download only what is chosen | Design | Implementing |
 | TIM-30 | P1: Download only what is chosen | Design | Implementing |
 | TIM-31 | P1: Download only what is chosen | Design | Implementing |
 | TIM-32 | P1: Download only what is chosen | Design | Implementing |
 | TIM-33 | P1: Download only what is chosen | Design | Implementing |
-| TIM-34 | P1: Download only what is chosen | Design | Pending |
-| TIM-35 | P1: Download only what is chosen | Design | Pending |
+| TIM-34 | P1: Download only what is chosen | Design | Implementing |
+| TIM-35 | P1: Download only what is chosen | Design | Implementing |
 | TIM-36 | P1: Download only what is chosen | Design | Implementing |
 | TIM-37 | P1: Approval by ear | Design | Pending |
 | TIM-38 | P1: Approval by ear | Design | Pending |
@@ -228,7 +228,7 @@ The Improv pad has one sound. The user liked what they heard, and their favourit
 | TIM-40 | P3: Credit | Design | Pending |
 | TIM-41 | P3: Credit | Design | Pending |
 | TIM-42 | Edge Cases | Design | Implementing |
-| TIM-43 | Edge Cases | Design | Pending |
+| TIM-43 | Edge Cases | Design | Implementing |
 | TIM-44 | Edge Cases | Design | Implementing |
 | TIM-45 | Edge Cases | Design | Implementing |
 
