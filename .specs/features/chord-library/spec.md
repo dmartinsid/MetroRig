@@ -40,6 +40,7 @@ The Improv pad offers 14 chord types, with no 11th, no half-diminished and no al
 | Selection on opening | `C` and `maj` selected, nothing sounding | One root and one type must be selected for a single click to play | y, presented with the spec, user: "Aprovado" |
 | Delivery | On `feat/pad-timbres`, as the last part of the pad | User: "pra finalizar a feature do pad" | y, presented with the spec, user: "Aprovado" |
 | Size | `public/pads/` stays at most 12 MB | AD-019, and it holds 10.9 MB | y |
+| Note 71 past the reverb | 7 cents, on that note alone | It leaves the voice within 0.5 cents, its harmonics sit on the reverb's combs, and TIM-10 keeps that reverb | y, presented at T7, user: "aprovado" |
 | Auth, rate limits, external dependencies, concurrency, data expiry | N/A because the chords are static data and the rules of `chord-pads` keep applying | Sweep | y |
 
 **Open questions:** none - all resolved or logged above.
@@ -112,7 +113,7 @@ The Improv pad offers 14 chord types, with no 11th, no half-diminished and no al
 **Acceptance Criteria**:
 
 1. CHD-06: Each note of the 408 chords in `Orchestra` SHALL sound from a file within 2 semitones of it, once its bank has loaded.
-2. CHD-07: Each note of `Choir`, `New Age`, `Sweep` and `Analog` up to MIDI 77 SHALL sound within 5 cents of equal temperament at A = 440 Hz.
+2. CHD-07: Each note of `Choir`, `New Age`, `Sweep` and `Analog` up to MIDI 77 SHALL sound within 5 cents of equal temperament at A = 440 Hz, and within 7 cents past the reverb on note 71 alone.
 3. CHD-08: The pitch centre of each `Orchestra` note up to MIDI 77 SHALL sit within 10 cents of equal temperament at A = 440 Hz.
 4. CHD-09: Within a timbre, any two of the 408 chords SHALL sound within 3 dB RMS.
 5. CHD-10: On each of the 408 chords, any two timbres SHALL sound within 3 dB RMS.
