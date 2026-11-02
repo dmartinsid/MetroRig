@@ -1723,6 +1723,7 @@ select:focus {
   }
 
   .view-nav {
+    flex-wrap: wrap;
     padding-left: 0;
     border-left: none;
   }
@@ -1739,7 +1740,6 @@ select:focus {
     width: 0;
   }
 
-  #grooves-view,
   /* Its 147 px would cover the roots, which must stay in view while the types scroll */
   body:has(#improv-view:not(.hidden)) header {
     position: static;
@@ -1763,6 +1763,7 @@ select:focus {
     height: 44px;
   }
 
+  #grooves-view,
   #improv-view {
     padding: 1rem;
   }
