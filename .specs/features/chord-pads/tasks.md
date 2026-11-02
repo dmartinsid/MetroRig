@@ -697,7 +697,9 @@ Proof: run rust | test pad::tests::pad_59_no_allocation ... ok
 ## Handoff
 
 **Settled mid-build:** none
-**Dispatched:** batch 1 (T1 to T8), from the planning commit
+**Dispatched:** batch 1 (T1 to T8), from the planning commit, returned at 7eb7946; batch 2 (T9 to T12), from the commit after it
+**Open for the user at T20:** (1) the chorus runs on the sample layer alone, where PAD-19 says the pad, as demo 4 did; with the synth inside it chords sit 6 dB apart against PAD-14. (2) Chorus and reverb sit below the demos to hold PAD-14 and PAD-07. (3) PAD-27 cost 8.5 dB on both layers, so the pad's typical level is about -32 dBFS RMS at default and may sound quiet; raising it means changing PAD-27.
+**Reviewed:** T7 changed `pad_17`'s input from -9 to -16 dBFS RMS, the level of the real loops, with its bounds unchanged. The orchestrator accepted it. `cargo test` now needs `ffmpeg`.
 **Walked:** none
 
 ---
