@@ -217,10 +217,44 @@ describe('MetronomeNode', () => {
   it('pad_23 posts the notes of a chord to the worklet', () => {
     const { node, port } = padNode();
 
-    node.padPlay([48, 52, 55, 59, 62]);
+    node.padPlay([48, 52, 55, 59, 62], 1);
 
     expect(port.postMessage).toHaveBeenCalledOnce();
-    expect(port.postMessage).toHaveBeenCalledWith({ type: 'PAD_PLAY', notes: [48, 52, 55, 59, 62] });
+    expect(port.postMessage).toHaveBeenCalledWith({ type: 'PAD_PLAY', notes: [48, 52, 55, 59, 62], timbre: 1 });
+  });
+
+  it('tim_15 posts a chord of 7 notes in its timbre to the worklet', () => {
+    const { node, port } = padNode();
+
+    node.padPlay([21, 33, 45, 49, 52, 56, 59], 2);
+
+    expect(port.postMessage).toHaveBeenCalledOnce();
+    expect(port.postMessage).toHaveBeenCalledWith({ type: 'PAD_PLAY', notes: [21, 33, 45, 49, 52, 56, 59], timbre: 2 });
+  });
+
+  it('tim_15 posts the timbre of a file to the worklet', async () => {
+    const { node, port, decodeAudioData } = padNode(44100);
+    const left = new Float32Array([0.5, -0.5]);
+    const right = new Float32Array([0.25, -0.25]);
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(okFile));
+    decodeAudioData.mockResolvedValue({
+      numberOfChannels: 2,
+      getChannelData: (channel: number) => (channel === 0 ? left : right),
+    });
+
+    await node.padLoad(2, 59, '/pads/orchestra/B3.flac', 0, 176400);
+
+    expect(fetch).toHaveBeenCalledWith('/pads/orchestra/B3.flac');
+    expect(port.postMessage).toHaveBeenCalledOnce();
+    expect(port.postMessage).toHaveBeenCalledWith({
+      type: 'PAD_LOAD',
+      timbre: 2,
+      key: 59,
+      loopStart: 0,
+      loopEnd: 176400,
+      leftChannel: left,
+      rightChannel: right,
+    });
   });
 
   it('pad_09 posts a stop to the worklet', () => {
@@ -251,12 +285,13 @@ describe('MetronomeNode', () => {
       getChannelData: (channel: number) => (channel === 0 ? left : right),
     });
 
-    await node.padLoad(56, '/pads/new-age/Gs3.flac', 44100, 100001);
+    await node.padLoad(1, 56, '/pads/new-age/Gs3.flac', 44100, 100001);
 
     expect(fetch).toHaveBeenCalledWith('/pads/new-age/Gs3.flac');
     expect(port.postMessage).toHaveBeenCalledOnce();
     const message = port.postMessage.mock.calls[0][0];
     expect(message.type).toBe('PAD_LOAD');
+    expect(message.timbre).toBe(1);
     expect(message.key).toBe(56);
     expect(message.loopStart).toBe(48000);
     expect(message.loopEnd).toBe(108845); // 108844.63, to the nearest frame: the engine takes whole frames
@@ -269,7 +304,7 @@ describe('MetronomeNode', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(okFile));
     decodeAudioData.mockResolvedValue({ numberOfChannels: 1, getChannelData: () => new Float32Array([1, 0.5]) });
 
-    await node.padLoad(48, '/pads/new-age/C3.flac', 1234, 56789);
+    await node.padLoad(1, 48, '/pads/new-age/C3.flac', 1234, 56789);
 
     const message = port.postMessage.mock.calls[0][0];
     expect([message.loopStart, message.loopEnd]).toEqual([1234, 56789]);
@@ -281,7 +316,7 @@ describe('MetronomeNode', () => {
     const { node, port } = padNode();
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
 
-    await expect(node.padLoad(48, '/pads/new-age/C3.flac', 0, 100)).rejects.toThrow('offline');
+    await expect(node.padLoad(1, 48, '/pads/new-age/C3.flac', 0, 100)).rejects.toThrow('offline');
 
     expect(port.postMessage).not.toHaveBeenCalled();
   });
@@ -291,7 +326,7 @@ describe('MetronomeNode', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 404, arrayBuffer: async () => new ArrayBuffer(8) }));
     decodeAudioData.mockResolvedValue({ numberOfChannels: 1, getChannelData: () => new Float32Array(2) });
 
-    await expect(node.padLoad(48, '/pads/new-age/C3.flac', 0, 100)).rejects.toThrow('/pads/new-age/C3.flac');
+    await expect(node.padLoad(1, 48, '/pads/new-age/C3.flac', 0, 100)).rejects.toThrow('/pads/new-age/C3.flac');
 
     expect(decodeAudioData).not.toHaveBeenCalled();
     expect(port.postMessage).not.toHaveBeenCalled();
@@ -302,7 +337,7 @@ describe('MetronomeNode', () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(okFile));
     decodeAudioData.mockRejectedValue(new Error('bad audio'));
 
-    await expect(node.padLoad(48, '/pads/new-age/C3.flac', 0, 100)).rejects.toThrow('bad audio');
+    await expect(node.padLoad(1, 48, '/pads/new-age/C3.flac', 0, 100)).rejects.toThrow('bad audio');
 
     expect(port.postMessage).not.toHaveBeenCalled();
   });
