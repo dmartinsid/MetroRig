@@ -323,8 +323,8 @@ T19 → T20
 
 **Done when**:
 
-- [ ] `tests/MetronomeNode.test.ts` covers each method and a failed fetch
-- [ ] Gate passes
+- [x] `tests/MetronomeNode.test.ts` covers each method and a failed fetch
+- [x] Gate passes
 
 **Tests**: unit
 **Gate**: quick

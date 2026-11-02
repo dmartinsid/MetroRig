@@ -139,7 +139,10 @@ export class MetronomeNode extends EventTarget {
   }
 
   private async decode(audioUrl: string) {
-    const response = await fetch(audioUrl);
+    return this.decodeResponse(await fetch(audioUrl));
+  }
+
+  private async decodeResponse(response: Response) {
     const arrayBuffer = await response.arrayBuffer();
     const audioBuffer = await this.ctx.decodeAudioData(arrayBuffer);
 
@@ -181,6 +184,38 @@ export class MetronomeNode extends EventTarget {
 
   setClickMode(mode: number) {
     this.workletNode?.port.postMessage({ type: 'SET_CLICK_MODE', mode });
+  }
+
+  padPlay(notes: number[]) {
+    this.workletNode?.port.postMessage({ type: 'PAD_PLAY', notes });
+  }
+
+  padStop() {
+    this.workletNode?.port.postMessage({ type: 'PAD_STOP' });
+  }
+
+  padVolume(volume: number) {
+    this.workletNode?.port.postMessage({ type: 'PAD_VOLUME', volume });
+  }
+
+  // Loop points are frames of the 44.1 kHz file, and decoding converts it to the context's rate.
+  // Rejects when the file fails, so the caller can log it and use the nearest file.
+  async padLoad(key: number, url: string, loopStart: number, loopEnd: number) {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch ${url}: ${response.status}`);
+    }
+    const { leftChannel, rightChannel } = await this.decodeResponse(response);
+    const scale = this.ctx.sampleRate / 44100;
+
+    this.workletNode?.port.postMessage({
+      type: 'PAD_LOAD',
+      key,
+      loopStart: Math.round(loopStart * scale),
+      loopEnd: Math.round(loopEnd * scale),
+      leftChannel,
+      rightChannel
+    });
   }
 
   sampleRate(): number {
