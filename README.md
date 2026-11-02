@@ -47,7 +47,14 @@ Kick, Snare, High Tom, Mid Tom, Low Tom and Floor Tom come from The House Kit by
 
 ## Chord Pads
 
-The Improv screen layers a synth in the Rust engine over New Age by FreePats, a pad released under Creative Commons CC0: https://github.com/freepats/new-age. Thank you, FreePats! The files are in `public/pads/new-age/`, and `public/kit/LICENSE.md` lists them.
+The Improv screen holds a chord in one of five timbres, chosen in a select: New Age, Choir, Orchestra, Sweep and Analog. Analog comes from a synth in the Rust engine alone, and the others use samples released under Creative Commons CC0:
+
+- New Age by FreePats: https://github.com/freepats/new-age
+- Synth Pad Choir by FreePats: https://github.com/freepats/synth-pad-choir
+- Sweep Pad by FreePats: https://github.com/freepats/sweep-pad
+- Orchestra, built from the strings of VSCO 2 Community Edition by Versilian Studios: https://github.com/sgossner/VSCO-2-CE
+
+Thank you, FreePats and Versilian Studios! The files are in `public/pads/`, and `public/kit/LICENSE.md` lists them.
 
 ## Building for Production
 

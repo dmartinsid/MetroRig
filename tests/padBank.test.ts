@@ -157,4 +157,54 @@ describe('Timbre banks', () => {
     expect(sizeOf(padsDir)).toBeGreaterThan(0);
     expect(sizeOf(padsDir)).toBeLessThanOrEqual(12 * 1000 * 1000);
   });
+
+  // The recordings each key of the builder's table reads, by their paths in the repository
+  function recordingsOfKeys() {
+    const builder = fs.readFileSync(builderPath, 'utf8');
+    const templates = new Map([...builder.matchAll(/^(CELLO|VIOLA|VIOLIN|CONTRABASS) = '(.*)'$/gm)].map(([, name, template]) => [name, template]));
+    const table = builder.match(/^BANK = \{\n([\s\S]*?)^\}/m)![1];
+    return new Map([...table.matchAll(/^\s+(\d+): (.*)$/gm)].map(([, key, row]) =>
+      [Number(key), [...row.matchAll(/\((CELLO|VIOLA|VIOLIN|CONTRABASS), '([^']+)'/g)]
+        .map(([, section, note]) => templates.get(section)!.replace('{}', note))] as [number, string[]]));
+  }
+
+  it('tim_40 license lists each file', () => {
+    const license = fs.readFileSync(licensePath, 'utf8');
+    const row = (url: string) => license.split('\n').find(line => line.startsWith(`| \`${url.replace('/pads/', 'pads/')}\` |`));
+
+    for (const name of ['Choir', 'Sweep']) {
+      const { files } = PAD_TIMBRES.find(timbre => timbre.name === name)!;
+      expect(files.length).toBeGreaterThan(0);
+      for (const file of files) {
+        const note = path.basename(file.url, '.flac').replace('s', '#');
+        expect(row(file.url)).toContain(`\`samples/${note}.flac\``);
+      }
+    }
+
+    const recordings = recordingsOfKeys();
+    expect(orchestra.length).toBe(13);
+    for (const file of orchestra) {
+      const sources = recordings.get(file.key)!;
+      expect(sources.length).toBeGreaterThan(0);
+      for (const source of sources) expect(row(file.url)).toContain(`\`${source}\``);
+    }
+
+    for (const heading of ['## Synth Pad Choir', '## Sweep Pad', '## Orchestra pad']) {
+      const section = license.slice(license.indexOf(heading)).split(/\n## /)[0];
+      expect(license).toContain(heading);
+      expect(section).toContain('CC0');
+      expect(section).toContain('https://creativecommons.org/publicdomain/zero/1.0/');
+    }
+    expect(license).toContain('https://github.com/freepats/synth-pad-choir');
+    expect(license).toContain('https://github.com/freepats/sweep-pad');
+    expect(license).toContain('https://github.com/sgossner/VSCO-2-CE');
+  });
+
+  it('tim_41 README', () => {
+    const readme = fs.readFileSync(readmePath, 'utf8');
+    for (const credit of ['FreePats', 'Versilian Studios', 'https://github.com/freepats/synth-pad-choir',
+      'https://github.com/freepats/sweep-pad', 'https://github.com/sgossner/VSCO-2-CE']) {
+      expect(readme).toContain(credit);
+    }
+  });
 });

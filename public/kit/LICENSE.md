@@ -93,3 +93,59 @@ Each sample's source, by piece, recording and take, in the kit's own folders:
 | `pads/new-age/E4.flac` | `samples/E4.flac` |
 | `pads/new-age/Gs4.flac` | `samples/G#4.flac` |
 | `pads/new-age/C5.flac` | `samples/C5.flac` |
+
+## Synth Pad Choir
+
+`public/pads/choir/` holds 5 notes of Synth Pad Choir, samples by 快乐爱的小精灵 (Elf of Happy and Love), made with ZynAddSubFX and edited by Roberto for the FreePats project. Its README states: "Published under the terms of Creative Commons CC0 public domain dedication." The files are unchanged, except that `F#` became `Fs` in their names, because `#` breaks URLs.
+
+- Source: https://github.com/freepats/synth-pad-choir
+- License: https://creativecommons.org/publicdomain/zero/1.0/
+
+| File | Source |
+| ---- | ------ |
+| `pads/choir/C3.flac` | `samples/C3.flac` |
+| `pads/choir/Fs3.flac` | `samples/F#3.flac` |
+| `pads/choir/C4.flac` | `samples/C4.flac` |
+| `pads/choir/Fs4.flac` | `samples/F#4.flac` |
+| `pads/choir/C5.flac` | `samples/C5.flac` |
+
+## Sweep Pad
+
+`public/pads/sweep/` holds 8 notes of Sweep Pad by Roberto of the FreePats project, made with the ZynAddSubFX and Yoshimi synthesizers. Its README states: "Published under the terms of Creative Commons CC0 public domain dedication." The files are unchanged, except that `G#` became `Gs` in their names, because `#` breaks URLs.
+
+- Source: https://github.com/freepats/sweep-pad
+- License: https://creativecommons.org/publicdomain/zero/1.0/
+
+| File | Source |
+| ---- | ------ |
+| `pads/sweep/Gs2.flac` | `samples/G#2.flac` |
+| `pads/sweep/C3.flac` | `samples/C3.flac` |
+| `pads/sweep/E3.flac` | `samples/E3.flac` |
+| `pads/sweep/Gs3.flac` | `samples/G#3.flac` |
+| `pads/sweep/C4.flac` | `samples/C4.flac` |
+| `pads/sweep/E4.flac` | `samples/E4.flac` |
+| `pads/sweep/Gs4.flac` | `samples/G#4.flac` |
+| `pads/sweep/C5.flac` | `samples/C5.flac` |
+
+## Orchestra pad
+
+`public/pads/orchestra/` holds 13 notes built by `scripts/build_orchestra_bank.py` from the string recordings of VSCO 2 Community Edition by Versilian Studios, whose LICENSE is the CC0 1.0 Universal dedication. These files are processed: each recording is pitched to its key, tuned, looped and levelled, and the recordings of a key are mixed. The table names the recordings of each file, by their paths in the repository, and VSCO counts octaves so that C3 is MIDI 60.
+
+- Source: https://github.com/sgossner/VSCO-2-CE
+- License: https://creativecommons.org/publicdomain/zero/1.0/
+
+| File | Source |
+| ---- | ------ |
+| `pads/orchestra/B0.flac` | `Strings/Solo Contrabass/SusVib/BKCtbss_SusVib_F#0_v1_rr1.wav` |
+| `pads/orchestra/Ds1.flac` | `Strings/Solo Contrabass/SusVib/BKCtbss_SusVib_F#0_v1_rr1.wav` |
+| `pads/orchestra/G1.flac` | `Strings/Solo Contrabass/SusVib/BKCtbss_SusVib_G0_v1_rr1.wav` |
+| `pads/orchestra/B1.flac` | `Strings/Cello Section/susvib/susvib_C1_v1_1.wav`, `Strings/Solo Contrabass/SusVib/BKCtbss_SusVib_C1_v1_rr1.wav` |
+| `pads/orchestra/Ds2.flac` | `Strings/Cello Section/susvib/susvib_E1_v1_1.wav`, `Strings/Solo Contrabass/SusVib/BKCtbss_SusVib_E1_v1_rr1.wav` |
+| `pads/orchestra/G2.flac` | `Strings/Cello Section/susvib/susvib_G1_v1_1.wav`, `Strings/Solo Contrabass/SusVib/BKCtbss_SusVib_G#1_v1_rr1.wav` |
+| `pads/orchestra/B2.flac` | `Strings/Cello Section/susvib/susvib_B1_v1_1.wav` |
+| `pads/orchestra/Ds3.flac` | `Strings/Viola Section/susvib/ViolaEns_susvib_E2_v1_1.wav` |
+| `pads/orchestra/G3.flac` | `Strings/Viola Section/susvib/ViolaEns_susvib_B2_v1_1.wav` |
+| `pads/orchestra/B3.flac` | `Strings/Violin Section/susVib/VlnEns_susVib_B2_v1.wav` |
+| `pads/orchestra/Ds4.flac` | `Strings/Violin Section/susVib/VlnEns_susVib_D3_v1.wav` |
+| `pads/orchestra/G4.flac` | `Strings/Violin Section/susVib/VlnEns_susVib_F#3_v1.wav` |
+| `pads/orchestra/B4.flac` | `Strings/Violin Section/susVib/VlnEns_susVib_C4_v1.wav` |
