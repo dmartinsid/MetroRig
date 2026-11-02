@@ -224,6 +224,24 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: 430d4c6 (git)
 - last seen: 2026-11-02T03:35:51Z
 
+### L-036 - Decode audio fixtures the way the app delivers them, so a test measures the level that ships
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `pad-tests` · harmful: 0
+- features: pad-timbres
+- evidence: verification.md C12, C20, C21, C22; src/pad.rs timbre_banks (pad-tests)
+- last seen: 2026-11-02T20:28:55Z
+
+### L-037 - Confirm a level test against the real signal path before trusting a green bound
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `pad-tests` · harmful: 0
+- features: pad-timbres
+- evidence: verification.md C21; TIM-19 (pad-tests)
+- last seen: 2026-11-02T20:28:55Z
+
+### L-038 - Test on-demand loading with a partly loaded bank, not only empty and full
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `pad-engine` · harmful: 0
+- features: pad-timbres
+- evidence: verification.md C32; src/pad.rs new_voice (pad-engine)
+- last seen: 2026-11-02T20:28:55Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

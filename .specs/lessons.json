@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 36,
+  "next_id": 39,
   "lessons": [
     {
       "id": "L-001",
@@ -634,6 +634,60 @@
       ],
       "created": "2026-11-02T03:35:51Z",
       "last_seen": "2026-11-02T03:35:51Z"
+    },
+    {
+      "id": "L-036",
+      "key": "weak_test::decode audio fixtures the way the app delivers them so a test measures the level that ships",
+      "text": "Decode audio fixtures the way the app delivers them, so a test measures the level that ships",
+      "signal": "weak_test",
+      "scope": "pad-tests",
+      "status": "candidate",
+      "features": [
+        "pad-timbres"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "verification.md C12, C20, C21, C22; src/pad.rs timbre_banks (pad-tests)"
+      ],
+      "created": "2026-11-02T20:28:55Z",
+      "last_seen": "2026-11-02T20:28:55Z"
+    },
+    {
+      "id": "L-037",
+      "key": "weak_test::confirm a level test against the real signal path before trusting a green bound",
+      "text": "Confirm a level test against the real signal path before trusting a green bound",
+      "signal": "weak_test",
+      "scope": "pad-tests",
+      "status": "candidate",
+      "features": [
+        "pad-timbres"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "verification.md C21; TIM-19 (pad-tests)"
+      ],
+      "created": "2026-11-02T20:28:55Z",
+      "last_seen": "2026-11-02T20:28:55Z"
+    },
+    {
+      "id": "L-038",
+      "key": "ac_gap::test on demand loading with a partly loaded bank not only empty and full",
+      "text": "Test on-demand loading with a partly loaded bank, not only empty and full",
+      "signal": "ac_gap",
+      "scope": "pad-engine",
+      "status": "candidate",
+      "features": [
+        "pad-timbres"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "verification.md C32; src/pad.rs new_voice (pad-engine)"
+      ],
+      "created": "2026-11-02T20:28:55Z",
+      "last_seen": "2026-11-02T20:28:55Z"
     }
   ]
 }
