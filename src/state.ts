@@ -25,7 +25,7 @@ export type StoredPreset = Preset & { swing?: number };
 
 export type TrainerSettings = Preset['trainerSettings'];
 
-export type ViewMode = 'editor' | 'stadium' | 'grooves';
+export type ViewMode = 'editor' | 'stadium' | 'grooves' | 'improv';
 
 export interface PracticeLog {
   id?: number;
@@ -198,7 +198,7 @@ export class StateManager {
 
   private loadActiveViewMode() {
     const mode = localStorage.getItem('metrorig_view_mode');
-    if (mode === 'stadium' || mode === 'editor' || mode === 'grooves') {
+    if (mode === 'stadium' || mode === 'editor' || mode === 'grooves' || mode === 'improv') {
       this.activeViewMode = mode;
     }
   }

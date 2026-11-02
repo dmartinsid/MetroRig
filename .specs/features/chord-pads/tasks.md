@@ -343,8 +343,8 @@ T19 → T20
 
 **Done when**:
 
-- [ ] `src/index.test.ts` proves the link, title and saved screen
-- [ ] Gate passes
+- [x] `src/index.test.ts` proves the link, title and saved screen
+- [x] Gate passes
 
 **Tests**: integration
 **Gate**: quick

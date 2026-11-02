@@ -667,7 +667,7 @@ describe('Interface V2', () => {
 
     const header = document.querySelector('header')!;
     expect(header.querySelectorAll('a')).toHaveLength(0);
-    expect(header.querySelectorAll('button')).toHaveLength(3);
+    expect(header.querySelectorAll('button')).toHaveLength(4);
     ['Presets', 'tune', 'settings'].forEach(word => {
       const visible = [...header.childNodes].map(node => node.nodeName === 'DIV' ? '' : node.textContent).join(' ');
       expect(visible).not.toContain(word);
@@ -1660,7 +1660,7 @@ describe('Grooves Library', () => {
 
   it('nav_01 header links', async () => {
     await openPage();
-    expect([...document.querySelectorAll('header nav button')].map(link => link.textContent)).toEqual(['Editor', 'Stadium', 'Grooves']);
+    expect([...document.querySelectorAll('header nav button')].map(link => link.textContent)).toEqual(['Editor', 'Stadium', 'Grooves', 'Improv']);
   });
 
   it('nav_02 editor link', async () => {
@@ -2742,5 +2742,38 @@ describe('House Kit', () => {
     expect(links[0].getAttribute('href')).toBe('https://www.youtube.com/@BetterMixes');
     expect(links[0].target).toBe('_blank');
     expect(links[0].rel).toContain('noopener');
+  });
+});
+
+describe('Improv', () => {
+  afterEach(() => {
+    delete (globalThis as any).indexedDB;
+    localStorage.removeItem('metrorig_view_mode');
+  });
+
+  const shownScreens = () => ['editor-view', 'stadium-view', 'grooves-view', 'improv-view'].filter(id => !byId(id).classList.contains('hidden'));
+
+  it('pad_30 link and title', async () => {
+    await openPage();
+    const links = [...document.querySelectorAll<HTMLButtonElement>('header nav button')];
+    expect(links.map(link => link.textContent)).toEqual(['Editor', 'Stadium', 'Grooves', 'Improv']);
+    expect(shownScreens()).toEqual(['editor-view']);
+
+    links[3].click();
+
+    expect(shownScreens()).toEqual(['improv-view']);
+    expect(links[3].getAttribute('aria-current')).toBe('page');
+    expect(document.querySelector('#improv-view h1')?.textContent).toBe('Improv · Chord Pads');
+  });
+
+  it('pad_57 saved screen opens Improv', async () => {
+    await openPage();
+    byId<HTMLButtonElement>('nav-improv').click();
+    expect(localStorage.getItem('metrorig_view_mode')).toBe('improv');
+
+    await openPage();
+
+    expect(shownScreens()).toEqual(['improv-view']);
+    expect(byId('nav-improv').getAttribute('aria-current')).toBe('page');
   });
 });
