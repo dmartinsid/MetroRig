@@ -230,7 +230,7 @@ The Improv pad has one sound. The user liked what they heard, and their favourit
 | TIM-42 | Edge Cases | Design | Pending |
 | TIM-43 | Edge Cases | Design | Pending |
 | TIM-44 | Edge Cases | Design | Implementing |
-| TIM-45 | Edge Cases | Design | Pending |
+| TIM-45 | Edge Cases | Design | Implementing |
 
 **Coverage:** 45 total, 0 mapped to tasks, 45 unmapped until Tasks.
 

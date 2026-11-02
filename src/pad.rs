@@ -63,7 +63,6 @@ const MIXES: [Mix; TIMBRES] = [
 ];
 
 const NO_FILE: usize = usize::MAX;
-pub const NEW_AGE: u8 = 1;
 const FALLBACK: usize = 4; // Analog, whose synth stands in for a timbre with none
 const LOWEST_CHORD_NOTE: u8 = 45; // Below it are the notes a timbre adds, which that synth leaves out: it holds the chord
 
@@ -564,6 +563,7 @@ mod tests {
     const FADE_END: f32 = 2.0; // Past the 1.5 s fade
     const C7M9: [u8; 5] = [48, 52, 55, 59, 62]; // The chord of the demos
     const CHOIR: u8 = 0;
+    const NEW_AGE: u8 = 1;
     const ORCHESTRA: u8 = 2;
     const SWEEP: u8 = 3;
     const ANALOG: u8 = 4;
