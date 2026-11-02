@@ -278,7 +278,7 @@ Every ambiguity is resolved or recorded here.
 | PAD-35 | P1: The Improv screen | Design | Implementing |
 | PAD-36 | P1: The Improv screen | Design | Implementing |
 | PAD-40 | P1: The Improv screen | Design | Implementing |
-| PAD-41 | P1: The Improv screen | Design | Pending |
+| PAD-41 | P1: The Improv screen | Design | Implementing |
 | PAD-37 | P1: Approval by ear | Design | Pending |
 | PAD-38 | P1: Approval by ear | Design | Pending |
 | PAD-42 | P2: Pad volume | Design | Implementing |

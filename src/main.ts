@@ -1283,6 +1283,7 @@ function renderImprov() {
   padStatus.textContent = soundingChord
     ? `${chordName(soundingChord.root, soundingChord.type)} · ${chordNotes(soundingChord.root, soundingChord.type).join(' ')}`
     : 'No chord playing';
+  padStatus.classList.toggle('sounding', soundingChord !== null);
   padNotice.textContent = padNoticeText();
   padNotice.hidden = !padNotice.textContent;
   padStop.disabled = !soundingChord;
