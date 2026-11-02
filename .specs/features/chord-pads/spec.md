@@ -274,7 +274,7 @@ Every ambiguity is resolved or recorded here.
 | PAD-31 | P1: The Improv screen | Design | Pending |
 | PAD-32 | P1: The Improv screen | Design | Pending |
 | PAD-33 | P1: The Improv screen | Design | Pending |
-| PAD-34 | P1: The Improv screen | Design | Pending |
+| PAD-34 | P1: The Improv screen | Design | Implementing |
 | PAD-35 | P1: The Improv screen | Design | Pending |
 | PAD-36 | P1: The Improv screen | Design | Pending |
 | PAD-40 | P1: The Improv screen | Design | Pending |
@@ -283,7 +283,7 @@ Every ambiguity is resolved or recorded here.
 | PAD-38 | P1: Approval by ear | Design | Pending |
 | PAD-42 | P2: Pad volume | Design | Pending |
 | PAD-43 | P2: Pad volume | Design | Pending |
-| PAD-44 | P2: Pad volume | Design | Pending |
+| PAD-44 | P2: Pad volume | Design | Implementing |
 | PAD-45 | P2: Pad volume | Design | Pending |
 | PAD-46 | P2: Loading and failure | Design | Pending |
 | PAD-47 | P2: Loading and failure | Design | Pending |

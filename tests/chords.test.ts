@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { CHORD_TYPES, ROOTS, chordMidi, chordName, nextChord } from '../src/chords';
+import { CHORD_TYPES, ROOTS, chordMidi, chordName, chordNotes, nextChord, parseVolume } from '../src/chords';
 
 // The roots and types as the spec lists them, in PAD-01 and PAD-02
 const SPEC_ROOTS = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
@@ -24,6 +24,10 @@ const SPEC_ROOT_MIDI: Record<string, number> = {
 };
 
 const typeIndex = (suffix: string) => CHORD_TYPES.findIndex(type => type.suffix === suffix);
+const notesOf = (root: string, suffix: string) => chordNotes(ROOTS.indexOf(root), typeIndex(suffix)).join(' ');
+const NATURAL_PITCH: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+const pitchOf = (note: string) =>
+  NATURAL_PITCH[note[0]] + [...note.slice(1)].reduce((sum, mark) => sum + (mark === '#' ? 1 : -1), 12);
 
 describe('Chords', () => {
   it('pad_01 offers 168 chords', () => {
@@ -71,5 +75,33 @@ describe('Chords', () => {
     expect(nextChord(cm7, f7)).toEqual(f7);
     expect(nextChord(cm7, sameRoot)).toEqual(sameRoot);
     expect(nextChord(cm7, { ...cm7 })).toBeNull();
+  });
+
+  it('pad_34 spelling', () => {
+    expect(notesOf('Eb', 'm')).toBe('Eb Gb Bb');
+    expect(notesOf('Ab', 'm')).toBe('Ab Cb Eb');
+    expect(notesOf('Eb', 'dim')).toBe('Eb Gb A');
+    expect(notesOf('C', '7M(9)')).toBe('C E G B D');
+    expect(notesOf('C#', '')).toBe('C# E# G#'); // E#, not F: each degree takes its own letter
+    expect(notesOf('F#', 'aug')).toBe('F# A# D'); // C## is D
+    expect(notesOf('Ab', 'dim')).toBe('Ab Cb D'); // Ebb is D
+    expect(notesOf('C', 'sus4')).toBe('C F G');
+    expect(notesOf('C', 'sus2')).toBe('C D G');
+    expect(notesOf('A', '6')).toBe('A C# E F#');
+    ROOTS.forEach((_, root) => CHORD_TYPES.forEach((_, type) => {
+      const notes = chordNotes(root, type);
+      expect(notes).toHaveLength(CHORD_TYPES[type].semitones.length);
+      expect(notes.every(note => /^[A-G][#b]?$/.test(note))).toBe(true);
+      expect(notes.map(note => pitchOf(note) % 12)).toEqual(chordMidi(root, type).map(note => note % 12));
+    }));
+  });
+
+  it('pad_44 parses the volume', () => {
+    expect(parseVolume('0')).toBe(0);
+    expect(parseVolume('30')).toBe(30);
+    expect(parseVolume('100')).toBe(100);
+    for (const bad of [null, '', ' ', 'loud', 'NaN', 'Infinity', '-1', '101']) {
+      expect(parseVolume(bad)).toBe(70);
+    }
   });
 });
