@@ -1,4 +1,4 @@
-// 12 roots × 14 types, in Brazilian notation
+// 12 roots × 34 types, in Brazilian notation
 export const ROOTS = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
 
 const LOWEST_ROOT = 45; // A2; roots run up to G#3
@@ -6,21 +6,44 @@ const LETTERS = 'CDEFGAB';
 const LETTER_PITCHES = [0, 2, 4, 5, 7, 9, 11];
 const DEFAULT_VOLUME = 70;
 
-export const CHORD_TYPES: { suffix: string; semitones: number[]; degrees: number[] }[] = [
-  { suffix: '', semitones: [0, 4, 7], degrees: [1, 3, 5] },
-  { suffix: 'm', semitones: [0, 3, 7], degrees: [1, 3, 5] },
-  { suffix: '7', semitones: [0, 4, 7, 10], degrees: [1, 3, 5, 7] },
-  { suffix: '7M', semitones: [0, 4, 7, 11], degrees: [1, 3, 5, 7] },
-  { suffix: 'm7', semitones: [0, 3, 7, 10], degrees: [1, 3, 5, 7] },
-  { suffix: 'sus4', semitones: [0, 5, 7], degrees: [1, 4, 5] },
-  { suffix: 'sus2', semitones: [0, 2, 7], degrees: [1, 2, 5] },
-  { suffix: 'add9', semitones: [0, 4, 7, 14], degrees: [1, 3, 5, 9] },
-  { suffix: '9', semitones: [0, 4, 7, 10, 14], degrees: [1, 3, 5, 7, 9] },
-  { suffix: 'm9', semitones: [0, 3, 7, 10, 14], degrees: [1, 3, 5, 7, 9] },
-  { suffix: '7M(9)', semitones: [0, 4, 7, 11, 14], degrees: [1, 3, 5, 7, 9] },
-  { suffix: '6', semitones: [0, 4, 7, 9], degrees: [1, 3, 5, 6] },
-  { suffix: 'dim', semitones: [0, 3, 6], degrees: [1, 3, 5] },
-  { suffix: 'aug', semitones: [0, 4, 8], degrees: [1, 3, 5] },
+export const CHORD_FAMILIES = ['Triads', 'Sevenths', 'Ninths', 'Elevenths', 'Thirteenths', 'Altered'];
+
+// At most 5 notes each, so a chord of 6 or 7 leaves one out: 11ths and 13ths drop the 5th or the 3rd
+export const CHORD_TYPES: { family: string; suffix: string; semitones: number[]; degrees: number[] }[] = [
+  { family: 'Triads', suffix: '', semitones: [0, 4, 7], degrees: [1, 3, 5] },
+  { family: 'Triads', suffix: 'm', semitones: [0, 3, 7], degrees: [1, 3, 5] },
+  { family: 'Triads', suffix: 'dim', semitones: [0, 3, 6], degrees: [1, 3, 5] },
+  { family: 'Triads', suffix: 'aug', semitones: [0, 4, 8], degrees: [1, 3, 5] },
+  { family: 'Triads', suffix: 'sus2', semitones: [0, 2, 7], degrees: [1, 2, 5] },
+  { family: 'Triads', suffix: 'sus4', semitones: [0, 5, 7], degrees: [1, 4, 5] },
+  { family: 'Sevenths', suffix: '6', semitones: [0, 4, 7, 9], degrees: [1, 3, 5, 6] },
+  { family: 'Sevenths', suffix: 'm6', semitones: [0, 3, 7, 9], degrees: [1, 3, 5, 6] },
+  { family: 'Sevenths', suffix: '7', semitones: [0, 4, 7, 10], degrees: [1, 3, 5, 7] },
+  { family: 'Sevenths', suffix: '7M', semitones: [0, 4, 7, 11], degrees: [1, 3, 5, 7] },
+  { family: 'Sevenths', suffix: 'm7', semitones: [0, 3, 7, 10], degrees: [1, 3, 5, 7] },
+  { family: 'Sevenths', suffix: 'm7M', semitones: [0, 3, 7, 11], degrees: [1, 3, 5, 7] },
+  { family: 'Sevenths', suffix: 'm7(b5)', semitones: [0, 3, 6, 10], degrees: [1, 3, 5, 7] },
+  { family: 'Sevenths', suffix: 'dim7', semitones: [0, 3, 6, 9], degrees: [1, 3, 5, 7] },
+  { family: 'Sevenths', suffix: '7sus4', semitones: [0, 5, 7, 10], degrees: [1, 4, 5, 7] },
+  { family: 'Ninths', suffix: 'add9', semitones: [0, 4, 7, 14], degrees: [1, 3, 5, 9] },
+  { family: 'Ninths', suffix: 'madd9', semitones: [0, 3, 7, 14], degrees: [1, 3, 5, 9] },
+  { family: 'Ninths', suffix: '9', semitones: [0, 4, 7, 10, 14], degrees: [1, 3, 5, 7, 9] },
+  { family: 'Ninths', suffix: 'm9', semitones: [0, 3, 7, 10, 14], degrees: [1, 3, 5, 7, 9] },
+  { family: 'Ninths', suffix: '7M(9)', semitones: [0, 4, 7, 11, 14], degrees: [1, 3, 5, 7, 9] },
+  { family: 'Ninths', suffix: '9sus4', semitones: [0, 5, 7, 10, 14], degrees: [1, 4, 5, 7, 9] },
+  { family: 'Ninths', suffix: '6/9', semitones: [0, 4, 7, 9, 14], degrees: [1, 3, 5, 6, 9] },
+  { family: 'Elevenths', suffix: 'add11', semitones: [0, 4, 7, 17], degrees: [1, 3, 5, 11] },
+  { family: 'Elevenths', suffix: '11', semitones: [0, 7, 10, 14, 17], degrees: [1, 5, 7, 9, 11] },
+  { family: 'Elevenths', suffix: 'm11', semitones: [0, 3, 10, 14, 17], degrees: [1, 3, 7, 9, 11] },
+  { family: 'Elevenths', suffix: '7(#11)', semitones: [0, 4, 10, 14, 18], degrees: [1, 3, 7, 9, 11] },
+  { family: 'Elevenths', suffix: '7M(#11)', semitones: [0, 4, 11, 14, 18], degrees: [1, 3, 7, 9, 11] },
+  { family: 'Thirteenths', suffix: '13', semitones: [0, 4, 10, 14, 21], degrees: [1, 3, 7, 9, 13] },
+  { family: 'Thirteenths', suffix: 'm13', semitones: [0, 3, 10, 14, 21], degrees: [1, 3, 7, 9, 13] },
+  { family: 'Altered', suffix: '7(b9)', semitones: [0, 4, 7, 10, 13], degrees: [1, 3, 5, 7, 9] },
+  { family: 'Altered', suffix: '7(#9)', semitones: [0, 4, 7, 10, 15], degrees: [1, 3, 5, 7, 9] },
+  { family: 'Altered', suffix: '7(#5)', semitones: [0, 4, 8, 10], degrees: [1, 3, 5, 7] },
+  { family: 'Altered', suffix: '7(b5)', semitones: [0, 4, 6, 10], degrees: [1, 3, 5, 7] },
+  { family: 'Altered', suffix: '7(b13)', semitones: [0, 4, 7, 10, 20], degrees: [1, 3, 5, 7, 13] },
 ];
 
 // Indexes into ROOTS and CHORD_TYPES

@@ -125,7 +125,7 @@ describe('Timbre banks', () => {
     const notes = [...new Set(ROOTS.flatMap((_, root) => CHORD_TYPES.flatMap((_, type) =>
       timbreNotes(root, type, PAD_TIMBRES.findIndex(timbre => timbre.name === 'Orchestra')))))].sort((a, b) => a - b);
     expect(notes[0]).toBe(21);
-    expect(notes[notes.length - 1]).toBe(70);
+    expect(notes[notes.length - 1]).toBe(77);
     const highestOf = (note: number) => Math.max(...sections.get(nearestKey(note))!.map(name => order.indexOf(name)));
     notes.slice(1).forEach((note, index) => {
       expect(highestOf(note)).toBeGreaterThanOrEqual(highestOf(notes[index]));

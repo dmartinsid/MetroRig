@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { CHORD_TYPES, DEFAULT_TIMBRE, PAD_TIMBRES, ROOTS, chordMidi, chordName, chordNotes, nextChord, parseTimbre, parseVolume, timbreNotes } from '../src/chords';
+import { CHORD_FAMILIES, CHORD_TYPES, DEFAULT_TIMBRE, PAD_TIMBRES, ROOTS, chordMidi, chordName, chordNotes, nextChord, parseTimbre, parseVolume, timbreNotes } from '../src/chords';
 
 // The roots and types as the spec lists them, in PAD-01 and PAD-02
 const SPEC_ROOTS = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
@@ -29,13 +29,108 @@ const NATURAL_PITCH: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A:
 const pitchOf = (note: string) =>
   NATURAL_PITCH[note[0]] + [...note.slice(1)].reduce((sum, mark) => sum + (mark === '#' ? 1 : -1), 12);
 
-describe('Chords', () => {
-  it('pad_01 offers 168 chords', () => {
-    expect(ROOTS).toEqual(SPEC_ROOTS);
-    expect(CHORD_TYPES.map(type => type.suffix)).toEqual(SPEC_TYPES.map(([suffix]) => suffix));
+// CHD-02's table: family, suffix, semitones, degrees
+const LIBRARY: [string, string, number[], number[]][] = [
+  ['Triads', '', [0, 4, 7], [1, 3, 5]],
+  ['Triads', 'm', [0, 3, 7], [1, 3, 5]],
+  ['Triads', 'dim', [0, 3, 6], [1, 3, 5]],
+  ['Triads', 'aug', [0, 4, 8], [1, 3, 5]],
+  ['Triads', 'sus2', [0, 2, 7], [1, 2, 5]],
+  ['Triads', 'sus4', [0, 5, 7], [1, 4, 5]],
+  ['Sevenths', '6', [0, 4, 7, 9], [1, 3, 5, 6]],
+  ['Sevenths', 'm6', [0, 3, 7, 9], [1, 3, 5, 6]],
+  ['Sevenths', '7', [0, 4, 7, 10], [1, 3, 5, 7]],
+  ['Sevenths', '7M', [0, 4, 7, 11], [1, 3, 5, 7]],
+  ['Sevenths', 'm7', [0, 3, 7, 10], [1, 3, 5, 7]],
+  ['Sevenths', 'm7M', [0, 3, 7, 11], [1, 3, 5, 7]],
+  ['Sevenths', 'm7(b5)', [0, 3, 6, 10], [1, 3, 5, 7]],
+  ['Sevenths', 'dim7', [0, 3, 6, 9], [1, 3, 5, 7]],
+  ['Sevenths', '7sus4', [0, 5, 7, 10], [1, 4, 5, 7]],
+  ['Ninths', 'add9', [0, 4, 7, 14], [1, 3, 5, 9]],
+  ['Ninths', 'madd9', [0, 3, 7, 14], [1, 3, 5, 9]],
+  ['Ninths', '9', [0, 4, 7, 10, 14], [1, 3, 5, 7, 9]],
+  ['Ninths', 'm9', [0, 3, 7, 10, 14], [1, 3, 5, 7, 9]],
+  ['Ninths', '7M(9)', [0, 4, 7, 11, 14], [1, 3, 5, 7, 9]],
+  ['Ninths', '9sus4', [0, 5, 7, 10, 14], [1, 4, 5, 7, 9]],
+  ['Ninths', '6/9', [0, 4, 7, 9, 14], [1, 3, 5, 6, 9]],
+  ['Elevenths', 'add11', [0, 4, 7, 17], [1, 3, 5, 11]],
+  ['Elevenths', '11', [0, 7, 10, 14, 17], [1, 5, 7, 9, 11]],
+  ['Elevenths', 'm11', [0, 3, 10, 14, 17], [1, 3, 7, 9, 11]],
+  ['Elevenths', '7(#11)', [0, 4, 10, 14, 18], [1, 3, 7, 9, 11]],
+  ['Elevenths', '7M(#11)', [0, 4, 11, 14, 18], [1, 3, 7, 9, 11]],
+  ['Thirteenths', '13', [0, 4, 10, 14, 21], [1, 3, 7, 9, 13]],
+  ['Thirteenths', 'm13', [0, 3, 10, 14, 21], [1, 3, 7, 9, 13]],
+  ['Altered', '7(b9)', [0, 4, 7, 10, 13], [1, 3, 5, 7, 9]],
+  ['Altered', '7(#9)', [0, 4, 7, 10, 15], [1, 3, 5, 7, 9]],
+  ['Altered', '7(#5)', [0, 4, 8, 10], [1, 3, 5, 7]],
+  ['Altered', '7(b5)', [0, 4, 6, 10], [1, 3, 5, 7]],
+  ['Altered', '7(b13)', [0, 4, 7, 10, 20], [1, 3, 5, 7, 13]],
+];
+
+describe('Chord library', () => {
+  it('chd_01 offers 408 chords', () => {
+    expect(ROOTS).toHaveLength(12);
+    expect(CHORD_TYPES).toHaveLength(34);
     const names = ROOTS.flatMap((_, root) => CHORD_TYPES.map((_, type) => chordName(root, type)));
-    expect(names).toHaveLength(168);
-    expect(new Set(names).size).toBe(168);
+    expect(names).toHaveLength(408);
+    expect(new Set(names).size).toBe(408);
+    expect(chordName(ROOTS.indexOf('B'), typeIndex('m7(b5)'))).toBe('Bm7(b5)');
+    expect(chordName(ROOTS.indexOf('G'), typeIndex('7(b13)'))).toBe('G7(b13)');
+  });
+
+  it('chd_02 semitones of each type', () => {
+    expect(CHORD_TYPES.map(({ family, suffix, semitones, degrees }) => [family, suffix, semitones, degrees])).toEqual(LIBRARY);
+    expect(CHORD_FAMILIES).toEqual(['Triads', 'Sevenths', 'Ninths', 'Elevenths', 'Thirteenths', 'Altered']);
+    CHORD_TYPES.forEach(({ semitones, degrees }) => {
+      expect(semitones.length).toBeLessThanOrEqual(5);
+      expect(degrees).toHaveLength(semitones.length);
+    });
+  });
+
+  it('chd_03 voices every root', () => {
+    for (const [, suffix, semitones] of LIBRARY) {
+      ROOTS.forEach((name, root) => {
+        expect(chordMidi(root, typeIndex(suffix))).toEqual(semitones.map(semitone => SPEC_ROOT_MIDI[name] + semitone));
+      });
+    }
+    expect(Math.max(...ROOTS.flatMap((_, root) => CHORD_TYPES.flatMap((_, type) => chordMidi(root, type))))).toBe(77);
+  });
+
+  it('chd_04 spells the new chords', () => {
+    expect(notesOf('C', '11')).toBe('C G Bb D F');
+    expect(notesOf('C', '7(b13)')).toBe('C E G Bb Ab');
+    expect(notesOf('C', 'dim7')).toBe('C Eb Gb A');
+    expect(notesOf('C', 'm11')).toBe('C Eb Bb D F');
+    expect(notesOf('C', '7(#11)')).toBe('C E Bb D F#');
+    expect(notesOf('C', '7M(#11)')).toBe('C E B D F#');
+    expect(notesOf('C', '13')).toBe('C E Bb D A');
+    expect(notesOf('C', '7(b9)')).toBe('C E G Bb Db');
+    expect(notesOf('C', '7(#9)')).toBe('C E G Bb D#');
+    expect(notesOf('C', '7(#5)')).toBe('C E G# Bb');
+    expect(notesOf('C', '7(b5)')).toBe('C E Gb Bb');
+    expect(notesOf('B', 'm7(b5)')).toBe('B D F A');
+    expect(notesOf('C', '6/9')).toBe('C E G A D');
+    // Every note carries the pitch it plays, in all 408
+    ROOTS.forEach((_, root) => CHORD_TYPES.forEach((_, type) => {
+      const midi = chordMidi(root, type);
+      expect(chordNotes(root, type).map(note => pitchOf(note) % 12)).toEqual(midi.map(note => note % 12));
+    }));
+  });
+
+  it('chd_05 keeps the old types', () => {
+    for (const [suffix, semitones] of SPEC_TYPES) {
+      expect(CHORD_TYPES[typeIndex(suffix)].semitones).toEqual(semitones);
+    }
+    expect(notesOf('Eb', 'm')).toBe('Eb Gb Bb');
+    expect(notesOf('Ab', 'm')).toBe('Ab Cb Eb');
+    expect(notesOf('Eb', 'dim')).toBe('Eb Gb A');
+    expect(notesOf('C', '7M(9)')).toBe('C E G B D');
+  });
+});
+
+describe('Chords', () => {
+  it('pad_01 names the chords', () => {
+    expect(ROOTS).toEqual(SPEC_ROOTS);
     expect(chordName(ROOTS.indexOf('C'), typeIndex('7M(9)'))).toBe('C7M(9)');
     expect(chordName(ROOTS.indexOf('Eb'), typeIndex('m'))).toBe('Ebm');
     expect(chordName(ROOTS.indexOf('F#'), typeIndex(''))).toBe('F#');
