@@ -119,8 +119,8 @@ T19 → T20
 
 **Done when**:
 
-- [ ] Tests cover `Ebm`, `Abm`, `Ebdim`, `C#`, `F#aug` and a bad stored volume
-- [ ] Gate passes
+- [x] Tests cover `Ebm`, `Abm`, `Ebdim`, `C#`, `F#aug` and a bad stored volume
+- [x] Gate passes
 
 **Tests**: unit
 **Gate**: quick

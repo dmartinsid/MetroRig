@@ -2,6 +2,9 @@
 export const ROOTS = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
 
 const LOWEST_ROOT = 45; // A2; roots run up to G#3
+const LETTERS = 'CDEFGAB';
+const LETTER_PITCHES = [0, 2, 4, 5, 7, 9, 11];
+const DEFAULT_VOLUME = 70;
 
 export const CHORD_TYPES: { suffix: string; semitones: number[]; degrees: number[] }[] = [
   { suffix: '', semitones: [0, 4, 7], degrees: [1, 3, 5] },
@@ -32,7 +35,24 @@ export function chordMidi(root: number, type: number): number[] {
   return CHORD_TYPES[type].semitones.map(semitone => bass + semitone);
 }
 
+// Each degree takes its own letter; a double accidental becomes the natural note of its pitch (AD-018)
+export function chordNotes(root: number, type: number): string[] {
+  const rootLetter = LETTERS.indexOf(ROOTS[root][0]);
+  const { semitones, degrees } = CHORD_TYPES[type];
+  return semitones.map((semitone, index) => {
+    const pitch = (root + semitone) % 12;
+    const letter = (rootLetter + degrees[index] - 1) % LETTERS.length;
+    const accidental = (pitch - LETTER_PITCHES[letter] + 18) % 12 - 6;
+    return Math.abs(accidental) > 1 ? ROOTS[pitch] : LETTERS[letter] + ['b', '', '#'][accidental + 1];
+  });
+}
+
 // The sounding chord after a click: the same chord stops, another replaces it
 export function nextChord(current: ChordId | null, clicked: ChordId): ChordId | null {
   return current?.root === clicked.root && current.type === clicked.type ? null : clicked;
+}
+
+export function parseVolume(stored: string | null): number {
+  const volume = stored?.trim() ? Number(stored) : NaN;
+  return volume >= 0 && volume <= 100 ? volume : DEFAULT_VOLUME;
 }
