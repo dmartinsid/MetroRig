@@ -177,3 +177,11 @@
 - **Scope**: pad-timbres, supersedes PAD-27 of chord-pads and the bound of TIM-20
 - **Date**: 2026-11-02
 - **Status**: active (AD-022)
+
+### AD-023
+- **Decision**: A chord is chosen by one row of roots and types grouped by family, and a click on either plays. This supersedes PAD-31's grid, PAD-41's sideways scroll, and "Any chord is one click away from any other": a chord that changes both root and type takes two clicks.
+- **Reason**: The question: "Como deve ser a escolha do acorde? Com 34 tipos, a grade atual viraria uma tabela de 408 botões." The user chose "Tônica + tipo", over tabs of grids and one long grid.
+- **Trade-off**: Moving to a chord that shares neither root nor type passes through a chord on the way.
+- **Scope**: chord-library, the `Improv` screen
+- **Date**: 2026-11-02
+- **Status**: active (AD-023)
