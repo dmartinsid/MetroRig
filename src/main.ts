@@ -6,7 +6,7 @@ import { VisualScheduler } from './visualSync';
 import { audibleSteps, createTrackMix, isAudible, toggleMute, toggleSolo } from './trackMix';
 import { formatBarStep, formatClock, formatLatency, formatSteps, formatTimer, nextDenominator } from './display';
 import { GENRE_TABS, SONGS, GenreTab, Song, songToPreset, songsForGenre } from './songs';
-import { CHORD_TYPES, ChordId, PAD_TIMBRES, PadFile, ROOTS, chordName, chordNotes, nextChord, parseTimbre, parseVolume, timbreNotes } from './chords';
+import { CHORD_FAMILIES, CHORD_TYPES, ChordId, PAD_TIMBRES, PadFile, ROOTS, chordName, chordNotes, chordOfRoot, chordOfType, nextChord, parseTimbre, parseVolume, timbreNotes } from './chords';
 import workletUrl from './audio/metronome-processor?url';
 
 declare const gsap: any;
@@ -88,7 +88,8 @@ const btnSaveGroove = document.getElementById('btn-save-groove') as HTMLButtonEl
 
 const padStatus = document.getElementById('pad-status') as HTMLElement;
 const padNotice = document.getElementById('pad-notice') as HTMLElement;
-const chordGrid = document.getElementById('chord-grid') as HTMLTableElement;
+const chordRoots = document.getElementById('chord-roots') as HTMLElement;
+const chordTypes = document.getElementById('chord-types') as HTMLElement;
 const padStop = document.getElementById('pad-stop') as HTMLButtonElement;
 const improvDot = document.getElementById('improv-dot') as HTMLElement;
 const padVolumeSlider = document.getElementById('pad-volume') as HTMLInputElement;
@@ -1215,7 +1216,9 @@ let soundingChord: ChordId | null = null;
 // Where the clicks lead, ahead of soundingChord while the engine starts, so the last click wins
 let clickedChord: ChordId | null = null;
 let audioFailed = false;
-const chordButtons = new Map<ChordId, HTMLButtonElement>();
+let selectedChord: ChordId = { root: 0, type: 0 }; // What a click on a root or type keeps the other half of
+const rootButtons: HTMLButtonElement[] = [];
+const typeButtons: HTMLButtonElement[] = [];
 
 async function engineReady(): Promise<boolean> {
   try {
@@ -1247,7 +1250,9 @@ function settleChord() {
 
 async function pressChord(chord: ChordId) {
   audioNode.resumeContext(); // A browser only honours it within the click
+  selectedChord = chord;
   clickedChord = nextChord(clickedChord, chord);
+  renderImprov();
   if (!(await engineReady())) clickedChord = null;
   settleChord();
 }
@@ -1293,7 +1298,12 @@ function padNoticeText() {
 }
 
 function renderImprov() {
-  chordButtons.forEach((button, chord) => button.setAttribute('aria-pressed', String(chord === soundingChord)));
+  const mark = (button: HTMLButtonElement, sounding: boolean, selected: boolean) => {
+    button.setAttribute('aria-pressed', String(sounding));
+    button.dataset.state = sounding ? 'sounding' : selected ? 'selected' : '';
+  };
+  rootButtons.forEach((button, root) => mark(button, soundingChord?.root === root, selectedChord.root === root));
+  typeButtons.forEach((button, type) => mark(button, soundingChord?.type === type, selectedChord.type === type));
   padStatus.textContent = soundingChord
     ? `${chordName(soundingChord.root, soundingChord.type)} · ${chordNotes(soundingChord.root, soundingChord.type).join(' ')}`
     : 'No chord playing';
@@ -1322,38 +1332,30 @@ padVolumeSlider.oninput = () => {
   sendPadVolume();
 };
 
-function chordHeader(text: string, scope: 'col' | 'row') {
-  const header = document.createElement('th');
-  header.setAttribute('scope', scope);
-  header.textContent = text;
-  return header;
+function chordButton(label: string, onclick: () => void) {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'chord-btn';
+  button.textContent = label;
+  button.onclick = onclick;
+  return button;
 }
 
-function drawChordGrid() {
-  const headerRow = document.createElement('tr');
-  headerRow.append(document.createElement('td'), ...CHORD_TYPES.map(({ suffix }) => chordHeader(suffix || 'major', 'col')));
-  const head = document.createElement('thead');
-  head.appendChild(headerRow);
-
-  const body = document.createElement('tbody');
-  ROOTS.forEach((root, rootIndex) => {
-    const row = document.createElement('tr');
-    row.appendChild(chordHeader(root, 'row'));
-    CHORD_TYPES.forEach((_, type) => {
-      const chord = { root: rootIndex, type };
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'chord-btn';
-      button.textContent = chordName(rootIndex, type);
-      button.onclick = () => pressChord(chord);
-      chordButtons.set(chord, button);
-      const cell = document.createElement('td');
-      cell.appendChild(button);
-      row.appendChild(cell);
-    });
-    body.appendChild(row);
+function drawChordSelector() {
+  ROOTS.forEach((name, root) => rootButtons.push(chordButton(name, () => pressChord(chordOfRoot(selectedChord, root)))));
+  chordRoots.append(...rootButtons);
+  CHORD_TYPES.forEach(({ suffix }, type) => typeButtons.push(chordButton(suffix || 'maj', () => pressChord(chordOfType(selectedChord, type)))));
+  CHORD_FAMILIES.forEach(family => {
+    const section = document.createElement('section');
+    section.className = 'chord-family';
+    const heading = document.createElement('h2');
+    heading.textContent = family;
+    const buttons = document.createElement('div');
+    buttons.className = 'chord-family-types';
+    buttons.append(...typeButtons.filter((_, type) => CHORD_TYPES[type].family === family));
+    section.append(heading, buttons);
+    chordTypes.appendChild(section);
   });
-  chordGrid.append(head, body);
 }
 
 function drawTimbreSelect() {
@@ -1374,8 +1376,9 @@ drawMixCards();
 drawGroovesScreen();
 drawFigurePalette();
 drawGrid();
-drawChordGrid();
+drawChordSelector();
 drawTimbreSelect();
+renderImprov();
 padVolumeSlider.value = String(parseVolume(localStorage.getItem('metrorig_pad_volume')));
 padVolumeValue.textContent = padVolumeSlider.value;
 renderImprov();

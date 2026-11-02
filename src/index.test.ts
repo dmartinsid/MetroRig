@@ -4,7 +4,7 @@ import * as path from 'path';
 import { MetronomeNode } from './audio/MetronomeNode';
 import { SONGS } from './songs';
 import { STADIUM_GROUPS, TRACKS } from './kit';
-import { CHORD_TYPES } from './chords';
+import { CHORD_FAMILIES, CHORD_TYPES, ROOTS } from './chords';
 
 const mockInit = vi.fn().mockResolvedValue(undefined);
 const mockLoadSample = vi.fn().mockResolvedValue(undefined);
@@ -338,6 +338,28 @@ async function openPage(presets: any[] = []) {
   await import('./main');
   await flush();
   return stores;
+}
+
+const rootButton = (name: string) =>
+  [...document.querySelectorAll<HTMLButtonElement>('#chord-roots button')].find(button => button.textContent === name)!;
+const typeButton = (label: string) =>
+  [...document.querySelectorAll<HTMLButtonElement>('#chord-types button')].find(button => button.textContent === label)!;
+
+// Reaches a chord by name with the clicks a musician needs: one if it shares its root or type with the selection, two
+// within one tick if not, which the pad settles as one chord (CHD-33)
+function pressChord(name: string) {
+  const root = [...ROOTS].sort((a, b) => b.length - a.length).find(candidate => name.startsWith(candidate))!;
+  const [rootBtn, typeBtn] = [rootButton(root), typeButton(name.slice(root.length) || 'maj')];
+  const rootMarked = !!rootBtn.dataset.state;
+  const typeMarked = !!typeBtn.dataset.state;
+  if (!typeMarked) typeBtn.click();
+  if (!rootMarked || typeMarked) rootBtn.click();
+}
+
+function pressedChords() {
+  const pressed = (list: string) => document.querySelector(`${list} button[aria-pressed="true"]`)?.textContent;
+  const [root, type] = [pressed('#chord-roots'), pressed('#chord-types')];
+  return root && type ? [root + (type === 'maj' ? '' : type)] : [];
 }
 
 const byId = <T extends HTMLElement = HTMLInputElement>(id: string) => document.getElementById(id) as unknown as T;
@@ -2764,18 +2786,14 @@ describe('Improv', () => {
     localStorage.removeItem('metrorig_view_mode');
   });
 
-  const chordButton = (name: string) =>
-    [...document.querySelectorAll<HTMLButtonElement>('#chord-grid button')].find(button => button.textContent === name)!;
   const clickChord = async (name: string) => {
-    chordButton(name).click();
+    pressChord(name);
     await flush();
   };
   const openImprov = async () => {
     byId<HTMLButtonElement>('nav-improv').click();
     await flush();
   };
-  const pressedChords = () =>
-    [...document.querySelectorAll<HTMLButtonElement>('#chord-grid button[aria-pressed="true"]')].map(button => button.textContent);
   const shownChord = () => byId('pad-status').textContent;
   const notice = () => (byId('pad-notice').hidden ? null : byId('pad-notice').textContent);
   // Resolves the engine start by hand
@@ -2910,12 +2928,12 @@ describe('Improv', () => {
     await openImprov();
     expect(mockNode.resumeContext).not.toHaveBeenCalled();
 
-    chordButton('C').click(); // No await: the browser only honours it within the click
+    pressChord('C'); // No await: the browser only honours it within the click
     expect(mockNode.resumeContext).toHaveBeenCalledTimes(1);
 
     release();
     await flush();
-    chordButton('D').click();
+    pressChord('D');
     expect(mockNode.resumeContext).toHaveBeenCalledTimes(2);
     await flush();
   });
@@ -2937,25 +2955,6 @@ describe('Improv', () => {
     expect(pressedChords()).toEqual(['C7M(9)']);
     expect(dotLit()).toBe(true);
   };
-
-  it('pad_31 grid of 168 buttons', async () => {
-    await openPage();
-    await openImprov();
-    const types = CHORD_TYPES.map(type => type.suffix || 'major');
-    const roots = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
-
-    expect([...document.querySelectorAll('#chord-grid th[scope="col"]')].map(header => header.textContent)).toEqual(types);
-    const rows = [...document.querySelectorAll('#chord-grid tbody tr')];
-    expect(rows.map(row => row.querySelector('th[scope="row"]')!.textContent)).toEqual(roots);
-    rows.forEach((row, index) => {
-      const names = types.map(type => roots[index] + (type === 'major' ? '' : type));
-      expect([...row.querySelectorAll('button')].map(button => button.textContent)).toEqual(names);
-    });
-    const buttons = [...document.querySelectorAll('#chord-grid button')];
-    expect(buttons).toHaveLength(408);
-    expect(new Set(buttons.map(button => button.textContent)).size).toBe(408);
-    buttons.forEach(button => expect(button.getAttribute('aria-pressed')).toBe('false'));
-  });
 
   it('pad_32 shows the sounding chord', async () => {
     await openPage();
@@ -3388,7 +3387,7 @@ describe('Timbres', () => {
     await flush();
   };
   const clickChord = async (name: string) => {
-    [...document.querySelectorAll<HTMLButtonElement>('#chord-grid button')].find(button => button.textContent === name)!.click();
+    pressChord(name);
     await flush();
   };
   const pickTimbre = async (name: string) => {
@@ -3401,8 +3400,6 @@ describe('Timbres', () => {
     await flush();
   };
   const shownChord = () => byId('pad-status').textContent;
-  const pressedChords = () =>
-    [...document.querySelectorAll<HTMLButtonElement>('#chord-grid button[aria-pressed="true"]')].map(button => button.textContent);
   const chordCommands = () => audioCalls.filter(call => call.method === 'padPlay' || call.method === 'padStop');
 
   it('tim_01 select lists the timbres', async () => {
@@ -3746,5 +3743,202 @@ describe('Timbres', () => {
     expect(chordCommands()).toEqual([]);
     expect(shownChord()).toBe('No chord playing');
     expect(pressedChords()).toEqual([]);
+  });
+});
+
+describe('Chord selector', () => {
+  beforeEach(() => {
+    for (const mock of [mockInit, mockLoadSample, mockLoadTake, mockPadLoad]) {
+      mock.mockReset();
+      mock.mockResolvedValue(undefined);
+    }
+  });
+
+  afterEach(() => {
+    delete (globalThis as any).indexedDB;
+    localStorage.removeItem('metrorig_view_mode');
+    localStorage.removeItem('metrorig_pad_timbre');
+  });
+
+  const openImprov = async () => {
+    await openPage();
+    byId<HTMLButtonElement>('nav-improv').click();
+    await flush();
+  };
+  const click = async (button: HTMLButtonElement) => {
+    button.click();
+    await flush();
+  };
+  const plays = () => audioCalls.filter(call => call.method === 'padPlay').map(call => call.args);
+  const stops = () => audioCalls.filter(call => call.method === 'padStop').length;
+  const shown = () => byId('pad-status').textContent;
+  const state = (button: HTMLButtonElement) => button.dataset.state;
+  const labels = (selector: string) => [...document.querySelectorAll(selector)].map(element => element.textContent);
+
+  it('chd_15 lists the roots', async () => {
+    await openImprov();
+    expect(labels('#chord-roots button')).toEqual(['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B']);
+  });
+
+  it('chd_16 groups the types', async () => {
+    await openImprov();
+    expect(labels('#chord-types h2')).toEqual(['Triads', 'Sevenths', 'Ninths', 'Elevenths', 'Thirteenths', 'Altered']);
+    expect(CHORD_FAMILIES).toEqual(labels('#chord-types h2'));
+    const families = [...document.querySelectorAll('#chord-types .chord-family')];
+    expect(families.map(family => family.querySelectorAll('button').length)).toEqual([6, 9, 7, 5, 2, 5]);
+    expect(labels('#chord-types .chord-family:nth-child(4) button')).toEqual(['add11', '11', 'm11', '7(#11)', '7M(#11)']);
+    expect(document.querySelectorAll('#chord-types button')).toHaveLength(34);
+  });
+
+  it('chd_17 labels the types', async () => {
+    await openImprov();
+    expect(labels('#chord-types button')).toEqual(CHORD_TYPES.map(({ suffix }) => suffix || 'maj'));
+    expect(labels('#chord-types button')[0]).toBe('maj');
+  });
+
+  it('chd_18 opens on C major', async () => {
+    await openImprov();
+    expect(state(rootButton('C'))).toBe('selected');
+    expect(state(typeButton('maj'))).toBe('selected');
+    expect(document.querySelectorAll('#chord-roots [data-state="selected"], #chord-types [data-state="selected"]')).toHaveLength(2);
+    expect(plays()).toEqual([]);
+    expect(shown()).toBe('No chord playing');
+  });
+
+  it('chd_19 root plays the selected type', async () => {
+    await openImprov();
+    await click(rootButton('A'));
+    expect(plays()).toEqual([[[45, 49, 52], 0]]);
+    expect(shown()).toBe('A · A C# E');
+  });
+
+  it('chd_20 type plays on the selected root', async () => {
+    await openImprov();
+    await click(typeButton('m7'));
+    expect(plays()).toEqual([[[48, 51, 55, 58], 0]]);
+    expect(shown()).toBe('Cm7 · C Eb G Bb');
+  });
+
+  it('chd_21 another root keeps the type', async () => {
+    await openImprov();
+    await click(typeButton('m7'));
+    await click(rootButton('D'));
+    expect(plays()[1]).toEqual([[50, 53, 57, 60], 0]);
+    expect(shown()).toBe('Dm7 · D F A C');
+    expect(stops()).toBe(0);
+  });
+
+  it('chd_22 another type keeps the root', async () => {
+    await openImprov();
+    await click(rootButton('D'));
+    await click(typeButton('m9'));
+    expect(plays()[1]).toEqual([[50, 53, 57, 60, 64], 0]);
+    expect(shown()).toBe('Dm9 · D F A C E');
+    expect(stops()).toBe(0);
+  });
+
+  it('chd_23 the sounding root or type stops it', async () => {
+    await openImprov();
+    await click(rootButton('D'));
+    await click(rootButton('D'));
+    expect(stops()).toBe(1);
+    expect(shown()).toBe('No chord playing');
+
+    await click(typeButton('m9'));
+    await click(typeButton('m9'));
+    expect(stops()).toBe(2);
+    expect(shown()).toBe('No chord playing');
+  });
+
+  it('chd_24 marks the sounding chord', async () => {
+    await openImprov();
+    await click(typeButton('m7(b5)'));
+    await click(rootButton('B'));
+    expect(state(rootButton('B'))).toBe('sounding');
+    expect(state(typeButton('m7(b5)'))).toBe('sounding');
+    expect(rootButton('B').getAttribute('aria-pressed')).toBe('true');
+    expect(typeButton('m7(b5)').getAttribute('aria-pressed')).toBe('true');
+    expect(pressedChords()).toEqual(['Bm7(b5)']);
+    expect(state(rootButton('C'))).toBe('');
+    expect(shown()).toBe('Bm7(b5) · B D F A');
+    expect(document.querySelectorAll('[data-state="sounding"]')).toHaveLength(2);
+  });
+
+  it('chd_25 marks the selection', async () => {
+    await openImprov();
+    await click(rootButton('G'));
+    byId<HTMLButtonElement>('pad-stop').click();
+    await flush();
+    expect(state(rootButton('G'))).toBe('selected');
+    expect(rootButton('G').getAttribute('aria-pressed')).toBe('false');
+    expect(state(typeButton('maj'))).toBe('selected');
+    expect(typeButton('maj').getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('chd_26 keeps the selection after a stop', async () => {
+    await openImprov();
+    await click(typeButton('13'));
+    await click(rootButton('Eb'));
+    await click(typeButton('13'));
+    expect(shown()).toBe('No chord playing');
+    expect(state(rootButton('Eb'))).toBe('selected');
+    expect(state(typeButton('13'))).toBe('selected');
+
+    await click(rootButton('Eb'));
+    expect(shown()).toBe('Eb13 · Eb G Db F C');
+  });
+
+  it('chd_27 uses real buttons', async () => {
+    await openImprov();
+    const buttons = document.querySelectorAll<HTMLButtonElement>('#chord-roots button, #chord-types button');
+    expect(buttons).toHaveLength(46);
+    buttons.forEach(button => {
+      expect(button.tagName).toBe('BUTTON');
+      expect(button.type).toBe('button');
+      expect(button.tabIndex).toBe(0);
+      expect(button.disabled).toBe(false);
+    });
+  });
+
+  it('chd_33 settles on the last chord', async () => {
+    await openImprov();
+    rootButton('D').click();
+    rootButton('E').click();
+    typeButton('m7').click();
+    await flush();
+    expect(shown()).toBe('Em7 · E G B D');
+    expect(plays()).toEqual([[[52, 55, 59, 62], 0]]);
+  });
+
+  it('chd_34 a timbre pick replays a new chord', async () => {
+    await openImprov();
+    await click(typeButton('11'));
+    await click(rootButton('A'));
+    const select = byId<HTMLSelectElement>('pad-timbre');
+    select.value = 'Orchestra';
+    select.dispatchEvent(new Event('change'));
+    await flush();
+    expect(plays()[plays().length - 1]).toEqual([[21, 33, 45, 52, 55, 59, 62], 2]);
+    expect(stops()).toBe(0);
+  });
+
+  it('chd_35 resumes audio within the click', async () => {
+    await openImprov();
+    (mockNode.resumeContext as any).mockClear();
+    typeButton('m7').click(); // No await: the browser only honours it within the click
+    expect(mockNode.resumeContext).toHaveBeenCalledTimes(1);
+    rootButton('D').click();
+    expect(mockNode.resumeContext).toHaveBeenCalledTimes(2);
+    await flush();
+  });
+
+  it('chd_36 click during a fade', async () => {
+    await openImprov();
+    await click(rootButton('D'));
+    byId<HTMLButtonElement>('pad-stop').click(); // The pad is fading out
+    await flush();
+    await click(typeButton('m'));
+    expect(plays()[plays().length - 1]).toEqual([[50, 53, 57], 0]);
+    expect(shown()).toBe('Dm · D F A');
   });
 });
