@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { CHORD_TYPES, ROOTS, chordMidi, chordName, chordNotes, nextChord, parseVolume } from '../src/chords';
+import { CHORD_TYPES, DEFAULT_TIMBRE, PAD_TIMBRES, ROOTS, chordMidi, chordName, chordNotes, nextChord, parseTimbre, parseVolume, timbreNotes } from '../src/chords';
 
 // The roots and types as the spec lists them, in PAD-01 and PAD-02
 const SPEC_ROOTS = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
@@ -103,5 +103,36 @@ describe('Chords', () => {
     for (const bad of [null, '', ' ', 'loud', 'NaN', 'Infinity', '-1', '101']) {
       expect(parseVolume(bad)).toBe(70);
     }
+  });
+});
+
+describe('Timbres', () => {
+  const TIMBRE_NAMES = ['Choir', 'New Age', 'Orchestra', 'Sweep', 'Analog'];
+  const ORCHESTRA = TIMBRE_NAMES.indexOf('Orchestra');
+
+  it('tim_07 parses the stored timbre', () => {
+    expect(PAD_TIMBRES.map(timbre => timbre.name)).toEqual(TIMBRE_NAMES);
+    expect(PAD_TIMBRES[DEFAULT_TIMBRE].name).toBe('Choir');
+
+    // The name is what is stored, so its place in the select can change
+    TIMBRE_NAMES.forEach((name, index) => expect(parseTimbre(name)).toBe(index));
+    for (const bad of [null, '', ' ', 'Bowed', 'choir', '0', '2', 'NaN', 'constructor']) {
+      expect(parseTimbre(bad)).toBe(DEFAULT_TIMBRE);
+    }
+  });
+
+  it('tim_14 orchestra bass', () => {
+    ROOTS.forEach((_, root) => CHORD_TYPES.forEach((_, type) => {
+      const bass = chordMidi(root, type)[0];
+      TIMBRE_NAMES.forEach((_, timbre) => {
+        const notes = timbreNotes(root, type, timbre);
+        const added = timbre === ORCHESTRA ? [bass - 24, bass - 12] : [];
+        expect(notes).toEqual([...added, ...chordMidi(root, type)]);
+        expect(notes.length).toBeLessThanOrEqual(7);
+      });
+    }));
+    expect(timbreNotes(ROOTS.indexOf('A'), 0, ORCHESTRA)).toEqual([21, 33, 45, 49, 52]);
+    expect(timbreNotes(ROOTS.indexOf('Ab'), CHORD_TYPES.findIndex(type => type.suffix === '9'), ORCHESTRA))
+      .toEqual([32, 44, 56, 60, 63, 66, 70]);
   });
 });
