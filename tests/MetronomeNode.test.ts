@@ -29,6 +29,23 @@ vi.stubGlobal('AudioContext', MockAudioContext);
 vi.stubGlobal('AudioWorkletNode', MockAudioWorkletNode);
 
 describe('MetronomeNode', () => {
+  it('tries again after the worklet reports a WASM error', async () => {
+    const node = new MetronomeNode();
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, arrayBuffer: async () => new ArrayBuffer(8) }));
+
+    const settle = async (type: string) => {
+      const init = node.init('/engine.wasm', '/worklet.js');
+      await vi.waitFor(() => expect((node as any).workletNode?.port.onmessage).toBeTruthy());
+      (node as any).workletNode.port.onmessage({ data: { type, error: 'bad module' } });
+      return init;
+    };
+
+    await expect(settle('WASM_ERROR')).rejects.toThrow('bad module');
+    (node as any).workletNode = null;
+    await expect(settle('WASM_READY')).resolves.toBeUndefined();
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
   it('reports the sample rate the context really runs at', () => {
     expect(new MetronomeNode().sampleRate()).toBe(48000);
   });

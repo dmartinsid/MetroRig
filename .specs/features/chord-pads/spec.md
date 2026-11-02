@@ -37,6 +37,7 @@ Every ambiguity is resolved or recorded here.
 | --------------------- | --------------- | --------- | ---------- |
 | Sound source | FreePats New Age samples layered with a synth in the engine, then chorus and reverb | Q1, user: "eu gostei muito do 2 e 3, acho que pode ser, ate somar eles tb"; Q8, user: "recomendacoes" | y |
 | Layer balance | Demo 4's balance: New Age about 2 dB above the synth | The user was told "peso igual", but demo 4 measures 0.8 and 0.6 over similar levels. What the user accepted is what the file plays; PAD-37 is the final say | y, presented with the spec, user: "Aprovado" |
+| Chorus path | The chorus takes the sample layer alone, as demo 4 did; effects sit below the demos | With the synth in it chords sit 6 dB apart against PAD-14. Heard in the running app, and kept per Q20, user: "resto recomendacoes" | y |
 | Chord model | Built from note samples at run time | 120 pre-rendered chords would take about 170 MB | y |
 | Timbres | One | Q2, user: "q2 recomendacao" | y |
 | Chord list | 12 roots × 14 types in Brazilian notation | Q3, user: "q3 recomendacao" | y |
@@ -108,7 +109,7 @@ Every ambiguity is resolved or recorded here.
 
 1. PAD-17: Each note SHALL mix a New Age sample layer and a synth layer.
 2. PAD-18: The synth layer SHALL be detuned sawtooth voices through a low-pass filter with slow movement, like demo 3.
-3. PAD-19: The pad SHALL pass through stereo chorus and reverb, so that its left and right channels differ.
+3. PAD-19: The sample layer SHALL pass through stereo chorus and the whole pad through reverb, so that its left and right channels differ.
 4. PAD-20: The sample layer SHALL sound at the balance of demo 4: about 2 dB above the synth layer.
 5. PAD-21: The pad samples SHALL come from FreePats New Age, whose CC0 dedication SHALL be recorded in `public/kit/LICENSE.md`.
 6. PAD-22: All files in `public/pads/` together SHALL take at most 10 MB.
