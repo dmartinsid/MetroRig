@@ -209,8 +209,8 @@ The Improv pad has one sound. The user liked what they heard, and their favourit
 | TIM-21 | P1: Five sounds | Design | Implementing |
 | TIM-22 | P1: Five sounds | Design | Pending |
 | TIM-23 | P1: Five sounds | Design | Pending |
-| TIM-24 | P1: Orchestra bank build | Design | Pending |
-| TIM-25 | P1: Orchestra bank build | Design | Pending |
+| TIM-24 | P1: Orchestra bank build | Design | Implementing |
+| TIM-25 | P1: Orchestra bank build | Design | Implementing |
 | TIM-26 | P1: Download only what is chosen | Design | Pending |
 | TIM-27 | P1: Download only what is chosen | Design | Pending |
 | TIM-28 | P1: Download only what is chosen | Design | Pending |

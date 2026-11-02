@@ -135,8 +135,8 @@ T14 → T15
 
 **Done when**:
 
-- [ ] Two runs give the same bytes
-- [ ] Gate passes
+- [x] Two runs give the same bytes
+- [x] Gate passes
 
 **Tests**: unit
 **Gate**: quick
