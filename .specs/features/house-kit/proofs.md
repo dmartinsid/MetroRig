@@ -1,6 +1,6 @@
 # house-kit proofs
 
-**HEAD**: 02f7259
+**HEAD**: d7f666c
 **Tree**: clean
 **Shell**: /bin/sh
 **Result**: 39 pass, 0 fail
@@ -52,8 +52,8 @@
 `Run js` - exit 0
 
 ```
-   Start at  19:10:28
-   Duration  11.27s (transform 696ms, setup 2ms, collect 1.00s, tests 14.25s, environment 2.82s, prepare 835ms)
+   Start at  21:21:08
+   Duration  11.17s (transform 618ms, setup 1ms, collect 1.11s, tests 13.92s, environment 2.77s, prepare 847ms)
 
 stderr | src/index.test.ts > Integration Test > should handle click sound variation selector changes, race conditions and fetch rejections
 Failed to load click sample, falling back to digital synth: Error: Fetch failed
@@ -77,14 +77,14 @@ test tests::bpm_01_quarter_note_in_every_meter ... ok
 test tests::time_01_hits_within_one_sample ... ok
 test tests::time_02_one_hour_no_drift ... ok
 
-test result: ok. 78 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 13.29s
+test result: ok. 78 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 13.11s
 
 
 running 0 tests
 
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-    Finished `test` profile [optimized + debuginfo] target(s) in 0.00s
+    Finished `test` profile [optimized + debuginfo] target(s) in 0.02s
      Running unittests src/lib.rs (target/debug/deps/metrorig_audio-e3c84ac815f4f448)
    Doc-tests metrorig_audio
 ```
