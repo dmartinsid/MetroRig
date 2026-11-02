@@ -263,13 +263,13 @@ Every ambiguity is resolved or recorded here.
 | PAD-20 | P1: A pad that sounds professional | Design | Implementing |
 | PAD-21 | P1: A pad that sounds professional | Design | Implementing |
 | PAD-22 | P1: A pad that sounds professional | Design | Implementing |
-| PAD-23 | P1: The pad and the metronome stay independent | Design | Pending |
-| PAD-24 | P1: The pad and the metronome stay independent | Design | Pending |
+| PAD-23 | P1: The pad and the metronome stay independent | Design | Implementing |
+| PAD-24 | P1: The pad and the metronome stay independent | Design | Implementing |
 | PAD-25 | P1: The pad and the metronome stay independent | Design | Pending |
 | PAD-26 | P1: The pad and the metronome stay independent | Design | Pending |
 | PAD-27 | P1: The pad and the metronome stay independent | Design | Implementing |
-| PAD-28 | P1: The pad and the metronome stay independent | Design | Pending |
-| PAD-29 | P1: The pad and the metronome stay independent | Design | Pending |
+| PAD-28 | P1: The pad and the metronome stay independent | Design | Implementing |
+| PAD-29 | P1: The pad and the metronome stay independent | Design | Implementing |
 | PAD-30 | P1: The Improv screen | Design | Pending |
 | PAD-31 | P1: The Improv screen | Design | Pending |
 | PAD-32 | P1: The Improv screen | Design | Pending |

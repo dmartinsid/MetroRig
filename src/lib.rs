@@ -160,6 +160,8 @@ pub struct Engine {
     // Sound selection
     click_mode: u32, // 0 = Synth, 1 = Sample
     click_accent: bool,
+
+    pad: pad::Pad,
 }
 
 // A step's value is its dynamic: 1 normal, 2 accent, 3 ghost
@@ -239,6 +241,7 @@ impl Engine {
             bars: 1,
             click_mode: 0,
             click_accent: false,
+            pad: pad::Pad::new(sample_rate),
         };
         eng.recalc_tempo();
         eng
@@ -493,6 +496,7 @@ impl Engine {
         if !self.is_playing {
             out_l.fill(0.0);
             out_r.fill(0.0);
+            self.mix_pad(out_l, out_r);
             return;
         }
 
@@ -576,8 +580,17 @@ impl Engine {
             }
 
             // Combine (Left / Right)
-            out_l[i] = (click_out_l + drums_l).clamp(-1.0, 1.0);
-            out_r[i] = (click_out_r + drums_r).clamp(-1.0, 1.0);
+            out_l[i] = click_out_l + drums_l;
+            out_r[i] = click_out_r + drums_r;
+        }
+        self.mix_pad(out_l, out_r);
+    }
+
+    // The pad runs on after the drums' loop, so it never reaches their timing
+    fn mix_pad(&mut self, out_l: &mut [f32], out_r: &mut [f32]) {
+        self.pad.mix_into(out_l, out_r);
+        for sample in out_l.iter_mut().chain(out_r.iter_mut()) {
+            *sample = sample.clamp(-1.0, 1.0);
         }
     }
 }
@@ -732,6 +745,47 @@ pub extern "C" fn engine_set_click_mode(ptr: *mut Engine, mode: u32) {
     if ptr.is_null() { return; }
     let engine = unsafe { &mut *ptr };
     engine.click_mode = mode;
+}
+
+// Holds the first `count` notes. A chord has at most 5, and the rest of the arguments are ignored
+#[no_mangle]
+pub extern "C" fn engine_pad_play(ptr: *mut Engine, n0: u8, n1: u8, n2: u8, n3: u8, n4: u8, count: usize) {
+    if ptr.is_null() { return; }
+    let notes = [n0, n1, n2, n3, n4];
+    let Some(notes) = notes.get(..count) else { return };
+    let engine = unsafe { &mut *ptr };
+    engine.pad.play(notes);
+}
+
+#[no_mangle]
+pub extern "C" fn engine_pad_stop(ptr: *mut Engine) {
+    if ptr.is_null() { return; }
+    let engine = unsafe { &mut *ptr };
+    engine.pad.stop();
+}
+
+#[no_mangle]
+pub extern "C" fn engine_pad_set_volume(ptr: *mut Engine, volume: f32) {
+    if ptr.is_null() || !volume.is_finite() { return; }
+    let engine = unsafe { &mut *ptr };
+    engine.pad.set_volume(volume);
+}
+
+#[no_mangle]
+pub extern "C" fn engine_pad_load(
+    ptr: *mut Engine,
+    key: u8,
+    loop_start: usize,
+    loop_end: usize,
+    left_ptr: *const f32,
+    right_ptr: *const f32,
+    length: usize
+) {
+    if ptr.is_null() || left_ptr.is_null() || right_ptr.is_null() { return; }
+    let engine = unsafe { &mut *ptr };
+    let left_slice = unsafe { slice::from_raw_parts(left_ptr, length) };
+    let right_slice = unsafe { slice::from_raw_parts(right_ptr, length) };
+    engine.pad.load(key, left_slice, right_slice, loop_start, loop_end);
 }
 
 #[no_mangle]
@@ -2686,5 +2740,249 @@ mod tests {
         assert_eq!(buf_r2[0], -0.2 * 0.5);
         assert_eq!(buf_l2[1], 0.4 * 0.5);
         assert_eq!(buf_r2[1], -0.4 * 0.5);
+    }
+
+    // --- The pad in the engine ---
+
+    const CHORD: [u8; 5] = [48, 52, 55, 59, 62];
+    const OTHER_CHORD: [u8; 3] = [45, 48, 52];
+    const FADED_IN: usize = 2 * SR as usize; // Past the 1.5 s fade
+    // drum_session on the sample click, hashed on the engine of df52c58, before the pad reached it
+    const DRUMS_BEFORE_THE_PAD: u64 = 0xe6cb5f9d31ccc6ed;
+
+    fn pad_play(ptr: *mut Engine, notes: &[u8]) {
+        let note = |index: usize| notes.get(index).copied().unwrap_or(0);
+        engine_pad_play(ptr, note(0), note(1), note(2), note(3), note(4), notes.len());
+    }
+
+    fn peak(channel: &[f32]) -> f32 {
+        channel.iter().fold(0.0, |peak, sample| peak.max(sample.abs()))
+    }
+
+    fn bits(channel: &[f32]) -> Vec<u32> {
+        channel.iter().map(|sample| sample.to_bits()).collect()
+    }
+
+    // A decaying buzz, built with no call to libm, so its bits hold on every platform
+    fn buzz(frames: usize, level: f32) -> Vec<f32> {
+        (0..frames)
+            .map(|i| {
+                let sign = if i % 40 < 20 { 1.0 } else { -1.0 };
+                sign * level * (1.0 - i as f32 / frames as f32)
+            })
+            .collect()
+    }
+
+    // Every drum path in one run: singles, takes of each dynamic, the hats' cut, replaced hits,
+    // a stacked hit past full scale for the clamp, the Trainer, then Stop and Play again.
+    fn drum_session(ptr: *mut Engine, click_mode: u32) -> (Vec<f32>, Vec<f32>) {
+        engine_set_click_mode(ptr, click_mode);
+        let click = buzz(400, 0.5);
+        engine_load_sample(ptr, 0, click.as_ptr(), click.as_ptr(), click.len());
+        for track in [2, 3, 4, 5] {
+            let left = buzz(30000, 0.3);
+            let right = buzz(20000 + 1000 * track as usize, 0.25);
+            let right: Vec<f32> = (0..left.len()).map(|i| right.get(i).copied().unwrap_or(0.0)).collect();
+            engine_load_sample(ptr, track, left.as_ptr(), right.as_ptr(), left.len());
+        }
+        for dynamic in 0..DYNAMICS as u32 {
+            for take in 0..TAKES as u32 {
+                let hit = buzz(12000 + 500 * take as usize, 0.3 + 0.35 * dynamic as f32);
+                engine_load_take(ptr, 1, dynamic, take, hit.as_ptr(), hit.as_ptr(), hit.len());
+            }
+        }
+
+        let grids: [[u8; 16]; 5] = [
+            [2, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
+            [2, 0, 3, 0, 1, 0, 3, 1, 2, 0, 0, 3, 1, 0, 1, 0],
+            [0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 3],
+            [1, 1, 3, 1, 2, 1, 0, 1, 1, 1, 3, 1, 2, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 2, 0],
+        ];
+        for (track, grid) in grids.iter().enumerate() {
+            engine_update_grid(ptr, track as u32, grid.as_ptr(), 16);
+        }
+        engine_set_measure_length(ptr, 16);
+        engine_set_bpm(ptr, 133.3);
+        engine_set_trainer(ptr, true, 133.3, 170.0, 4.0, 0, 1.0, 0);
+
+        engine_start(ptr);
+        let (mut left, mut right) = stereo_output(ptr, 6 * SR as usize);
+        engine_stop(ptr);
+        let (stopped_left, stopped_right) = stereo_output(ptr, 1000);
+        left.extend(stopped_left);
+        right.extend(stopped_right);
+
+        engine_set_trainer(ptr, true, 90.0, 120.0, 5.0, 1, 2.0, 1);
+        engine_start(ptr);
+        let (again_left, again_right) = stereo_output(ptr, 6 * SR as usize);
+        left.extend(again_left);
+        right.extend(again_right);
+        engine_stop(ptr);
+        (left, right)
+    }
+
+    // FNV-1a over the bits of both channels
+    fn session_hash(left: &[f32], right: &[f32]) -> u64 {
+        let mut hash = 0xcbf29ce484222325u64;
+        for sample in left.iter().chain(right) {
+            for byte in sample.to_bits().to_le_bytes() {
+                hash = (hash ^ byte as u64).wrapping_mul(0x100000001b3);
+            }
+        }
+        hash
+    }
+
+    #[test]
+    fn pad_23_sounds_while_stopped() {
+        let ptr = engine_new(SR);
+        pad_play(ptr, &CHORD);
+        let (left, right) = stereo_output(ptr, FADED_IN);
+
+        let held = FADED_IN - SR as usize / 2;
+        assert_eq!(sounding_frames(&left[held..], &right[held..]).len(), FADED_IN - held);
+        assert!(peak(&left[held..]) > 0.003, "left peak {}", peak(&left[held..]));
+        assert!(peak(&right[held..]) > 0.003, "right peak {}", peak(&right[held..]));
+        engine_free(ptr);
+
+        // A stopped engine still clears its tick, with the pad sounding
+        let run = Run::new(120.0, &[1; 16]);
+        pad_play(run.ptr, &CHORD);
+        engine_start(run.ptr);
+        stereo_output(run.ptr, FADED_IN);
+        let mut bpm = 0.0f64;
+        while engine_get_tick(run.ptr, &mut bpm) < 0 {
+            stereo_output(run.ptr, BLOCK as usize); // Stop on a block that carries a tick
+        }
+        engine_stop(run.ptr);
+
+        for _ in 0..100 {
+            let (left, right) = stereo_output(run.ptr, BLOCK as usize);
+            assert_eq!(engine_get_tick(run.ptr, &mut bpm), -1);
+            assert_eq!(sounding_frames(&left, &right).len(), BLOCK as usize);
+        }
+    }
+
+    #[test]
+    fn pad_24_play_and_stop_keep_the_pad() {
+        let pressed = engine_new(SR);
+        let untouched = engine_new(SR);
+        for ptr in [pressed, untouched] {
+            pad_play(ptr, &CHORD);
+        }
+
+        // Halfway through the fade in, then while held
+        let presses: [(extern "C" fn(*mut Engine), usize); 5] = [
+            (engine_start, 22050),
+            (engine_stop, 22050),
+            (engine_start, FADED_IN),
+            (engine_stop, FADED_IN),
+            (engine_start, FADED_IN),
+        ];
+        for (press, frames) in presses {
+            press(pressed);
+            let (left, right) = stereo_output(pressed, frames);
+            let (quiet_left, quiet_right) = stereo_output(untouched, frames);
+            assert_eq!(bits(&left), bits(&quiet_left));
+            assert_eq!(bits(&right), bits(&quiet_right));
+            assert!(peak(&left) > 0.003, "left peak {}", peak(&left));
+        }
+        engine_free(pressed);
+        engine_free(untouched);
+    }
+
+    #[test]
+    fn pad_28_hits_keep_their_time() {
+        let halves = |ptr: *mut Engine, chords: bool| {
+            let (mut left, _) = stereo_output(ptr, 5 * SR as usize);
+            if chords {
+                pad_play(ptr, &OTHER_CHORD); // A crossfade while the hits fall
+            }
+            left.extend(stereo_output(ptr, 15 * SR as usize).0);
+            left
+        };
+
+        for bpm in [60.0, 97.5, 133.3, 187.7, 240.0] {
+            let without_pad = Run::new(bpm, &[1; 16]);
+            let with_pad = Run::new(bpm, &[1; 16]);
+            let pad_alone = Run::new(bpm, &[0; 16]);
+            for run in [&with_pad, &pad_alone] {
+                pad_play(run.ptr, &CHORD);
+            }
+            for run in [&without_pad, &with_pad, &pad_alone] {
+                engine_start(run.ptr);
+            }
+
+            let clicks = halves(without_pad.ptr, false);
+            let mixed = halves(with_pad.ptr, true);
+            let pad = halves(pad_alone.ptr, true);
+            assert!(peak(&pad) > 0.003, "pad peak {}", peak(&pad));
+
+            // The pad is the same in both runs, so a frame differs only where a hit falls
+            let plain_hits: Vec<usize> = (0..clicks.len()).filter(|&i| clicks[i] != 0.0).collect();
+            let mixed_hits: Vec<usize> = (0..mixed.len()).filter(|&i| mixed[i] != pad[i]).collect();
+            let ideal = step_samples(SR, bpm);
+            assert_eq!(plain_hits.len(), mixed_hits.len(), "hit count at {} BPM", bpm);
+            assert!(mixed_hits.len() as f64 >= 20.0 * SR as f64 / ideal - 1.0, "hits at {} BPM", bpm);
+            for (k, (&plain, &mixed)) in plain_hits.iter().zip(&mixed_hits).enumerate() {
+                let what = format!("{} BPM, hit {}", bpm, k);
+                assert_within_one_sample(mixed as f64, plain as f64, &what);
+                assert_within_one_sample(mixed as f64, k as f64 * ideal, &what);
+            }
+        }
+    }
+
+    #[test]
+    fn pad_29_silent_pad_changes_nothing() {
+        let never_used = engine_new(SR);
+        let (left, right) = drum_session(never_used, 1);
+        assert_eq!(session_hash(&left, &right), DRUMS_BEFORE_THE_PAD);
+        engine_free(never_used);
+
+        // A pad that sounded and fell silent leaves nothing behind, on either click
+        for click_mode in [0, 1] {
+            let never_used = engine_new(SR);
+            let (left, right) = drum_session(never_used, click_mode);
+            engine_free(never_used);
+
+            let played = engine_new(SR);
+            pad_play(played, &CHORD);
+            stereo_output(played, FADED_IN);
+            engine_pad_set_volume(played, 1.0);
+            engine_pad_stop(played);
+            let mut tail_seconds = 0;
+            while !unsafe { &*played }.pad.is_silent() {
+                stereo_output(played, SR as usize);
+                tail_seconds += 1;
+                assert!(tail_seconds < 60, "the tail never ended");
+            }
+            let (quiet_left, quiet_right) = stereo_output(played, 1000);
+            assert_eq!(sounding_frames(&quiet_left, &quiet_right), Vec::<usize>::new());
+
+            let (after_left, after_right) = drum_session(played, click_mode);
+            assert_eq!(bits(&left), bits(&after_left));
+            assert_eq!(bits(&right), bits(&after_right));
+            engine_free(played);
+        }
+    }
+
+    #[test]
+    fn pad_shares_the_output_clamp() {
+        // Far past full scale, so the sum reaches the clamp on both paths
+        let hot: Vec<f32> = (0..4000).map(|i| if i % 40 < 20 { 40.0 } else { -40.0 }).collect();
+        let ptr = engine_new(SR);
+        engine_pad_load(ptr, 48, 0, 3999, hot.as_ptr(), hot.as_ptr(), hot.len());
+        engine_pad_set_volume(ptr, 1.0);
+        pad_play(ptr, &CHORD);
+
+        let (left, right) = stereo_output(ptr, FADED_IN);
+        assert_eq!(peak(&left), 1.0);
+        assert_eq!(peak(&right), 1.0);
+
+        engine_start(ptr);
+        let (left, right) = stereo_output(ptr, FADED_IN);
+        assert_eq!(peak(&left), 1.0);
+        assert_eq!(peak(&right), 1.0);
+        engine_free(ptr);
     }
 }
