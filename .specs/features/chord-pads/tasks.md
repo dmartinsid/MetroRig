@@ -139,9 +139,9 @@ T19 → T20
 
 **Done when**:
 
-- [ ] `tests/padBank.test.ts` proves the files and the size
-- [ ] The fixture proves a step of 0 on each loop
-- [ ] Gate passes
+- [x] `tests/padBank.test.ts` proves the files and the size
+- [x] The fixture proves a step of 0 on each loop
+- [x] Gate passes
 
 **Tests**: unit
 **Gate**: quick
