@@ -28,6 +28,7 @@
   --radius-control: 8px;
   --radius-cell:    6px;
   --field-bg:       rgba(8, 8, 16, 0.8);
+  --surface-flat:   #12121A;
   --mono:           'JetBrains Mono', monospace;
 }
 
@@ -200,10 +201,196 @@ header {
   color: var(--text);
 }
 
+.view-link {
+  position: relative;
+}
+
+.view-link .status-dot {
+  position: absolute;
+  top: 0.15rem;
+  right: -0.7rem;
+}
+
+.view-link .status-dot:not(.lit) {
+  display: none;
+}
+
 .view-link[aria-current="page"] {
   color: var(--neon-green);
   border-bottom-color: var(--neon-green);
   font-weight: 700;
+}
+
+/* ─── Improv ─────────────────────────────────────────────── */
+#improv-view {
+  width: 100%;
+  min-width: 0;
+  padding: 1.5rem;
+}
+
+.improv-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.25rem;
+}
+
+.improv-title {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.improv-readout {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 1rem;
+}
+
+.improv-chord {
+  font-family: var(--mono);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.improv-chord.sounding {
+  color: var(--neon-green);
+  text-shadow: 0 0 12px rgba(57, 255, 20, 0.4);
+}
+
+.improv-notice {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.improv-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.pad-stop {
+  background: transparent;
+  color: var(--neon-green);
+  border: 1px solid var(--neon-green);
+  border-radius: var(--radius-control);
+  padding: 0.5rem 1.25rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+}
+
+.pad-stop:hover:enabled {
+  background: var(--neon-green);
+  color: var(--bg);
+  box-shadow: 0 0 20px rgba(57, 255, 20, 0.4);
+}
+
+.pad-stop:disabled {
+  color: var(--text-muted);
+  border-color: var(--glass-border);
+  cursor: not-allowed;
+}
+
+.pad-volume {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.improv-controls input[type="range"] {
+  flex: 1;
+  width: auto;
+  min-width: 0;
+  max-width: 16rem;
+}
+
+.pad-volume-value {
+  min-width: 3ch;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  text-align: right;
+  color: var(--neon-green);
+}
+
+.chord-scroller {
+  overflow-x: auto;
+}
+
+.chord-grid {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.chord-grid th[scope="col"] {
+  padding: 0 2px 0.4rem;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+/* An opaque fill, so the chords scrolling under the roots don't show through */
+.chord-grid th[scope="row"],
+.chord-grid thead td {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--surface-flat);
+}
+
+.chord-grid th[scope="row"] {
+  padding: 0 0.5rem;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-align: left;
+  color: var(--text);
+}
+
+.chord-grid td {
+  padding: 2px;
+}
+
+.chord-btn {
+  width: 100%;
+  min-width: 3.75rem;
+  height: 2rem;
+  padding: 0 0.25rem;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  white-space: nowrap;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-cell);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, box-shadow 0.15s;
+}
+
+.chord-btn:hover {
+  color: var(--text);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.chord-btn:focus-visible {
+  outline: 1px solid var(--neon-green);
+  outline-offset: -1px;
+}
+
+.chord-btn[aria-pressed="true"] {
+  color: var(--neon-green);
+  border-color: var(--neon-green);
+  box-shadow: 0 0 8px rgba(57, 255, 20, 0.25);
 }
 
 /* ─── Grooves ────────────────────────────────────────────── */
@@ -1521,7 +1708,12 @@ select:focus {
     width: 0;
   }
 
-  #grooves-view {
+  #grooves-view,
+  #improv-view {
+    padding: 1rem;
+  }
+
+  .improv-panel {
     padding: 1rem;
   }
 
