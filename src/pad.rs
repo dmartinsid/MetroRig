@@ -64,6 +64,7 @@ const MIXES: [Mix; TIMBRES] = [
 
 const NO_FILE: usize = usize::MAX;
 const FALLBACK: usize = 4; // Analog, whose synth stands in for a timbre with none
+const OWN_FILE_SEMITONES: u8 = 2; // Orchestra's keys stand 4 apart, so every note it plays has a file this close
 const LOWEST_CHORD_NOTE: u8 = 45; // Below it are the notes a timbre adds, which that synth leaves out: it holds the chord
 
 // A pad sample keeps its onset, so `Sample` and its trimming are not reused: they would shift the loop points
@@ -474,10 +475,13 @@ impl Pad {
         voice
     }
 
-    // A tie goes to the higher file, as FreePats maps its keys
+    // A tie goes to the higher file, as FreePats maps its keys. A timbre with no synth waits for a file of its own
+    // note: while its bank loads, a far file would play the note at any speed where the fallback synth holds it
     fn nearest_file(&self, timbre: u8, note: u8) -> usize {
         let bank = &self.banks[timbre as usize];
+        let reach = if MIXES[timbre as usize].synth == 0.0 { OWN_FILE_SEMITONES } else { u8::MAX };
         (0..bank.len())
+            .filter(|&file| bank[file].key.abs_diff(note) <= reach)
             .min_by_key(|&file| (bank[file].key.abs_diff(note), u8::MAX - bank[file].key))
             .unwrap_or(NO_FILE)
     }
@@ -2104,6 +2108,43 @@ mod tests {
             let powers: Vec<f64> = C7M9.iter().map(|&note| sweep(&signal, note_hz(note as f32), 25.0, RATE).iter().map(|(_, power)| power).sum()).collect();
             let loudest = powers.iter().cloned().fold(0.0, f64::max);
             assert!(powers.iter().all(|power| *power > loudest / 20.0), "timbre {timbre} misses a note: {powers:?}");
+        }
+
+        // A chord that starts on a part-loaded Orchestra holds on the synth, and reads no other note's file
+        let orchestra = &timbre_banks()[ORCHESTRA as usize];
+        let chord = [45u8, 48, 52, 55]; // Am7
+        let notes = timbre_notes(&chord, ORCHESTRA);
+        let frames = (6.0 * RATE) as usize;
+        let bare = {
+            let mut pad = Pad::new(RATE);
+            pad.play(&notes, ORCHESTRA);
+            let synth: Vec<f32> = (0..frames).map(|_| pad.layers().0.0).collect();
+            db(rms(after(&synth, FADE_END, RATE)))
+        };
+        for loaded in [1, 3] {
+            let mut pad = Pad::new(RATE);
+            for file in &orchestra[..loaded] {
+                pad.load(ORCHESTRA, file.key, &file.left, &file.right, file.loop_start, file.loop_end);
+            }
+            pad.play(&notes, ORCHESTRA);
+            let synth: Vec<f32> = (0..frames).map(|_| pad.layers().0.0).collect();
+            let slot = pad.slots.iter().find(|slot| slot.count > 0).unwrap();
+            for voice in slot.voices[..slot.count].iter() {
+                if let Some(file) = pad.banks[ORCHESTRA as usize].get(voice.file) {
+                    assert!(file.key.abs_diff(voice.note) <= 2, "{loaded} files: note {} reads key {}", voice.note, file.key);
+                }
+            }
+            let chord_voices = slot.voices[..slot.count].iter().filter(|voice| chord.contains(&voice.note));
+            assert_eq!(chord_voices.filter(|voice| voice.file == NO_FILE).count(), chord.len(), "{loaded} files");
+            let level = db(rms(after(&synth, FADE_END, RATE)));
+            assert!((level - bare).abs() < 1.0, "{loaded} files: the synth stands at {level} dB against {bare} dB");
+        }
+
+        // With the whole bank every note Orchestra plays has its file
+        let mut pad = Pad::new(RATE);
+        load_timbre(&mut pad, ORCHESTRA);
+        for note in all_chords().iter().flat_map(|chord| timbre_notes(chord, ORCHESTRA)) {
+            assert_ne!(pad.nearest_file(ORCHESTRA, note), NO_FILE, "note {note} has no file");
         }
 
         // Each timbre keeps its own synth layer, so Orchestra's is the Analog synth, to the bit

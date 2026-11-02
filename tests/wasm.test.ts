@@ -163,15 +163,15 @@ describe('Shipped WASM', () => {
   describe('Timbres', () => {
     const frames = 4000;
 
-    // A renderer with one file of the given height, in the given timbre
-    function withFile(timbre: number, height: number) {
+    // A renderer with one file of the given height for each key, in the given timbre
+    function withFile(timbre: number, height: number, keys = [48]) {
       const renderer = padRenderer();
       const { engine, ptr } = renderer;
       const samplePtr = engine.engine_alloc(frames * 4);
       new Float32Array(engine.memory.buffer, samplePtr, frames).forEach((_, frame, sample) => {
         sample[frame] = frame % 40 < 20 ? height : -height;
       });
-      engine.engine_pad_load(ptr, timbre, 48, 0, frames - 1, samplePtr, samplePtr, frames);
+      keys.forEach(key => engine.engine_pad_load(ptr, timbre, key, 0, frames - 1, samplePtr, samplePtr, frames));
       return renderer;
     }
 
@@ -189,7 +189,8 @@ describe('Shipped WASM', () => {
     });
 
     it('Orchestra sounds its files with no synth, and a synth with none', () => {
-      expect(heldPeak(withFile(ORCHESTRA, 0), ORCHESTRA)).toBe(0);
+      const orchestraKeys = Array.from({ length: 13 }, (_, file) => 23 + file * 4);
+      expect(heldPeak(withFile(ORCHESTRA, 0, orchestraKeys), ORCHESTRA)).toBe(0);
       expect(heldPeak(padRenderer(), ORCHESTRA)).toBeGreaterThan(0.003);
     });
 
