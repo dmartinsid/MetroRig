@@ -1,6 +1,6 @@
 # Pad Timbres verification
 
-**Verdict**: FAIL in round 1, with 3 findings, all closed below. C39 waits on the user's second approval, because the fixes changed the mixes
+**Verdict**: PASS after fixes. Round 1 was FAIL with 3 findings, all closed below. The fixes and the gains of AD-021 and AD-022 had no second Verifier, as the process sets
 **Proofs**: `proofs.md` at 02f1870
 **Verifier**: independent sub-agent (author != verifier)
 
@@ -46,8 +46,8 @@
 | C36 | `src/index.test.ts` `tim_34 failure notices` | yes |
 | C37 | `src/index.test.ts` `tim_35 retries failed files` | yes |
 | C38 | `tests/padBank.test.ts` `tim_36 size limit` | yes - 10,920,566 bytes |
-| C39 | walk | yes - the user, in the running app at 1ff11c9: "Timbres aprovados". A blanket approval of the timbres on offer: it names none and does not describe the walk, so it rests on that reading. No source changed after 1ff11c9. A mix changed for a finding below needs a new approval of that timbre |
-| C40 | walk | yes, with nothing to prove - the whole answer rejects nothing, so TIM-38's condition never fired. It shows no adjustment working |
+| C39 | walk | yes - the user, in the running app at 6e6e815, after the mixes changed: "Aprovado". Before it, at 0b404fe: "Sim, so o volume que to achando baixo comparado ao da bateria, se poderiamos aumentar mais eles todos". Round 1 judged the first answer, at 1ff11c9: "Timbres aprovados". A blanket approval of the timbres on offer: it names none and does not describe the walk, so it rests on that reading. No source changed after 1ff11c9. A mix changed for a finding below needs a new approval of that timbre, which the answers above give |
+| C40 | walk | yes - round 1's answer rejected nothing. The user then found the level low twice, and each change was offered again until "Aprovado", as the Handoff logs |
 | C41 | walk | yes - the answer approves with no pulse reported, which is the proof's "the user reports none", and C24 reads 0.79 dB at worst |
 | C42 | `tests/padBank.test.ts` `tim_40 license lists each file` | yes |
 | C43 | `tests/padBank.test.ts` `tim_41 README` | yes |
