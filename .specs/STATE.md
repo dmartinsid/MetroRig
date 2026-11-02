@@ -145,3 +145,19 @@
 - **Scope**: chord names on every screen
 - **Date**: 2026-11-01
 - **Status**: active (AD-018)
+
+### AD-019
+- **Decision**: `public/pads/` may take up to 12 MB, and Choir is the first sound of `Improv`. This supersedes PAD-22's 10 MB and New Age as the only bank.
+- **Reason**: Q22: "subimos o limite de `public/pads/` para 12 MB, mantendo os cinco timbres?" Q23: "o Choir, seu favorito, passa a ser o som padrão...?" The user answered "q22 recomendacao q23 recomendacao".
+- **Trade-off**: More files in the repository, though each downloads only when chosen.
+- **Scope**: pad-timbres, supersedes PAD-22 and the first load of PAD-46
+- **Date**: 2026-11-02
+- **Status**: active (AD-019)
+
+### AD-020
+- **Decision**: A pad slot holds a chord and a timbre, so the same chord in another timbre is another chord to the engine. Notes a timbre adds, such as a bass, are data in `src/chords.ts`.
+- **Reason**: Every fade and limit of AD-017 then applies to a change of timbre with no new code.
+- **Trade-off**: A timbre change uses a second slot during its crossfade.
+- **Scope**: pad-timbres, engine
+- **Date**: 2026-11-02
+- **Status**: active (AD-020)

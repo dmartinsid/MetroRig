@@ -20,6 +20,7 @@ A select on the `Improv` screen chooses the timbre of the pad. User: "Talvez ate
 - Orchestra uses real string sections from VSCO 2 Community Edition, CC0. User: "se tiver string tipo orquestra ou quarteto de cordas ia ficar mais legal". A real quartet is not possible: the free set has no solo viola or solo cello.
 - Each timbre has its own mix of samples and synth, set by ear. User on Q17: "resto recomendacoes".
 - The first Orchestra demo lacked bass. User on Q21: "faltou mais graves".
+- The second demo adds cello an octave down and solo contrabass in two octaves. User on Q24: "q24 sim, gostei". It carries no synth layer.
 
 ### Select (Q18)
 
@@ -38,7 +39,7 @@ A select on the `Improv` screen chooses the timbre of the pad. User: "Talvez ate
 
 ## Specific References
 
-- Demos in the session scratchpad: `timbre-synth-pad-choir-Cmaj9.wav`, `timbre-orquestra-vsco-Cmaj9.wav`.
+- Demos in the session scratchpad: `timbre-synth-pad-choir-Cmaj9.wav`, `timbre-orquestra-graves-Cmaj9.wav`, the approved one.
 - Measured for MIDI 45 to 70: `synth-pad-choir` 2.8 MB, `sweep-pad` 1.9 MB. VSCO sustain samples have no loop points, so a build script must make them.
 
 ---
