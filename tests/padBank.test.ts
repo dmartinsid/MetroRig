@@ -2,7 +2,7 @@ import { createHash } from 'crypto';
 import { describe, it, expect } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
-import { CHORD_TYPES, PAD_BANK, ROOTS, chordMidi } from '../src/chords';
+import { CHORD_TYPES, PAD_BANK, PAD_TIMBRES, ROOTS, chordMidi } from '../src/chords';
 
 const padsDir = path.resolve(__dirname, '../public/pads');
 const licensePath = path.resolve(__dirname, '../public/kit/LICENSE.md');
@@ -68,7 +68,7 @@ describe('Pad bank', () => {
 
   it('pad_22 size limit', () => {
     expect(sizeOf(padsDir)).toBeGreaterThan(0);
-    expect(sizeOf(padsDir)).toBeLessThanOrEqual(10 * 1000 * 1000);
+    expect(sizeOf(padsDir)).toBeLessThanOrEqual(12 * 1000 * 1000);
   });
 
   it('pad_54 README', () => {
@@ -83,5 +83,18 @@ describe('Pad bank', () => {
     for (const [, name] of NEW_AGE) {
       expect(license).toContain(`\`pads/new-age/${name}.flac\` | \`samples/${name.replace('Gs', 'G#')}.flac\``);
     }
+  });
+});
+
+describe('Timbre banks', () => {
+  const listed = PAD_TIMBRES.flatMap(timbre => timbre.files.map(file => file.url));
+
+  it('tim_36 size limit', () => {
+    // The limit covers what ships, so every listed file has to be there
+    for (const url of listed) {
+      expect(fs.statSync(path.join(padsDir, '..', url)).size).toBeGreaterThan(0);
+    }
+    expect(sizeOf(padsDir)).toBeGreaterThan(0);
+    expect(sizeOf(padsDir)).toBeLessThanOrEqual(12 * 1000 * 1000);
   });
 });

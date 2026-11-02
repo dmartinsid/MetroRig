@@ -41,12 +41,33 @@ export const PAD_BANK: PadFile[] = [
   { key: 72, url: '/pads/new-age/C5.flac', loopStart: 104269, loopEnd: 265523 },
 ];
 
+// FreePats Synth Pad Choir: stereo 44.1 kHz FLAC, `F#` written `Fs`, loop points as the New Age bank has them
+const CHOIR_FILES: PadFile[] = [
+  { key: 48, url: '/pads/choir/C3.flac', loopStart: 119520, loopEnd: 299519 },
+  { key: 54, url: '/pads/choir/Fs3.flac', loopStart: 119520, loopEnd: 299519 },
+  { key: 60, url: '/pads/choir/C4.flac', loopStart: 119520, loopEnd: 299519 },
+  { key: 66, url: '/pads/choir/Fs4.flac', loopStart: 119520, loopEnd: 299519 },
+  { key: 72, url: '/pads/choir/C5.flac', loopStart: 119520, loopEnd: 299519 },
+];
+
+// FreePats Sweep Pad: mono 44.1 kHz FLAC, written like the New Age bank
+const SWEEP_FILES: PadFile[] = [
+  { key: 44, url: '/pads/sweep/Gs2.flac', loopStart: 27903, loopEnd: 329471 },
+  { key: 48, url: '/pads/sweep/C3.flac', loopStart: 34720, loopEnd: 357321 },
+  { key: 52, url: '/pads/sweep/E3.flac', loopStart: 34303, loopEnd: 321535 },
+  { key: 56, url: '/pads/sweep/Gs3.flac', loopStart: 36760, loopEnd: 291327 },
+  { key: 60, url: '/pads/sweep/C4.flac', loopStart: 21167, loopEnd: 352511 },
+  { key: 64, url: '/pads/sweep/E4.flac', loopStart: 33791, loopEnd: 346623 },
+  { key: 68, url: '/pads/sweep/Gs4.flac', loopStart: 31207, loopEnd: 309247 },
+  { key: 72, url: '/pads/sweep/C5.flac', loopStart: 17382, loopEnd: 302079 },
+];
+
 // In select order, and the index is the timbre's id in the engine. Storage keeps the name, so a reorder saves nothing wrong
 export const PAD_TIMBRES: { name: string; files: PadFile[]; bass: boolean }[] = [
-  { name: 'Choir', files: [], bass: false },
+  { name: 'Choir', files: CHOIR_FILES, bass: false },
   { name: 'New Age', files: PAD_BANK, bass: false },
   { name: 'Orchestra', files: [], bass: true },
-  { name: 'Sweep', files: [], bass: false },
+  { name: 'Sweep', files: SWEEP_FILES, bass: false },
   { name: 'Analog', files: [], bass: false },
 ];
 export const DEFAULT_TIMBRE = 0;

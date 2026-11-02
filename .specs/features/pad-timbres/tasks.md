@@ -114,9 +114,9 @@ T14 → T15
 
 **Done when**:
 
-- [ ] The fixture reads every bank in `PAD_TIMBRES`
-- [ ] `pad_22` moves to 12 MB, as AD-019 sets
-- [ ] Gate passes
+- [x] The fixture reads every bank in `PAD_TIMBRES`
+- [x] `pad_22` moves to 12 MB, as AD-019 sets
+- [x] Gate passes
 
 **Tests**: unit
 **Gate**: quick
