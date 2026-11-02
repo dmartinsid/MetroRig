@@ -168,4 +168,12 @@
 - **Trade-off**: The output only clamps (AD-015), so a pad under a full-scale drum hit reaches the clamp more often.
 - **Scope**: pad-timbres, supersedes PAD-27 of chord-pads and the bound of TIM-20
 - **Date**: 2026-11-02
-- **Status**: active (AD-021)
+- **Status**: superseded by AD-022
+
+### AD-022
+- **Decision**: The pad's output takes a fixed gain of 8 dB on every timbre, and the default volume may peak at -4 dBFS. This supersedes the 6 dB and -6 dBFS of AD-021.
+- **Reason**: After hearing 6 dB, the user answered: "Melhorou, mas acho que da pra aumentar uns 2 db ainda".
+- **Trade-off**: As AD-021: the output only clamps (AD-015), so a pad under a full-scale drum hit reaches the clamp more often.
+- **Scope**: pad-timbres, supersedes PAD-27 of chord-pads and the bound of TIM-20
+- **Date**: 2026-11-02
+- **Status**: active (AD-022)

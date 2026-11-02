@@ -84,7 +84,7 @@ The Improv pad has one sound. The user liked what they heard, and their favourit
 **Acceptance Criteria**:
 
 1. TIM-09: `Choir` SHALL mix FreePats Synth Pad Choir with the synth layer, with the samples about 2 dB above the synth, as in `timbre-synth-pad-choir-Cmaj9.wav`.
-2. TIM-10: `New Age` SHALL render the same output as `chord-pads` for the same chord, sample for sample, before the gain AD-021 adds.
+2. TIM-10: `New Age` SHALL render the same output as `chord-pads` for the same chord, sample for sample, before the gain AD-022 adds.
 3. TIM-11: `Sweep` SHALL mix FreePats Sweep Pad with the synth layer.
 4. TIM-12: `Analog` SHALL render the synth layer alone and read no file.
 5. TIM-13: `Orchestra` SHALL render VSCO string sections with no synth layer: cello, viola and violin from low to high.
@@ -94,7 +94,7 @@ The Improv pad has one sound. The user liked what they heard, and their favourit
 9. TIM-17: The pitch centre of each `Orchestra` note SHALL sit within 10 cents of equal temperament at A = 440 Hz.
 10. TIM-18: Within a timbre, any two held chords SHALL sound within 3 dB RMS.
 11. TIM-19: On the same chord, any two timbres SHALL sound within 3 dB RMS.
-12. TIM-20: At the default volume, every timbre SHALL peak at or below -6 dBFS, as AD-021 sets.
+12. TIM-20: At the default volume, every timbre SHALL peak at or below -4 dBFS, as AD-022 sets.
 13. TIM-21: Every file loop SHALL close with no sample-to-sample step above the largest in the 10 ms before it.
 14. TIM-22: Across each `Orchestra` loop, the level SHALL stay within 1.5 dB over windows of 100 ms, so the loop does not pulse.
 15. TIM-23: The engine SHALL allocate no memory on the audio thread while a chord or timbre starts, changes or stops.
