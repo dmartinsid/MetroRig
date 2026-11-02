@@ -78,7 +78,7 @@ Each sample's source, by piece, recording and take, in the kit's own folders:
 
 ## New Age pad
 
-`public/pads/new-age/` holds 8 notes of New Age by Roberto of the FreePats project, made with the ZynAddSubFX and Yoshimi synthesizers. Its README states: "Published under the terms of Creative Commons CC0 public domain dedication." The files are unchanged, except that `G#` became `Gs` in their names, because `#` breaks URLs.
+`public/pads/new-age/` holds 9 notes of New Age by Roberto of the FreePats project, made with the ZynAddSubFX and Yoshimi synthesizers. Its README states: "Published under the terms of Creative Commons CC0 public domain dedication." The files are unchanged, except that `G#` became `Gs` in their names, because `#` breaks URLs.
 
 - Source: https://github.com/freepats/new-age
 - License: https://creativecommons.org/publicdomain/zero/1.0/
@@ -93,6 +93,7 @@ Each sample's source, by piece, recording and take, in the kit's own folders:
 | `pads/new-age/E4.flac` | `samples/E4.flac` |
 | `pads/new-age/Gs4.flac` | `samples/G#4.flac` |
 | `pads/new-age/C5.flac` | `samples/C5.flac` |
+| `pads/new-age/E5.flac` | `samples/E5.flac` |
 
 ## Synth Pad Choir
 
@@ -111,7 +112,7 @@ Each sample's source, by piece, recording and take, in the kit's own folders:
 
 ## Sweep Pad
 
-`public/pads/sweep/` holds 8 notes of Sweep Pad by Roberto of the FreePats project, made with the ZynAddSubFX and Yoshimi synthesizers. Its README states: "Published under the terms of Creative Commons CC0 public domain dedication." The files are unchanged, except that `G#` became `Gs` in their names, because `#` breaks URLs.
+`public/pads/sweep/` holds 9 notes of Sweep Pad by Roberto of the FreePats project, made with the ZynAddSubFX and Yoshimi synthesizers. Its README states: "Published under the terms of Creative Commons CC0 public domain dedication." The files are unchanged, except that `G#` became `Gs` in their names, because `#` breaks URLs.
 
 - Source: https://github.com/freepats/sweep-pad
 - License: https://creativecommons.org/publicdomain/zero/1.0/
@@ -126,10 +127,11 @@ Each sample's source, by piece, recording and take, in the kit's own folders:
 | `pads/sweep/E4.flac` | `samples/E4.flac` |
 | `pads/sweep/Gs4.flac` | `samples/G#4.flac` |
 | `pads/sweep/C5.flac` | `samples/C5.flac` |
+| `pads/sweep/E5.flac` | `samples/E5.flac` |
 
 ## Orchestra pad
 
-`public/pads/orchestra/` holds 13 notes built by `scripts/build_orchestra_bank.py` from the string recordings of VSCO 2 Community Edition by Versilian Studios, whose LICENSE is the CC0 1.0 Universal dedication. These files are processed: each recording is pitched to its key, tuned, looped and levelled, and the recordings of a key are mixed. The table names the recordings of each file, by their paths in the repository, and VSCO counts octaves so that C3 is MIDI 60.
+`public/pads/orchestra/` holds 14 notes built by `scripts/build_orchestra_bank.py` from the string recordings of VSCO 2 Community Edition by Versilian Studios, whose LICENSE is the CC0 1.0 Universal dedication. These files are processed: each recording is pitched to its key, tuned, looped and levelled, and the recordings of a key are mixed. The table names the recordings of each file, by their paths in the repository, and VSCO counts octaves so that C3 is MIDI 60.
 
 - Source: https://github.com/sgossner/VSCO-2-CE
 - License: https://creativecommons.org/publicdomain/zero/1.0/
@@ -149,3 +151,4 @@ Each sample's source, by piece, recording and take, in the kit's own folders:
 | `pads/orchestra/Ds4.flac` | `Strings/Violin Section/susVib/VlnEns_susVib_D3_v1.wav` |
 | `pads/orchestra/G4.flac` | `Strings/Violin Section/susVib/VlnEns_susVib_F#3_v1.wav` |
 | `pads/orchestra/B4.flac` | `Strings/Violin Section/susVib/VlnEns_susVib_C4_v1.wav` |
+| `pads/orchestra/Ds5.flac` | `Strings/Violin Section/susVib/VlnEns_susVib_E4_v1.wav` |

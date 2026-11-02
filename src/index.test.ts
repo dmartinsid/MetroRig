@@ -3518,8 +3518,8 @@ describe('Timbres', () => {
   });
 
   const CHOIR_NOTES = ['C3', 'Fs3', 'C4', 'Fs4', 'C5'];
-  const SWEEP_NOTES = ['Gs2', 'C3', 'E3', 'Gs3', 'C4', 'E4', 'Gs4', 'C5'];
-  const ORCHESTRA_NOTES = ['B0', 'Ds1', 'G1', 'B1', 'Ds2', 'G2', 'B2', 'Ds3', 'G3', 'B3', 'Ds4', 'G4', 'B4'];
+  const SWEEP_NOTES = ['Gs2', 'C3', 'E3', 'Gs3', 'C4', 'E4', 'Gs4', 'C5', 'E5'];
+  const ORCHESTRA_NOTES = ['B0', 'Ds1', 'G1', 'B1', 'Ds2', 'G2', 'B2', 'Ds3', 'G3', 'B3', 'Ds4', 'G4', 'B4', 'Ds5'];
   const urlsOf = (folder: string, notes: string[]) => notes.map(note => `/pads/${folder}/${note}.flac`);
   const CHOIR_URLS = urlsOf('choir', CHOIR_NOTES);
   const SWEEP_URLS = urlsOf('sweep', SWEEP_NOTES);
@@ -3673,13 +3673,13 @@ describe('Timbres', () => {
     let fail!: (error: Error) => void;
     mockPadLoad.mockImplementation((_timbre: number, _key: number, url: string) => new Promise<void>((resolve, reject) => {
       finish.push(resolve);
-      if (url === SWEEP_URLS[7]) fail = reject;
+      if (url === SWEEP_URLS[8]) fail = reject;
     }));
     localStorage.setItem('metrorig_pad_timbre', 'Sweep');
     await openPage();
     await openImprov();
     await pickTimbre('Choir');
-    for (let index = 0; index < 7; index++) {
+    for (let index = 0; index < 8; index++) {
       finish[index]();
       await flush();
     }
@@ -3687,7 +3687,7 @@ describe('Timbres', () => {
     fail(new Error('404'));
     await flush();
 
-    expect(logged).toHaveBeenCalledWith(`Failed to load ${SWEEP_URLS[7]}:`, expect.any(Error));
+    expect(logged).toHaveBeenCalledWith(`Failed to load ${SWEEP_URLS[8]}:`, expect.any(Error));
     expect(notice()).toBeNull();
 
     await pickTimbre('Sweep');

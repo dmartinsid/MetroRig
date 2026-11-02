@@ -1,4 +1,4 @@
-"""Builds the 13 Orchestra pad files from the string recordings of VSCO 2 Community Edition.
+"""Builds the 14 Orchestra pad files from the string recordings of VSCO 2 Community Edition.
 
 Usage: python3 -I scripts/build_orchestra_bank.py <VSCO folder> <output folder>
 Writes <output folder>/<note>.flac, named as the other pad banks: 44.1 kHz, 16-bit, stereo, frames 0 to 176400, where frame 176400
@@ -65,6 +65,7 @@ BANK = {
     63: ((VIOLIN, 'D3', 62, 0),),
     67: ((VIOLIN, 'F#3', 66, 0),),
     71: ((VIOLIN, 'C4', 72, 0),),
+    75: ((VIOLIN, 'E4', 76, 0),),
 }
 
 

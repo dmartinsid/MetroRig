@@ -91,17 +91,17 @@ T7
 
 ### T2: Reach MIDI 77 in Orchestra
 
-**What**: Download VSCO into the scratchpad, add key 75 to the builder and to `ORCHESTRA_FILES`, build the file, and list it in `LICENSE.md`
-**Where**: `scripts/build_orchestra_bank.py`, `public/pads/orchestra/`, `src/chords.ts`, `public/kit/LICENSE.md`
-**Depends on**: T1
+**What**: Add VSCO's key 75 to the builder and build it, add FreePats `E5` to New Age and Sweep, and list the 3 files
+**Where**: `scripts/build_orchestra_bank.py`, `public/pads/`, `src/chords.ts`, `public/kit/LICENSE.md`
+**Depends on**: None
 **Reuses**: `scripts/build_orchestra_bank.py`
 **Requirement**: CHD-06, CHD-08, CHD-12, CHD-13
 
 **Done when**:
 
-- [ ] The pitch, level, loop and repeat fixtures pass on 14 files
-- [ ] The 13 existing files keep their bytes
-- [ ] Gate passes
+- [x] The pitch, level, loop and repeat fixtures pass on 14 files
+- [x] The 13 existing files keep their bytes
+- [x] Gate passes
 
 **Tests**: unit
 **Gate**: quick
@@ -326,7 +326,7 @@ Proof: run js | ✓ src/index.test.ts > Chord selector > chd_36 click during a f
 
 ## Handoff
 
-**Settled mid-build:** none
+**Settled mid-build:** T2 runs before T1, because the bank tests read the top note. `pad_21` holds New Age within 2 semitones, so New Age and Sweep take FreePats `E5` at key 76 too. Choir's `F#5` takes 0.64 MB and would pass the 12 MB of CHD-12, so Choir reads `C5` up to 5 semitones sharp for notes 75 to 77; the user judges it at T7.
 **Dispatched:** none
 **Walked:** not yet
 

@@ -29,7 +29,7 @@ A chord stays a `ChordId` of root and type, and the pad keeps its rules: `nextCh
 
 - `src/chords.ts`: `CHORD_TYPES` entries add `family`, and they follow the spec's table. `CHORD_FAMILIES` lists the headings in order.
 - `chordOfRoot(selected, root)` keeps the type, and `chordOfType(selected, type)` keeps the root.
-- `ORCHESTRA_FILES` gains key 75, `/pads/orchestra/Ds5.flac`.
+- `ORCHESTRA_FILES` gains key 75, `/pads/orchestra/Ds5.flac`. New Age and Sweep gain key 76, each `E5.flac`.
 
 ### Orchestra bank
 

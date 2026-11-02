@@ -19,6 +19,7 @@ const NEW_AGE: [number, string, string, number, number][] = [
   [64, 'E4', '231d2ec4b785d28cc857b19237aabb6e7755d06601fe58cf0251713a5b06593e', 115725, 303615],
   [68, 'Gs4', 'c04b9ecf6c40128edacdbb27f855def03bcb342350fc8d7c4556eb59ef40c4d2', 103656, 257543],
   [72, 'C5', '18d73e6b2ceb8d216e04bcc321d3b081c2ec8de48cc36c63a8b5b9aeb98dad1f', 104269, 265523],
+  [76, 'E5', '0a521cf64088dd68651e6b593149d6d0fcf04845d2a80b04e0066527fa2722c6', 106254, 252287],
 ];
 
 // The STREAMINFO block sits right after the `fLaC` marker and its 4-byte header
@@ -108,7 +109,7 @@ describe('Timbre banks', () => {
   }
 
   it('tim_13 orchestra sections', () => {
-    const keys = [23, 27, 31, 35, 39, 43, 47, 51, 55, 59, 63, 67, 71];
+    const keys = [23, 27, 31, 35, 39, 43, 47, 51, 55, 59, 63, 67, 71, 75];
     expect(orchestra.map(file => file.key)).toEqual(keys);
 
     const sections = sectionsOfKeys();
@@ -117,7 +118,7 @@ describe('Timbre banks', () => {
     for (const key of [35, 39, 43]) expect(sections.get(key)).toEqual(['CELLO', 'CONTRABASS']);
     expect(sections.get(47)).toEqual(['CELLO']);
     for (const key of [51, 55]) expect(sections.get(key)).toEqual(['VIOLA']);
-    for (const key of [59, 63, 67, 71]) expect(sections.get(key)).toEqual(['VIOLIN']);
+    for (const key of [59, 63, 67, 71, 75]) expect(sections.get(key)).toEqual(['VIOLIN']);
 
     // Every note of every chord, from low to high: the sections never go back down, and no note reads far from its key
     const order = ['CONTRABASS', 'CELLO', 'VIOLA', 'VIOLIN'];
@@ -139,7 +140,7 @@ describe('Timbre banks', () => {
   });
 
   it('tim_24 orchestra format', () => {
-    expect(orchestra).toHaveLength(13);
+    expect(orchestra).toHaveLength(14);
     for (const file of orchestra) {
       const info = readStreamInfo(fs.readFileSync(path.join(padsDir, '..', file.url)));
       expect(info).toEqual({ sampleRate: 44100, channels: 2, bits: 16, frames: 176401 });
@@ -182,7 +183,7 @@ describe('Timbre banks', () => {
     }
 
     const recordings = recordingsOfKeys();
-    expect(orchestra.length).toBe(13);
+    expect(orchestra.length).toBe(14);
     for (const file of orchestra) {
       const sources = recordings.get(file.key)!;
       expect(sources.length).toBeGreaterThan(0);
