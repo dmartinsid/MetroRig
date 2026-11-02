@@ -270,8 +270,27 @@ header {
 
 .improv-controls {
   display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+
+.pad-timbre {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.pad-timbre select {
+  width: auto;
+}
+
+.pad-playback {
+  flex: 1 1 18rem;
+  display: flex;
   align-items: center;
   gap: 0.75rem;
+  min-width: 0;
 }
 
 .pad-stop {
@@ -1148,7 +1167,8 @@ select:focus {
 
 .form-group label,
 .stepper-field label,
-.groove-library-group label {
+.groove-library-group label,
+.pad-timbre label {
   font-size: 0.7rem;
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -1312,7 +1332,8 @@ select:focus {
   gap: 0.5rem;
 }
 
-.groove-library-group select {
+.groove-library-group select,
+.pad-timbre select {
   padding: 0.55rem 2rem 0.55rem 0.75rem;
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none' stroke='%239CA3AF' stroke-width='1.5'%3E%3Cpath d='M3 4.5 6 2l3 2.5M3 7.5 6 10l3-2.5'/%3E%3C/svg%3E");
