@@ -424,8 +424,8 @@ T19 → T20
 
 **Done when**:
 
-- [ ] Load, failure and retry tests pass
-- [ ] Gate passes
+- [x] Load, failure and retry tests pass
+- [x] Gate passes
 
 **Tests**: integration
 **Gate**: quick
