@@ -113,6 +113,8 @@ Every ambiguity is resolved or recorded here.
 4. PAD-20: The sample layer SHALL sound at the balance of demo 4: about 2 dB above the synth layer.
 5. PAD-21: The pad samples SHALL come from FreePats New Age, whose CC0 dedication SHALL be recorded in `public/kit/LICENSE.md`.
 6. PAD-22: All files in `public/pads/` together SHALL take at most 10 MB.
+7. PAD-60: Across the 168 chords, the sample layer SHALL sit from -2.5 dB to +4.5 dB against the synth layer, the range the user approved by ear.
+8. PAD-61: IF a sample's loop end lies past its file THEN the pad SHALL clamp it to the last frame, and IF its loop is empty THEN the pad SHALL refuse the sample.
 
 **Independent Test**: Hold `C7M(9)` and compare it with demo 4.
 
@@ -264,6 +266,8 @@ Every ambiguity is resolved or recorded here.
 | PAD-20 | P1: A pad that sounds professional | Design | Implementing |
 | PAD-21 | P1: A pad that sounds professional | Design | Implementing |
 | PAD-22 | P1: A pad that sounds professional | Design | Implementing |
+| PAD-60 | P1: A pad that sounds professional | Design | Implementing |
+| PAD-61 | P1: A pad that sounds professional | Design | Implementing |
 | PAD-23 | P1: The pad and the metronome stay independent | Design | Implementing |
 | PAD-24 | P1: The pad and the metronome stay independent | Design | Implementing |
 | PAD-25 | P1: The pad and the metronome stay independent | Design | Implementing |
@@ -301,7 +305,7 @@ Every ambiguity is resolved or recorded here.
 | PAD-57 | Edge Cases | Design | Implementing |
 | PAD-58 | Edge Cases | Design | Implementing |
 
-**Coverage:** 59 total, 0 mapped to tasks, 59 unmapped until Tasks.
+**Coverage:** 61 total. PAD-60 and PAD-61 came from the Verifier's findings.
 
 ---
 
