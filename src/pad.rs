@@ -9,6 +9,7 @@ const SAWS: usize = 7;
 const FADE_SECONDS: f32 = 1.5;
 const EVICTION_SECONDS: f32 = 0.02;
 const VOLUME_SECONDS: f32 = 0.02;
+const OUTPUT_GAIN: f32 = 2.0; // AD-021: every timbre 6 dB up, set by ear against the drums. A power of 2 keeps each sample's bits
 const DEFAULT_VOLUME: f32 = 0.7;
 
 // The sound of demo 3
@@ -40,7 +41,7 @@ const REVERB_WET: f32 = 0.08;
 const SILENCE: f32 = 3.2e-5; // -90 dBFS
 
 // Set by ear, within PAD-20 and PAD-27. Their ratio keeps the sample layer about 2 dB above the synth, as in demo 4.
-// Their level answers to the worst peak: at DEFAULT_VOLUME a rare line-up of three files reaches -12.7 dBFS
+// Before OUTPUT_GAIN, at DEFAULT_VOLUME a rare line-up of three files reaches -12.7 dBFS
 const SYNTH_GAIN: f32 = 0.0375;
 const SAMPLE_GAIN: f32 = 0.3375;
 
@@ -432,8 +433,8 @@ impl Pad {
             let (pad_left, pad_right) = (pad_left + past_left * REVERB_DRY, pad_right + past_right * REVERB_DRY);
             peak = peak.max(pad_left.abs()).max(pad_right.abs());
             self.volume += (self.volume_target - self.volume).clamp(-volume_step, volume_step);
-            *out_left += pad_left * self.volume;
-            *out_right += pad_right * self.volume;
+            *out_left += pad_left * self.volume * OUTPUT_GAIN;
+            *out_right += pad_right * self.volume * OUTPUT_GAIN;
         }
         if peak < SILENCE && self.slots.iter().all(|slot| slot.count == 0) {
             self.silent = true;
@@ -573,6 +574,7 @@ mod tests {
     const ANALOG: u8 = 4;
     // `new_age_hash`, taken on the engine of 65319e9, before any timbre reached it
     const NEW_AGE_BEFORE_TIMBRES: u64 = 0x6dc4d4d93e118ee4;
+    const PEAK_LIMIT: f32 = -6.0; // dBFS at the default volume, as AD-021 sets
 
     // Per thread, so tests running beside this one cannot disturb its count
     thread_local! {
@@ -1304,7 +1306,7 @@ mod tests {
         }).collect();
         held_peaks.sort_by(|a, b| a.0.total_cmp(&b.0));
         let (loudest, chord) = held_peaks.last().unwrap();
-        assert!(db(*loudest) <= -12.0, "{chord:?} peaks at {} dBFS", db(*loudest));
+        assert!(db(*loudest) <= PEAK_LIMIT, "{chord:?} peaks at {} dBFS", db(*loudest));
 
         // Two chords overlap through every crossfade, each opening on the hot start of its files
         let mut pad = Pad::new(RATE);
@@ -1321,7 +1323,7 @@ mod tests {
                 crossfade_peak = crossfade_peak.max(peak(&left)).max(peak(&right));
             }
         }
-        assert!(db(crossfade_peak) <= -12.0, "a crossfade peaks at {} dBFS", db(crossfade_peak));
+        assert!(db(crossfade_peak) <= PEAK_LIMIT, "a crossfade peaks at {} dBFS", db(crossfade_peak));
     }
 
     #[test]
@@ -1630,7 +1632,8 @@ mod tests {
         hold(&mut pad, 2.5);
         pad.stop();
         hold(&mut pad, 3.0);
-        left.iter().chain(&right).flat_map(|value| ((value * 1024.0).round() as i32).to_le_bytes())
+        // The chord-pads output, before the gain AD-021 adds
+        left.iter().chain(&right).flat_map(|value| ((value / OUTPUT_GAIN * 1024.0).round() as i32).to_le_bytes())
             .fold(0xcbf29ce484222325u64, |hash, byte| (hash ^ byte as u64).wrapping_mul(0x100000001b3))
     }
 
@@ -2064,7 +2067,7 @@ mod tests {
         let held = held_chords();
         for (timbre, chords) in held.iter().enumerate() {
             let loudest = chords.iter().max_by(|a, b| a.peak.total_cmp(&b.peak)).unwrap();
-            assert!(db(loudest.peak) <= -12.0, "timbre {timbre}: {:?} peaks at {} dBFS", loudest.chord, db(loudest.peak));
+            assert!(db(loudest.peak) <= PEAK_LIMIT, "timbre {timbre}: {:?} peaks at {} dBFS", loudest.chord, db(loudest.peak));
         }
 
         // Every crossfade doubles the chords sounding, each on the hot start of its files, within a timbre and across them
@@ -2099,7 +2102,7 @@ mod tests {
         });
         for picks in within.chain([across]) {
             let highest = crossfade_peak(&picks);
-            assert!(db(highest) <= -12.0, "a crossfade peaks at {} dBFS", db(highest));
+            assert!(db(highest) <= PEAK_LIMIT, "a crossfade peaks at {} dBFS", db(highest));
         }
     }
 
@@ -2184,7 +2187,7 @@ mod tests {
             assert!(highest - lowest <= 3.0, "chords sit from {lowest} to {highest} dB on the synth");
         }
         let loudest = held.iter().max_by(|a, b| a.peak.total_cmp(&b.peak)).unwrap();
-        assert!(db(loudest.peak) <= -12.0, "{:?} peaks at {} dBFS on the synth", loudest.chord, db(loudest.peak));
+        assert!(db(loudest.peak) <= PEAK_LIMIT, "{:?} peaks at {} dBFS on the synth", loudest.chord, db(loudest.peak));
     }
 
     #[test]

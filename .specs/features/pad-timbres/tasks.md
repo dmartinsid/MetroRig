@@ -421,7 +421,7 @@ Proof: run js | ✓ src/index.test.ts > Timbres > tim_08 opens silent
 **C10** - Choir samples sit about 2 dB above the synth (TIM-09, AC 9)
 Proof: run rust | test pad::tests::tim_09_choir_balance ... ok
 
-**C11** - New Age renders the output of `chord-pads`, sample for sample (TIM-10, AC 10)
+**C11** - New Age renders the output of `chord-pads`, sample for sample, before AD-021's gain (TIM-10, AC 10)
 Proof: run rust | test pad::tests::tim_10_new_age_is_unchanged ... ok
 
 **C12** - Sweep mixes its samples with the synth (TIM-11, AC 11)
@@ -454,7 +454,7 @@ Proof: run rust | test pad::tests::tim_18_chords_match_within_3_db ... ok
 **C21** - On one chord, the timbres sit within 3 dB RMS (TIM-19, AC 19)
 Proof: run rust | test pad::tests::tim_19_timbres_match_within_3_db ... ok
 
-**C22** - At default volume every timbre peaks at or below -12 dBFS (TIM-20, AC 20)
+**C22** - At default volume every timbre peaks at or below -6 dBFS (TIM-20, AC 20)
 Proof: run rust | test pad::tests::tim_20_default_peak ... ok
 
 **C23** - Every file of every bank closes its loop cleanly (TIM-21, AC 21)
