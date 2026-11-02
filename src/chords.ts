@@ -1,0 +1,38 @@
+// 12 roots × 14 types, in Brazilian notation
+export const ROOTS = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];
+
+const LOWEST_ROOT = 45; // A2; roots run up to G#3
+
+export const CHORD_TYPES: { suffix: string; semitones: number[]; degrees: number[] }[] = [
+  { suffix: '', semitones: [0, 4, 7], degrees: [1, 3, 5] },
+  { suffix: 'm', semitones: [0, 3, 7], degrees: [1, 3, 5] },
+  { suffix: '7', semitones: [0, 4, 7, 10], degrees: [1, 3, 5, 7] },
+  { suffix: '7M', semitones: [0, 4, 7, 11], degrees: [1, 3, 5, 7] },
+  { suffix: 'm7', semitones: [0, 3, 7, 10], degrees: [1, 3, 5, 7] },
+  { suffix: 'sus4', semitones: [0, 5, 7], degrees: [1, 4, 5] },
+  { suffix: 'sus2', semitones: [0, 2, 7], degrees: [1, 2, 5] },
+  { suffix: 'add9', semitones: [0, 4, 7, 14], degrees: [1, 3, 5, 9] },
+  { suffix: '9', semitones: [0, 4, 7, 10, 14], degrees: [1, 3, 5, 7, 9] },
+  { suffix: 'm9', semitones: [0, 3, 7, 10, 14], degrees: [1, 3, 5, 7, 9] },
+  { suffix: '7M(9)', semitones: [0, 4, 7, 11, 14], degrees: [1, 3, 5, 7, 9] },
+  { suffix: '6', semitones: [0, 4, 7, 9], degrees: [1, 3, 5, 6] },
+  { suffix: 'dim', semitones: [0, 3, 6], degrees: [1, 3, 5] },
+  { suffix: 'aug', semitones: [0, 4, 8], degrees: [1, 3, 5] },
+];
+
+// Indexes into ROOTS and CHORD_TYPES
+export interface ChordId { root: number; type: number }
+
+export function chordName(root: number, type: number): string {
+  return ROOTS[root] + CHORD_TYPES[type].suffix;
+}
+
+export function chordMidi(root: number, type: number): number[] {
+  const bass = LOWEST_ROOT + (root + 12 - (LOWEST_ROOT % 12)) % 12;
+  return CHORD_TYPES[type].semitones.map(semitone => bass + semitone);
+}
+
+// The sounding chord after a click: the same chord stops, another replaces it
+export function nextChord(current: ChordId | null, clicked: ChordId): ChordId | null {
+  return current?.root === clicked.root && current.type === clicked.type ? null : clicked;
+}
