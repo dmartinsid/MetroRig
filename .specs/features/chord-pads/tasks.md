@@ -262,9 +262,9 @@ T19 → T20
 
 **Done when**:
 
-- [ ] Every existing Rust test still passes
-- [ ] The 4 new tests pass
-- [ ] Gate passes
+- [x] Every existing Rust test still passes
+- [x] The 4 new tests pass
+- [x] Gate passes
 
 **Tests**: unit
 **Gate**: rust
