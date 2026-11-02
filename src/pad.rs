@@ -1,5 +1,5 @@
 // The chord pad: held chords mixed over the drums. The page says which notes to hold; everything else
-// runs here, on the audio thread, so nothing below allocates once `Pad::new` has returned.
+// runs here, on the audio thread, where only `load` may allocate: a chord starts, changes and stops on fixed arrays.
 use std::f32::consts::{FRAC_PI_2, TAU};
 
 const MAX_CHORDS: usize = 3;
@@ -7,6 +7,8 @@ const MAX_NOTES: usize = 5;
 const SAWS: usize = 7;
 const FADE_SECONDS: f32 = 1.5;
 const EVICTION_SECONDS: f32 = 0.02;
+const VOLUME_SECONDS: f32 = 0.02;
+const DEFAULT_VOLUME: f32 = 0.7;
 
 // The sound of demo 3
 const DETUNE: [f32; SAWS] = [-0.19, -0.11, -0.05, 0.0, 0.05, 0.11, 0.19]; // Semitones
@@ -15,8 +17,9 @@ const CUTOFF_SWING_HZ: f32 = 350.0;
 const CUTOFF_LFO_HZ: f32 = 0.13;
 
 // Demo 2's ffmpeg chorus, `0.6:0.9:45|60|75:0.35|0.3|0.3:0.15|0.23|0.31:2|2.5|3`, in opposite phase left and right.
-// Each tap's delay swings from its base up by its depth. The taps sit at half the demo's level, and the reverb
-// below demo 3's: both colour some notes more than others, against PAD-14's level and PAD-07's pitch.
+// Each tap's delay swings from its base up by its depth.
+// SPEC_DEVIATION: the taps sit at half the demo's level, and COMB_FEEDBACK and REVERB_WET below demo 3's 0.9 and 0.1
+// Reason: at the demos' values both colour some notes more than others, past PAD-14's 3 dB and PAD-07's 5 cents
 const CHORUS_TAPS: usize = 3;
 const CHORUS_DELAY_MS: [f32; CHORUS_TAPS] = [45.0, 60.0, 75.0];
 const CHORUS_DEPTH_MS: [f32; CHORUS_TAPS] = [2.0, 2.5, 3.0];
@@ -35,9 +38,10 @@ const REVERB_WET: f32 = 0.08;
 
 const SILENCE: f32 = 3.2e-5; // -90 dBFS
 
-// Set by ear. Demo 4 keeps the sample layer about 2 dB above the synth
-const SYNTH_GAIN: f32 = 0.1;
-const SAMPLE_GAIN: f32 = 0.9;
+// Set by ear, within PAD-20 and PAD-27. Their ratio keeps the sample layer about 2 dB above the synth, as in demo 4.
+// Their level answers to the worst peak: at DEFAULT_VOLUME a rare line-up of three files reaches -12.7 dBFS
+const SYNTH_GAIN: f32 = 0.0375;
+const SAMPLE_GAIN: f32 = 0.3375;
 
 const NO_FILE: usize = usize::MAX;
 
@@ -52,9 +56,14 @@ struct PadSample {
 
 #[derive(Clone, Copy)]
 struct Voice {
+    note: u8,
     phases: [f32; SAWS],
     steps: [f32; SAWS], // Phase per frame
     file: usize, // Index into `samples`, or NO_FILE
+    next_file: usize, // A nearer file that came in while the voice sounds
+    // SPEC_DEVIATION: on the voice, where the design keeps one sample gain per slot
+    // Reason: files arrive one by one, and a held note must move to the nearer file without a click
+    file_gain: f32, // Linear, from 0 to 1
     // SPEC_DEVIATION: f64, where the design says f32
     // Reason: past 262,144 frames f32 moves in steps of 1/32 of a frame, which rounds a ratio of 1.059 to 1.0625, 5 cents sharp
     position: f64,
@@ -62,7 +71,37 @@ struct Voice {
 }
 
 impl Voice {
-    const OFF: Voice = Voice { phases: [0.0; SAWS], steps: [0.0; SAWS], file: NO_FILE, position: 0.0, speed: 1.0 };
+    const OFF: Voice = Voice {
+        note: 0,
+        phases: [0.0; SAWS],
+        steps: [0.0; SAWS],
+        file: NO_FILE,
+        next_file: NO_FILE,
+        file_gain: 0.0,
+        position: 0.0,
+        speed: 1.0,
+    };
+
+    fn use_file(&mut self, file: usize, samples: &[PadSample]) {
+        self.file = file;
+        self.next_file = file;
+        self.position = 0.0;
+        if let Some(sample) = samples.get(file) {
+            self.speed = 2f64.powf((self.note as f64 - sample.key as f64) / 12.0);
+        }
+    }
+
+    // Leaves the file it has, if a nearer one came in, and fades that one in
+    fn approach_file(&mut self, samples: &[PadSample], rise: f32, fall: f32) {
+        if self.next_file != self.file {
+            self.file_gain = (self.file_gain - fall).max(0.0);
+            if self.file_gain == 0.0 {
+                self.use_file(self.next_file, samples);
+            }
+        } else if self.file != NO_FILE {
+            self.file_gain = (self.file_gain + rise).min(1.0);
+        }
+    }
 
     fn read(&mut self, sample: &PadSample) -> (f32, f32) {
         let index = self.position as usize;
@@ -247,6 +286,8 @@ pub struct Pad {
     pending_count: usize,
     order: u64,
     samples: Vec<PadSample>,
+    volume: f32,
+    volume_target: f32,
     filter_left: [f32; 2],
     filter_right: [f32; 2],
     cutoff_phase: f32,
@@ -265,6 +306,8 @@ impl Pad {
             pending_count: 0,
             order: 0,
             samples: Vec::new(),
+            volume: DEFAULT_VOLUME,
+            volume_target: DEFAULT_VOLUME,
             filter_left: [0.0; 2],
             filter_right: [0.0; 2],
             cutoff_phase: 0.0,
@@ -314,6 +357,15 @@ impl Pad {
         }
         let sample = PadSample { key, left: left[..frames].to_vec(), right: right[..frames].to_vec(), loop_start, loop_end };
         self.samples.push(sample);
+        for slot in 0..MAX_CHORDS {
+            for voice in 0..self.slots[slot].count {
+                self.slots[slot].voices[voice].next_file = self.nearest_file(self.slots[slot].voices[voice].note);
+            }
+        }
+    }
+
+    pub fn set_volume(&mut self, volume: f32) {
+        self.volume_target = volume.clamp(0.0, 1.0);
     }
 
     pub fn is_silent(&self) -> bool {
@@ -325,6 +377,7 @@ impl Pad {
             return;
         }
         let mut peak = 0f32;
+        let volume_step = 1.0 / (VOLUME_SECONDS * self.sample_rate);
         for (out_left, out_right) in left.iter_mut().zip(right.iter_mut()) {
             let ((synth_left, synth_right), (file_left, file_right)) = self.layers();
             // SPEC_DEVIATION: the chorus takes the sample layer alone, where PAD-19 says the pad
@@ -332,8 +385,9 @@ impl Pad {
             let (file_left, file_right) = self.chorus.run(file_left, file_right);
             let (pad_left, pad_right) = self.reverb.run(synth_left + file_left, synth_right + file_right);
             peak = peak.max(pad_left.abs()).max(pad_right.abs());
-            *out_left += pad_left;
-            *out_right += pad_right;
+            self.volume += (self.volume_target - self.volume).clamp(-volume_step, volume_step);
+            *out_left += pad_left * self.volume;
+            *out_right += pad_right * self.volume;
         }
         if peak < SILENCE && self.slots.iter().all(|slot| slot.count == 0) {
             self.silent = true;
@@ -361,17 +415,15 @@ impl Pad {
 
     // Saws start at random phases, or a chord would open with a thump
     fn new_voice(&mut self, note: u8) -> Voice {
-        let mut voice = Voice::OFF;
+        let mut voice = Voice { note, ..Voice::OFF };
         for saw in 0..SAWS {
             self.random = self.random.wrapping_mul(1664525).wrapping_add(1013904223);
             voice.phases[saw] = (self.random >> 8) as f32 / 16777216.0;
             let hz = 440.0 * 2f32.powf((note as f32 + DETUNE[saw] - 69.0) / 12.0);
             voice.steps[saw] = hz / self.sample_rate;
         }
-        voice.file = self.nearest_file(note);
-        if let Some(sample) = self.samples.get(voice.file) {
-            voice.speed = 2f64.powf((note as f64 - sample.key as f64) / 12.0);
-        }
+        voice.use_file(self.nearest_file(note), &self.samples);
+        voice.file_gain = if voice.file == NO_FILE { 0.0 } else { 1.0 };
         voice
     }
 
@@ -386,6 +438,8 @@ impl Pad {
     fn layers(&mut self) -> ((f32, f32), (f32, f32)) {
         let (mut left, mut right) = (0.0, 0.0);
         let (mut file_left, mut file_right) = (0.0, 0.0);
+        let file_rise = 1.0 / (FADE_SECONDS * self.sample_rate);
+        let file_fall = 1.0 / (EVICTION_SECONDS * self.sample_rate);
         for slot in &mut self.slots {
             let gain = slot.fade_gain();
             for voice in &mut slot.voices[..slot.count] {
@@ -398,10 +452,12 @@ impl Pad {
                     left += value * (1.0 - pan);
                     right += value * pan;
                 }
+                voice.approach_file(&self.samples, file_rise, file_fall);
                 if let Some(sample) = self.samples.get(voice.file) {
+                    let file_gain = if voice.file_gain < 1.0 { (voice.file_gain * FRAC_PI_2).sin() } else { 1.0 };
                     let (sample_left, sample_right) = voice.read(sample);
-                    file_left += sample_left * gain;
-                    file_right += sample_right * gain;
+                    file_left += sample_left * gain * file_gain;
+                    file_right += sample_right * gain * file_gain;
                 }
             }
         }
@@ -893,22 +949,14 @@ mod tests {
 
     #[test]
     fn pad_14_chords_match_within_3_db() {
-        const TYPES: [&[u8]; 14] = [
-            &[0, 4, 7], &[0, 3, 7], &[0, 4, 7, 10], &[0, 4, 7, 11], &[0, 3, 7, 10], &[0, 5, 7], &[0, 2, 7],
-            &[0, 4, 7, 14], &[0, 4, 7, 10, 14], &[0, 3, 7, 10, 14], &[0, 4, 7, 11, 14], &[0, 4, 7, 9], &[0, 3, 6], &[0, 4, 8],
-        ];
-        let mut levels: Vec<(f32, Vec<u8>)> = Vec::new();
-        for root in 45..=56u8 {
-            for semitones in TYPES {
-                let chord: Vec<u8> = semitones.iter().map(|semitone| root + semitone).collect();
-                let mut pad = Pad::new(RATE);
-                load_bank(&mut pad);
-                pad.play(&chord);
-                let (left, right) = render(&mut pad, 12.0);
-                let held = mono(after(&left, FADE_END, RATE), after(&right, FADE_END, RATE));
-                levels.push((db(rms(&held)), chord));
-            }
-        }
+        let mut levels: Vec<(f32, Vec<u8>)> = all_chords().into_iter().map(|chord| {
+            let mut pad = Pad::new(RATE);
+            load_bank(&mut pad);
+            pad.play(&chord);
+            let (left, right) = render(&mut pad, 12.0);
+            let held = mono(after(&left, FADE_END, RATE), after(&right, FADE_END, RATE));
+            (db(rms(&held)), chord)
+        }).collect();
         levels.sort_by(|a, b| a.0.total_cmp(&b.0));
         let (quietest, loudest) = (&levels[0], &levels[levels.len() - 1]);
         assert!(loudest.0 - quietest.0 <= 3.0, "{quietest:?} against {loudest:?}");
@@ -1089,6 +1137,154 @@ mod tests {
                 assert!(peak.abs() <= 5.0, "note {note} is {peak} cents off");
             }
         }
+    }
+
+    fn all_chords() -> Vec<Vec<u8>> {
+        const TYPES: [&[u8]; 14] = [
+            &[0, 4, 7], &[0, 3, 7], &[0, 4, 7, 10], &[0, 4, 7, 11], &[0, 3, 7, 10], &[0, 5, 7], &[0, 2, 7],
+            &[0, 4, 7, 14], &[0, 4, 7, 10, 14], &[0, 3, 7, 10, 14], &[0, 4, 7, 11, 14], &[0, 4, 7, 9], &[0, 3, 6], &[0, 4, 8],
+        ];
+        (45..=56u8).flat_map(|root| TYPES.iter().map(move |semitones| semitones.iter().map(|semitone| root + semitone).collect())).collect()
+    }
+
+    fn peak(signal: &[f32]) -> f32 {
+        signal.iter().fold(0.0, |peak, value| peak.max(value.abs()))
+    }
+
+    #[test]
+    fn pad_27_default_peak() {
+        // The app sends 70 from a slider going to 100, and a fresh engine must already sit there
+        let mut held_peaks: Vec<(f32, Vec<u8>)> = all_chords().into_iter().map(|chord| {
+            let mut pad = Pad::new(RATE);
+            load_bank(&mut pad);
+            pad.play(&chord);
+            let (left, right) = render(&mut pad, 16.0);
+            (peak(&left).max(peak(&right)), chord)
+        }).collect();
+        held_peaks.sort_by(|a, b| a.0.total_cmp(&b.0));
+        let (loudest, chord) = held_peaks.last().unwrap();
+        assert!(db(*loudest) <= -12.0, "{chord:?} peaks at {} dBFS", db(*loudest));
+
+        // Two chords overlap through every crossfade, each opening on the hot start of its files
+        let mut pad = Pad::new(RATE);
+        load_bank(&mut pad);
+        pad.set_volume(0.7);
+        let (mut left, mut right) = ([0.0f32; 128], [0.0f32; 128]);
+        let mut crossfade_peak = 0f32;
+        for (_, chord) in held_peaks.iter().rev().take(40) {
+            pad.play(chord);
+            for _ in 0..(2.0 * RATE / 128.0) as usize {
+                left.fill(0.0);
+                right.fill(0.0);
+                pad.mix_into(&mut left, &mut right);
+                crossfade_peak = crossfade_peak.max(peak(&left)).max(peak(&right));
+            }
+        }
+        assert!(db(crossfade_peak) <= -12.0, "a crossfade peaks at {} dBFS", db(crossfade_peak));
+    }
+
+    #[test]
+    fn pad_42_volume_has_no_click() {
+        // A slow tone has small steps of its own, so a jump in gain would stand out
+        let held = || {
+            let mut pad = Pad::new(RATE);
+            load_tone(&mut pad, 45, 110.0);
+            pad.play(&[45]);
+            render(&mut pad, 3.0);
+            pad
+        };
+        let largest_step = |signal: &[f32]| signal.windows(2).map(|pair| (pair[1] - pair[0]).abs()).fold(0.0, f32::max);
+
+        let mut pad = held();
+        pad.set_volume(1.0);
+        render(&mut pad, 0.1);
+        let (full, _) = render(&mut pad, 2.0);
+        let (full_level, full_step) = (rms(&full), largest_step(&full));
+
+        for (from, to) in [(1.0, 0.0), (0.0, 1.0), (0.2, 0.9)] {
+            // A jump is only as tall as the signal at that moment, so the change comes all across the tone's 9 ms
+            for moment in 0..9 {
+                let mut pad = held();
+                pad.set_volume(from);
+                let (before, _) = render(&mut pad, 0.1 + moment as f32 * 0.001);
+                pad.set_volume(to);
+                let (signal, _) = render(&mut pad, 2.0);
+                // From the last frame before the change, or a jump would fall between the two renders
+                let across = [&before[before.len() - 1..], &signal[..]].concat();
+                assert!(largest_step(&across) <= 1.25 * full_step, "from {from} to {to}: step {} after {full_step}", largest_step(&across));
+                let settled = after(&signal, 0.1, RATE);
+                assert!((rms(settled) - to * full_level).abs() <= 0.1 * full_level, "from {from} to {to}: level {}", rms(settled));
+            }
+        }
+
+        // Down to nothing
+        let mut pad = held();
+        pad.set_volume(0.0);
+        render(&mut pad, 0.1);
+        let (signal, _) = render(&mut pad, 0.5);
+        assert_eq!(peak(&signal), 0.0);
+
+        // It leaves the buffers' drums alone, whatever the volume
+        let mut pad = held();
+        pad.set_volume(0.0);
+        render(&mut pad, 0.1);
+        let (mut left, mut right) = ([0.5f32; 128], [-0.5f32; 128]);
+        pad.mix_into(&mut left, &mut right);
+        assert!(left.iter().all(|value| *value == 0.5) && right.iter().all(|value| *value == -0.5));
+    }
+
+    #[test]
+    fn pad_49_late_samples_fade_in() {
+        let loaded_at = 2.0;
+        let late = |load: fn(&mut Pad)| {
+            let run = |with_files: bool| {
+                let mut pad = Pad::new(RATE);
+                pad.play(&CHORD_A);
+                let (mut left, _) = render_dry(&mut pad, loaded_at);
+                if with_files {
+                    load(&mut pad);
+                }
+                left.extend(render_dry(&mut pad, 3.0).0);
+                left
+            };
+            let (loaded, bare) = (run(true), run(false));
+            loaded.iter().zip(&bare).map(|(a, b)| a - b).collect::<Vec<f32>>()
+        };
+
+        // The first file reaches the held note from nothing, over 1.5 s
+        let signal = late(|pad| load_tone(pad, 50, tone_of(CHORD_A)));
+        assert_level(&signal, CHORD_A, loaded_at - 0.02, 0.0);
+        assert_level(&signal, CHORD_A, loaded_at + 0.02, equal_power(0.02));
+        assert_level(&signal, CHORD_A, loaded_at + 0.75, equal_power(0.75));
+        assert!(level_at(&signal, CHORD_A, loaded_at + 1.3) < 0.985, "full level came before 1.5 s");
+        assert_level(&signal, CHORD_A, loaded_at + 1.2, equal_power(1.2));
+        assert_level(&signal, CHORD_A, loaded_at + 1.52, 1.0);
+        assert_level(&signal, CHORD_A, loaded_at + 2.5, 1.0);
+
+        // A nearer file takes over with no click: the first leaves in 20 ms, and the second rises
+        let run = || {
+            let mut pad = Pad::new(RATE);
+            load_tone(&mut pad, 44, 110.0);
+            pad.play(&[50]);
+            let (before, _) = render_dry(&mut pad, 3.0);
+            (pad, before[before.len() - 1])
+        };
+        let ((mut bare, _), (mut loaded, last_before)) = (run(), run());
+        load_tone(&mut loaded, 52, 200.0);
+        // From the last frame before the load, or a jump would fall between the two renders
+        let signal = [&[last_before][..], &render_dry(&mut loaded, 3.0).0].concat();
+        let bare_signal = render_dry(&mut bare, 3.0).0;
+        let moved = 2f32.powf(6.0 / 12.0);
+        let nearer_tone = 200.0 * 2f32.powf(-2.0 / 12.0);
+        let heard = |signal: &[f32], hz: f32, second: f32| {
+            let window = &signal[(second * RATE) as usize..((second + 0.2) * RATE) as usize];
+            band_power(window, hz, 40.0, RATE)
+        };
+        assert!(heard(&signal, nearer_tone, 2.5) > 1000.0 * heard(&signal, 110.0 * moved, 2.5), "the first file stayed");
+        let step = |signal: &[f32], from: usize, to: usize| signal[from..to].windows(2).map(|pair| (pair[1] - pair[0]).abs()).fold(0.0, f32::max);
+        let swap_end = (0.05 * RATE) as usize;
+        let last = (2.9 * RATE) as usize;
+        assert!(step(&signal, 0, swap_end) <= 1.25 * step(&bare_signal, last - swap_end, last), "the swap clicks");
     }
 
     #[test]
