@@ -182,8 +182,8 @@ T7
 
 **Done when**:
 
-- [ ] Walk at 1280 px and 390 px logged in the Handoff
-- [ ] Gate passes
+- [x] Walk at 1280 px and 390 px logged in the Handoff
+- [x] Gate passes
 
 **Tests**: none
 **Gate**: full
@@ -328,7 +328,7 @@ Proof: run js | ✓ src/index.test.ts > Chord selector > chd_36 click during a f
 
 **Settled mid-build:** T2 runs before T1, because the bank tests read the top note. `pad_21` holds New Age within 2 semitones, so New Age and Sweep take FreePats `E5` at key 76 too. Choir's `F#5` takes 0.64 MB and would pass the 12 MB of CHD-12, so Choir reads `C5` up to 5 semitones sharp for notes 75 to 77; the user judges it at T7. T3: Analog spread 3.25 dB, because the filter darkens notes above 70, so the synth takes a gain above note 70, which leaves every `chord-pads` chord alone, and Analog's mix moves from 1.40 to 1.43. `tim_16`'s heard pitch allows 7 cents on note 71 alone: it read -6.0 on Analog and -5.1 on New Age, while the note leaves the voice within 0.5 cents, because its harmonics sit on the reverb's combs, and TIM-10 keeps that reverb. The dry reading keeps 5 cents on every note. The user is told at T7.
 **Dispatched:** none
-**Walked:** not yet
+**Walked:** T6, Chrome on `http://localhost:3000`, reached by the `Improv` link. The browser window stayed 1080 px wide, so layout was measured in same-origin iframes of exactly 1280 and 390 px. Opens with `C` and `maj` selected and `No chord playing`, 12 roots, 34 types under 6 headings. 1280 px: scrollWidth 1280 = clientWidth 1280, no button clipped or off the right edge, roots on one row. 390 px: scrollWidth 375 = clientWidth 375, every button 44 px tall or more, none clipped. The roots sat under the 147 px sticky header, so the header goes static on narrow `Improv`; with the last type scrolled into view the roots stay at top 0 and `elementFromPoint` hits a root. At 1080 px, by DOM clicks: `m7` gives `Cm7 · C Eb G Bb`, `A` gives `Am7 · A C E G`, `D` gives `Dm7 · D F A C`, `m9` gives `Dm9 · D F A C E`, `m11` gives `Dm11 · D F C E G`, marks on `D` and `m11`; Stop gives `No chord playing` with `D` and `m11` selected. No console error after the page loaded. Audio was not heard. Enter and Space were not pressed; C27 proves native buttons.
 
 ---
 
