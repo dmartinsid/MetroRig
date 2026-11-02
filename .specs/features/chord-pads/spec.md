@@ -270,7 +270,7 @@ Every ambiguity is resolved or recorded here.
 | PAD-27 | P1: The pad and the metronome stay independent | Design | Implementing |
 | PAD-28 | P1: The pad and the metronome stay independent | Design | Implementing |
 | PAD-29 | P1: The pad and the metronome stay independent | Design | Implementing |
-| PAD-30 | P1: The Improv screen | Design | Pending |
+| PAD-30 | P1: The Improv screen | Design | Implementing |
 | PAD-31 | P1: The Improv screen | Design | Pending |
 | PAD-32 | P1: The Improv screen | Design | Pending |
 | PAD-33 | P1: The Improv screen | Design | Pending |
@@ -297,7 +297,7 @@ Every ambiguity is resolved or recorded here.
 | PAD-55 | P3: Credit and documentation | Design | Pending |
 | PAD-39 | Edge Cases | Design | Implementing |
 | PAD-56 | Edge Cases | Design | Pending |
-| PAD-57 | Edge Cases | Design | Pending |
+| PAD-57 | Edge Cases | Design | Implementing |
 | PAD-58 | Edge Cases | Design | Implementing |
 
 **Coverage:** 59 total, 0 mapped to tasks, 59 unmapped until Tasks.

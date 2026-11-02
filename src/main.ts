@@ -21,6 +21,7 @@ const views: Record<ViewMode, HTMLElement> = {
   editor: document.getElementById('editor-view') as HTMLElement,
   stadium: document.getElementById('stadium-view') as HTMLElement,
   grooves: document.getElementById('grooves-view') as HTMLElement,
+  improv: document.getElementById('improv-view') as HTMLElement,
 };
 
 const bpmSlider = document.getElementById('bpm-slider') as HTMLInputElement;
