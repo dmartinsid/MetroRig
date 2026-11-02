@@ -173,7 +173,7 @@ describe('Timbre banks', () => {
     const license = fs.readFileSync(licensePath, 'utf8');
     const row = (url: string) => license.split('\n').find(line => line.startsWith(`| \`${url.replace('/pads/', 'pads/')}\` |`));
 
-    for (const name of ['Choir', 'Sweep']) {
+    for (const name of ['Choir', 'New Age', 'Sweep']) {
       const { files } = PAD_TIMBRES.find(timbre => timbre.name === name)!;
       expect(files.length).toBeGreaterThan(0);
       for (const file of files) {

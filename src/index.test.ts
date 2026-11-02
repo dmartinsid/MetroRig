@@ -3810,6 +3810,14 @@ describe('Chord selector', () => {
     await click(rootButton('A'));
     expect(plays()).toEqual([[[45, 49, 52], 0]]);
     expect(shown()).toBe('A · A C# E');
+
+    // With another type selected, the next root takes that one
+    await click(typeButton('m7'));
+    byId<HTMLButtonElement>('pad-stop').click();
+    await flush();
+    await click(rootButton('D'));
+    expect(plays()[plays().length - 1]).toEqual([[50, 53, 57, 60], 0]);
+    expect(shown()).toBe('Dm7 · D F A C');
   });
 
   it('chd_20 type plays on the selected root', async () => {
@@ -3817,6 +3825,14 @@ describe('Chord selector', () => {
     await click(typeButton('m7'));
     expect(plays()).toEqual([[[48, 51, 55, 58], 0]]);
     expect(shown()).toBe('Cm7 · C Eb G Bb');
+
+    // With another root selected, the next type takes that one
+    await click(rootButton('A'));
+    byId<HTMLButtonElement>('pad-stop').click();
+    await flush();
+    await click(typeButton('7'));
+    expect(plays()[plays().length - 1]).toEqual([[45, 49, 52, 55], 0]);
+    expect(shown()).toBe('A7 · A C# E G');
   });
 
   it('chd_21 another root keeps the type', async () => {

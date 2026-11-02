@@ -1,3 +1,4 @@
+import { createHash } from 'crypto';
 import { describe, it, expect } from 'vitest';
 import { CHORD_FAMILIES, CHORD_TYPES, chordOfRoot, chordOfType, DEFAULT_TIMBRE, PAD_TIMBRES, ROOTS, chordMidi, chordName, chordNotes, nextChord, parseTimbre, parseVolume, timbreNotes } from '../src/chords';
 
@@ -110,10 +111,23 @@ describe('Chord library', () => {
     expect(notesOf('C', '7(b5)')).toBe('C E Gb Bb');
     expect(notesOf('B', 'm7(b5)')).toBe('B D F A');
     expect(notesOf('C', '6/9')).toBe('C E G A D');
-    // Every note carries the pitch it plays, in all 408
-    ROOTS.forEach((_, root) => CHORD_TYPES.forEach((_, type) => {
+    expect(notesOf('Ab', '13')).toBe('Ab C Gb Bb F');
+    expect(notesOf('F#', '7(#9)')).toBe('F# A# C# E A');
+    expect(notesOf('Bb', '11')).toBe('Bb F Ab C Eb');
+    expect(notesOf('Eb', '7(b13)')).toBe('Eb G Bb Db Cb');
+    expect(notesOf('B', '7(#11)')).toBe('B D# A C# E#');
+    // In all 408: each note carries the pitch it plays, on the letter of its degree, but for AD-018's natural notes
+    const letters = 'CDEFGAB';
+    ROOTS.forEach((rootName, root) => CHORD_TYPES.forEach(({ degrees }, type) => {
       const midi = chordMidi(root, type);
-      expect(chordNotes(root, type).map(note => pitchOf(note) % 12)).toEqual(midi.map(note => note % 12));
+      const notes = chordNotes(root, type);
+      expect(notes.map(note => pitchOf(note) % 12)).toEqual(midi.map(note => note % 12));
+      notes.forEach((note, index) => {
+        const letter = letters[(letters.indexOf(rootName[0]) + degrees[index] - 1) % 7];
+        const away = Math.abs((pitchOf(letter) - pitchOf(note) + 18) % 12 - 6);
+        if (away <= 1) expect(note[0]).toBe(letter);
+        else expect(ROOTS).toContain(note);
+      });
     }));
   });
 
@@ -125,6 +139,13 @@ describe('Chord library', () => {
     expect(notesOf('Ab', 'm')).toBe('Ab Cb Eb');
     expect(notesOf('Eb', 'dim')).toBe('Eb Gb A');
     expect(notesOf('C', '7M(9)')).toBe('C E G B D');
+    // Name, spelling and notes of the 168 chords as `chord-pads` shipped them, at 7e3ce19
+    const rows = ROOTS.flatMap((_, root) => SPEC_TYPES.map(([suffix]) => {
+      const type = typeIndex(suffix);
+      return [chordName(root, type), chordNotes(root, type).join(' '), chordMidi(root, type).join(' ')].join('|');
+    }));
+    expect(rows).toHaveLength(168);
+    expect(createHash('sha256').update(rows.join('\n')).digest('hex')).toBe('6f45f0584f0abd3d8bf2d68b9cca02e6ef269edc6451b6a93bd10b06b1c1a89b');
   });
 });
 

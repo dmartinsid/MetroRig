@@ -2062,7 +2062,7 @@ mod tests {
                         let (left, right) = render(&mut held(), 16.0);
                         let signal = mono(after(&left, FADE_END, RATE), after(&right, FADE_END, RATE));
                         let centre = heard_centre_cents(&signal, note as f32, RATE);
-                        // Note 71's harmonics sit on the reverb's combs, and it leaves the voice within 0.5 cents
+                        // CHD-37: note 71's harmonics sit on the reverb's combs, and it leaves the voice within 1 cent
                         let limit = if note == 71 { 7.0 } else { 5.0 };
                         assert!(centre.abs() <= limit, "timbre {timbre}, note {note} is heard {centre} cents off");
                     }
