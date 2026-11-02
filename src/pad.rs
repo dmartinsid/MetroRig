@@ -616,7 +616,7 @@ mod tests {
         BANK.get_or_init(|| {
             let root = env!("CARGO_MANIFEST_DIR");
             let source = std::fs::read_to_string(format!("{root}/src/chords.ts")).unwrap();
-            let files: Vec<BankFile> = source.lines().filter(|line| line.contains("url: '/pads/")).map(|line| {
+            let files: Vec<BankFile> = source.lines().filter(|line| line.contains("url: '/pads/new-age/")).map(|line| {
                 let parts: Vec<&str> = line.split('\'').collect();
                 let (key, loops) = (numbers(parts[0]), numbers(parts[2]));
                 let output = Command::new("ffmpeg")
