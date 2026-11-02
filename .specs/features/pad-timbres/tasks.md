@@ -94,8 +94,8 @@ T14 → T15
 
 **Done when**:
 
-- [ ] `tests/chords.test.ts` proves both checks
-- [ ] Gate passes
+- [x] `tests/chords.test.ts` proves both checks
+- [x] Gate passes
 
 **Tests**: unit
 **Gate**: quick

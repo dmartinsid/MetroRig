@@ -26,9 +26,11 @@ export const CHORD_TYPES: { suffix: string; semitones: number[]; degrees: number
 // Indexes into ROOTS and CHORD_TYPES
 export interface ChordId { root: number; type: number }
 
+export interface PadFile { key: number; url: string; loopStart: number; loopEnd: number }
+
 // FreePats New Age: mono 44.1 kHz FLAC, `G#` written `Gs` because `#` breaks URLs. Loop points are in
 // frames, and loopEnd is inclusive: its sample equals loopStart's, so a wrap is seamless.
-export const PAD_BANK: { key: number; url: string; loopStart: number; loopEnd: number }[] = [
+export const PAD_BANK: PadFile[] = [
   { key: 44, url: '/pads/new-age/Gs2.flac', loopStart: 164330, loopEnd: 388482 },
   { key: 48, url: '/pads/new-age/C3.flac', loopStart: 165283, loopEnd: 395775 },
   { key: 52, url: '/pads/new-age/E3.flac', loopStart: 147455, loopEnd: 374783 },
@@ -39,6 +41,16 @@ export const PAD_BANK: { key: number; url: string; loopStart: number; loopEnd: n
   { key: 72, url: '/pads/new-age/C5.flac', loopStart: 104269, loopEnd: 265523 },
 ];
 
+// In select order, and the index is the timbre's id in the engine. Storage keeps the name, so a reorder saves nothing wrong
+export const PAD_TIMBRES: { name: string; files: PadFile[]; bass: boolean }[] = [
+  { name: 'Choir', files: [], bass: false },
+  { name: 'New Age', files: PAD_BANK, bass: false },
+  { name: 'Orchestra', files: [], bass: true },
+  { name: 'Sweep', files: [], bass: false },
+  { name: 'Analog', files: [], bass: false },
+];
+export const DEFAULT_TIMBRE = 0;
+
 export function chordName(root: number, type: number): string {
   return ROOTS[root] + CHORD_TYPES[type].suffix;
 }
@@ -46,6 +58,12 @@ export function chordName(root: number, type: number): string {
 export function chordMidi(root: number, type: number): number[] {
   const bass = LOWEST_ROOT + (root + 12 - (LOWEST_ROOT % 12)) % 12;
   return CHORD_TYPES[type].semitones.map(semitone => bass + semitone);
+}
+
+// A timbre with a bass adds the root an octave and two octaves down, from low to high
+export function timbreNotes(root: number, type: number, timbre: number): number[] {
+  const notes = chordMidi(root, type);
+  return PAD_TIMBRES[timbre].bass ? [notes[0] - 24, notes[0] - 12, ...notes] : notes;
 }
 
 // Each degree takes its own letter; a double accidental becomes the natural note of its pitch (AD-018)
@@ -68,4 +86,9 @@ export function nextChord(current: ChordId | null, clicked: ChordId): ChordId | 
 export function parseVolume(stored: string | null): number {
   const volume = stored?.trim() ? Number(stored) : NaN;
   return volume >= 0 && volume <= 100 ? volume : DEFAULT_VOLUME;
+}
+
+export function parseTimbre(stored: string | null): number {
+  const timbre = PAD_TIMBRES.findIndex(({ name }) => name === stored);
+  return timbre < 0 ? DEFAULT_TIMBRE : timbre;
 }
