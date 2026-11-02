@@ -125,6 +125,7 @@ struct Slot {
     level: f32, // Linear, from 0 to 1, so a fade continues from wherever it stands
     target: f32,
     fade_step: f32, // Level per frame
+    evicting: bool, // Its 20 ms already run, so a later click must not restart them
     order: u64, // Higher is newer
 }
 
@@ -137,6 +138,7 @@ impl Slot {
         level: 0.0,
         target: 0.0,
         fade_step: 0.0,
+        evicting: false,
         order: 0,
     };
 
@@ -331,6 +333,7 @@ impl Pad {
             let slot = &mut self.slots[index];
             slot.target = 1.0;
             slot.fade_step = 1.0 / (FADE_SECONDS * self.sample_rate);
+            slot.evicting = false;
             slot.order = self.order; // It stopped being the oldest, so the next eviction must not cut it
         } else if let Some(free) = self.slots.iter().position(|slot| slot.count == 0) {
             self.start(free, notes);
@@ -338,7 +341,11 @@ impl Pad {
             self.pending[..notes.len()].copy_from_slice(notes);
             self.pending_count = notes.len();
             let oldest = (0..MAX_CHORDS).min_by_key(|&index| self.slots[index].order).unwrap_or(0);
-            self.slots[oldest].fade_step = 1.0 / (EVICTION_SECONDS * self.sample_rate);
+            // From any level, so the slot is free 20 ms from now however far its fade has gone
+            if !self.slots[oldest].evicting {
+                self.slots[oldest].evicting = true;
+                self.slots[oldest].fade_step = self.slots[oldest].level / (EVICTION_SECONDS * self.sample_rate);
+            }
         }
     }
 
@@ -410,6 +417,7 @@ impl Pad {
         slot.level = 0.0;
         slot.target = 1.0;
         slot.fade_step = 1.0 / (FADE_SECONDS * self.sample_rate);
+        slot.evicting = false;
         slot.order = self.order;
     }
 
@@ -1301,6 +1309,74 @@ mod tests {
         let synth = band_power(&signal, 440.0, 25.0, RATE);
         assert!(10.0 * (sample / synth).log10() > -12.0, "the sample layer is missing: {sample} against {synth}");
         assert!(10.0 * (sample / synth).log10() < 12.0, "the synth layer is missing: {sample} against {synth}");
+    }
+
+    #[test]
+    fn pad_12_eviction_takes_20_ms() {
+        // The oldest chord is at about 0.9, 0.7 and 0.13 when the fourth click comes, with all 3 slots held
+        for fading in [0.15, 0.45, 1.3] {
+            let mut pad = Pad::new(RATE);
+            pad.play(&CHORD_A);
+            render(&mut pad, 2.0);
+            pad.play(&CHORD_B);
+            render(&mut pad, fading * 2.0 / 3.0);
+            pad.play(&CHORD_C);
+            render(&mut pad, fading / 3.0);
+            pad.play(&CHORD_D);
+            assert!(pad.slots.iter().all(|slot| slot.count > 0), "a free slot means no eviction, from {fading} s of fade");
+            render(&mut pad, 0.019);
+            assert_eq!(pad.slots[0].voices[0].note, CHORD_A[0], "gone before 19 ms, from {fading} s of fade");
+            assert!(pad.slots[0].level > 0.0, "silent before 19 ms, from {fading} s of fade");
+            render(&mut pad, 0.002);
+            assert_eq!(pad.slots[0].voices[0].note, CHORD_D[0], "still held at 21 ms, from {fading} s of fade");
+        }
+    }
+
+    #[test]
+    fn pad_60_balance_across_every_chord() {
+        const SEMITONES: [&[u8]; 14] = [
+            &[0, 4, 7], &[0, 3, 7], &[0, 4, 7, 10], &[0, 4, 7, 11], &[0, 3, 7, 10], &[0, 5, 7], &[0, 2, 7],
+            &[0, 4, 7, 14], &[0, 4, 7, 10, 14], &[0, 3, 7, 10, 14], &[0, 4, 7, 11, 14], &[0, 4, 7, 9], &[0, 3, 6], &[0, 4, 8],
+        ];
+        let (mut lowest, mut highest) = (f32::MAX, f32::MIN);
+        for root in 45..=56u8 {
+            for semitones in SEMITONES {
+                let notes: Vec<u8> = semitones.iter().map(|semitone| root + semitone).collect();
+                let held = |pad: &mut Pad| { pad.play(&notes); render(pad, 16.0) };
+                let mut with_samples = Pad::new(RATE);
+                load_bank(&mut with_samples);
+                let (left, _) = held(&mut with_samples);
+                let (synth, _) = held(&mut Pad::new(RATE));
+                let sample: Vec<f32> = left.iter().zip(&synth).map(|(a, b)| a - b).collect();
+                let difference = db(rms(after(&sample, 4.0, RATE))) - db(rms(after(&synth, 4.0, RATE)));
+                lowest = lowest.min(difference);
+                highest = highest.max(difference);
+            }
+        }
+        assert!(lowest >= -2.5 && highest <= 4.5, "from {lowest} to {highest} dB");
+    }
+
+    #[test]
+    fn pad_61_load_clamps_a_loop_end_past_the_file() {
+        let tone = sine(440.0, 1.0, RATE);
+        let mut pad = Pad::new(RATE);
+        pad.load(69, &tone, &tone, 1000, tone.len() + 500);
+        assert_eq!(pad.samples[0].loop_end, tone.len() - 1);
+        pad.play(&[69]);
+        render(&mut pad, 3.0); // Reading past the file would panic
+    }
+
+    #[test]
+    fn pad_61_load_refuses_an_empty_loop() {
+        let tone = sine(440.0, 1.0, RATE);
+        let mut pad = Pad::new(RATE);
+        for (start, end) in [(1000, 1000), (2000, 1000), (tone.len(), tone.len() + 500)] {
+            pad.load(69, &tone, &tone, start, end);
+        }
+        pad.load(69, &[], &[], 0, 0);
+        assert!(pad.samples.is_empty());
+        pad.play(&[69]);
+        render(&mut pad, 3.0);
     }
 
     #[test]

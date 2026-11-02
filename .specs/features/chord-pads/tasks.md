@@ -692,6 +692,18 @@ Proof: run rust | test pad::tests::pad_58_pitch_holds_at_48_khz ... ok
 **C65** - Starting, changing and stopping allocate nothing (PAD-59, AC 59)
 Proof: run rust | test pad::tests::pad_59_no_allocation ... ok
 
+**C66** - The oldest chord leaves in 20 ms from any level (PAD-12, AC 12)
+Proof: run rust | test pad::tests::pad_12_eviction_takes_20_ms ... ok
+
+**C67** - The sample layer sits from -2.5 to +4.5 dB against the synth on all 168 chords (PAD-60, AC 7)
+Proof: run rust | test pad::tests::pad_60_balance_across_every_chord ... ok
+
+**C68** - A loop end past the file is clamped (PAD-61, AC 8)
+Proof: run rust | test pad::tests::pad_61_load_clamps_a_loop_end_past_the_file ... ok
+
+**C69** - An empty loop is refused (PAD-61, AC 8)
+Proof: run rust | test pad::tests::pad_61_load_refuses_an_empty_loop ... ok
+
 ---
 
 ## Handoff
