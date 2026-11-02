@@ -282,7 +282,7 @@ Every ambiguity is resolved or recorded here.
 | PAD-37 | P1: Approval by ear | Design | Pending |
 | PAD-38 | P1: Approval by ear | Design | Pending |
 | PAD-42 | P2: Pad volume | Design | Implementing |
-| PAD-43 | P2: Pad volume | Design | Pending |
+| PAD-43 | P2: Pad volume | Design | Implementing |
 | PAD-44 | P2: Pad volume | Design | Implementing |
 | PAD-45 | P2: Pad volume | Design | Implementing |
 | PAD-46 | P2: Loading and failure | Design | Pending |

@@ -404,8 +404,8 @@ T19 → T20
 
 **Done when**:
 
-- [ ] Slider and reload tests pass
-- [ ] Gate passes
+- [x] Slider and reload tests pass
+- [x] Gate passes
 
 **Tests**: integration
 **Gate**: quick

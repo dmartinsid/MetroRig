@@ -37,6 +37,7 @@ vi.mock('./audio/MetronomeNode', () => {
       setClickMode = mockSetClickMode;
       padPlay = recorded('padPlay');
       padStop = recorded('padStop');
+      padVolume = recorded('padVolume');
       visualDelayMs = () => mockVisualDelay;
       sampleRate = () => 44100;
 
@@ -3113,5 +3114,89 @@ describe('Improv', () => {
     await openPage();
     expect(calls('padPlay')).toEqual([]);
     expect(dotLit()).toBe(false);
+  });
+
+  const volumeSlider = () => byId('pad-volume');
+  const moveVolume = (value: string) => {
+    volumeSlider().value = value;
+    volumeSlider().dispatchEvent(new Event('input'));
+  };
+
+  afterEach(() => localStorage.removeItem('metrorig_pad_volume'));
+
+  it('pad_42 volume control', async () => {
+    await openPage();
+    await openImprov();
+    expect(document.querySelectorAll('#improv-view input[type="range"]')).toHaveLength(1);
+    expect([...document.querySelectorAll('#improv-view button')].filter(button => button.textContent === 'Stop')).toHaveLength(1);
+    expect(document.querySelector<HTMLLabelElement>('label[for="pad-volume"]')?.textContent).toBe('Volume');
+    expect(volumeSlider().min).toBe('0');
+    expect(volumeSlider().max).toBe('100');
+    await clickChord('C');
+    audioCalls.length = 0;
+
+    moveVolume('30');
+    moveVolume('0');
+    moveVolume('100');
+
+    // Nothing but the pad's level moves: no drum, tempo or chord message
+    expect(audioCalls).toEqual([
+      { method: 'padVolume', args: [0.3] },
+      { method: 'padVolume', args: [0] },
+      { method: 'padVolume', args: [1] },
+    ]);
+    expect(byId('pad-volume-value').textContent).toBe('100');
+    expect(shownChord()).toBe('C · C E G');
+  });
+
+  it('pad_43 remembers the volume', async () => {
+    await openPage();
+    await openImprov();
+    expect(volumeSlider().value).toBe('70');
+    moveVolume('30');
+    expect(localStorage.getItem('metrorig_pad_volume')).toBe('30');
+
+    await openPage(); // A reload on Improv: the engine takes 30 before any chord
+
+    expect(volumeSlider().value).toBe('30');
+    expect(byId('pad-volume-value').textContent).toBe('30');
+    expect(calls('padVolume')).toEqual([[0.3]]);
+    expect(calls('padPlay')).toEqual([]);
+    await clickChord('C');
+    expect(audioCalls.map(call => call.method).filter(method => method.startsWith('pad'))).toEqual(['padVolume', 'padPlay']);
+  });
+
+  it('pad_43 sends the stored volume when Play starts the engine', async () => {
+    localStorage.setItem('metrorig_pad_volume', '30');
+    await openPage();
+    expect(calls('padVolume')).toEqual([]);
+
+    await clickPlay();
+
+    expect(calls('padVolume')).toEqual([[0.3]]);
+    await clickPlay();
+  });
+
+  it('pad_43 a volume moved while the engine starts reaches it', async () => {
+    const release = holdEngine();
+    await openPage();
+    await openImprov();
+    moveVolume('30');
+
+    release();
+    await flush();
+
+    expect(lastCall('padVolume')).toEqual([0.3]);
+  });
+
+  it('pad_43 an invalid stored volume falls back to 70', async () => {
+    for (const stored of ['abc', '101', '-1', '']) {
+      localStorage.setItem('metrorig_pad_volume', stored);
+      await openPage();
+      await openImprov();
+      expect(volumeSlider().value, stored).toBe('70');
+      expect(calls('padVolume'), stored).toEqual([[0.7]]);
+      localStorage.removeItem('metrorig_view_mode');
+    }
   });
 });
