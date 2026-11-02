@@ -186,53 +186,53 @@ The Improv pad has one sound. The user liked what they heard, and their favourit
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| TIM-01 | P1: Choose a timbre | Design | Implementing |
-| TIM-02 | P1: Choose a timbre | Design | Implementing |
-| TIM-03 | P1: Choose a timbre | Design | Implementing |
-| TIM-04 | P1: Choose a timbre | Design | Implementing |
-| TIM-05 | P1: Choose a timbre | Design | Implementing |
-| TIM-06 | P1: Choose a timbre | Design | Implementing |
-| TIM-07 | P1: Choose a timbre | Design | Implementing |
-| TIM-08 | P1: Choose a timbre | Design | Implementing |
-| TIM-09 | P1: Five sounds | Design | Implementing |
-| TIM-10 | P1: Five sounds | Design | Implementing |
-| TIM-11 | P1: Five sounds | Design | Implementing |
-| TIM-12 | P1: Five sounds | Design | Implementing |
-| TIM-13 | P1: Five sounds | Design | Implementing |
-| TIM-14 | P1: Five sounds | Design | Implementing |
-| TIM-15 | P1: Five sounds | Design | Implementing |
-| TIM-16 | P1: Five sounds | Design | Implementing |
-| TIM-17 | P1: Five sounds | Design | Implementing |
-| TIM-18 | P1: Five sounds | Design | Implementing |
-| TIM-19 | P1: Five sounds | Design | Implementing |
-| TIM-20 | P1: Five sounds | Design | Implementing |
-| TIM-21 | P1: Five sounds | Design | Implementing |
-| TIM-22 | P1: Five sounds | Design | Implementing |
-| TIM-23 | P1: Five sounds | Design | Implementing |
-| TIM-24 | P1: Orchestra bank build | Design | Implementing |
-| TIM-25 | P1: Orchestra bank build | Design | Implementing |
-| TIM-26 | P1: Download only what is chosen | Design | Implementing |
-| TIM-27 | P1: Download only what is chosen | Design | Implementing |
-| TIM-28 | P1: Download only what is chosen | Design | Implementing |
-| TIM-29 | P1: Download only what is chosen | Design | Implementing |
-| TIM-30 | P1: Download only what is chosen | Design | Implementing |
-| TIM-31 | P1: Download only what is chosen | Design | Implementing |
-| TIM-32 | P1: Download only what is chosen | Design | Implementing |
-| TIM-33 | P1: Download only what is chosen | Design | Implementing |
-| TIM-34 | P1: Download only what is chosen | Design | Implementing |
-| TIM-35 | P1: Download only what is chosen | Design | Implementing |
-| TIM-36 | P1: Download only what is chosen | Design | Implementing |
-| TIM-37 | P1: Approval by ear | Design | Pending |
-| TIM-38 | P1: Approval by ear | Design | Pending |
-| TIM-39 | P1: Approval by ear | Design | Pending |
-| TIM-40 | P3: Credit | Design | Pending |
-| TIM-41 | P3: Credit | Design | Pending |
-| TIM-42 | Edge Cases | Design | Implementing |
-| TIM-43 | Edge Cases | Design | Implementing |
-| TIM-44 | Edge Cases | Design | Implementing |
-| TIM-45 | Edge Cases | Design | Implementing |
+| TIM-01 | P1: Choose a timbre | Tasks | Verified |
+| TIM-02 | P1: Choose a timbre | Tasks | Verified |
+| TIM-03 | P1: Choose a timbre | Tasks | Verified |
+| TIM-04 | P1: Choose a timbre | Tasks | Verified |
+| TIM-05 | P1: Choose a timbre | Tasks | Verified |
+| TIM-06 | P1: Choose a timbre | Tasks | Verified |
+| TIM-07 | P1: Choose a timbre | Tasks | Verified |
+| TIM-08 | P1: Choose a timbre | Tasks | Verified |
+| TIM-09 | P1: Five sounds | Tasks | Verified |
+| TIM-10 | P1: Five sounds | Tasks | Verified |
+| TIM-11 | P1: Five sounds | Tasks | Verified |
+| TIM-12 | P1: Five sounds | Tasks | Verified |
+| TIM-13 | P1: Five sounds | Tasks | Verified |
+| TIM-14 | P1: Five sounds | Tasks | Verified |
+| TIM-15 | P1: Five sounds | Tasks | Verified |
+| TIM-16 | P1: Five sounds | Tasks | Verified |
+| TIM-17 | P1: Five sounds | Tasks | Verified |
+| TIM-18 | P1: Five sounds | Tasks | Verified |
+| TIM-19 | P1: Five sounds | Tasks | Verified |
+| TIM-20 | P1: Five sounds | Tasks | Verified |
+| TIM-21 | P1: Five sounds | Tasks | Verified |
+| TIM-22 | P1: Five sounds | Tasks | Verified |
+| TIM-23 | P1: Five sounds | Tasks | Verified |
+| TIM-24 | P1: Orchestra bank build | Tasks | Verified |
+| TIM-25 | P1: Orchestra bank build | Tasks | Verified |
+| TIM-26 | P1: Download only what is chosen | Tasks | Verified |
+| TIM-27 | P1: Download only what is chosen | Tasks | Verified |
+| TIM-28 | P1: Download only what is chosen | Tasks | Verified |
+| TIM-29 | P1: Download only what is chosen | Tasks | Verified |
+| TIM-30 | P1: Download only what is chosen | Tasks | Verified |
+| TIM-31 | P1: Download only what is chosen | Tasks | Verified |
+| TIM-32 | P1: Download only what is chosen | Tasks | Verified |
+| TIM-33 | P1: Download only what is chosen | Tasks | Verified |
+| TIM-34 | P1: Download only what is chosen | Tasks | Verified |
+| TIM-35 | P1: Download only what is chosen | Tasks | Verified |
+| TIM-36 | P1: Download only what is chosen | Tasks | Verified |
+| TIM-37 | P1: Approval by ear | Tasks | Verified |
+| TIM-38 | P1: Approval by ear | Tasks | Verified |
+| TIM-39 | P1: Approval by ear | Tasks | Verified |
+| TIM-40 | P3: Credit | Tasks | Verified |
+| TIM-41 | P3: Credit | Tasks | Verified |
+| TIM-42 | Edge Cases | Tasks | Verified |
+| TIM-43 | Edge Cases | Tasks | Verified |
+| TIM-44 | Edge Cases | Tasks | Verified |
+| TIM-45 | Edge Cases | Tasks | Verified |
 
-**Coverage:** 45 total, 0 mapped to tasks, 45 unmapped until Tasks.
+**Coverage:** 45 total, all mapped to tasks.
 
 ---
 
