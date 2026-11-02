@@ -358,8 +358,8 @@ T14 → T15
 
 **Done when**:
 
-- [ ] `tests/padBank.test.ts` proves both
-- [ ] Gate passes
+- [x] `tests/padBank.test.ts` proves both
+- [x] Gate passes
 
 **Tests**: unit
 **Gate**: full
@@ -537,7 +537,7 @@ Proof: run rust | test tests::tim_45_timbre_leaves_the_drums_alone ... ok
 ## Handoff
 
 **Settled mid-build:** Orchestra register follows measured pitch (TIM-17), an octave below the approved demo, which read VSCO names with C3 = 48; the user decides at T15. Orchestra keys 23 to 31 are contrabass alone. Samples past the chorus also skip the reverb, effects share 0.3 for Orchestra. The fallback synth fades on a cosine and voices notes from 45 up. `tim_16` uses dry fundamental and heard pitch at the output; the Verifier judges that metric.
-**Dispatched:** batch 1 (T1 to T8), from the planning commit, done at 74096ad; batch 2 (T9 to T13), from 74096ad
+**Dispatched:** batch 1 (T1 to T8), from the planning commit, done at 74096ad; batch 2 (T9 to T13), from 74096ad, done at 324db53
 **Walked:** T13, Chrome on `http://localhost:3000`, reached by the `Improv` link with `metrorig_pad_timbre` cleared. Browser window resize had no effect (it stayed 1853 px), so layout was measured in same-origin iframes of exactly 1280 and 390 px; the chord, timbre and reload steps ran at 1853 px. Select: `Choir`, `New Age`, `Orchestra`, `Sweep`, `Analog`, showing `Choir`, with 5 Choir `PAD_LOAD` messages on open. Clicked `Am7`: `PAD_PLAY` 45 48 52 55 in timbre 0, status `Am7 · A C E G`, worklet output RMS 0.015 after 3 s, no console error. With it held, Down twice on the focused select: `PAD_PLAY` in timbres 1 then 2, the second with notes 21 33 45 48 52 55, no `PAD_STOP`, output RMS 0.016 to 0.023 over 8 s with no gap, `Orchestra` shown and stored, 13 Orchestra files at 200, no console error. The arrow keys fire a change per step, so New Age downloaded too. Reload: opens on `Improv` showing `Orchestra`, `No chord playing`, Stop disabled. 1280 px: one row, grid fits, scrollWidth 1265 = clientWidth 1265. 390 px: select on its row, Stop, Volume and slider (121 px) below, scrollWidth 375 = clientWidth 375, only the grid scrolls (926 in 309). Audio was measured, not heard; the worklet's own call was not observed beyond its output. Sweep, Analog, New Age alone and failure notices were not walked.
 
 ---
