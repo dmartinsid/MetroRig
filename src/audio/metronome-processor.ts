@@ -36,11 +36,23 @@ interface WasmEngineExports {
   engine_alloc(size: number): number;
   engine_free_buf(ptr: number, size: number): void;
   engine_set_click_mode(ptr: number, mode: number): void;
-  engine_pad_play(ptr: number, n0: number, n1: number, n2: number, n3: number, n4: number, count: number): void;
+  engine_pad_play(
+    ptr: number,
+    n0: number,
+    n1: number,
+    n2: number,
+    n3: number,
+    n4: number,
+    n5: number,
+    n6: number,
+    count: number,
+    timbre: number
+  ): void;
   engine_pad_stop(ptr: number): void;
   engine_pad_set_volume(ptr: number, volume: number): void;
   engine_pad_load(
     ptr: number,
+    timbre: number,
     key: number,
     loopStart: number,
     loopEnd: number,
@@ -179,8 +191,8 @@ class MetronomeProcessor extends AudioWorkletProcessor {
         exports.engine_set_click_mode(this.enginePtr, msg.mode);
         break;
       case 'PAD_PLAY': {
-        const [n0 = 0, n1 = 0, n2 = 0, n3 = 0, n4 = 0] = msg.notes;
-        exports.engine_pad_play(this.enginePtr, n0, n1, n2, n3, n4, msg.notes.length);
+        const [n0 = 0, n1 = 0, n2 = 0, n3 = 0, n4 = 0, n5 = 0, n6 = 0] = msg.notes;
+        exports.engine_pad_play(this.enginePtr, n0, n1, n2, n3, n4, n5, n6, msg.notes.length, msg.timbre);
         break;
       }
       case 'PAD_STOP':
@@ -190,9 +202,9 @@ class MetronomeProcessor extends AudioWorkletProcessor {
         exports.engine_pad_set_volume(this.enginePtr, msg.volume);
         break;
       case 'PAD_LOAD': {
-        const { key, loopStart, loopEnd, leftChannel, rightChannel } = msg;
+        const { timbre, key, loopStart, loopEnd, leftChannel, rightChannel } = msg;
         this.loadIntoEngine(leftChannel, rightChannel, (ptrL, ptrR, length) =>
-          exports.engine_pad_load(this.enginePtr, key, loopStart, loopEnd, ptrL, ptrR, length));
+          exports.engine_pad_load(this.enginePtr, timbre, key, loopStart, loopEnd, ptrL, ptrR, length));
         break;
       }
     }

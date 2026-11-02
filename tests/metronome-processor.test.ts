@@ -1,4 +1,6 @@
 import { describe, it, expect, vi, beforeAll, beforeEach, afterEach, afterAll } from 'vitest';
+import * as fs from 'fs';
+import * as path from 'path';
 
 const RealFloat32Array = Float32Array;
 const RealFloat64Array = Float64Array;
@@ -277,7 +279,7 @@ describe('Worklet', () => {
   // What engine_pad_load finds in the heap at its pointers
   function hearLoad(engine: ReturnType<typeof fakeEngine>, pad: ReturnType<typeof padEngine>['pad']) {
     const heard = { left: [] as number[], right: [] as number[] };
-    pad.engine_pad_load.mockImplementation((_ptr: number, _key: number, _start: number, _end: number, l: number, r: number, length: number) => {
+    pad.engine_pad_load.mockImplementation((_ptr: number, _timbre: number, _key: number, _start: number, _end: number, l: number, r: number, length: number) => {
       const heap = new RealFloat32Array(engine.exports.memory.buffer);
       heard.left = Array.from(heap.subarray(l / 4, l / 4 + length));
       heard.right = Array.from(heap.subarray(r / 4, r / 4 + length));
@@ -289,16 +291,53 @@ describe('Worklet', () => {
     const { engine, pad } = padEngine();
     const { send } = await startProcessor(engine);
 
-    send({ type: 'PAD_PLAY', notes: [48, 52, 55] });
-    expect(pad.engine_pad_play).toHaveBeenLastCalledWith(1, 48, 52, 55, 0, 0, 3);
+    send({ type: 'PAD_PLAY', notes: [48, 52, 55], timbre: 1 });
+    expect(pad.engine_pad_play).toHaveBeenLastCalledWith(1, 48, 52, 55, 0, 0, 0, 0, 3, 1);
 
-    send({ type: 'PAD_PLAY', notes: [48, 52, 55, 58] });
-    expect(pad.engine_pad_play).toHaveBeenLastCalledWith(1, 48, 52, 55, 58, 0, 4);
+    send({ type: 'PAD_PLAY', notes: [48, 52, 55, 58], timbre: 1 });
+    expect(pad.engine_pad_play).toHaveBeenLastCalledWith(1, 48, 52, 55, 58, 0, 0, 0, 4, 1);
 
-    send({ type: 'PAD_PLAY', notes: [48, 52, 55, 59, 62] });
-    expect(pad.engine_pad_play).toHaveBeenLastCalledWith(1, 48, 52, 55, 59, 62, 5);
+    send({ type: 'PAD_PLAY', notes: [48, 52, 55, 59, 62], timbre: 1 });
+    expect(pad.engine_pad_play).toHaveBeenLastCalledWith(1, 48, 52, 55, 59, 62, 0, 0, 5, 1);
     expect(pad.engine_pad_play).toHaveBeenCalledTimes(3);
     expect(engine.exports.engine_start).not.toHaveBeenCalled();
+  });
+
+  it('tim_15 sends a chord of 7 notes in its timbre to the engine', async () => {
+    const { engine, pad } = padEngine();
+    const { send } = await startProcessor(engine);
+
+    send({ type: 'PAD_PLAY', notes: [21, 33, 45, 49, 52, 56, 59], timbre: 2 });
+
+    expect(pad.engine_pad_play).toHaveBeenCalledOnce();
+    expect(pad.engine_pad_play).toHaveBeenCalledWith(1, 21, 33, 45, 49, 52, 56, 59, 7, 2);
+  });
+
+  it('tim_15 sends the timbre of a file to the engine', async () => {
+    const { engine, pad } = padEngine();
+    const heard = hearLoad(engine, pad);
+    const { send } = await startProcessor(engine);
+
+    send({ type: 'PAD_LOAD', timbre: 3, key: 60, loopStart: 4, loopEnd: 9, leftChannel: new RealFloat32Array([0.5]), rightChannel: new RealFloat32Array([-0.5]) });
+
+    expect(pad.engine_pad_load).toHaveBeenCalledOnce();
+    expect(pad.engine_pad_load).toHaveBeenCalledWith(1, 3, 60, 4, 9, expect.any(Number), expect.any(Number), 1);
+    expect(heard.left).toEqual([0.5]);
+    expect(heard.right).toEqual([-0.5]);
+  });
+
+  // The fake engine takes any arguments, so only the shipped binary shows the calls fit
+  it('tim_15 calls the shipped engine with the arguments it takes', async () => {
+    const wasm = fs.readFileSync(path.resolve(__dirname, '../public/pkg/metrorig_audio_bg.wasm'));
+    const shipped = new WebAssembly.Instance(new WebAssembly.Module(wasm)).exports as Record<string, Function>;
+    const { engine, pad } = padEngine();
+    const { send } = await startProcessor(engine);
+
+    send({ type: 'PAD_PLAY', notes: [48, 52, 55], timbre: 0 });
+    send({ type: 'PAD_LOAD', timbre: 0, key: 48, loopStart: 0, loopEnd: 1, leftChannel: new RealFloat32Array(2), rightChannel: new RealFloat32Array(2) });
+
+    expect(pad.engine_pad_play.mock.calls[0]).toHaveLength(shipped.engine_pad_play.length);
+    expect(pad.engine_pad_load.mock.calls[0]).toHaveLength(shipped.engine_pad_load.length);
   });
 
   it('pad_09 sends PAD_STOP to the engine', async () => {
@@ -326,9 +365,9 @@ describe('Worklet', () => {
     const heard = hearLoad(engine, pad);
     const { send } = await startProcessor(engine);
 
-    send({ type: 'PAD_LOAD', key: 56, loopStart: 1, loopEnd: 2, leftChannel: new RealFloat32Array([0.5, 0.25, -0.25]), rightChannel: new RealFloat32Array([-0.5, -0.25, 0.25]) });
+    send({ type: 'PAD_LOAD', timbre: 1, key: 56, loopStart: 1, loopEnd: 2, leftChannel: new RealFloat32Array([0.5, 0.25, -0.25]), rightChannel: new RealFloat32Array([-0.5, -0.25, 0.25]) });
 
-    expect(pad.engine_pad_load).toHaveBeenCalledWith(1, 56, 1, 2, expect.any(Number), expect.any(Number), 3);
+    expect(pad.engine_pad_load).toHaveBeenCalledWith(1, 1, 56, 1, 2, expect.any(Number), expect.any(Number), 3);
     expect(heard.left).toEqual([0.5, 0.25, -0.25]);
     expect(heard.right).toEqual([-0.5, -0.25, 0.25]);
     expect(engine.exports.engine_free_buf).toHaveBeenCalledTimes(2);
@@ -348,7 +387,7 @@ describe('Worklet', () => {
     const frames = 20000; // Two channels of this fill more than the 2 pages the memory starts with
     const left = new RealFloat32Array(frames).fill(0.5);
     const right = new RealFloat32Array(frames).fill(-0.5);
-    send({ type: 'PAD_LOAD', key: 48, loopStart: 0, loopEnd: frames - 1, leftChannel: left, rightChannel: right });
+    send({ type: 'PAD_LOAD', timbre: 1, key: 48, loopStart: 0, loopEnd: frames - 1, leftChannel: left, rightChannel: right });
 
     expect(heard.left).toEqual(Array.from(left));
     expect(heard.right).toEqual(Array.from(right));

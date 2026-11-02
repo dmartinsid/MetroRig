@@ -258,8 +258,8 @@ T14 → T15
 
 **Done when**:
 
-- [ ] `tests/metronome-processor.test.ts` covers both
-- [ ] Gate passes
+- [x] `tests/metronome-processor.test.ts` covers both
+- [x] Gate passes
 
 **Tests**: unit
 **Gate**: quick
