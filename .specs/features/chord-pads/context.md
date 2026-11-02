@@ -70,4 +70,4 @@ User on Q7: "sim, pra agora eh so foco de improvisar sobre um acorde especifico 
 - Automatic chord progressions
 - MIDI controllers and computer-keyboard shortcuts
 - Saving pads in presets
-- More timbres
+- More timbres, with a select to choose them. User: "Talvez ate um select pra escolher" and "Se tiver algo como strings tb acho que fica interessante". CC0 candidates measured for MIDI 45 to 70: `synth-strings-1` 2.2 MB, `synth-strings-2` 2.2 MB, `synth-pad-choir` 2.8 MB, `sweep-pad` 1.9 MB, `synth-crystal` 1.2 MB, `synth-pad-bowed` 6.3 MB.

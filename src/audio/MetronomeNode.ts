@@ -73,6 +73,7 @@ export class MetronomeNode extends EventTarget {
             resolve();
           } else if (msg.type === 'WASM_ERROR') {
             console.error("MetronomeNode: WASM error reported from worklet:", msg.error);
+            this.initPromise = null;
             reject(new Error(msg.error));
           } else if (msg.type === 'TICK') {
             this.dispatchEvent(new CustomEvent('tick', { detail: msg }));
