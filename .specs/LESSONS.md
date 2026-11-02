@@ -200,6 +200,30 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: HK-07
 - last seen: 2026-11-01T22:10:54Z
 
+### L-032 - A level rule on the pad must be measured across all 168 chords, because a single chord hides the spread between sample files.
+- signal: `spec_precision_gap` · recurrence: 1 feature(s) · scope: `src/pad.rs` · harmful: 0
+- features: chord-pads
+- evidence: PAD-20 (src/pad.rs)
+- last seen: 2026-11-02T03:35:51Z
+
+### L-033 - Hold a timed fade by reading engine state at both sides of its deadline, because a spectral meter window blurs it by 20 ms.
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `src/pad.rs` · harmful: 0
+- features: chord-pads
+- evidence: C14 (src/pad.rs)
+- last seen: 2026-11-02T03:35:51Z
+
+### L-034 - Every guard that protects the audio thread from a bad load needs its own test, because removing it leaves the suite green.
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `src/pad.rs` · harmful: 0
+- features: chord-pads
+- evidence: PAD-61 (src/pad.rs)
+- last seen: 2026-11-02T03:35:51Z
+
+### L-035 - Chain a commit to its gate with && in one command, because a pipe to grep or a later line commits a red tree.
+- signal: `gate_fail` · recurrence: 1 feature(s) · scope: `git` · harmful: 0
+- features: chord-pads
+- evidence: 430d4c6 (git)
+- last seen: 2026-11-02T03:35:51Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

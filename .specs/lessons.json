@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 32,
+  "next_id": 36,
   "lessons": [
     {
       "id": "L-001",
@@ -562,6 +562,78 @@
       ],
       "created": "2026-11-01T22:10:54Z",
       "last_seen": "2026-11-01T22:10:54Z"
+    },
+    {
+      "id": "L-032",
+      "key": "spec_precision_gap::a level rule on the pad must be measured across all 168 chords because a single chord hides the spread between sample files",
+      "text": "A level rule on the pad must be measured across all 168 chords, because a single chord hides the spread between sample files.",
+      "signal": "spec_precision_gap",
+      "scope": "src/pad.rs",
+      "status": "candidate",
+      "features": [
+        "chord-pads"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "PAD-20 (src/pad.rs)"
+      ],
+      "created": "2026-11-02T03:35:51Z",
+      "last_seen": "2026-11-02T03:35:51Z"
+    },
+    {
+      "id": "L-033",
+      "key": "weak_test::hold a timed fade by reading engine state at both sides of its deadline because a spectral meter window blurs it by 20 ms",
+      "text": "Hold a timed fade by reading engine state at both sides of its deadline, because a spectral meter window blurs it by 20 ms.",
+      "signal": "weak_test",
+      "scope": "src/pad.rs",
+      "status": "candidate",
+      "features": [
+        "chord-pads"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "C14 (src/pad.rs)"
+      ],
+      "created": "2026-11-02T03:35:51Z",
+      "last_seen": "2026-11-02T03:35:51Z"
+    },
+    {
+      "id": "L-034",
+      "key": "ac_gap::every guard that protects the audio thread from a bad load needs its own test because removing it leaves the suite green",
+      "text": "Every guard that protects the audio thread from a bad load needs its own test, because removing it leaves the suite green.",
+      "signal": "ac_gap",
+      "scope": "src/pad.rs",
+      "status": "candidate",
+      "features": [
+        "chord-pads"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "PAD-61 (src/pad.rs)"
+      ],
+      "created": "2026-11-02T03:35:51Z",
+      "last_seen": "2026-11-02T03:35:51Z"
+    },
+    {
+      "id": "L-035",
+      "key": "gate_fail::chain a commit to its gate with in one command because a pipe to grep or a later line commits a red tree",
+      "text": "Chain a commit to its gate with && in one command, because a pipe to grep or a later line commits a red tree.",
+      "signal": "gate_fail",
+      "scope": "git",
+      "status": "candidate",
+      "features": [
+        "chord-pads"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "430d4c6 (git)"
+      ],
+      "created": "2026-11-02T03:35:51Z",
+      "last_seen": "2026-11-02T03:35:51Z"
     }
   ]
 }
