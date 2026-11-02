@@ -303,8 +303,8 @@ T19 → T20
 
 **Done when**:
 
-- [ ] `tests/metronome-processor.test.ts` covers each message
-- [ ] Gate passes
+- [x] `tests/metronome-processor.test.ts` covers each message
+- [x] Gate passes
 
 **Tests**: unit
 **Gate**: quick
