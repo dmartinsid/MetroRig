@@ -8,10 +8,10 @@ Kick, snare and toms use one sample each, and a step's dynamic only changes its 
 
 ## Goals
 
-- [ ] Kick, Snare and 4 toms play The House Kit, each dynamic with its own recording and alternating takes.
-- [ ] MetroRig has 13 tracks, with 4 toms a user can write in the grid.
-- [ ] The user approves each new piece by ear.
-- [ ] Better Mixes is credited in the repository and in the app.
+- [x] Kick, Snare and 4 toms play The House Kit, each dynamic with its own recording and alternating takes.
+- [x] MetroRig has 13 tracks, with 4 toms a user can write in the grid.
+- [x] The user approves each new piece by ear.
+- [x] Better Mixes is credited in the repository and in the app.
 
 ## Out of Scope
 
@@ -149,42 +149,42 @@ Kick, snare and toms use one sample each, and a step's dynamic only changes its 
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| HK-01 | P1: Real recordings at each dynamic | Tasks | Implemented |
-| HK-02 | P1: Real recordings at each dynamic | Tasks | Implemented |
-| HK-03 | P1: Real recordings at each dynamic | Tasks | Implemented |
-| HK-04 | P1: Real recordings at each dynamic | Tasks | Implemented |
-| HK-05 | P1: Real recordings at each dynamic | Tasks | Implemented |
-| HK-06 | P1: Real recordings at each dynamic | Tasks | Implemented |
-| HK-07 | P1: Real recordings at each dynamic | Tasks | Implemented |
-| HK-08 | P1: Real recordings at each dynamic | Tasks | Implemented |
-| HK-09 | P1: Real recordings at each dynamic | Tasks | Implemented |
-| HK-10 | P1: Real recordings at each dynamic | Tasks | Implemented |
-| HK-11 | P1: Real recordings at each dynamic | Tasks | Implemented |
-| HK-12 | P1: Real recordings at each dynamic | Tasks | Implemented |
-| HK-13 | P1: Real recordings at each dynamic | Tasks | Implemented |
-| HK-14 | P1: Real recordings at each dynamic | Tasks | Implemented |
-| HK-15 | P1: Four toms | Tasks | Implemented |
-| HK-16 | P1: Four toms | Design | Implementing |
-| HK-17 | P1: Four toms | Tasks | Implemented |
-| HK-18 | P1: Four toms | Design | Implementing |
-| HK-19 | P1: Four toms | Design | Implementing |
-| HK-20 | P1: Four toms | Design | Implementing |
-| HK-21 | P1: Four toms | Design | Implementing |
-| HK-22 | P1: Four toms | Design | Implementing |
-| HK-23 | P1: Four toms | Design | Implementing |
-| HK-24 | P1: Approval by ear | Design | Pending |
-| HK-25 | P1: Approval by ear | Design | Pending |
-| HK-26 | P1: Approval by ear | Design | Pending |
-| HK-27 | P1: Approval by ear | Design | Implementing |
-| HK-28 | P2: Credit to Better Mixes | Tasks | Implemented |
-| HK-29 | P2: Credit to Better Mixes | Tasks | Implemented |
-| HK-30 | P2: Credit to Better Mixes | Tasks | Implemented |
-| HK-31 | P2: Credit to Better Mixes | Tasks | Implemented |
-| HK-32 | P2: Credit to Better Mixes | Tasks | Implemented |
-| HK-33 | P1: Real recordings at each dynamic | Tasks | Implemented |
-| HK-34 | P1: Real recordings at each dynamic | Tasks | Implemented |
-| HK-35 | P1: Real recordings at each dynamic | Tasks | Implemented |
-| HK-36 | P1: Real recordings at each dynamic | Tasks | Implemented |
+| HK-01 | P1: Real recordings at each dynamic | Tasks | Verified |
+| HK-02 | P1: Real recordings at each dynamic | Tasks | Verified |
+| HK-03 | P1: Real recordings at each dynamic | Tasks | Verified |
+| HK-04 | P1: Real recordings at each dynamic | Tasks | Verified |
+| HK-05 | P1: Real recordings at each dynamic | Tasks | Verified |
+| HK-06 | P1: Real recordings at each dynamic | Tasks | Verified |
+| HK-07 | P1: Real recordings at each dynamic | Tasks | Verified |
+| HK-08 | P1: Real recordings at each dynamic | Tasks | Verified |
+| HK-09 | P1: Real recordings at each dynamic | Tasks | Verified |
+| HK-10 | P1: Real recordings at each dynamic | Tasks | Verified |
+| HK-11 | P1: Real recordings at each dynamic | Tasks | Verified |
+| HK-12 | P1: Real recordings at each dynamic | Tasks | Verified |
+| HK-13 | P1: Real recordings at each dynamic | Tasks | Verified |
+| HK-14 | P1: Real recordings at each dynamic | Tasks | Verified |
+| HK-15 | P1: Four toms | Tasks | Verified |
+| HK-16 | P1: Four toms | Tasks | Verified |
+| HK-17 | P1: Four toms | Tasks | Verified |
+| HK-18 | P1: Four toms | Tasks | Verified |
+| HK-19 | P1: Four toms | Tasks | Verified |
+| HK-20 | P1: Four toms | Tasks | Verified |
+| HK-21 | P1: Four toms | Tasks | Verified |
+| HK-22 | P1: Four toms | Tasks | Verified |
+| HK-23 | P1: Four toms | Tasks | Verified |
+| HK-24 | P1: Approval by ear | Tasks | Verified |
+| HK-25 | P1: Approval by ear | Tasks | Verified |
+| HK-26 | P1: Approval by ear | Tasks | Verified |
+| HK-27 | P1: Approval by ear | Tasks | Verified |
+| HK-28 | P2: Credit to Better Mixes | Tasks | Verified |
+| HK-29 | P2: Credit to Better Mixes | Tasks | Verified |
+| HK-30 | P2: Credit to Better Mixes | Tasks | Verified |
+| HK-31 | P2: Credit to Better Mixes | Tasks | Verified |
+| HK-32 | P2: Credit to Better Mixes | Tasks | Verified |
+| HK-33 | P1: Real recordings at each dynamic | Tasks | Verified |
+| HK-34 | P1: Real recordings at each dynamic | Tasks | Verified |
+| HK-35 | P1: Real recordings at each dynamic | Tasks | Verified |
+| HK-36 | P1: Real recordings at each dynamic | Tasks | Verified |
 
 **Coverage:** 36 total, 36 mapped to tasks, 0 unmapped
 

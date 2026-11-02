@@ -65,6 +65,8 @@
 
 HK-24: the user compared the layered kit with `Blend` alone on 2026-11-01, having been told the answer closes all 6 pieces, and answered once: "Pode deixar assim, pode abrir a PR".
 
+A PR review then flagged that one answer stood for 6 pieces. The user was told so, and that the toms had not changed between the two versions compared, and answered on 2026-11-01: "os sons estao otimos, aprovado." That answer names no piece: it is one approval of all 6, not 6 approvals, and AD-016 accepts it for HK-24. No piece was rejected, so HK-25 and HK-26 did not apply.
+
 | Piece | User's words | Trim |
 | --- | --- | --- |
 | Kick | "Pode deixar assim" | 0.85 |

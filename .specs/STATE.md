@@ -121,3 +121,11 @@
 - **Scope**: house-kit, Kick and Snare samples. Narrows Q5, which chose `Blend` alone
 - **Date**: 2026-11-01
 - **Status**: active (AD-015)
+
+### AD-016
+- **Decision**: One answer from the user closes HK-24 for all 6 pieces, in place of one answer per piece.
+- **Reason**: A PR review flagged the single answer, and the user, told so, answered: "os sons estao otimos, aprovado."
+- **Trade-off**: `verification.md` holds no separate judgement of each piece.
+- **Scope**: house-kit, HK-24
+- **Date**: 2026-11-01
+- **Status**: active (AD-016)
