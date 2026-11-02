@@ -56,7 +56,7 @@
 - **Trade-off**: The captures draw a pill the product no longer has.
 - **Scope**: grooves-library, header
 - **Date**: 2026-11-01
-- **Status**: active (AD-007)
+- **Status**: active (AD-007); chord-pads adds `Improv` as a fourth link
 
 ### AD-008
 - **Decision**: The Editor grid and the Mute/Solo cards always show all 11 tracks, with lower rows, where `editor.png` draws 4.
@@ -129,3 +129,19 @@
 - **Scope**: house-kit, HK-24
 - **Date**: 2026-11-01
 - **Status**: active (AD-016)
+
+### AD-017
+- **Decision**: Sustained instruments run in their own Rust module, mixed into `fill_buffers` after the drums, playing or stopped. The Pad owns its voices, fades and effects, and uses fixed arrays.
+- **Reason**: The user asked for the pad "no nosso motor". Rules on the audio thread stay in reach of `cargo test`, and a shared output keeps one clamp.
+- **Trade-off**: The WASM binary grows, and every sound change needs `npm run build:wasm`.
+- **Scope**: chord-pads, engine
+- **Date**: 2026-11-01
+- **Status**: active (AD-017)
+
+### AD-018
+- **Decision**: Notes are named by chord degree, and a double accidental becomes its natural note. `Ebm` reads `Eb Gb Bb`, and `Ebdim` reads `Eb Gb A`.
+- **Reason**: Stated as a default with the spec, and the user answered "Aprovado". Musicians read degrees, and `Bbb` helps nobody improvising.
+- **Trade-off**: A few spellings differ from strict theory.
+- **Scope**: chord names on every screen
+- **Date**: 2026-11-01
+- **Status**: active (AD-018)
