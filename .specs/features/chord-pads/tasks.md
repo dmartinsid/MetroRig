@@ -180,8 +180,8 @@ T19 → T20
 
 **Done when**:
 
-- [ ] Loop, nearest-file, pitch and balance tests pass
-- [ ] Gate passes
+- [x] Loop, nearest-file, pitch and balance tests pass
+- [x] Gate passes
 
 **Tests**: unit
 **Gate**: rust

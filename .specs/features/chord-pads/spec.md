@@ -257,10 +257,10 @@ Every ambiguity is resolved or recorded here.
 | PAD-15 | P1: Hold a chord | Design | Pending |
 | PAD-16 | P1: Hold a chord | Design | Pending |
 | PAD-59 | P1: Hold a chord | Design | Pending |
-| PAD-17 | P1: A pad that sounds professional | Design | Pending |
+| PAD-17 | P1: A pad that sounds professional | Design | Implementing |
 | PAD-18 | P1: A pad that sounds professional | Design | Implementing |
 | PAD-19 | P1: A pad that sounds professional | Design | Pending |
-| PAD-20 | P1: A pad that sounds professional | Design | Pending |
+| PAD-20 | P1: A pad that sounds professional | Design | Implementing |
 | PAD-21 | P1: A pad that sounds professional | Design | Implementing |
 | PAD-22 | P1: A pad that sounds professional | Design | Implementing |
 | PAD-23 | P1: The pad and the metronome stay independent | Design | Pending |
@@ -289,7 +289,7 @@ Every ambiguity is resolved or recorded here.
 | PAD-47 | P2: Loading and failure | Design | Pending |
 | PAD-48 | P2: Loading and failure | Design | Implementing |
 | PAD-49 | P2: Loading and failure | Design | Pending |
-| PAD-50 | P2: Loading and failure | Design | Pending |
+| PAD-50 | P2: Loading and failure | Design | Implementing |
 | PAD-51 | P2: Loading and failure | Design | Pending |
 | PAD-52 | P2: Loading and failure | Design | Implementing |
 | PAD-53 | P2: Loading and failure | Design | Pending |
