@@ -1,9 +1,9 @@
 # chord-pads proofs
 
-**HEAD**: bc0e593
+**HEAD**: 5d10265
 **Tree**: clean
 **Shell**: /bin/sh
-**Result**: 66 pass, 0 fail
+**Result**: 70 pass, 0 fail
 
 | Check | Proof | Result |
 | --- | --- | --- |
@@ -72,6 +72,10 @@
 | C63 | `run js / ✓ src/index.test.ts > Improv > pad_57 saved screen` | pass |
 | C64 | `run rust / test pad::tests::pad_58_pitch_holds_at_48_khz ... ok` | pass |
 | C65 | `run rust / test pad::tests::pad_59_no_allocation ... ok` | pass |
+| C66 | `run rust / test pad::tests::pad_12_eviction_takes_20_ms ... ok` | pass |
+| C67 | `run rust / test pad::tests::pad_60_balance_across_every_chord ... ok` | pass |
+| C68 | `run rust / test pad::tests::pad_61_load_clamps_a_loop_end_past_the_file ... ok` | pass |
+| C69 | `run rust / test pad::tests::pad_61_load_refuses_an_empty_loop ... ok` | pass |
 | Build | `npm run build` | pass |
 
 ## Output
@@ -99,12 +103,12 @@ Failed to load click sample, falling back to digital synth: Error: Fetch failed
 `Run rust` - exit 0
 
 ```
-test pad::tests::pad_58_pitch_holds_at_48_khz ... ok
 test pad::tests::pad_14_chords_match_within_3_db ... ok
 test tests::time_02_one_hour_no_drift ... ok
 test pad::tests::pad_27_default_peak ... ok
+test pad::tests::pad_60_balance_across_every_chord ... ok
 
-test result: ok. 109 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 26.77s
+test result: ok. 113 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 49.49s
 
 
 running 0 tests
