@@ -267,7 +267,7 @@ Every ambiguity is resolved or recorded here.
 | PAD-24 | P1: The pad and the metronome stay independent | Design | Pending |
 | PAD-25 | P1: The pad and the metronome stay independent | Design | Pending |
 | PAD-26 | P1: The pad and the metronome stay independent | Design | Pending |
-| PAD-27 | P1: The pad and the metronome stay independent | Design | Pending |
+| PAD-27 | P1: The pad and the metronome stay independent | Design | Implementing |
 | PAD-28 | P1: The pad and the metronome stay independent | Design | Pending |
 | PAD-29 | P1: The pad and the metronome stay independent | Design | Pending |
 | PAD-30 | P1: The Improv screen | Design | Pending |
@@ -281,14 +281,14 @@ Every ambiguity is resolved or recorded here.
 | PAD-41 | P1: The Improv screen | Design | Pending |
 | PAD-37 | P1: Approval by ear | Design | Pending |
 | PAD-38 | P1: Approval by ear | Design | Pending |
-| PAD-42 | P2: Pad volume | Design | Pending |
+| PAD-42 | P2: Pad volume | Design | Implementing |
 | PAD-43 | P2: Pad volume | Design | Pending |
 | PAD-44 | P2: Pad volume | Design | Implementing |
 | PAD-45 | P2: Pad volume | Design | Pending |
 | PAD-46 | P2: Loading and failure | Design | Pending |
 | PAD-47 | P2: Loading and failure | Design | Pending |
 | PAD-48 | P2: Loading and failure | Design | Implementing |
-| PAD-49 | P2: Loading and failure | Design | Pending |
+| PAD-49 | P2: Loading and failure | Design | Implementing |
 | PAD-50 | P2: Loading and failure | Design | Implementing |
 | PAD-51 | P2: Loading and failure | Design | Pending |
 | PAD-52 | P2: Loading and failure | Design | Implementing |

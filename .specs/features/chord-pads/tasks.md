@@ -242,8 +242,8 @@ T19 → T20
 
 **Done when**:
 
-- [ ] Peak, click and late-sample tests pass
-- [ ] Gate passes
+- [x] Peak, click and late-sample tests pass
+- [x] Gate passes
 
 **Tests**: unit
 **Gate**: rust
