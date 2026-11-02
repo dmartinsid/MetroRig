@@ -8,10 +8,11 @@ MetroRig is a modern, high-fidelity Web-based 16-step sequencer, metronome, and 
 - **Step Sequencer**: A fully editable grid of up to 32 steps per bar with 13 tracks (Click, Kick, Snare, Hi-hat, Open Hat, Ride, Ride Bell, Crash, China, High Tom, Mid Tom, Low Tom, Floor Tom), each hit at ghost, normal or accent.
 - **Grooves**: Transcribed drum parts of famous rock, metal, metalcore and blues songs, loaded with their tempo in one click. Each song plays 4 bars of its Songsterr tab, fills included, and cites that tab.
 - **Tempo Trainer**: Increase BPM automatically dynamically over time, supporting both stepped and smooth acceleration models.
-- **Three Screens**:
+- **Four Screens**:
   - **Editor Mode**: Set presets, configure Sequencer grids, and adjust speed details.
   - **Practice Stadium Mode**: Full-screen layout with elapsed timer, current tempo gauge, and rotating beat clock.
   - **Grooves**: Browse the songs by genre, play one in place, or open it in the Editor.
+  - **Improv**: Hold a sustained pad on any of 168 chords and improvise over it, with or without the metronome.
 
 ## Prerequisites
 
@@ -43,6 +44,10 @@ To run the metronome locally, you need:
 ## Drum Samples
 
 Kick, Snare, High Tom, Mid Tom, Low Tom and Floor Tom come from The House Kit by [Better Mixes](https://www.youtube.com/@BetterMixes): one recording per dynamic, three takes of each, in `public/kit/house/`. Thank you, Better Mixes! The Hi-hat, Open Hat, Ride, Ride Bell, Crash and China are single samples from public-domain and CC0 sources, in `public/` and `public/kit/`. `public/kit/LICENSE.md` lists the origin of every file, and which licenses are unconfirmed.
+
+## Chord Pads
+
+The Improv screen layers a synth in the Rust engine over New Age by FreePats, a pad released under Creative Commons CC0: https://github.com/freepats/new-age. Thank you, FreePats! The files are in `public/pads/new-age/`, and `public/kit/LICENSE.md` lists them.
 
 ## Building for Production
 

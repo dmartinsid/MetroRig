@@ -464,8 +464,8 @@ T19 → T20
 
 **Done when**:
 
-- [ ] `tests/padBank.test.ts` proves both
-- [ ] Gate passes
+- [x] `tests/padBank.test.ts` proves both
+- [x] Gate passes
 
 **Tests**: unit
 **Gate**: full
@@ -697,7 +697,7 @@ Proof: run rust | test pad::tests::pad_59_no_allocation ... ok
 ## Handoff
 
 **Settled mid-build:** none
-**Dispatched:** batch 1 (T1 to T8), from the planning commit, returned at 7eb7946; batch 2 (T9 to T12), from df52c58, returned at 21d7070; batch 3 (T13 to T18), from the commit after it
+**Dispatched:** batch 1 (T1 to T8), from the planning commit, returned at 7eb7946; batch 2 (T9 to T12), from df52c58, returned at 21d7070; batch 3 (T13 to T18), from 2fec640, returned at 83c2c31
 **Open for the user at T20:** (1) the chorus runs on the sample layer alone, where PAD-19 says the pad, as demo 4 did; with the synth inside it chords sit 6 dB apart against PAD-14. (2) Chorus and reverb sit below the demos to hold PAD-14 and PAD-07. (3) PAD-27 cost 8.5 dB on both layers, so the pad's typical level is about -32 dBFS RMS at default and may sound quiet; raising it means changing PAD-27.
 **Reviewed:** T7 changed `pad_17`'s input from -9 to -16 dBFS RMS, the level of the real loops, with its bounds unchanged. The orchestrator accepted it. `cargo test` now needs `ffmpeg`.
 **Walked:** Chrome on the dev server, with real clicks. The window manager refused a resize, so 1280 px and 390 px were an iframe at each width, which applies the page's media queries; the desktop window at 1853 px was also seen. An analyser on the output read the levels; the ear is T20's. Reach it: `Improv` in the header. **P1 Improv screen, 1280 px:** `Cm7`, `F7`, `F7`, `C7M(9)`: the status read each chord, `F7` twice returned to `No chord playing`, the button lit neon, Stop enabled and disabled with it, 14 columns fit with no grid scroll, page width equal to the window. **390 px:** header wraps to 3 rows, grid 926 px wide in a 309 px scroller, scrolled to its end with the roots still in view at the scroller's left edge, page `scrollWidth` 375 equal to `clientWidth` 375 (PAD-41). `Cm`, `C6` and Stop worked after that scroll. **P1 Independent:** with the metronome stopped the output peaked at -19.2 dBFS on `Cm`; after Stop it read digital silence at 8 s. `C7M(9)` held through Stadium, Play (peak -4.9 dBFS with the click) and Stop, then read -20.8 dBFS, button still lit, dot lit on Stadium. **P2 Volume:** a click on the slider set 29: -29.4 dBFS, stored; a reload found 29, silence, and no chord. **P2 Failure:** with `/pads/` blocked by a fetch wrapper the reload showed `Samples unavailable · synth only` and logged all 8 paths; unblocking all but `C3` showed `Some samples unavailable`, and the log shows only `C3` failing again; unblocking it cleared the notice. First visit fetched the 8 files in order, the `.wasm` once, and no `/kit/` file. Not seen: a suspended context, because the tab already had user activation, so PAD-56 rests on its test.

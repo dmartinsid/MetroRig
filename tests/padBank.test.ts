@@ -5,6 +5,8 @@ import * as path from 'path';
 import { CHORD_TYPES, PAD_BANK, ROOTS, chordMidi } from '../src/chords';
 
 const padsDir = path.resolve(__dirname, '../public/pads');
+const licensePath = path.resolve(__dirname, '../public/kit/LICENSE.md');
+const readmePath = path.resolve(__dirname, '../README.md');
 
 // The files as FreePats ships them: MIDI key, name in the repository, SHA-256 and loop points
 const NEW_AGE: [number, string, string, number, number][] = [
@@ -52,6 +54,11 @@ describe('Pad bank', () => {
       expect(info.frames).toBeGreaterThan(loopEnd);
     }
 
+    // CC0 is the reason these files may ship, so its record must name the source and the dedication
+    const license = fs.readFileSync(licensePath, 'utf8');
+    expect(license).toContain('https://github.com/freepats/new-age');
+    expect(license).toContain('Creative Commons CC0');
+
     // Every chord note reads a file at most 2 semitones away, which is what the design's interpolation relies on
     const keys = PAD_BANK.map(entry => entry.key);
     for (const note of ROOTS.flatMap((_, root) => CHORD_TYPES.flatMap((_, type) => chordMidi(root, type)))) {
@@ -62,5 +69,19 @@ describe('Pad bank', () => {
   it('pad_22 size limit', () => {
     expect(sizeOf(padsDir)).toBeGreaterThan(0);
     expect(sizeOf(padsDir)).toBeLessThanOrEqual(10 * 1000 * 1000);
+  });
+
+  it('pad_54 README', () => {
+    const readme = fs.readFileSync(readmePath, 'utf8');
+    expect(readme).toMatch(/\*\*Improv\*\*:/);
+    expect(readme).toContain('New Age by FreePats');
+    expect(readme).toContain('https://github.com/freepats/new-age');
+  });
+
+  it('pad_55 license lists each file', () => {
+    const license = fs.readFileSync(licensePath, 'utf8');
+    for (const [, name] of NEW_AGE) {
+      expect(license).toContain(`\`pads/new-age/${name}.flac\` | \`samples/${name.replace('Gs', 'G#')}.flac\``);
+    }
   });
 });
