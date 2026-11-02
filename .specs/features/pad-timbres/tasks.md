@@ -217,8 +217,8 @@ T14 → T15
 
 **Done when**:
 
-- [ ] The three tests pass
-- [ ] Gate passes
+- [x] The three tests pass
+- [x] Gate passes
 
 **Tests**: unit
 **Gate**: rust
