@@ -194,18 +194,18 @@ The Improv pad has one sound. The user liked what they heard, and their favourit
 | TIM-06 | P1: Choose a timbre | Design | Pending |
 | TIM-07 | P1: Choose a timbre | Design | Implementing |
 | TIM-08 | P1: Choose a timbre | Design | Pending |
-| TIM-09 | P1: Five sounds | Design | Pending |
+| TIM-09 | P1: Five sounds | Design | Implementing |
 | TIM-10 | P1: Five sounds | Design | Implementing |
-| TIM-11 | P1: Five sounds | Design | Pending |
-| TIM-12 | P1: Five sounds | Design | Pending |
+| TIM-11 | P1: Five sounds | Design | Implementing |
+| TIM-12 | P1: Five sounds | Design | Implementing |
 | TIM-13 | P1: Five sounds | Design | Implementing |
 | TIM-14 | P1: Five sounds | Design | Implementing |
 | TIM-15 | P1: Five sounds | Design | Implementing |
-| TIM-16 | P1: Five sounds | Design | Pending |
+| TIM-16 | P1: Five sounds | Design | Implementing |
 | TIM-17 | P1: Five sounds | Design | Implementing |
-| TIM-18 | P1: Five sounds | Design | Pending |
-| TIM-19 | P1: Five sounds | Design | Pending |
-| TIM-20 | P1: Five sounds | Design | Pending |
+| TIM-18 | P1: Five sounds | Design | Implementing |
+| TIM-19 | P1: Five sounds | Design | Implementing |
+| TIM-20 | P1: Five sounds | Design | Implementing |
 | TIM-21 | P1: Five sounds | Design | Implementing |
 | TIM-22 | P1: Five sounds | Design | Implementing |
 | TIM-23 | P1: Five sounds | Design | Implementing |

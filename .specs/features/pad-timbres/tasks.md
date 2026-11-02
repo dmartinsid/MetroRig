@@ -196,9 +196,9 @@ T14 → T15
 
 **Done when**:
 
-- [ ] Tests decode the real banks
-- [ ] `pad_14`, `pad_20`, `pad_27` and `pad_60` still pass unchanged
-- [ ] Gate passes
+- [x] Tests decode the real banks
+- [x] `pad_14`, `pad_20`, `pad_27` and `pad_60` still pass unchanged
+- [x] Gate passes
 
 **Tests**: unit
 **Gate**: rust
