@@ -141,8 +141,8 @@ T7
 
 **Done when**:
 
-- [ ] `tests/chords.test.ts` proves each rule with `nextChord`
-- [ ] Gate passes
+- [x] `tests/chords.test.ts` proves each rule with `nextChord`
+- [x] Gate passes
 
 **Tests**: unit
 **Gate**: quick
