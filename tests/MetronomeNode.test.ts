@@ -186,4 +186,117 @@ describe('MetronomeNode', () => {
     (node as any).ctx.baseLatency = undefined;
     expect(node.visualDelayMs()).toBe(0);
   });
+
+  function padNode(sampleRate = 48000) {
+    const node = new MetronomeNode();
+    const worklet = new MockAudioWorkletNode();
+    (node as any).workletNode = worklet;
+    (node as any).ctx.sampleRate = sampleRate;
+    return { node, port: worklet.port, decodeAudioData: (node as any).ctx.decodeAudioData };
+  }
+
+  const okFile = { ok: true, status: 200, arrayBuffer: async () => new ArrayBuffer(8) };
+
+  it('pad_23 posts the notes of a chord to the worklet', () => {
+    const { node, port } = padNode();
+
+    node.padPlay([48, 52, 55, 59, 62]);
+
+    expect(port.postMessage).toHaveBeenCalledOnce();
+    expect(port.postMessage).toHaveBeenCalledWith({ type: 'PAD_PLAY', notes: [48, 52, 55, 59, 62] });
+  });
+
+  it('pad_09 posts a stop to the worklet', () => {
+    const { node, port } = padNode();
+
+    node.padStop();
+
+    expect(port.postMessage).toHaveBeenCalledOnce();
+    expect(port.postMessage).toHaveBeenCalledWith({ type: 'PAD_STOP' });
+  });
+
+  it('pad_42 posts the volume to the worklet', () => {
+    const { node, port } = padNode();
+
+    node.padVolume(0.3);
+
+    expect(port.postMessage).toHaveBeenCalledOnce();
+    expect(port.postMessage).toHaveBeenCalledWith({ type: 'PAD_VOLUME', volume: 0.3 });
+  });
+
+  it('pad_58 scales the loop points to the rate of the context', async () => {
+    const { node, port, decodeAudioData } = padNode(48000);
+    const left = new Float32Array([0.5, -0.5]);
+    const right = new Float32Array([0.25, -0.25]);
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(okFile));
+    decodeAudioData.mockResolvedValue({
+      numberOfChannels: 2,
+      getChannelData: (channel: number) => (channel === 0 ? left : right),
+    });
+
+    await node.padLoad(56, '/pads/new-age/Gs3.flac', 44100, 100001);
+
+    expect(fetch).toHaveBeenCalledWith('/pads/new-age/Gs3.flac');
+    expect(port.postMessage).toHaveBeenCalledOnce();
+    const message = port.postMessage.mock.calls[0][0];
+    expect(message.type).toBe('PAD_LOAD');
+    expect(message.key).toBe(56);
+    expect(message.loopStart).toBe(48000);
+    expect(message.loopEnd).toBe(108845); // 108844.63, to the nearest frame: the engine takes whole frames
+    expect(Array.from(message.leftChannel)).toEqual([0.5, -0.5]);
+    expect(Array.from(message.rightChannel)).toEqual([0.25, -0.25]);
+  });
+
+  it('pad_58 keeps the loop points at 44.1 kHz', async () => {
+    const { node, port, decodeAudioData } = padNode(44100);
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(okFile));
+    decodeAudioData.mockResolvedValue({ numberOfChannels: 1, getChannelData: () => new Float32Array([1, 0.5]) });
+
+    await node.padLoad(48, '/pads/new-age/C3.flac', 1234, 56789);
+
+    const message = port.postMessage.mock.calls[0][0];
+    expect([message.loopStart, message.loopEnd]).toEqual([1234, 56789]);
+    expect(Array.from(message.leftChannel)).toEqual([1, 0.5]);
+    expect(Array.from(message.rightChannel)).toEqual([1, 0.5]);
+  });
+
+  it('pad_50 rejects when the fetch fails, and sends nothing', async () => {
+    const { node, port } = padNode();
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
+
+    await expect(node.padLoad(48, '/pads/new-age/C3.flac', 0, 100)).rejects.toThrow('offline');
+
+    expect(port.postMessage).not.toHaveBeenCalled();
+  });
+
+  it('pad_50 rejects a response that is not ok, naming its path', async () => {
+    const { node, port, decodeAudioData } = padNode();
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 404, arrayBuffer: async () => new ArrayBuffer(8) }));
+    decodeAudioData.mockResolvedValue({ numberOfChannels: 1, getChannelData: () => new Float32Array(2) });
+
+    await expect(node.padLoad(48, '/pads/new-age/C3.flac', 0, 100)).rejects.toThrow('/pads/new-age/C3.flac');
+
+    expect(decodeAudioData).not.toHaveBeenCalled();
+    expect(port.postMessage).not.toHaveBeenCalled();
+  });
+
+  it('pad_50 rejects a file that does not decode', async () => {
+    const { node, port, decodeAudioData } = padNode();
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(okFile));
+    decodeAudioData.mockRejectedValue(new Error('bad audio'));
+
+    await expect(node.padLoad(48, '/pads/new-age/C3.flac', 0, 100)).rejects.toThrow('bad audio');
+
+    expect(port.postMessage).not.toHaveBeenCalled();
+  });
+
+  it('pad_29 leaves the drums reading a response that is not ok', async () => {
+    const { node, port, decodeAudioData } = padNode();
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 404, arrayBuffer: async () => new ArrayBuffer(8) }));
+    decodeAudioData.mockResolvedValue({ numberOfChannels: 1, getChannelData: () => new Float32Array([0.5]) });
+
+    await node.loadSample(1, '/kit/house/kick.wav');
+
+    expect(port.postMessage.mock.calls[0][0].type).toBe('LOAD_SAMPLE');
+  });
 });
