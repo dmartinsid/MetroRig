@@ -155,8 +155,8 @@ T14 → T15
 
 **Done when**:
 
-- [ ] Pitch, level and loop fixtures pass on the real files
-- [ ] Gate passes
+- [x] Pitch, level and loop fixtures pass on the real files
+- [x] Gate passes
 
 **Tests**: unit
 **Gate**: quick

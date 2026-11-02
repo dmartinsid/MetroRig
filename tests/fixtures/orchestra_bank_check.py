@@ -2,7 +2,7 @@
 
 --pitch   TIM-17: every file's pitch centre sits within 10 cents of its key
 --level   TIM-22: across every loop, the level holds within 1.5 dB over windows of 100 ms
---repeat  TIM-25: two builder runs give the same bytes
+--repeat  TIM-25: two builder runs give the same bytes, and they are the shipped files
 
 --pitch and --level read the files of PAD_TIMBRES, so they follow what the engine is given. --pitch
 measures with the long-term spectrum, not with the builder's phase, so a mistake in one does not hide in
@@ -191,7 +191,10 @@ def check_repeat():
         sys.exit(f'the builder wrote {len(first)} files, expected {BANK_SIZE}')
     if first != second:
         sys.exit(f'two runs differ on {[name for name in first if first[name] != second.get(name)]}')
-    print(f'two runs give the same {len(first)} files')
+    shipped = {path.name: path.read_bytes() for _, path in read_bank()}
+    if first != shipped:
+        sys.exit(f'the shipped files differ on {[name for name in first if first[name] != shipped.get(name)]}')
+    print(f'two runs give the same {len(first)} files, which are the shipped ones')
 
 
 def main():

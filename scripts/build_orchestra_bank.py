@@ -185,6 +185,12 @@ def flatten(left, right):
                 channel[i] *= gains[block] + fraction * (gains[(block + 1) % count] - gains[block])
 
 
+def rotated(left, right):
+    """The loop from its smallest step, because a low note's own steps can pass those of the 10 ms before a wrap."""
+    start = min(range(1, LOOP_FRAMES), key=lambda i: max(abs(left[i] - left[i - 1]), abs(right[i] - right[i - 1])))
+    return left[start:] + left[:start], right[start:] + right[:start]
+
+
 def build_key(vsco, key):
     left, right = [0.0] * LOOP_FRAMES, [0.0] * LOOP_FRAMES
     for template, name, note, level in BANK[key]:
@@ -202,7 +208,7 @@ def build_key(vsco, key):
     peak = max(max(abs(v) for v in left), max(abs(v) for v in right)) * gain
     if peak > HEADROOM_PEAK:
         raise ValueError(f'key {key} peaks at {peak:.3f}')
-    return scaled(left, gain), scaled(right, gain)
+    return rotated(scaled(left, gain), scaled(right, gain))
 
 
 def write_flac(path, left, right):

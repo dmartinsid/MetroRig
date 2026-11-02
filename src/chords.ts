@@ -62,11 +62,28 @@ const SWEEP_FILES: PadFile[] = [
   { key: 72, url: '/pads/sweep/C5.flac', loopStart: 17382, loopEnd: 302079 },
 ];
 
+// VSCO 2 string sections, built by scripts/build_orchestra_bank.py: stereo 44.1 kHz FLAC with a 4 s loop
+const ORCHESTRA_FILES: PadFile[] = [
+  { key: 23, url: '/pads/orchestra/B0.flac', loopStart: 0, loopEnd: 176400 },
+  { key: 27, url: '/pads/orchestra/Ds1.flac', loopStart: 0, loopEnd: 176400 },
+  { key: 31, url: '/pads/orchestra/G1.flac', loopStart: 0, loopEnd: 176400 },
+  { key: 35, url: '/pads/orchestra/B1.flac', loopStart: 0, loopEnd: 176400 },
+  { key: 39, url: '/pads/orchestra/Ds2.flac', loopStart: 0, loopEnd: 176400 },
+  { key: 43, url: '/pads/orchestra/G2.flac', loopStart: 0, loopEnd: 176400 },
+  { key: 47, url: '/pads/orchestra/B2.flac', loopStart: 0, loopEnd: 176400 },
+  { key: 51, url: '/pads/orchestra/Ds3.flac', loopStart: 0, loopEnd: 176400 },
+  { key: 55, url: '/pads/orchestra/G3.flac', loopStart: 0, loopEnd: 176400 },
+  { key: 59, url: '/pads/orchestra/B3.flac', loopStart: 0, loopEnd: 176400 },
+  { key: 63, url: '/pads/orchestra/Ds4.flac', loopStart: 0, loopEnd: 176400 },
+  { key: 67, url: '/pads/orchestra/G4.flac', loopStart: 0, loopEnd: 176400 },
+  { key: 71, url: '/pads/orchestra/B4.flac', loopStart: 0, loopEnd: 176400 },
+];
+
 // In select order, and the index is the timbre's id in the engine. Storage keeps the name, so a reorder saves nothing wrong
 export const PAD_TIMBRES: { name: string; files: PadFile[]; bass: boolean }[] = [
   { name: 'Choir', files: CHOIR_FILES, bass: false },
   { name: 'New Age', files: PAD_BANK, bass: false },
-  { name: 'Orchestra', files: [], bass: true },
+  { name: 'Orchestra', files: ORCHESTRA_FILES, bass: true },
   { name: 'Sweep', files: SWEEP_FILES, bass: false },
   { name: 'Analog', files: [], bass: false },
 ];
