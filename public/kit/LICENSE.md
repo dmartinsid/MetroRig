@@ -75,3 +75,21 @@ Each sample's source, by piece, recording and take, in the kit's own folders:
 | `house/tom-16/soft-<take>.wav` | `Toms/16/Blend/Soft <take>.wav` |
 | `house/tom-16/med-<take>.wav` | `Toms/16/Blend/Med <take>.wav` |
 | `house/tom-16/hard-<take>.wav` | `Toms/16/Blend/Hard <take>.wav` |
+
+## New Age pad
+
+`public/pads/new-age/` holds 8 notes of New Age by Roberto of the FreePats project, made with the ZynAddSubFX and Yoshimi synthesizers. Its README states: "Published under the terms of Creative Commons CC0 public domain dedication." The files are unchanged, except that `G#` became `Gs` in their names, because `#` breaks URLs.
+
+- Source: https://github.com/freepats/new-age
+- License: https://creativecommons.org/publicdomain/zero/1.0/
+
+| File | Source |
+| ---- | ------ |
+| `pads/new-age/Gs2.flac` | `samples/G#2.flac` |
+| `pads/new-age/C3.flac` | `samples/C3.flac` |
+| `pads/new-age/E3.flac` | `samples/E3.flac` |
+| `pads/new-age/Gs3.flac` | `samples/G#3.flac` |
+| `pads/new-age/C4.flac` | `samples/C4.flac` |
+| `pads/new-age/E4.flac` | `samples/E4.flac` |
+| `pads/new-age/Gs4.flac` | `samples/G#4.flac` |
+| `pads/new-age/C5.flac` | `samples/C5.flac` |

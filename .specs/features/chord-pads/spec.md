@@ -293,8 +293,8 @@ Every ambiguity is resolved or recorded here.
 | PAD-51 | P2: Loading and failure | Design | Implementing |
 | PAD-52 | P2: Loading and failure | Design | Implementing |
 | PAD-53 | P2: Loading and failure | Design | Implementing |
-| PAD-54 | P3: Credit and documentation | Design | Pending |
-| PAD-55 | P3: Credit and documentation | Design | Pending |
+| PAD-54 | P3: Credit and documentation | Tasks | Implementing |
+| PAD-55 | P3: Credit and documentation | Tasks | Implementing |
 | PAD-39 | Edge Cases | Design | Implementing |
 | PAD-56 | Edge Cases | Design | Implementing |
 | PAD-57 | Edge Cases | Design | Implementing |

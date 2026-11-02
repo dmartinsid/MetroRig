@@ -227,7 +227,7 @@ Every panel uses the same recipe: Smoked Glass, 20px backdrop blur, 1px Glass Ed
 
 ### Navigation
 
-A sticky header: glass-black, blurred, with a bottom hairline. Left: `METRORIG` plus a small `PRO` badge, then the mono links `Editor`, `Stadium` and `Grooves` behind a hairline. Muted links lift on hover, and the open screen's link is neon with a 2px underline. Right: the click sound selector, with a dim `Click:` label beside a bright value, and the preset selector. The three screens swap in place. Don't add links or icons without a function behind them.
+A sticky header: glass-black, blurred, with a bottom hairline. Left: `METRORIG` plus a small `PRO` badge, then the mono links `Editor`, `Stadium`, `Grooves` and `Improv` behind a hairline. Muted links lift on hover, and the open screen's link is neon with a 2px underline. Right: the click sound selector, with a dim `Click:` label beside a bright value, and the preset selector. The four screens swap in place. Don't add links or icons without a function behind them.
 
 ### Grooves Screen
 
