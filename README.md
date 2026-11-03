@@ -12,7 +12,7 @@ MetroRig is a modern, high-fidelity Web-based 16-step sequencer, metronome, and 
   - **Editor Mode**: Set presets, configure Sequencer grids, and adjust speed details.
   - **Practice Stadium Mode**: Full-screen layout with elapsed timer, current tempo gauge, and rotating beat clock.
   - **Grooves**: Browse the songs by genre, play one in place, or open it in the Editor.
-  - **Improv**: Hold a sustained pad on any of 168 chords and improvise over it, with or without the metronome.
+  - **Improv**: Hold a sustained pad on any of 408 chords and improvise over it, with or without the metronome.
 
 ## Prerequisites
 
@@ -47,7 +47,7 @@ Kick, Snare, High Tom, Mid Tom, Low Tom and Floor Tom come from The House Kit by
 
 ## Chord Pads
 
-The Improv screen holds a chord in one of five timbres, chosen in a select: New Age, Choir, Orchestra, Sweep and Analog. Analog comes from a synth in the Rust engine alone, and the others use samples released under Creative Commons CC0:
+The Improv screen holds a chord in one of five timbres, chosen in a select: Choir, New Age, Orchestra, Sweep and Analog. Analog comes from a synth in the Rust engine alone, and the others use samples released under Creative Commons CC0:
 
 - New Age by FreePats: https://github.com/freepats/new-age
 - Synth Pad Choir by FreePats: https://github.com/freepats/synth-pad-choir
