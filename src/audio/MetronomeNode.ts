@@ -199,6 +199,15 @@ export class MetronomeNode extends EventTarget {
     this.workletNode?.port.postMessage({ type: 'PAD_VOLUME', volume });
   }
 
+  // A timbre's files reach its notes only once padLoadEnd follows them, whether or not some failed
+  padLoadBegin(timbre: number) {
+    this.workletNode?.port.postMessage({ type: 'PAD_LOAD_BEGIN', timbre });
+  }
+
+  padLoadEnd(timbre: number) {
+    this.workletNode?.port.postMessage({ type: 'PAD_LOAD_END', timbre });
+  }
+
   // Loop points are frames of the 44.1 kHz file, and decoding converts it to the context's rate.
   // Rejects when the file fails, so the caller can log it and use the nearest file.
   async padLoad(timbre: number, key: number, url: string, loopStart: number, loopEnd: number) {

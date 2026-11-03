@@ -1268,6 +1268,7 @@ function loadTimbre(timbre: number) {
   load.isLoading = true;
   padLoadQueue = padLoadQueue.then(async () => {
     const failed: PadFile[] = [];
+    audioNode.padLoadBegin(timbre);
     for (const file of load.toLoad) {
       try {
         await audioNode.padLoad(timbre, file.key, file.url, file.loopStart, file.loopEnd);
@@ -1276,6 +1277,7 @@ function loadTimbre(timbre: number) {
         failed.push(file);
       }
     }
+    audioNode.padLoadEnd(timbre);
     load.toLoad = failed;
     load.failed = failed.length;
     load.isLoading = false;
@@ -1378,7 +1380,6 @@ drawFigurePalette();
 drawGrid();
 drawChordSelector();
 drawTimbreSelect();
-renderImprov();
 padVolumeSlider.value = String(parseVolume(localStorage.getItem('metrorig_pad_volume')));
 padVolumeValue.textContent = padVolumeSlider.value;
 renderImprov();

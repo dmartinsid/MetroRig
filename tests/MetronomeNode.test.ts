@@ -257,6 +257,15 @@ describe('MetronomeNode', () => {
     });
   });
 
+  it('tim_30 posts the bracket of a load to the worklet', () => {
+    const { node, port } = padNode();
+
+    node.padLoadBegin(1);
+    node.padLoadEnd(1);
+
+    expect(port.postMessage.mock.calls).toEqual([[{ type: 'PAD_LOAD_BEGIN', timbre: 1 }], [{ type: 'PAD_LOAD_END', timbre: 1 }]]);
+  });
+
   it('pad_09 posts a stop to the worklet', () => {
     const { node, port } = padNode();
 
