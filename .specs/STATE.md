@@ -199,5 +199,6 @@
 - **Reason**: The review of PR #13 found two problems. First, a chord played mid-load read one file pitched across the chord, or Orchestra strings on some notes and the synth on the others, against TIM-30 to TIM-32. Second, an Orchestra note whose own file failed never read the nearest one, against PAD-50.
 - **Trade-off**: A held chord waits for the whole timbre, about 3.6 MB for Orchestra, before any sample fades in. With every Orchestra file failed, its bass notes are silent and the Analog synth holds the chord, as PAD-52 says.
 - **Scope**: chord-pads, pad-timbres; `src/pad.rs`, the worklet and `loadTimbre`
+- **Heard**: the user, in the running app at 68b439d, on 2026-11-03: "escutei e pra mim esta ok". No independent Verifier judged this fix
 - **Date**: 2026-11-03
 - **Status**: active (AD-025)
