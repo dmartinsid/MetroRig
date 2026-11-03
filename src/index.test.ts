@@ -40,6 +40,8 @@ vi.mock('./audio/MetronomeNode', () => {
       padPlay = recorded('padPlay');
       padStop = recorded('padStop');
       padVolume = recorded('padVolume');
+      padLoadBegin = recorded('padLoadBegin');
+      padLoadEnd = recorded('padLoadEnd');
       padLoad = mockPadLoad;
       visualDelayMs = () => mockVisualDelay;
       sampleRate = () => 44100;
@@ -2940,7 +2942,9 @@ describe('Improv', () => {
 
   const stopPad = () => byId<HTMLButtonElement>('pad-stop').click();
   const dotLit = () => byId('nav-improv').querySelector('.status-dot')!.classList.contains('lit');
-  const padCommands = () => audioCalls.filter(call => call.method.startsWith('pad'));
+  // What the pad plays: loading a timbre's files changes nothing it sounds
+  const SOUND_COMMANDS = ['padPlay', 'padStop', 'padVolume'];
+  const padCommands = () => audioCalls.filter(call => SOUND_COMMANDS.includes(call.method));
 
   // A chord sounding, with the log cleared, for a path that must leave it alone
   const holdChord = async () => {
@@ -3165,7 +3169,7 @@ describe('Improv', () => {
     expect(calls('padVolume')).toEqual([[0.3]]);
     expect(calls('padPlay')).toEqual([]);
     await clickChord('C');
-    expect(audioCalls.map(call => call.method).filter(method => method.startsWith('pad'))).toEqual(['padVolume', 'padPlay']);
+    expect(padCommands().map(call => call.method)).toEqual(['padVolume', 'padPlay']);
   });
 
   it('pad_43 sends the stored volume when Play starts the engine', async () => {
@@ -3226,6 +3230,23 @@ describe('Improv', () => {
     byId<HTMLButtonElement>('nav-editor').click();
     await openImprov();
     expect(mockPadLoad).toHaveBeenCalledTimes(5); // Nothing failed, so nothing is fetched again
+  });
+
+  it('tim_30 brackets each load, so its files reach the notes once all have come or failed', async () => {
+    mockPadLoad.mockImplementation((_timbre: number, _key: number, url: string) => {
+      audioCalls.push({ method: 'padLoad', args: [url] });
+      return url === BANK_URLS[1] ? Promise.reject(new Error('404')) : Promise.resolve();
+    });
+    const loadCalls = () => audioCalls
+      .filter(call => call.method.startsWith('padLoad'))
+      .map(call => call.method === 'padLoad' ? call.args[0] : `${call.method} ${call.args[0]}`);
+    await openPage();
+    await openImprov();
+    expect(loadCalls()).toEqual(['padLoadBegin 0', ...BANK_URLS, 'padLoadEnd 0']);
+
+    byId<HTMLButtonElement>('nav-editor').click();
+    await openImprov(); // The retry of the failed file is bracketed too (TIM-35)
+    expect(loadCalls()).toEqual(['padLoadBegin 0', ...BANK_URLS, 'padLoadEnd 0', 'padLoadBegin 0', BANK_URLS[1], 'padLoadEnd 0']);
   });
 
   it('pad_46 each file awaits the last, and a chord does not wait for them', async () => {

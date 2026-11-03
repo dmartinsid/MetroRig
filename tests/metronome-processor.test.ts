@@ -271,6 +271,8 @@ describe('Worklet', () => {
       engine_pad_stop: vi.fn(),
       engine_pad_set_volume: vi.fn(),
       engine_pad_load: vi.fn(),
+      engine_pad_load_begin: vi.fn(),
+      engine_pad_load_end: vi.fn(),
     };
     Object.assign(engine.exports, pad);
     return { engine, pad };
@@ -338,6 +340,21 @@ describe('Worklet', () => {
 
     expect(pad.engine_pad_play.mock.calls[0]).toHaveLength(shipped.engine_pad_play.length);
     expect(pad.engine_pad_load.mock.calls[0]).toHaveLength(shipped.engine_pad_load.length);
+  });
+
+  it('tim_30 sends the bracket of a load to the engine, with the arguments the shipped one takes', async () => {
+    const wasm = fs.readFileSync(path.resolve(__dirname, '../public/pkg/metrorig_audio_bg.wasm'));
+    const shipped = new WebAssembly.Instance(new WebAssembly.Module(wasm)).exports as Record<string, Function>;
+    const { engine, pad } = padEngine();
+    const { send } = await startProcessor(engine);
+
+    send({ type: 'PAD_LOAD_BEGIN', timbre: 2 });
+    send({ type: 'PAD_LOAD_END', timbre: 3 });
+
+    expect(pad.engine_pad_load_begin.mock.calls).toEqual([[1, 2]]);
+    expect(pad.engine_pad_load_end.mock.calls).toEqual([[1, 3]]);
+    expect(shipped.engine_pad_load_begin.length).toBe(2);
+    expect(shipped.engine_pad_load_end.length).toBe(2);
   });
 
   it('pad_09 sends PAD_STOP to the engine', async () => {

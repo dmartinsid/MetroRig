@@ -60,6 +60,8 @@ interface WasmEngineExports {
     rightPtr: number,
     length: number
   ): void;
+  engine_pad_load_begin(ptr: number, timbre: number): void;
+  engine_pad_load_end(ptr: number, timbre: number): void;
 }
 
 // The worklet is served on its own, so it cannot import src/kit.ts
@@ -200,6 +202,12 @@ class MetronomeProcessor extends AudioWorkletProcessor {
         break;
       case 'PAD_VOLUME':
         exports.engine_pad_set_volume(this.enginePtr, msg.volume);
+        break;
+      case 'PAD_LOAD_BEGIN':
+        exports.engine_pad_load_begin(this.enginePtr, msg.timbre);
+        break;
+      case 'PAD_LOAD_END':
+        exports.engine_pad_load_end(this.enginePtr, msg.timbre);
         break;
       case 'PAD_LOAD': {
         const { timbre, key, loopStart, loopEnd, leftChannel, rightChannel } = msg;

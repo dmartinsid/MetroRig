@@ -789,6 +789,21 @@ pub extern "C" fn engine_pad_load(
     engine.pad.load(timbre, key, left_slice, right_slice, loop_start, loop_end);
 }
 
+// Brackets the files of one timbre: the notes read none of them until the last has come or failed
+#[no_mangle]
+pub extern "C" fn engine_pad_load_begin(ptr: *mut Engine, timbre: u8) {
+    if ptr.is_null() { return; }
+    let engine = unsafe { &mut *ptr };
+    engine.pad.load_begin(timbre);
+}
+
+#[no_mangle]
+pub extern "C" fn engine_pad_load_end(ptr: *mut Engine, timbre: u8) {
+    if ptr.is_null() { return; }
+    let engine = unsafe { &mut *ptr };
+    engine.pad.load_end(timbre);
+}
+
 #[no_mangle]
 pub extern "C" fn engine_get_tick(ptr: *mut Engine, out_bpm: *mut f64) -> i32 {
     if ptr.is_null() || out_bpm.is_null() { return -1; }

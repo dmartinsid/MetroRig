@@ -74,7 +74,6 @@ fn top_note_gain(note: u8) -> f32 {
 
 const NO_FILE: usize = usize::MAX;
 const FALLBACK: usize = 4; // Analog, whose synth stands in for a timbre with none
-const OWN_FILE_SEMITONES: u8 = 2; // Orchestra's keys stand 4 apart, so every note it plays has a file this close
 const LOWEST_CHORD_NOTE: u8 = 45; // Below it are the notes a timbre adds, which that synth leaves out: it holds the chord
 
 // A pad sample keeps its onset, so `Sample` and its trimming are not reused: they would shift the loop points
@@ -323,6 +322,8 @@ pub struct Pad {
     pending_timbre: u8,
     order: u64,
     banks: [Vec<PadSample>; TIMBRES],
+    // While a timbre loads, how many of its files new and held notes may read: those it had when the load began
+    loading: [Option<usize>; TIMBRES],
     volume: f32,
     volume_target: f32,
     output_gain: f32,
@@ -345,6 +346,7 @@ impl Pad {
             pending_timbre: 0,
             order: 0,
             banks: std::array::from_fn(|_| Vec::new()),
+            loading: [None; TIMBRES],
             volume: DEFAULT_VOLUME,
             volume_target: DEFAULT_VOLUME,
             output_gain: OUTPUT_GAIN,
@@ -409,6 +411,25 @@ impl Pad {
         }
         let sample = PadSample { key, left: left[..frames].to_vec(), right: right[..frames].to_vec(), loop_start, loop_end };
         self.banks[timbre as usize].push(sample);
+        self.retarget(timbre);
+    }
+
+    // The files that arrive from here on wait for load_end, so a chord holds on what it had until the whole timbre is in
+    pub fn load_begin(&mut self, timbre: u8) {
+        if let Some(loading) = self.loading.get_mut(timbre as usize) {
+            *loading = Some(loading.unwrap_or(self.banks[timbre as usize].len()));
+        }
+    }
+
+    // Whatever failed, every note now reads the nearest file that loaded, and a held chord fades its files in
+    pub fn load_end(&mut self, timbre: u8) {
+        if let Some(loading) = self.loading.get_mut(timbre as usize) {
+            *loading = None;
+            self.retarget(timbre);
+        }
+    }
+
+    fn retarget(&mut self, timbre: u8) {
         for slot in 0..MAX_CHORDS {
             if self.slots[slot].timbre != timbre {
                 continue;
@@ -487,13 +508,11 @@ impl Pad {
         voice
     }
 
-    // A tie goes to the higher file, as FreePats maps its keys. A timbre with no synth waits for a file of its own
-    // note: while its bank loads, a far file would play the note at any speed where the fallback synth holds it
+    // A tie goes to the higher file, as FreePats maps its keys
     fn nearest_file(&self, timbre: u8, note: u8) -> usize {
         let bank = &self.banks[timbre as usize];
-        let reach = if MIXES[timbre as usize].synth == 0.0 { OWN_FILE_SEMITONES } else { u8::MAX };
-        (0..bank.len())
-            .filter(|&file| bank[file].key.abs_diff(note) <= reach)
+        let usable = self.loading[timbre as usize].unwrap_or(bank.len());
+        (0..usable)
             .min_by_key(|&file| (bank[file].key.abs_diff(note), u8::MAX - bank[file].key))
             .unwrap_or(NO_FILE)
     }
@@ -2153,38 +2172,33 @@ mod tests {
             assert!(powers.iter().all(|power| *power > loudest / 20.0), "timbre {timbre} misses a note: {powers:?}");
         }
 
-        // A chord that starts on a part-loaded Orchestra holds on the synth, and reads no other note's file
-        let orchestra = &timbre_banks()[ORCHESTRA as usize];
+        // A chord that starts on a part-loaded timbre holds on the synth, to the bit, and reads none of its files,
+        // whichever of them have come in
         let chord = [45u8, 48, 52, 55]; // Am7
-        let notes = timbre_notes(&chord, ORCHESTRA);
-        let frames = (6.0 * RATE) as usize;
-        let bare = {
-            let mut pad = Pad::new(RATE);
-            pad.play(&notes, ORCHESTRA);
-            let synth: Vec<f32> = (0..frames).map(|_| pad.layers().0.0).collect();
-            db(rms(after(&synth, FADE_END, RATE)))
-        };
-        for loaded in [1, 3] {
-            let mut pad = Pad::new(RATE);
-            for file in &orchestra[..loaded] {
-                pad.load(ORCHESTRA, file.key, &file.left, &file.right, file.loop_start, file.loop_end);
-            }
-            pad.play(&notes, ORCHESTRA);
-            let synth: Vec<f32> = (0..frames).map(|_| pad.layers().0.0).collect();
-            let slot = pad.slots.iter().find(|slot| slot.count > 0).unwrap();
-            for voice in slot.voices[..slot.count].iter() {
-                if let Some(file) = pad.banks[ORCHESTRA as usize].get(voice.file) {
-                    assert!(file.key.abs_diff(voice.note) <= 2, "{loaded} files: note {} reads key {}", voice.note, file.key);
+        let bits = |signal: &[f32]| signal.iter().map(|value| value.to_bits()).collect::<Vec<u32>>();
+        for timbre in [CHOIR, NEW_AGE, ORCHESTRA, SWEEP] {
+            let bank = &timbre_banks()[timbre as usize];
+            let notes = timbre_notes(&chord, timbre);
+            let held = |pad: &mut Pad| {
+                pad.play(&notes, timbre);
+                render(pad, 4.0)
+            };
+            let bare = held(&mut Pad::new(RATE));
+            for loaded in [1, 3, bank.len()] {
+                let mut pad = Pad::new(RATE);
+                pad.load_begin(timbre);
+                for file in &bank[..loaded] {
+                    pad.load(timbre, file.key, &file.left, &file.right, file.loop_start, file.loop_end);
                 }
+                let (left, right) = held(&mut pad);
+                let slot = pad.slots.iter().find(|slot| slot.count > 0).unwrap();
+                assert!(slot.voices[..slot.count].iter().all(|voice| voice.file == NO_FILE), "timbre {timbre}, {loaded} files");
+                assert_eq!(bits(&left), bits(&bare.0), "timbre {timbre}, {loaded} files");
+                assert_eq!(bits(&right), bits(&bare.1), "timbre {timbre}, {loaded} files");
             }
-            let chord_voices = slot.voices[..slot.count].iter().filter(|voice| chord.contains(&voice.note));
-            assert_eq!(chord_voices.filter(|voice| voice.file == NO_FILE).count(), chord.len(), "{loaded} files");
-            let level = db(rms(after(&synth, FADE_END, RATE)));
-            assert!((level - bare).abs() < 1.0, "{loaded} files: the synth stands at {level} dB against {bare} dB");
         }
 
         // Each timbre keeps its own synth layer, so Orchestra's is the Analog synth, to the bit
-        let bits = |signal: &[f32]| signal.iter().map(|value| value.to_bits()).collect::<Vec<u32>>();
         let held = |timbre: u8| {
             let mut pad = Pad::new(RATE);
             pad.play(&C7M9, timbre);
@@ -2228,22 +2242,50 @@ mod tests {
         }
     }
 
+    // A held note while its timbre loads: the file comes at half time and the load ends at `loaded_at`
+    fn load_while_held(timbre: u8, hz: f32, loaded_at: f32, with_file: bool) -> Vec<((f32, f32), (f32, f32), (f32, f32))> {
+        let mut pad = Pad::new(RATE);
+        let frames = |seconds: f32| (seconds * RATE) as usize;
+        pad.load_begin(timbre);
+        pad.play(&TIMBRE_NOTE, timbre);
+        let mut layers: Vec<_> = (0..frames(loaded_at / 2.0)).map(|_| pad.layers()).collect();
+        if with_file {
+            let tone = sine(hz, 40.0, RATE);
+            pad.load(timbre, TIMBRE_NOTE[0], &tone, &tone, 0, tone.len() - 1);
+        }
+        layers.extend((0..frames(loaded_at / 2.0)).map(|_| pad.layers()));
+        pad.load_end(timbre);
+        layers.extend((0..frames(3.0)).map(|_| pad.layers()));
+        layers
+    }
+
+    #[test]
+    fn tim_34_failed_file_takes_the_nearest_loaded() {
+        // Every Orchestra note whose own file failed reads the nearest file that loaded, once the load ends
+        let orchestra = &timbre_banks()[ORCHESTRA as usize];
+        for failed in 0..orchestra.len() {
+            let mut pad = Pad::new(RATE);
+            pad.load_begin(ORCHESTRA);
+            let lost = orchestra[failed].key;
+            for file in orchestra.iter().filter(|file| file.key != lost) {
+                pad.load(ORCHESTRA, file.key, &file.left, &file.right, file.loop_start, file.loop_end);
+            }
+            pad.load_end(ORCHESTRA);
+            for note in lost.saturating_sub(2)..=lost + 2 {
+                let file = pad.nearest_file(ORCHESTRA, note);
+                assert_ne!(file, NO_FILE, "note {note} has no file with {lost} failed");
+                let distance = pad.banks[ORCHESTRA as usize][file].key.abs_diff(note);
+                let nearest = orchestra.iter().filter(|other| other.key != lost).map(|other| other.key.abs_diff(note)).min().unwrap();
+                assert_eq!(distance, nearest, "note {note} with {lost} failed");
+            }
+        }
+    }
+
     #[test]
     fn tim_31_late_files_fade_in() {
         let loaded_at = 2.0;
         for (timbre, hz) in [(CHOIR, 700.0), (SWEEP, 700.0), (NEW_AGE, 700.0)] {
-            let run = |with_file: bool| {
-                let mut pad = Pad::new(RATE);
-                pad.play(&TIMBRE_NOTE, timbre);
-                let frames = |seconds: f32| (seconds * RATE) as usize;
-                let mut layers: Vec<_> = (0..frames(loaded_at)).map(|_| pad.layers()).collect();
-                if with_file {
-                    let tone = sine(hz, 40.0, RATE);
-                    pad.load(timbre, TIMBRE_NOTE[0], &tone, &tone, 0, tone.len() - 1);
-                }
-                layers.extend((0..frames(3.0)).map(|_| pad.layers()));
-                layers
-            };
+            let run = |with_file: bool| load_while_held(timbre, hz, loaded_at, with_file);
             let (loaded, bare) = (run(true), run(false));
             let files: Vec<f32> = loaded.iter().map(|(_, (bus, _), (past, _))| bus + past).collect();
             let full = tone_level(&files, hz, loaded_at + 2.5);
@@ -2265,18 +2307,7 @@ mod tests {
     #[test]
     fn tim_32_orchestra_replaces_the_synth() {
         let (loaded_at, hz) = (2.0, 700.0);
-        let run = |with_file: bool| {
-            let mut pad = Pad::new(RATE);
-            pad.play(&TIMBRE_NOTE, ORCHESTRA);
-            let frames = |seconds: f32| (seconds * RATE) as usize;
-            let mut layers: Vec<_> = (0..frames(loaded_at)).map(|_| pad.layers()).collect();
-            if with_file {
-                let tone = sine(hz, 40.0, RATE);
-                pad.load(ORCHESTRA, TIMBRE_NOTE[0], &tone, &tone, 0, tone.len() - 1);
-            }
-            layers.extend((0..frames(3.0)).map(|_| pad.layers()));
-            layers
-        };
+        let run = |with_file: bool| load_while_held(ORCHESTRA, hz, loaded_at, with_file);
         let (loaded, bare) = (run(true), run(false));
         let synth: Vec<f32> = loaded.iter().map(|((left, _), _, _)| *left).collect();
         let bare_synth: Vec<f32> = bare.iter().map(|((left, _), _, _)| *left).collect();

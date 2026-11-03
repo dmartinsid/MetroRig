@@ -193,3 +193,11 @@
 - **Scope**: chord-library, CHD-07 and CHD-37
 - **Date**: 2026-11-02
 - **Status**: active (AD-024)
+
+### AD-025
+- **Decision**: A timbre's files reach its notes only when its load ends: the app brackets each load with `padLoadBegin` and `padLoadEnd`, and until the end every note reads only the files it had before. After that, every note reads the nearest file that loaded, at any distance. This replaces the per-file use of PAD-49 and TIM-30, and Orchestra's 2-semitone reach.
+- **Reason**: The review of PR #13 found two problems. First, a chord played mid-load read one file pitched across the chord, or Orchestra strings on some notes and the synth on the others, against TIM-30 to TIM-32. Second, an Orchestra note whose own file failed never read the nearest one, against PAD-50.
+- **Trade-off**: A held chord waits for the whole timbre, about 3.6 MB for Orchestra, before any sample fades in. With every Orchestra file failed, its bass notes are silent and the Analog synth holds the chord, as PAD-52 says.
+- **Scope**: chord-pads, pad-timbres; `src/pad.rs`, the worklet and `loadTimbre`
+- **Date**: 2026-11-03
+- **Status**: active (AD-025)
