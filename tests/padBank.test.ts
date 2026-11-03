@@ -201,6 +201,13 @@ describe('Timbre banks', () => {
     expect(license).toContain('https://github.com/sgossner/VSCO-2-CE');
   });
 
+  it('pad_54 README states the chords and timbres the app offers', () => {
+    const readme = fs.readFileSync(readmePath, 'utf8');
+    expect(readme).toContain(`any of ${ROOTS.length * CHORD_TYPES.length} chords`);
+    const names = PAD_TIMBRES.map(({ name }) => name);
+    expect(readme).toContain(`chosen in a select: ${names.slice(0, -1).join(', ')} and ${names.at(-1)}.`);
+  });
+
   it('tim_41 README', () => {
     const readme = fs.readFileSync(readmePath, 'utf8');
     for (const credit of ['FreePats', 'Versilian Studios', 'https://github.com/freepats/synth-pad-choir',
