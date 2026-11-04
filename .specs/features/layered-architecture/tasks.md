@@ -104,16 +104,18 @@ T23 → T24
 
 **Done when**:
 
-- [ ] `cargo test golden_tests` passes on code otherwise identical to `591f031`
-- [ ] `kept_591f031.json` lists 136 Rust test names, every vitest test name, and the export names of `public/pkg/metrorig_audio_bg.wasm`
-- [ ] `python3 -I tests/fixtures/tests_kept.py rust` and `... js` exit 0
-- [ ] Gate check passes: `cargo test && npx vitest run`
-- [ ] Test count: 143 Rust tests pass
+- [x] `cargo test golden_tests` passes on code otherwise identical to `591f031`
+- [x] `kept_591f031.json` lists 136 Rust test names, every vitest test name, and the export names of `public/pkg/metrorig_audio_bg.wasm`
+- [x] `python3 -I tests/fixtures/tests_kept.py rust` and `... js` exit 0
+- [x] Gate check passes: `cargo test && npx vitest run`
+- [x] Test count: 143 Rust tests pass
 
 **Tests**: unit
 **Gate**: quick
 
 **Commit**: `test(engine): record the golden output and the kept tests at 591f031`
+
+**Status**: ✅ Complete
 
 ---
 
@@ -746,5 +748,5 @@ Proof: run js | ✓ copy_wasm > exits 1 naming the path when the build is missin
 ## Handoff
 
 **Settled mid-build:** Execution by batch sub-agents - user: "aprovo, vamos de sub agents"
-**Dispatched:** none
+**Dispatched:** batch 1 (Phases 1-2, T1-T8) at e6c9c7c
 **Walked:** none
