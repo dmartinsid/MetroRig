@@ -202,3 +202,13 @@
 - **Heard**: the user, in the running app at 68b439d, on 2026-11-03: "escutei e pra mim esta ok". No independent Verifier judged this fix
 - **Date**: 2026-11-03
 - **Status**: active (AD-025)
+
+### AD-026
+- **Decision**: A held note that gets a nearer file while it already reads one crosses from the old file to the new one over 1.5 s on equal-power curves, both read at once. The note's level stays the same, and Orchestra's stand-in synth stays out. A file that arrives during a crossing waits until it ends. This replaces the swap of `chord-pads`, where the old file left in 20 ms and the new one rose over 1.5 s.
+- **Reason**: The re-review of PR #13 at d25874f found that a retry under TIM-35, succeeding while a chord was held across screens (PAD-26), dipped the note's files to nothing for 1.5 s and brought the Analog synth into Orchestra, against TIM-13. `tim_35_retry_while_held_keeps_the_sound` measured -7 dB at 25 ms after the retry before the fix.
+- **Trade-off**: For 1.5 s a crossing voice reads two files, which doubles its sample reads. The fields are fixed, so the audio thread still allocates nothing (AD-017).
+- **Scope**: chord-pads, pad-timbres; `src/pad.rs`
+- **Heard**: not yet heard in the running app
+- **Date**: 2026-11-03
+- **Status**: active (AD-026)
+

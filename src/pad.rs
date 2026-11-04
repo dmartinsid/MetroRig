@@ -99,6 +99,11 @@ struct Voice {
     // Reason: past 262,144 frames f32 moves in steps of 1/32 of a frame, which rounds a ratio of 1.059 to 1.0625, 5 cents sharp
     position: f64,
     speed: f64, // Frames of the file per output frame
+    // The file a nearer one replaced, read on while the two cross, so the note keeps its level
+    past_file: usize,
+    past_position: f64,
+    past_speed: f64,
+    crossing: f32, // Linear, from 0 to 1: how far the voice has moved from past_file to file
 }
 
 impl Voice {
@@ -111,6 +116,10 @@ impl Voice {
         file_gain: 0.0,
         position: 0.0,
         speed: 1.0,
+        past_file: NO_FILE,
+        past_position: 0.0,
+        past_speed: 1.0,
+        crossing: 1.0,
     };
 
     fn use_file(&mut self, file: usize, samples: &[PadSample]) {
@@ -122,29 +131,57 @@ impl Voice {
         }
     }
 
-    // Leaves the file it has, if a nearer one came in, and fades that one in
-    fn approach_file(&mut self, samples: &[PadSample], rise: f32, fall: f32) {
-        if self.next_file != self.file {
-            self.file_gain = (self.file_gain - fall).max(0.0);
-            if self.file_gain == 0.0 {
-                self.use_file(self.next_file, samples);
+    // Takes a nearer file that came in: from no file it fades in, and from another file the two cross, so neither
+    // the note's level nor, in Orchestra, the absence of a synth moves. A third file waits for the crossing to end
+    fn approach_file(&mut self, samples: &[PadSample], rise: f32) {
+        if self.next_file != self.file && self.past_file == NO_FILE {
+            if self.file != NO_FILE {
+                (self.past_file, self.past_position, self.past_speed) = (self.file, self.position, self.speed);
+                self.crossing = 0.0;
             }
-        } else if self.file != NO_FILE {
+            self.use_file(self.next_file, samples);
+        }
+        if self.file != NO_FILE {
             self.file_gain = (self.file_gain + rise).min(1.0);
+        }
+        if self.past_file != NO_FILE {
+            self.crossing = (self.crossing + rise).min(1.0);
+            if self.crossing == 1.0 {
+                self.past_file = NO_FILE;
+            }
         }
     }
 
-    fn read(&mut self, sample: &PadSample) -> (f32, f32) {
-        let index = self.position as usize;
-        let fraction = (self.position - index as f64) as f32;
-        let left = sample.left[index] + fraction * (sample.left[index + 1] - sample.left[index]);
-        let right = sample.right[index] + fraction * (sample.right[index + 1] - sample.right[index]);
-        self.position += self.speed;
-        while self.position >= sample.loop_end as f64 {
-            self.position -= (sample.loop_end - sample.loop_start) as f64;
+    // One frame of the voice's files, the one it leaves and the one it takes on equal-power curves
+    fn read_files(&mut self, samples: &[PadSample]) -> (f32, f32) {
+        let (mut left, mut right) = (0.0, 0.0);
+        let (taking, leaving) = if self.past_file == NO_FILE {
+            (1.0, 0.0)
+        } else {
+            ((self.crossing * FRAC_PI_2).sin(), (self.crossing * FRAC_PI_2).cos())
+        };
+        if let Some(sample) = samples.get(self.file) {
+            let (file_left, file_right) = read(sample, &mut self.position, self.speed);
+            (left, right) = (file_left * taking, file_right * taking);
+        }
+        if let Some(sample) = samples.get(self.past_file) {
+            let (file_left, file_right) = read(sample, &mut self.past_position, self.past_speed);
+            (left, right) = (left + file_left * leaving, right + file_right * leaving);
         }
         (left, right)
     }
+}
+
+fn read(sample: &PadSample, position: &mut f64, speed: f64) -> (f32, f32) {
+    let index = *position as usize;
+    let fraction = (*position - index as f64) as f32;
+    let left = sample.left[index] + fraction * (sample.left[index + 1] - sample.left[index]);
+    let right = sample.right[index] + fraction * (sample.right[index + 1] - sample.right[index]);
+    *position += speed;
+    while *position >= sample.loop_end as f64 {
+        *position -= (sample.loop_end - sample.loop_start) as f64;
+    }
+    (left, right)
 }
 
 #[derive(Clone, Copy)]
@@ -524,7 +561,6 @@ impl Pad {
         let (mut bus_left, mut bus_right) = (0.0, 0.0);
         let (mut past_left, mut past_right) = (0.0, 0.0);
         let file_rise = 1.0 / (FADE_SECONDS * self.sample_rate);
-        let file_fall = 1.0 / (EVICTION_SECONDS * self.sample_rate);
         for slot in &mut self.slots {
             let gain = slot.fade_gain();
             let bank = &self.banks[slot.timbre as usize];
@@ -547,10 +583,10 @@ impl Pad {
                     left += value * (1.0 - pan);
                     right += value * pan;
                 }
-                voice.approach_file(bank, file_rise, file_fall);
-                if let Some(sample) = bank.get(voice.file) {
+                voice.approach_file(bank, file_rise);
+                if voice.file != NO_FILE || voice.past_file != NO_FILE {
                     let file_gain = if voice.file_gain < 1.0 { (voice.file_gain * FRAC_PI_2).sin() } else { 1.0 };
-                    let (sample_left, sample_right) = voice.read(sample);
+                    let (sample_left, sample_right) = voice.read_files(bank);
                     let file_left = sample_left * gain * file_gain * mix.samples;
                     let file_right = sample_right * gain * file_gain * mix.samples;
                     bus_left += file_left * mix.chorus;
@@ -1439,7 +1475,7 @@ mod tests {
         assert_level(&signal, CHORD_A, loaded_at + 1.52, 1.0);
         assert_level(&signal, CHORD_A, loaded_at + 2.5, 1.0);
 
-        // A nearer file takes over with no click: the first leaves in 20 ms, and the second rises
+        // A nearer file takes over with no click: the two cross over 1.5 s
         let run = || {
             let mut pad = Pad::new(RATE);
             load_tone(&mut pad, 44, 110.0);
@@ -1460,9 +1496,9 @@ mod tests {
         };
         assert!(heard(&signal, nearer_tone, 2.5) > 1000.0 * heard(&signal, 110.0 * moved, 2.5), "the first file stayed");
         let step = |signal: &[f32], from: usize, to: usize| signal[from..to].windows(2).map(|pair| (pair[1] - pair[0]).abs()).fold(0.0, f32::max);
+        // Against the same 50 ms left without the load, as the first file still sounds through them
         let swap_end = (0.05 * RATE) as usize;
-        let last = (2.9 * RATE) as usize;
-        assert!(step(&signal, 0, swap_end) <= 1.25 * step(&bare_signal, last - swap_end, last), "the swap clicks");
+        assert!(step(&signal, 0, swap_end) <= 1.25 * step(&bare_signal, 0, swap_end), "the swap clicks");
     }
 
     #[test]
@@ -2332,6 +2368,39 @@ mod tests {
         // Nothing of the synth stays, past what the filter still rings with
         let past_fade = ((loaded_at + 1.6) * RATE) as usize;
         assert!(synth[past_fade..].iter().all(|value| *value == 0.0 || value.abs() < 1e-30));
+    }
+
+    #[test]
+    fn tim_35_retry_while_held_keeps_the_sound() {
+        // A held note reads the nearest file, its own having failed; a retry brings that one in while it sounds
+        let (retried_at, near_hz, own_hz) = (2.0, 330.0, 650.0);
+        let frames = |seconds: f32| (seconds * RATE) as usize;
+        for timbre in [ORCHESTRA, NEW_AGE] {
+            let mut pad = Pad::new(RATE);
+            let (near, own) = (sine(near_hz, 40.0, RATE), sine(own_hz, 40.0, RATE));
+            pad.load(timbre, 56, &near, &near, 0, near.len() - 1);
+            pad.play(&[60], timbre);
+            let mut layers: Vec<_> = (0..frames(retried_at)).map(|_| pad.layers()).collect();
+            pad.load_begin(timbre);
+            pad.load(timbre, 60, &own, &own, 0, own.len() - 1);
+            pad.load_end(timbre);
+            layers.extend((0..frames(3.0)).map(|_| pad.layers()));
+
+            let files: Vec<f32> = layers.iter().map(|(_, (bus, _), (past, _))| bus + past).collect();
+            let level = |second: f32| db(rms(&files[frames(second - 0.025)..frames(second + 0.025)]));
+            let before = level(retried_at - 0.1);
+            for tenth in 0..30 {
+                let second = retried_at + 0.025 + tenth as f32 / 10.0 * 0.9;
+                let moved = level(second) - before;
+                assert!(moved.abs() < 1.0, "timbre {timbre}: the files moved {moved} dB at {second} s");
+            }
+            let heard = |hz: f32, second: f32| band_power(&files[frames(second)..frames(second + 0.2)], hz, 40.0, RATE);
+            assert!(heard(own_hz, retried_at + 2.5) > 1000.0 * heard(near_hz * 2f32.powf(4.0 / 12.0), retried_at + 2.5), "timbre {timbre}: the retried file never took over");
+
+            if timbre == ORCHESTRA {
+                assert!(layers.iter().all(|((left, right), _, _)| *left == 0.0 && *right == 0.0), "the Analog synth reached the Orchestra");
+            }
+        }
     }
 
     #[test]
