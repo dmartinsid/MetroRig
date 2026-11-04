@@ -202,15 +202,17 @@ T23 → T24
 
 **Done when**:
 
-- [ ] `sequencer` uses no other crate module
-- [ ] Golden proof passes
-- [ ] Gate check passes: `cargo test --manifest-path engine/Cargo.toml`
-- [ ] Test count: 149 Rust tests pass
+- [x] `sequencer` uses no other crate module
+- [x] Golden proof passes
+- [x] Gate check passes: `cargo test --manifest-path engine/Cargo.toml`
+- [x] Test count: 149 Rust tests pass
 
 **Tests**: unit
 **Gate**: quick
 
 **Commit**: `refactor(engine): extract the clock and the pattern`
+
+**Status**: ✅ Complete
 
 ---
 
