@@ -1,9 +1,11 @@
 #![allow(dead_code)]
 mod dsp;
 mod pad;
+mod sequencer;
 #[cfg(test)]
 mod golden_tests;
 use dsp::sample::{trim_onset, Sample};
+use sequencer::trainer::{Curve, StepType, Trainer, TrainerSettings};
 use std::slice;
 
 const MAX_SAMPLES: usize = 13; // 0: Click, then the kit in src/kit.ts
@@ -41,72 +43,19 @@ struct SequencerTrack {
     steps: [u8; STEPS_COUNT], // 0 = Off, 1 = Low, 2 = High
 }
 
-#[derive(Clone, Copy, PartialEq)]
-enum StepType {
-    Bars,
-    Seconds,
-}
-
-impl StepType {
-    fn from_ffi(value: u32) -> Option<Self> {
-        match value {
-            0 => Some(StepType::Bars),
-            1 => Some(StepType::Seconds),
-            _ => None,
-        }
+fn step_type_from_ffi(value: u32) -> Option<StepType> {
+    match value {
+        0 => Some(StepType::Bars),
+        1 => Some(StepType::Seconds),
+        _ => None,
     }
 }
 
-#[derive(Clone, Copy, PartialEq)]
-enum Curve {
-    Stepped,
-    Smooth,
-}
-
-impl Curve {
-    fn from_ffi(value: u32) -> Option<Self> {
-        match value {
-            0 => Some(Curve::Stepped),
-            1 => Some(Curve::Smooth),
-            _ => None,
-        }
-    }
-}
-
-#[derive(Clone, Copy, PartialEq)]
-struct TrainerSettings {
-    enabled: bool,
-    start_bpm: f64,
-    target_bpm: f64,
-    increment: f64,
-    step_type: StepType,
-    step_value: f64,
-    curve: Curve,
-}
-
-impl TrainerSettings {
-    fn from_ffi(
-        enabled: bool,
-        start_bpm: f64,
-        target_bpm: f64,
-        increment: f64,
-        step_type: u32,
-        step_value: f64,
-        curve_type: u32
-    ) -> Option<Self> {
-        if start_bpm <= 0.0 || !start_bpm.is_finite() { return None; }
-        if target_bpm <= 0.0 || !target_bpm.is_finite() { return None; }
-        if increment < 0.0 || !increment.is_finite() { return None; }
-        if step_value <= 0.0 || !step_value.is_finite() { return None; }
-        Some(TrainerSettings {
-            enabled,
-            start_bpm,
-            target_bpm,
-            increment,
-            step_type: StepType::from_ffi(step_type)?,
-            step_value,
-            curve: Curve::from_ffi(curve_type)?,
-        })
+fn curve_from_ffi(value: u32) -> Option<Curve> {
+    match value {
+        0 => Some(Curve::Stepped),
+        1 => Some(Curve::Smooth),
+        _ => None,
     }
 }
 
@@ -140,12 +89,8 @@ pub struct Engine {
     tracks: [SequencerTrack; MAX_SAMPLES],
 
     // Tempo Trainer State
-    trainer: TrainerSettings,
-    trainer_accumulated_measures: u64,
-    trainer_accumulated_samples: u64,
+    trainer: Trainer,
     first_hit: bool, // The next hit opens a run, so no measure has finished
-    trainer_schedule_restarted: bool, // Its first interval counts from the next beat 1
-    pending_trainer: Option<TrainerSettings>, // Received during playback, waits for beat 1
     
     // Events queued for Javascript
     last_tick_index: i32, // -1 if no tick in last process
@@ -206,20 +151,8 @@ impl Engine {
             fading: [None; MAX_SAMPLES],
             fade_frames: (sample_rate * FADE_SECONDS).round() as usize,
             tracks,
-            trainer: TrainerSettings {
-                enabled: false,
-                start_bpm: 120.0,
-                target_bpm: 160.0,
-                increment: 5.0,
-                step_type: StepType::Bars,
-                step_value: 4.0,
-                curve: Curve::Stepped,
-            },
-            trainer_accumulated_measures: 0,
-            trainer_accumulated_samples: 0,
+            trainer: Trainer::new(),
             first_hit: false,
-            trainer_schedule_restarted: false,
-            pending_trainer: None,
             last_tick_index: -1,
             last_tick_bpm: 120.0,
             measure_length: 16,
@@ -233,11 +166,8 @@ impl Engine {
     }
 
     pub fn start(&mut self) {
-        self.apply_pending_trainer();
-        self.trainer_accumulated_measures = 0;
-        self.trainer_accumulated_samples = 0;
-        if self.trainer.enabled {
-            self.bpm = self.trainer.start_bpm;
+        if let Some(bpm) = self.trainer.on_start(self.is_playing) {
+            self.bpm = bpm;
             self.recalc_tempo();
         }
 
@@ -252,7 +182,6 @@ impl Engine {
         self.is_playing = true;
         self.step_index = 0;
         self.first_hit = true;
-        self.trainer_schedule_restarted = false;
         self.samples_in_current_step = 0.0;
     }
 
@@ -272,22 +201,10 @@ impl Engine {
 
     fn trigger_step(&mut self) {
         if self.step_index % self.measure_length == 0 {
-            if self.first_hit {
-                self.first_hit = false;
-                self.apply_pending_trainer();
-                if self.trainer.enabled {
-                    self.bpm = self.trainer.start_bpm; // Settings may have arrived after Play
-                    self.recalc_tempo();
-                }
-                self.trainer_schedule_restarted = false; // No bar has ended yet
-                self.trainer_accumulated_samples = 0; // Seconds count from this hit
-            } else {
-                self.apply_pending_trainer();
-                // The bar that just ended does not count toward a restarted schedule
-                let restarted = std::mem::take(&mut self.trainer_schedule_restarted);
-                if !(restarted && self.trainer.step_type == StepType::Bars) {
-                    self.on_measure_complete();
-                }
+            let first = std::mem::take(&mut self.first_hit);
+            if let Some(bpm) = self.trainer.on_bar_start(first, self.bpm, self.sample_rate) {
+                self.bpm = bpm;
+                self.recalc_tempo();
             }
         }
 
@@ -375,104 +292,20 @@ impl Engine {
         self.measure_length * self.bars
     }
 
-    fn apply_pending_trainer(&mut self) {
-        if let Some(settings) = self.pending_trainer.take() {
-            self.apply_trainer(settings);
-        }
-    }
-
-    // Enabling the Trainer, or changing when it steps, restarts its schedule. Target,
-    // Increment and Start BPM do not, so their edits keep the progress of the interval.
-    fn apply_trainer(&mut self, settings: TrainerSettings) {
-        let active = self.trainer;
-        let schedule_restarted = (settings.enabled && !active.enabled)
-            || settings.step_type != active.step_type
-            || settings.step_value != active.step_value
-            || settings.curve != active.curve;
-        self.trainer = settings;
-        if schedule_restarted {
-            self.restart_trainer_schedule();
-        }
-    }
-
-    fn restart_trainer_schedule(&mut self) {
-        self.trainer_accumulated_measures = 0;
-        self.trainer_accumulated_samples = 0;
-        self.trainer_schedule_restarted = self.is_playing;
-    }
-
     // A preset load: the old Trainer stops now, and its counters go with it.
     fn replace_trainer(&mut self, settings: TrainerSettings) {
-        self.pending_trainer = None;
-        self.apply_trainer(settings);
-        self.restart_trainer_schedule();
+        self.trainer.replace(settings, self.is_playing);
     }
 
     fn set_trainer(&mut self, settings: TrainerSettings) {
-        if self.is_playing && settings.enabled {
-            self.pending_trainer = Some(settings);
-        } else {
-            // Stopped, or a disable: it applies now and replaces anything still waiting.
-            self.pending_trainer = None;
-            self.apply_trainer(settings);
-        }
-    }
-
-    fn on_measure_complete(&mut self) {
-        if !self.trainer.enabled || self.trainer.curve != Curve::Stepped {
-            return;
-        }
-        let due = if self.trainer.step_type == StepType::Bars {
-            self.trainer_accumulated_measures += 1;
-            self.trainer_accumulated_measures >= self.trainer.step_value as u64
-        } else {
-            let samples_limit = (self.trainer.step_value * self.sample_rate as f64) as u64;
-            self.trainer_accumulated_samples >= samples_limit
-        };
-        if due {
-            self.trainer_accumulated_measures = 0;
-            self.trainer_accumulated_samples = 0;
-            self.increment_bpm();
-        }
-    }
-
-    fn increment_bpm(&mut self) {
-        if self.bpm < self.trainer.target_bpm {
-            self.bpm = (self.bpm + self.trainer.increment).min(self.trainer.target_bpm);
-            self.recalc_tempo();
-        }
-    }
-
-    fn update_trainer_smooth(&mut self, elapsed_samples: u64) {
-        if !self.trainer.enabled || self.trainer.curve != Curve::Smooth {
-            return;
-        }
-        self.trainer_accumulated_samples += elapsed_samples;
-        
-        let samples_needed = if self.trainer.step_type == StepType::Seconds {
-            // By time
-            self.trainer.step_value * self.sample_rate as f64
-        } else {
-            // By measure: samples per measure
-            self.samples_per_step * self.measure_length as f64 * self.trainer.step_value
-        };
-
-        if self.bpm < self.trainer.target_bpm {
-            // Linear ramp
-            let progress = elapsed_samples as f64 / samples_needed;
-            let bpm_delta = self.trainer.increment * progress;
-            self.bpm = (self.bpm + bpm_delta).min(self.trainer.target_bpm);
-            self.recalc_tempo();
-        }
+        self.trainer.set(settings, self.is_playing);
     }
 
     fn process_tick_samples(&mut self) {
-        if self.trainer.enabled && self.trainer.curve == Curve::Smooth {
-            // Smooth update per frame
-            self.update_trainer_smooth(1);
-        } else if self.trainer.enabled && self.trainer.step_type == StepType::Seconds {
-            // Stepped by time: the increment waits for beat 1
-            self.trainer_accumulated_samples += 1;
+        let next = self.trainer.on_frame(self.bpm, self.samples_per_step, self.measure_length, self.sample_rate);
+        if let Some(bpm) = next {
+            self.bpm = bpm;
+            self.recalc_tempo();
         }
     }
 
@@ -688,6 +521,19 @@ pub extern "C" fn engine_set_bars(ptr: *mut Engine, bars: u32) {
     }
 }
 
+fn trainer_settings(
+    enabled: bool,
+    start_bpm: f64,
+    target_bpm: f64,
+    increment: f64,
+    step_type: u32,
+    step_value: f64,
+    curve_type: u32
+) -> Option<TrainerSettings> {
+    let (step_type, curve) = (step_type_from_ffi(step_type)?, curve_from_ffi(curve_type)?);
+    TrainerSettings::new(enabled, start_bpm, target_bpm, increment, step_type, step_value, curve)
+}
+
 // Runs a Trainer update unless the pointer or any setting is invalid.
 fn update_trainer(ptr: *mut Engine, settings: Option<TrainerSettings>, update: fn(&mut Engine, TrainerSettings)) {
     if ptr.is_null() { return; }
@@ -706,7 +552,7 @@ pub extern "C" fn engine_replace_trainer(
     step_value: f64,
     curve_type: u32
 ) {
-    let settings = TrainerSettings::from_ffi(enabled, start_bpm, target_bpm, increment, step_type, step_value, curve_type);
+    let settings = trainer_settings(enabled, start_bpm, target_bpm, increment, step_type, step_value, curve_type);
     update_trainer(ptr, settings, Engine::replace_trainer);
 }
 
@@ -721,7 +567,7 @@ pub extern "C" fn engine_set_trainer(
     step_value: f64,
     curve_type: u32
 ) {
-    let settings = TrainerSettings::from_ffi(enabled, start_bpm, target_bpm, increment, step_type, step_value, curve_type);
+    let settings = trainer_settings(enabled, start_bpm, target_bpm, increment, step_type, step_value, curve_type);
     update_trainer(ptr, settings, Engine::set_trainer);
 }
 
@@ -1737,7 +1583,7 @@ mod tests {
         engine_set_trainer(run.ptr, true, 100.0, 160.0, 5.0, BY_BARS, 1.0, STEPPED);
         engine_set_trainer(run.ptr, true, 90.0, 150.0, 2.0, 2, 1.0, STEPPED);
         engine_replace_trainer(run.ptr, true, 90.0, 150.0, 2.0, BY_BARS, 1.0, 2);
-        let trainer = unsafe { (*run.ptr).trainer };
+        let trainer = unsafe { (*run.ptr).trainer.settings };
         assert_eq!(trainer.start_bpm, 100.0);
         assert_eq!(trainer.target_bpm, 160.0);
         assert_eq!(trainer.increment, 5.0);
@@ -2402,13 +2248,13 @@ mod tests {
         engine.start();
         
         // 120 BPM, target 130 BPM, increment 5.0, stepped curve, measures mode (step_value = 2.0 measures)
-        engine.trainer.enabled = true;
-        engine.trainer.start_bpm = 120.0;
-        engine.trainer.target_bpm = 130.0;
-        engine.trainer.increment = 5.0;
-        engine.trainer.step_type = StepType::Bars;
-        engine.trainer.step_value = 2.0;
-        engine.trainer.curve = Curve::Stepped;
+        engine.trainer.settings.enabled = true;
+        engine.trainer.settings.start_bpm = 120.0;
+        engine.trainer.settings.target_bpm = 130.0;
+        engine.trainer.settings.increment = 5.0;
+        engine.trainer.settings.step_type = StepType::Bars;
+        engine.trainer.settings.step_value = 2.0;
+        engine.trainer.settings.curve = Curve::Stepped;
 
         // 1 measure has 16 steps, so 2 measures have 32 steps.
         // The first hit of a run finishes no measure. The next step 0 is trigger 17, and the
@@ -2444,13 +2290,13 @@ mod tests {
         engine.start();
         
         // 120 BPM, target 130 BPM, increment 5.0, stepped curve, seconds mode (step_value = 0.01 seconds -> 441 samples)
-        engine.trainer.enabled = true;
-        engine.trainer.start_bpm = 120.0;
-        engine.trainer.target_bpm = 130.0;
-        engine.trainer.increment = 5.0;
-        engine.trainer.step_type = StepType::Seconds;
-        engine.trainer.step_value = 0.01;
-        engine.trainer.curve = Curve::Stepped;
+        engine.trainer.settings.enabled = true;
+        engine.trainer.settings.start_bpm = 120.0;
+        engine.trainer.settings.target_bpm = 130.0;
+        engine.trainer.settings.increment = 5.0;
+        engine.trainer.settings.step_type = StepType::Seconds;
+        engine.trainer.settings.step_value = 0.01;
+        engine.trainer.settings.curve = Curve::Stepped;
 
         // The first hit starts the run, so the 441 samples pass with BPM unchanged.
         let mut buf_l = vec![0.0f32; 441];
@@ -2478,13 +2324,13 @@ mod tests {
         engine.start();
         
         // 120 BPM, target 130 BPM, increment 5.0, smooth curve, seconds mode (step_value = 1.0 second -> 44100 samples)
-        engine.trainer.enabled = true;
-        engine.trainer.start_bpm = 120.0;
-        engine.trainer.target_bpm = 130.0;
-        engine.trainer.increment = 5.0;
-        engine.trainer.step_type = StepType::Seconds;
-        engine.trainer.step_value = 1.0;
-        engine.trainer.curve = Curve::Smooth;
+        engine.trainer.settings.enabled = true;
+        engine.trainer.settings.start_bpm = 120.0;
+        engine.trainer.settings.target_bpm = 130.0;
+        engine.trainer.settings.increment = 5.0;
+        engine.trainer.settings.step_type = StepType::Seconds;
+        engine.trainer.settings.step_value = 1.0;
+        engine.trainer.settings.curve = Curve::Smooth;
 
         let mut buf_l = vec![0.0f32; 44100];
         let mut buf_r = vec![0.0f32; 44100];

@@ -178,15 +178,17 @@ T23 → T24
 
 **Done when**:
 
-- [ ] Tests `stepped_curve_steps_at_the_bar_count`, `smooth_curve_ramps_each_frame`, `steps_by_bars`, `steps_by_seconds_wait_for_beat_one`, `settings_wait_for_beat_one`, `a_changed_schedule_restarts` pass
-- [ ] Golden proof passes
-- [ ] Gate check passes: `cargo test --manifest-path engine/Cargo.toml`
-- [ ] Test count: 149 Rust tests pass
+- [x] Tests `stepped_curve_steps_at_the_bar_count`, `smooth_curve_ramps_each_frame`, `steps_by_bars`, `steps_by_seconds_wait_for_beat_one`, `settings_wait_for_beat_one`, `a_changed_schedule_restarts` pass
+- [x] Golden proof passes
+- [x] Gate check passes: `cargo test --manifest-path engine/Cargo.toml`
+- [x] Test count: 149 Rust tests pass
 
 **Tests**: unit
 **Gate**: quick
 
 **Commit**: `refactor(engine): give the Speed Trainer its own module`
+
+**Status**: ✅ Complete
 
 ---
 
