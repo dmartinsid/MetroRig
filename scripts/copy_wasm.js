@@ -5,7 +5,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const source = path.resolve(__dirname, '../target/wasm32-unknown-unknown/release/metrorig_audio.wasm');
+const source = path.resolve(__dirname, '../engine/target/wasm32-unknown-unknown/release/metrorig_audio.wasm');
 const destDir = path.resolve(__dirname, '../public/pkg');
 const dest = path.resolve(destDir, 'metrorig_audio_bg.wasm');
 
@@ -14,7 +14,7 @@ console.log(`To destination: ${dest}`);
 
 if (!fs.existsSync(source)) {
   console.error(`Error: Compiled WASM file not found at: ${source}`);
-  console.error('Please run "cargo build --target wasm32-unknown-unknown --release" first.');
+  console.error('Please run "cargo build --manifest-path engine/Cargo.toml --target wasm32-unknown-unknown --release" first.');
   process.exit(1);
 }
 
