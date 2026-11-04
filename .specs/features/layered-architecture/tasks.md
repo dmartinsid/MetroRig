@@ -524,13 +524,15 @@ T23 → T24
 
 **Done when**:
 
-- [ ] Gate check passes: `cargo test --manifest-path engine/Cargo.toml && npx vitest run`
-- [ ] Test count: every vitest test of T1 plus the new ones pass
+- [x] Gate check passes: `cargo test --manifest-path engine/Cargo.toml && npx vitest run`
+- [x] Test count: every vitest test of T1 plus the new ones pass
 
 **Tests**: integration
 **Gate**: full
 
 **Commit**: `refactor(web): extract the Stadium screen`
+
+**Status**: ✅ Complete
 
 ---
 
