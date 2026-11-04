@@ -5,40 +5,16 @@ mod sequencer;
 #[cfg(test)]
 mod golden_tests;
 mod instruments;
-use dsp::sample::{trim_onset, Sample};
+use dsp::sample::trim_onset;
 use instruments::click::Click;
+use instruments::drums::{Drums, DYNAMICS, HI_HAT_TRACK, OPEN_HAT_TRACK, TAKES, TRACKS};
 use sequencer::clock::Clock;
 use sequencer::pattern::{Pattern, STEPS_COUNT};
 use sequencer::trainer::{Curve, StepType, Trainer, TrainerSettings};
 use std::slice;
 
-const MAX_SAMPLES: usize = 13; // 0: Click, then the kit in src/kit.ts
-const DYNAMICS: usize = 3;
-const TAKES: usize = 3;
-const DYNAMIC_GHOST: usize = 0;
-const DYNAMIC_NORMAL: usize = 1;
-const DYNAMIC_ACCENT: usize = 2;
-const HI_HAT_TRACK: usize = 3;
-const OPEN_HAT_TRACK: usize = 4;
-const FADE_SECONDS: f32 = 0.005;
-const GAIN_NORMAL: f32 = 0.7;
-const GAIN_ACCENT: f32 = 1.0;
-const GAIN_GHOST: f32 = 0.3;
-
-#[derive(Clone, Copy)]
-enum Source {
-    Single,
-    Take(usize, usize), // Dynamic, take
-}
-
-// A replaced hit, ringing out under the hit that replaced it
-#[derive(Clone, Copy)]
-struct FadingVoice {
-    source: Source,
-    offset: usize,
-    level: f32,
-    elapsed: usize, // Frames of the fade already played
-}
+// The pattern and the kit count the same tracks, though neither layer may name the other
+const _: () = assert!(sequencer::pattern::TRACKS == instruments::drums::TRACKS);
 
 fn step_type_from_ffi(value: u32) -> Option<StepType> {
     match value {
@@ -61,20 +37,10 @@ pub struct Engine {
     is_playing: bool,
     current_sample_index: u64,
     clock: Clock,
-    
-    click: Click,
 
-    // Drum samples playback state
-    samples: [Option<Sample>; MAX_SAMPLES],
-    bank: [[[Option<Sample>; TAKES]; DYNAMICS]; MAX_SAMPLES],
-    next_take: [[usize; DYNAMICS]; MAX_SAMPLES],
-    playback_source: [Source; MAX_SAMPLES],
-    playback_offsets: [usize; MAX_SAMPLES],
-    playback_active: [bool; MAX_SAMPLES],
-    playback_volume: [f32; MAX_SAMPLES],
-    playback_gain: [f32; MAX_SAMPLES], // The dynamic of the step that started each voice
-    fading: [Option<FadingVoice>; MAX_SAMPLES],
-    fade_frames: usize,
+    // Instruments
+    click: Click,
+    drums: Drums,
 
     // Sequencer Grid
     pattern: Pattern,
@@ -86,27 +52,7 @@ pub struct Engine {
     last_tick_index: i32, // -1 if no tick in last process
     last_tick_bpm: f64,
 
-
-    // Sound selection
-
     pad: pad::Pad,
-}
-
-// A step's value is its dynamic: 1 normal, 2 accent, 3 ghost
-fn step_gain(step: u8) -> f32 {
-    match step {
-        2 => GAIN_ACCENT,
-        3 => GAIN_GHOST,
-        _ => GAIN_NORMAL,
-    }
-}
-
-fn step_dynamic(step: u8) -> usize {
-    match step {
-        2 => DYNAMIC_ACCENT,
-        3 => DYNAMIC_GHOST,
-        _ => DYNAMIC_NORMAL,
-    }
 }
 
 impl Engine {
@@ -117,16 +63,7 @@ impl Engine {
             current_sample_index: 0,
             clock: Clock::new(sample_rate),
             click: Click::new(sample_rate),
-            samples: std::array::from_fn(|_| None),
-            bank: std::array::from_fn(|_| std::array::from_fn(|_| std::array::from_fn(|_| None))),
-            next_take: [[0; DYNAMICS]; MAX_SAMPLES],
-            playback_source: [Source::Single; MAX_SAMPLES],
-            playback_offsets: [0; MAX_SAMPLES],
-            playback_active: [false; MAX_SAMPLES],
-            playback_volume: [0.8, 1.0, 0.9, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.9, 0.9, 0.9, 0.9],
-            playback_gain: [GAIN_NORMAL; MAX_SAMPLES],
-            fading: [None; MAX_SAMPLES],
-            fade_frames: (sample_rate * FADE_SECONDS).round() as usize,
+            drums: Drums::new(sample_rate),
             pattern: Pattern::new(),
             trainer: Trainer::new(),
             last_tick_index: -1,
@@ -140,10 +77,7 @@ impl Engine {
             self.clock.set_bpm(bpm);
         }
 
-        self.next_take = [[0; DYNAMICS]; MAX_SAMPLES];
-        self.playback_active = [false; MAX_SAMPLES];
-        self.playback_offsets = [0; MAX_SAMPLES];
-        self.fading = [None; MAX_SAMPLES];
+        self.drums.reset();
         self.click.reset();
 
         self.is_playing = true;
@@ -153,7 +87,7 @@ impl Engine {
 
     pub fn stop(&mut self) {
         self.is_playing = false;
-        self.fading = [None; MAX_SAMPLES];
+        self.drums.stop();
     }
 
     fn trigger_step(&mut self) {
@@ -172,65 +106,19 @@ impl Engine {
 
         // A closing hat cuts the open one, as on a real stand
         if self.pattern.step(HI_HAT_TRACK) > 0 {
-            self.playback_active[OPEN_HAT_TRACK] = false;
+            self.drums.choke(OPEN_HAT_TRACK);
         }
 
         // Check the drum tracks
-        for i in 1..MAX_SAMPLES {
+        for i in 1..TRACKS {
             let step = self.pattern.step(i);
             if step > 0 {
-                if let Some(source) = self.next_source(i, step) {
-                    if self.playback_active[i] {
-                        let replaced = self.playback_source[i];
-                        self.fading[i] = Some(FadingVoice {
-                            source: replaced,
-                            offset: self.playback_offsets[i],
-                            level: self.voice_level(i, replaced),
-                            elapsed: 0,
-                        });
-                    }
-                    self.playback_source[i] = source;
-                    self.playback_active[i] = true;
-                    self.playback_offsets[i] = 0;
-                    self.playback_gain[i] = step_gain(step);
-                }
+                self.drums.trigger(i, step);
             }
         }
 
         // Update step index
         self.pattern.advance();
-    }
-
-    // A track with a bank plays it. Only a track without one plays its single sample.
-    fn next_source(&mut self, track: usize, step: u8) -> Option<Source> {
-        for dynamic in [step_dynamic(step), DYNAMIC_NORMAL, DYNAMIC_ACCENT, DYNAMIC_GHOST] {
-            let first = self.next_take[track][dynamic];
-            for offset in 0..TAKES {
-                let take = (first + offset) % TAKES;
-                if self.bank[track][dynamic][take].is_some() {
-                    self.next_take[track][dynamic] = (take + 1) % TAKES;
-                    return Some(Source::Take(dynamic, take));
-                }
-            }
-        }
-        self.samples[track].is_some().then_some(Source::Single)
-    }
-
-    // A voice's frame, or None past the end of its recording
-    fn voice_frame(&self, track: usize, source: Source, offset: usize) -> Option<(f32, f32)> {
-        let sample = match source {
-            Source::Single => self.samples[track].as_ref(),
-            Source::Take(dynamic, take) => self.bank[track][dynamic][take].as_ref(),
-        }?;
-        Some((*sample.left_channel.get(offset)?, sample.right_channel[offset]))
-    }
-
-    // A take plays at its recorded level, with its trim already in the sample
-    fn voice_level(&self, track: usize, source: Source) -> f32 {
-        match source {
-            Source::Single => self.playback_volume[track] * self.playback_gain[track],
-            Source::Take(..) => 1.0,
-        }
     }
 
     // A preset load: the old Trainer stops now, and its counters go with it.
@@ -273,35 +161,7 @@ impl Engine {
             let (click_out_l, click_out_r) = self.click.render();
 
             // 3. Play Drum Samples
-            let mut drums_l = 0.0;
-            let mut drums_r = 0.0;
-            
-            for s_idx in 1..MAX_SAMPLES {
-                if self.playback_active[s_idx] {
-                    let source = self.playback_source[s_idx];
-                    match self.voice_frame(s_idx, source, self.playback_offsets[s_idx]) {
-                        Some((left, right)) => {
-                            let level = self.voice_level(s_idx, source);
-                            drums_l += left * level;
-                            drums_r += right * level;
-                            self.playback_offsets[s_idx] += 1;
-                        }
-                        None => self.playback_active[s_idx] = false,
-                    }
-                }
-
-                if let Some(voice) = self.fading[s_idx] {
-                    let frame = self.voice_frame(s_idx, voice.source, voice.offset);
-                    if let Some((left, right)) = frame {
-                        let ramp = 1.0 - voice.elapsed as f32 / self.fade_frames as f32;
-                        drums_l += left * voice.level * ramp;
-                        drums_r += right * voice.level * ramp;
-                    }
-                    let elapsed = voice.elapsed + 1;
-                    self.fading[s_idx] = (frame.is_some() && elapsed < self.fade_frames)
-                        .then_some(FadingVoice { offset: voice.offset + 1, elapsed, ..voice });
-                }
-            }
+            let (drums_l, drums_r) = self.drums.render();
 
             // Combine (Left / Right)
             out_l[i] = click_out_l + drums_l;
@@ -362,7 +222,7 @@ pub extern "C" fn engine_load_sample(
     right_ptr: *const f32,
     length: usize
 ) {
-    if ptr.is_null() || left_ptr.is_null() || right_ptr.is_null() || sample_id >= MAX_SAMPLES as u32 { return; }
+    if ptr.is_null() || left_ptr.is_null() || right_ptr.is_null() || sample_id >= TRACKS as u32 { return; }
     let engine = unsafe { &mut *ptr };
     let left_slice = unsafe { slice::from_raw_parts(left_ptr, length) };
     let right_slice = unsafe { slice::from_raw_parts(right_ptr, length) };
@@ -370,7 +230,7 @@ pub extern "C" fn engine_load_sample(
     if sample_id == 0 {
         engine.click.load(sample);
     } else {
-        engine.samples[sample_id as usize] = Some(sample);
+        engine.drums.load_sample(sample_id as usize, sample);
     }
 }
 
@@ -386,16 +246,16 @@ pub extern "C" fn engine_load_take(
     length: usize
 ) {
     if ptr.is_null() || left_ptr.is_null() || right_ptr.is_null() { return; }
-    if track >= MAX_SAMPLES as u32 || dynamic >= DYNAMICS as u32 || take >= TAKES as u32 { return; }
+    if track >= TRACKS as u32 || dynamic >= DYNAMICS as u32 || take >= TAKES as u32 { return; }
     let engine = unsafe { &mut *ptr };
     let left_slice = unsafe { slice::from_raw_parts(left_ptr, length) };
     let right_slice = unsafe { slice::from_raw_parts(right_ptr, length) };
-    engine.bank[track as usize][dynamic as usize][take as usize] = Some(trim_onset(left_slice, right_slice));
+    engine.drums.load_take(track as usize, dynamic as usize, take as usize, trim_onset(left_slice, right_slice));
 }
 
 #[no_mangle]
 pub extern "C" fn engine_update_grid(ptr: *mut Engine, sample_id: u32, steps_ptr: *const u8, length: usize) {
-    if ptr.is_null() || steps_ptr.is_null() || sample_id >= MAX_SAMPLES as u32 || length > STEPS_COUNT { return; }
+    if ptr.is_null() || steps_ptr.is_null() || sample_id >= TRACKS as u32 || length > STEPS_COUNT { return; }
     let engine = unsafe { &mut *ptr };
     let steps_slice = unsafe { slice::from_raw_parts(steps_ptr, length) };
     engine.pattern.update_grid(sample_id as usize, steps_slice);
@@ -573,6 +433,8 @@ pub extern "C" fn engine_free_buf(ptr: *mut u8, size: usize) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::dsp::sample::Sample;
+    use crate::instruments::drums::{GAIN_ACCENT, GAIN_GHOST, GAIN_NORMAL};
 
     // --- Black-box harness: a one-sample click read back through the exports ---
 
@@ -1029,7 +891,7 @@ mod tests {
         engine_load_sample(run.ptr, 1, silence.as_ptr(), silence.as_ptr(), silence.len());
 
         let engine = unsafe { &*run.ptr };
-        let stored = engine.samples[1].as_ref().unwrap();
+        let stored = engine.drums.samples[1].as_ref().unwrap();
         assert_eq!(stored.left_channel, silence);
         assert_eq!(stored.right_channel, silence);
     }
@@ -1583,7 +1445,7 @@ mod tests {
         let left_sample = vec![0.5f32, 1.0f32, 0.5f32];
         let right_sample = vec![-0.5f32, -1.0f32, -0.5f32];
         
-        engine.samples[1] = Some(Sample {
+        engine.drums.samples[1] = Some(Sample {
             left_channel: left_sample,
             right_channel: right_sample,
         });
@@ -2080,7 +1942,7 @@ mod tests {
             engine_start(run.ptr);
             let (left, right) = stereo_output(run.ptr, hit + 1000);
             assert_eq!(*sounding_frames(&left, &right).last().unwrap(), frames - 1);
-            assert!(unsafe { &*run.ptr }.fading.iter().all(Option::is_none));
+            assert!(unsafe { &*run.ptr }.drums.fading.iter().all(Option::is_none));
         }
     }
 
@@ -2113,9 +1975,9 @@ mod tests {
             let run = replaced_take(SR, 2 * hit);
             engine_start(run.ptr);
             stereo_output(run.ptr, hit + 10);
-            assert!(unsafe { &*run.ptr }.fading[2].is_some());
+            assert!(unsafe { &*run.ptr }.drums.fading[2].is_some());
             act(run.ptr);
-            unsafe { &*run.ptr }.fading[2].is_some()
+            unsafe { &*run.ptr }.drums.fading[2].is_some()
         };
         assert!(!fading_after(engine_stop));
         assert!(!fading_after(engine_start));
@@ -2126,7 +1988,7 @@ mod tests {
         let run = Run::new(120.0, &[0; 16]);
         let take = [0.0f32, 0.001, 0.5, 1.0];
         engine_load_take(run.ptr, 2, 1, 0, take.as_ptr(), take.as_ptr(), take.len());
-        let stored = unsafe { &*run.ptr }.bank[2][1][0].as_ref().unwrap();
+        let stored = unsafe { &*run.ptr }.drums.bank[2][1][0].as_ref().unwrap();
         assert_eq!(stored.left_channel, vec![0.5, 1.0]);
         assert_eq!(stored.right_channel, vec![0.5, 1.0]);
     }
@@ -2141,7 +2003,7 @@ mod tests {
         engine_load_take(std::ptr::null_mut(), 1, 0, 0, take.as_ptr(), take.as_ptr(), 1);
         engine_load_take(run.ptr, 1, 0, 0, std::ptr::null(), take.as_ptr(), 1);
         engine_load_take(run.ptr, 1, 0, 0, take.as_ptr(), std::ptr::null(), 1);
-        assert!(unsafe { &*run.ptr }.bank.iter().flatten().flatten().all(Option::is_none));
+        assert!(unsafe { &*run.ptr }.drums.bank.iter().flatten().flatten().all(Option::is_none));
     }
 
     #[test]

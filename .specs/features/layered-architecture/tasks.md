@@ -249,14 +249,16 @@ T23 → T24
 
 **Done when**:
 
-- [ ] Golden `drums_with_takes_and_dynamics` passes
-- [ ] Gate check passes: `cargo test --manifest-path engine/Cargo.toml`
-- [ ] Test count: 149 Rust tests pass
+- [x] Golden `drums_with_takes_and_dynamics` passes
+- [x] Gate check passes: `cargo test --manifest-path engine/Cargo.toml`
+- [x] Test count: 149 Rust tests pass
 
 **Tests**: unit
 **Gate**: quick
 
 **Commit**: `refactor(engine): extract the drum instrument`
+
+**Status**: ✅ Complete
 
 ---
 
