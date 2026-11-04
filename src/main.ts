@@ -2,14 +2,15 @@ import { MetronomeNode } from './audio/MetronomeNode';
 import { StateManager } from './app/stateManager';
 import { Session } from './app/session';
 import { browserPreferences } from './storage/preferences';
-import { FACTORY_PRESETS, FACTORY_GROOVES, SPEED_TRAINER_PRESETS } from './data/factory';
-import { TrainerSettings, ViewMode, startBpmFor } from './domain/preset';
+import { FACTORY_GROOVES } from './data/factory';
+import { TrainerSettings, startBpmFor } from './domain/preset';
+import { mount as mountHeader } from './ui/header';
 import { getBeatsPerMeasure, getBeatForStep, isSustainedStep } from './domain/meter';
 import { FIGURES, barCount, barSteps, patternLength } from './domain/pattern';
 import { STADIUM_GROUPS, STEP_ACCENT, STEP_GHOST, STEP_NORMAL, TRACKS, groupHit } from './domain/kit';
 import { isAudible } from './domain/mix';
-import { formatBarStep, formatClock, formatLatency, formatSteps, formatTimer, nextDenominator } from './ui/format';
-import { GENRE_TABS, SONGS, GenreTab, Song, songsForGenre } from './domain/songs';
+import { formatBarStep, formatSteps, formatTimer, nextDenominator } from './ui/format';
+import { GENRE_TABS, GenreTab, Song, songsForGenre } from './domain/songs';
 import { CHORD_FAMILIES, CHORD_TYPES, PAD_TIMBRES, ROOTS, chordName, chordNotes, chordOfRoot, chordOfType } from './domain/chords';
 import workletUrl from './audio/metronome-processor?url';
 
@@ -25,20 +26,9 @@ const session = new Session({
   workletUrl,
 });
 
-// Elements
-const viewLinks = [...document.querySelectorAll<HTMLButtonElement>('.view-link')];
-const views: Record<ViewMode, HTMLElement> = {
-  editor: document.getElementById('editor-view') as HTMLElement,
-  stadium: document.getElementById('stadium-view') as HTMLElement,
-  grooves: document.getElementById('grooves-view') as HTMLElement,
-  improv: document.getElementById('improv-view') as HTMLElement,
-};
+mountHeader(session);
 
-const bpmSlider = document.getElementById('bpm-slider') as HTMLInputElement;
-const bpmNumber = document.getElementById('bpm-number') as HTMLElement;
-const bpmSliderValue = document.getElementById('bpm-slider-value') as HTMLElement;
-const btnPlay = document.getElementById('btn-play') as HTMLButtonElement;
-const btnStadiumPlay = document.getElementById('btn-stadium-play') as HTMLButtonElement;
+// Elements
 
 const stadiumBpm = document.getElementById('stadium-bpm') as HTMLElement;
 const stadiumTimer = document.getElementById('stadium-timer') as HTMLElement;
@@ -49,11 +39,8 @@ const sequencerDot = document.getElementById('sequencer-dot') as HTMLElement;
 const patternName = document.getElementById('pattern-name') as HTMLElement;
 const patternSteps = document.getElementById('pattern-steps') as HTMLElement;
 const patternPosValue = document.getElementById('pattern-pos-value') as HTMLElement;
-const footerClock = document.getElementById('footer-clock') as HTMLElement;
-const footerLatency = document.getElementById('footer-latency') as HTMLElement;
 
 const panelHeaderText = document.getElementById('panel-header-text') as HTMLElement;
-const saveToast = document.getElementById('save-toast') as HTMLElement;
 const trainerToggle = document.getElementById('trainer-toggle') as HTMLElement;
 const trainerBody = document.getElementById('trainer-body') as HTMLElement;
 const trainerChevron = document.getElementById('trainer-chevron') as HTMLElement;
@@ -78,17 +65,6 @@ const barSelector = document.getElementById('bar-selector') as HTMLElement;
 const barButtons = [...barSelector.querySelectorAll<HTMLButtonElement>('.bar-btn')];
 const gridContainer = document.getElementById('grid-container') as HTMLElement;
 
-const presetSelector = document.getElementById('preset-selector') as HTMLSelectElement;
-const groupSignatures = document.getElementById('group-signatures') as HTMLOptGroupElement;
-const groupGenres = document.getElementById('group-genres') as HTMLOptGroupElement;
-const groupSongs = document.getElementById('group-songs') as HTMLOptGroupElement;
-const groupTrainers = document.getElementById('group-trainers') as HTMLOptGroupElement;
-const groupUser = document.getElementById('group-user') as HTMLOptGroupElement;
-const stadiumPresetSelector = document.getElementById('stadium-preset-selector') as HTMLSelectElement;
-const presetNameInput = document.getElementById('preset-name') as HTMLInputElement;
-const btnSave = document.getElementById('btn-save') as HTMLButtonElement;
-const clickSoundSelector = document.getElementById('click-sound-selector') as HTMLSelectElement;
-
 const timeSigNum = document.getElementById('time-sig-num') as HTMLInputElement;
 const timeSigDen = document.getElementById('time-sig-den') as HTMLSelectElement;
 
@@ -104,88 +80,6 @@ const improvDot = document.getElementById('improv-dot') as HTMLElement;
 const padVolumeSlider = document.getElementById('pad-volume') as HTMLInputElement;
 const padVolumeValue = document.getElementById('pad-volume-value') as HTMLElement;
 const padTimbreSelect = document.getElementById('pad-timbre') as HTMLSelectElement;
-
-// Shows the save button once the preset is modified
-function showEdits() {
-  // Pre-populate with the current preset name so user can build on it
-  if (!presetNameInput.value) {
-    presetNameInput.value = session.preset.name;
-  }
-  gsap.killTweensOf(saveToast);
-  gsap.set(saveToast, { display: 'flex' });
-  gsap.to(saveToast, { y: 0, opacity: 1, duration: 0.25, ease: 'power2.out', pointerEvents: 'auto' });
-}
-
-// Build option elements
-function populatePresetsDropdown(selectedId?: string) {
-  groupSignatures.innerHTML = '';
-  groupGenres.innerHTML = '';
-  groupSongs.innerHTML = '';
-  groupTrainers.innerHTML = '';
-  stadiumPresetSelector.innerHTML = '<option value="">Choose a speed trainer</option>';
-  
-  // Add Factory Time Signatures (indices 0 to 3)
-  FACTORY_PRESETS.slice(0, 4).forEach(p => {
-    const opt = document.createElement('option');
-    opt.value = `factory:${p.id}`;
-    opt.innerText = p.name;
-    groupSignatures.appendChild(opt);
-  });
-  
-  // Add Factory Genres (indices 4 onwards)
-  FACTORY_PRESETS.slice(4).forEach(p => {
-    const opt = document.createElement('option');
-    opt.value = `factory:${p.id}`;
-    opt.innerText = p.name;
-    groupGenres.appendChild(opt);
-  });
-
-  SONGS.forEach(song => {
-    const opt = document.createElement('option');
-    opt.value = `song:${song.id}`;
-    opt.innerText = song.title;
-    groupSongs.appendChild(opt);
-  });
-
-  // Add Speed Trainers to both the header and Stadium dropdowns
-  SPEED_TRAINER_PRESETS.forEach(p => {
-    const opt = document.createElement('option');
-    opt.value = `factory:${p.id}`;
-    opt.innerText = p.name;
-    groupTrainers.appendChild(opt);
-    stadiumPresetSelector.appendChild(opt.cloneNode(true));
-  });
-
-  // Load User Presets from database
-  session.userPresets().then(userPresets => {
-    groupUser.innerHTML = '';
-    if (userPresets.length === 0) {
-      const opt = document.createElement('option');
-      opt.disabled = true;
-      opt.innerText = "No custom presets";
-      groupUser.appendChild(opt);
-    } else {
-      userPresets.forEach(p => {
-        const opt = document.createElement('option');
-        opt.value = `user:${p.id}`;
-        opt.innerText = p.name;
-        groupUser.appendChild(opt);
-      });
-    }
-    if (selectedId) {
-      presetSelector.value = selectedId;
-    } else {
-      presetSelector.value = `factory:${session.preset.id}`;
-    }
-    syncStadiumPresetSelector();
-  });
-}
-
-// Shows the placeholder when the active preset is not a speed trainer
-function syncStadiumPresetSelector() {
-  stadiumPresetSelector.value = presetSelector.value;
-  if (stadiumPresetSelector.selectedIndex < 0) stadiumPresetSelector.value = '';
-}
 
 function readTrainerInputs(): TrainerSettings {
   return {
@@ -424,20 +318,15 @@ function resetPosition() {
 
 function renderPlayback() {
   if (!session.isPlaying) {
-    btnPlay.classList.remove('playing');
-    btnStadiumPlay.classList.remove('playing');
     clearInterval(timerInterval);
     drawGrid();
     resetBeatClock();
     resetPosition();
     sequencerDot.classList.remove('lit');
-    bpmNumber.innerText = String(session.preset.bpm);
     stadiumBpm.innerText = session.preset.bpm.toFixed(1);
     updateSongCards();
   } else {
     drawGrid();
-    btnPlay.classList.add('playing');
-    btnStadiumPlay.classList.add('playing');
     sequencerDot.classList.add('lit');
 
     startTime = Date.now();
@@ -459,43 +348,35 @@ function updateTimers(seconds: number) {
 
 // Subscriptions & Events
 function renderView() {
-  (Object.keys(views) as ViewMode[]).forEach(mode => {
-    views[mode].classList.toggle('hidden', mode !== session.view);
-  });
-  viewLinks.forEach(link => {
-    if (link.dataset.view === session.view) link.setAttribute('aria-current', 'page');
-    else link.removeAttribute('aria-current');
-  });
   if (session.view === 'stadium') updateStadiumStatus(); // The Trainer form lives in the Editor
+}
+
+function renderTempo() {
+  stadiumBpm.innerText = session.preset.bpm.toFixed(1);
+  updatePanelHeader();
+}
+
+// The pattern was saved as a user preset
+function renderSaved() {
+  drawGrid();
+  updatePanelHeader();
+  updateSongCards();
 }
 
 session.subscribe(change => {
   if (change === 'grid') drawGrid();
   else if (change === 'mix') applyTrackMix();
-  else if (change === 'edits') showEdits();
   else if (change === 'playback') renderPlayback();
   else if (change === 'tick') renderTick();
   else if (change === 'preset') renderPreset();
   else if (change === 'view') renderView();
   else if (change === 'improv') renderImprov();
+  else if (change === 'tempo') renderTempo();
+  else if (change === 'library') renderSaved();
 });
 renderView();
 
 // UI Event Bindings
-viewLinks.forEach(link => {
-  link.onclick = () => {
-    session.setView(link.dataset.view as ViewMode);
-  };
-});
-
-bpmSlider.oninput = () => {
-  const bpm = Number(bpmSlider.value);
-  bpmNumber.innerText = String(bpm);
-  bpmSliderValue.innerText = String(bpm);
-  stadiumBpm.innerText = bpm.toFixed(1);
-  session.setBpm(bpm);
-  updatePanelHeader();
-};
 
 function updateTimeSignature() {
   let num = parseInt(timeSigNum.value, 10);
@@ -549,9 +430,6 @@ function stepDenominator(direction: 1 | -1) {
 (document.getElementById('time-sig-den-up') as HTMLButtonElement).onclick = () => stepDenominator(1);
 (document.getElementById('time-sig-den-down') as HTMLButtonElement).onclick = () => stepDenominator(-1);
 
-btnPlay.onclick = () => session.togglePlay();
-btnStadiumPlay.onclick = () => session.togglePlay();
-
 // React to trainer config updates dynamically
 const formInputs = [trainerEnable, trainerStart, trainerTarget, trainerInc, trainerType, trainerVal, trainerCurve];
 formInputs.forEach(el => {
@@ -590,17 +468,11 @@ function updateStadiumStatus() {
   stadiumStatusDot.classList.toggle('lit', trainerEnable.checked);
 }
 
-// Stepped runs read as integers; Smooth runs show their real value
-function formatLiveBpm(bpm: number): string {
-  return Number.isInteger(bpm) ? String(bpm) : bpm.toFixed(1);
-}
-
 // Draws the tick the Session took, once its sound has left the device
 function renderTick() {
   const { currentBpm, activeTrackIds } = session.lastTick!;
 
   // Update BPM text
-  bpmNumber.innerText = formatLiveBpm(Number(currentBpm));
   stadiumBpm.innerText = Number(currentBpm).toFixed(1);
 
   updateStadiumStatus();
@@ -609,8 +481,6 @@ function renderTick() {
   const measureLength = session.preset.measureLength || 16;
   const step = session.position.step;
   patternPosValue.textContent = formatBarStep(session.position.bar, step + 1);
-
-  if (step === 0) footerLatency.textContent = formatLatency(session.latencyMs());
 
   // Beat clock
   const beats = getBeatsPerMeasure(timeSignature, measureLength);
@@ -636,21 +506,6 @@ function renderTick() {
   });
 }
 
-// Handle Preset Dropdown Selection Change
-presetSelector.onchange = () => {
-  syncStadiumPresetSelector();
-  if (!session.loadPreset(presetSelector.value)) {
-    presetSelector.value = session.selectedPresetValue;
-    syncStadiumPresetSelector();
-  }
-};
-
-stadiumPresetSelector.onchange = () => {
-  if (!stadiumPresetSelector.value) return;
-  presetSelector.value = stadiumPresetSelector.value;
-  presetSelector.dispatchEvent(new Event('change'));
-};
-
 function updatePanelHeader() {
   const { name, bpm, measureLength } = session.preset;
   panelHeaderText.textContent = `${name}  ·  ${measureLengthToTimeSig(measureLength || 16)}  ·  ${bpm} BPM`;
@@ -669,14 +524,8 @@ function measureLengthToTimeSig(len: number): string {
 function renderPreset() {
   const preset = session.preset;
   const ts = preset.trainerSettings;
-  presetSelector.value = session.selectedPresetValue;
-  syncStadiumPresetSelector();
-
-  bpmSlider.value = String(preset.bpm);
-  bpmSliderValue.innerText = String(preset.bpm);
   // During playback the engine jumps to the preset's start tempo
   const shownBpm = session.isPlaying ? startBpmFor(preset) : preset.bpm;
-  bpmNumber.innerText = String(shownBpm);
 
   const parts = preset.timeSignature.split('/');
   timeSigNum.value = parts[0];
@@ -696,10 +545,7 @@ function renderPreset() {
   } else {
     trainerDot.classList.remove('visible');
   }
-  
-  presetNameInput.value = '';
-  hideSaveToast();
-  
+
   drawGrid();
   grooveSelector.value = "";
 
@@ -709,31 +555,6 @@ function renderPreset() {
   updateStadiumStatus();
   updateSongCards();
 }
-
-function hideSaveToast() {
-  gsap.killTweensOf(saveToast);
-  gsap.to(saveToast, {
-    y: -20,
-    opacity: 0,
-    duration: 0.2,
-    ease: 'power2.in',
-    pointerEvents: 'none',
-    onComplete: () => {
-      gsap.set(saveToast, { display: 'none' });
-    }
-  });
-}
-
-btnSave.onclick = () => {
-  session.savePreset(presetNameInput.value).then(() => {
-    drawGrid(); // Cell handlers must hold the saved copy's steps
-    updatePanelHeader();
-    populatePresetsDropdown(session.selectedPresetValue);
-    presetNameInput.value = '';
-    updateSongCards();
-    hideSaveToast();
-  });
-};
 
 function populateGroovesDropdown() {
   grooveSelector.innerHTML = '<option value="">-- Choose a Groove --</option>';
@@ -778,11 +599,6 @@ btnSaveGroove.onclick = () => {
     alert(`Groove "${name}" saved successfully!`);
   });
 };
-
-clickSoundSelector.onchange = () => session.setClickSound(clickSoundSelector.value);
-
-// Initialize dropdown value from the stored choice
-clickSoundSelector.value = session.clickSound;
 
 function mixButton(id: string, text: string, title: string, onPress: () => void) {
   const button = document.createElement('button');
@@ -946,8 +762,6 @@ function drawTimbreSelect() {
 }
 
 // Initial draw and population
-footerClock.textContent = formatClock(session.sampleRate());
-populatePresetsDropdown();
 populateGroovesDropdown();
 drawMixCards();
 drawGroovesScreen();

@@ -5,6 +5,7 @@ import { createTrackMix, toggleMute, toggleSolo, type TrackMix } from '../domain
 import { FIGURES, applyFigure, barCount, barOfStep, barSteps, patternLength, stepInBar, writeBar } from '../domain/pattern';
 import { completeKit, normalizePreset, type CustomGroove, type Preset, type StoredPreset, type TrainerSettings, type ViewMode } from '../domain/preset';
 import { songToPreset, type Song } from '../domain/songs';
+import { FACTORY_GROOVES, FACTORY_PRESETS, SPEED_TRAINER_PRESETS } from '../data/factory';
 import type { TickDetail } from '../audio/MetronomeNode';
 import { VisualScheduler } from '../audio/visualSync';
 import { Improv } from './improv';
@@ -50,6 +51,10 @@ export class Session {
   private selectorValue = 'factory:default'; // What the preset selector asks for last
   lastTick: TickDetail | null = null;
   clickSound: string;
+  // What the selectors list
+  readonly factoryPresets = FACTORY_PRESETS;
+  readonly trainerPresets = SPEED_TRAINER_PRESETS;
+  readonly factoryGrooves = FACTORY_GROOVES;
 
   constructor({ engine, state, prefs, dialogs, wasmUrl, workletUrl }: SessionOptions) {
     this.engine = engine;
@@ -168,6 +173,7 @@ export class Session {
   setBpm(bpm: number) {
     this.preset.bpm = bpm;
     if (this.transport.isAudioInit) this.engine.setBpm(bpm);
+    this.emit('tempo');
     this.markEdited();
   }
 

@@ -35,4 +35,4 @@ export interface Dialogs {
 
 export type Preferences = PreferenceStore;
 
-export type SessionChange = 'preset' | 'grid' | 'playback' | 'tick' | 'mix' | 'edits' | 'view' | 'improv' | 'library';
+export type SessionChange = 'preset' | 'tempo' | 'grid' | 'playback' | 'tick' | 'mix' | 'edits' | 'view' | 'improv' | 'library';
