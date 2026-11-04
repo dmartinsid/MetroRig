@@ -1,5 +1,6 @@
 import { afterEach, describe, it, expect, beforeEach } from 'vitest';
-import { StateManager, FACTORY_PRESETS, FACTORY_GROOVES, SPEED_TRAINER_PRESETS } from '../src/state';
+import { StateManager } from '../src/state';
+import { FACTORY_PRESETS, FACTORY_GROOVES, SPEED_TRAINER_PRESETS } from '../src/data/factory';
 import { FIGURES, applyFigure } from '../src/domain/pattern';
 import { getBeatsPerMeasure, getBeatForStep, isSustainedStep, measureLengthFor } from '../src/domain/meter';
 import { normalizePreset, completeKit, startBpmFor } from '../src/domain/preset';
