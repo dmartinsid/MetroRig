@@ -2,7 +2,7 @@ import { execFileSync } from 'child_process';
 import { describe, it, expect } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
-import { STADIUM_GROUPS, TRACKS, groupHit, nextStepValue, takesOf } from '../src/kit';
+import { STADIUM_GROUPS, TRACKS, groupHit, nextStepValue, takesOf } from '../src/domain/kit';
 
 const namesOf = (trackIds: number[]) => trackIds.map(id => TRACKS.find(track => track.id === id)!.name);
 const group = (label: string) => STADIUM_GROUPS.find(g => g.label === label)!;

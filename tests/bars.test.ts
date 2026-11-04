@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { barCount, barOfStep, barSteps, patternLength, stepInBar, writeBar } from '../src/bars';
+import { barCount, barOfStep, barSteps, patternLength, stepInBar, writeBar } from '../src/domain/pattern';
 
 describe('Bars', () => {
   it('a pattern with no bar count holds 1 bar', () => {

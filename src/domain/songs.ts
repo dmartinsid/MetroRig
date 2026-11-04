@@ -1,7 +1,7 @@
-import { patternLength } from './bars';
+import { patternLength } from './pattern';
 import { STEP_ACCENT, STEP_GHOST, STEP_NORMAL, TRACKS } from './kit';
-import { getBeatsPerMeasure } from './state';
-import type { Preset } from './state';
+import { getBeatsPerMeasure } from './meter';
+import type { Preset } from './preset';
 
 export type Genre = 'Rock' | 'Metal' | 'Metalcore' | 'Blues';
 export type GenreTab = Genre | 'All';

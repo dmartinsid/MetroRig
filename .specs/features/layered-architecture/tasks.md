@@ -343,15 +343,17 @@ T23 → T24
 
 **Done when**:
 
-- [ ] `python3 -I tests/fixtures/pad_bank_check.py` exits 0
-- [ ] `python3 -I tests/fixtures/tests_kept.py js` exits 0
-- [ ] Gate check passes: `cargo test --manifest-path engine/Cargo.toml && npx vitest run`
-- [ ] Test count: every vitest test of T1 passes
+- [x] `python3 -I tests/fixtures/pad_bank_check.py` exits 0
+- [x] `python3 -I tests/fixtures/tests_kept.py js` exits 0
+- [x] Gate check passes: `cargo test --manifest-path engine/Cargo.toml && npx vitest run`
+- [x] Test count: every vitest test of T1 passes
 
 **Tests**: unit
 **Gate**: full
 
 **Commit**: `refactor(web): move the pure rules into domain/`
+
+**Status**: ✅ Complete
 
 ---
 

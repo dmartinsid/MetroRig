@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
-import { MetronomeNode } from './audio/MetronomeNode';
-import { SONGS } from './songs';
-import { STADIUM_GROUPS, TRACKS } from './kit';
-import { CHORD_FAMILIES, CHORD_TYPES, ROOTS } from './chords';
+import { MetronomeNode } from '../src/audio/MetronomeNode';
+import { SONGS } from '../src/domain/songs';
+import { STADIUM_GROUPS, TRACKS } from '../src/domain/kit';
+import { CHORD_FAMILIES, CHORD_TYPES, ROOTS } from '../src/domain/chords';
 
 const mockInit = vi.fn().mockResolvedValue(undefined);
 const mockLoadSample = vi.fn().mockResolvedValue(undefined);
@@ -20,7 +20,7 @@ const recorded = (method: string) => vi.fn((...args: any[]) => {
 let mockNode: any;
 let mockVisualDelay = 0;
 
-vi.mock('./audio/MetronomeNode', () => {
+vi.mock('../src/audio/MetronomeNode', () => {
   return {
     MetronomeNode: class MockMetronomeNode extends EventTarget {
       init = mockInit;
@@ -100,7 +100,7 @@ describe('Integration Test', () => {
     vi.stubGlobal('alert', alertSpy);
 
     // This will trigger main.ts execution
-    await import('./main');
+    await import('../src/main');
 
     const timeSigNum = document.getElementById('time-sig-num') as HTMLInputElement;
     const timeSigDen = document.getElementById('time-sig-den') as HTMLSelectElement;
@@ -160,7 +160,7 @@ describe('Integration Test', () => {
     mockLoadSample.mockClear();
 
     // Import main.ts
-    await import('./main');
+    await import('../src/main');
 
     const clickSoundSelector = document.getElementById('click-sound-selector') as HTMLSelectElement;
     const btnPlay = document.getElementById('btn-play') as HTMLButtonElement;
@@ -254,7 +254,7 @@ describe('Integration Test', () => {
   });
 });
 
-import { StateManager } from './state';
+import { StateManager } from '../src/state';
 
 describe('StateManager IndexedDB Upgrade', () => {
   it('should initialize StateManager and allow saving custom grooves', async () => {
@@ -337,7 +337,7 @@ async function openPage(presets: any[] = []) {
   const stores = fakeIndexedDB(presets);
   audioCalls.length = 0;
   mockVisualDelay = 0;
-  await import('./main');
+  await import('../src/main');
   await flush();
   return stores;
 }
@@ -1105,7 +1105,7 @@ describe('Interface V2', () => {
     byId('trainer-enable').dispatchEvent(new Event('change'));
     expect(byId('trainer-dot').classList.contains('visible')).toBe(true);
 
-    const css = fs.readFileSync(path.resolve(__dirname, './index.css'), 'utf8');
+    const css = fs.readFileSync(path.resolve(__dirname, '../src/index.css'), 'utf8');
     expect(css).not.toMatch(/@keyframes|animation\s*:/);
     expect(mockGsap.fromTo.mock.calls.some(call => call[0] === byId('trainer-dot'))).toBe(false);
     expect(mockGsap.to.mock.calls.some(call => call[0] === byId('trainer-dot'))).toBe(false);
@@ -1811,7 +1811,7 @@ describe('Grooves Library', () => {
 
   it('song_08 save leaves catalog', async () => {
     const stores = await openPage();
-    const { SONGS } = await import('./songs');
+    const { SONGS } = await import('../src/domain/songs');
     const original = structuredClone(SONGS);
     await selectPreset('song:song_battery');
     cell(8, 0).click();
