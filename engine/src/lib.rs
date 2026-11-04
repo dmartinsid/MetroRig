@@ -1,6 +1,5 @@
 #![allow(dead_code)]
 mod dsp;
-mod pad;
 mod sequencer;
 #[cfg(test)]
 mod golden_tests;
@@ -52,7 +51,7 @@ pub struct Engine {
     last_tick_index: i32, // -1 if no tick in last process
     last_tick_bpm: f64,
 
-    pad: pad::Pad,
+    pad: instruments::pad::Pad,
 }
 
 impl Engine {
@@ -68,7 +67,7 @@ impl Engine {
             trainer: Trainer::new(),
             last_tick_index: -1,
             last_tick_bpm: 120.0,
-            pad: pad::Pad::new(sample_rate),
+            pad: instruments::pad::Pad::new(sample_rate),
         }
     }
 
