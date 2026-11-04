@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatClock, formatBarStep, formatLatency, formatSteps, formatTimer, nextDenominator } from '../src/display';
+import { formatClock, formatBarStep, formatLatency, formatSteps, formatTimer, nextDenominator } from '../src/ui/format';
 
 describe('Display rules', () => {
   it('time_01 timer format', () => {

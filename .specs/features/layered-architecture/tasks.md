@@ -412,13 +412,15 @@ T23 → T24
 
 **Done when**:
 
-- [ ] Gate check passes: `cargo test --manifest-path engine/Cargo.toml && npx vitest run`
-- [ ] Test count: every vitest test of T1 passes
+- [x] Gate check passes: `cargo test --manifest-path engine/Cargo.toml && npx vitest run`
+- [x] Test count: every vitest test of T1 passes
 
 **Tests**: unit
 **Gate**: full
 
 **Commit**: `refactor(web): settle the audio adapter folder`
+
+**Status**: ✅ Complete
 
 ---
 

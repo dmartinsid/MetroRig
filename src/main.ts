@@ -6,9 +6,9 @@ import { Preset, StoredPreset, TrainerSettings, ViewMode, normalizePreset, compl
 import { getBeatsPerMeasure, getBeatForStep, isSustainedStep, measureLengthFor } from './domain/meter';
 import { FIGURES, applyFigure, barCount, barOfStep, barSteps, patternLength, stepInBar, writeBar } from './domain/pattern';
 import { STADIUM_GROUPS, STEP_ACCENT, STEP_GHOST, STEP_NORMAL, TRACKS, groupHit, nextStepValue, takesOf } from './domain/kit';
-import { VisualScheduler } from './visualSync';
+import { VisualScheduler } from './audio/visualSync';
 import { audibleSteps, createTrackMix, isAudible, toggleMute, toggleSolo } from './domain/mix';
-import { formatBarStep, formatClock, formatLatency, formatSteps, formatTimer, nextDenominator } from './display';
+import { formatBarStep, formatClock, formatLatency, formatSteps, formatTimer, nextDenominator } from './ui/format';
 import { GENRE_TABS, SONGS, GenreTab, Song, songToPreset, songsForGenre } from './domain/songs';
 import { CHORD_FAMILIES, CHORD_TYPES, ChordId, PAD_TIMBRES, PadFile, ROOTS, chordName, chordNotes, chordOfRoot, chordOfType, nextChord, parseTimbre, parseVolume, timbreNotes } from './domain/chords';
 import workletUrl from './audio/metronome-processor?url';

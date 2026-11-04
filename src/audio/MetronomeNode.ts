@@ -1,4 +1,4 @@
-import { visualDelayMs } from '../visualSync';
+import { visualDelayMs } from './visualSync';
 import type { TrainerSettings } from '../domain/preset';
 
 export interface TickDetail {
