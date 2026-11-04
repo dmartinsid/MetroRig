@@ -3,6 +3,14 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 describe('Shipped WASM', () => {
+  it('exports the same names as at 591f031', () => {
+    const wasm = fs.readFileSync(path.resolve(__dirname, '../public/pkg/metrorig_audio_bg.wasm'));
+    const exports = WebAssembly.Module.exports(new WebAssembly.Module(wasm)).map(entry => entry.name);
+    const recorded = JSON.parse(fs.readFileSync(path.resolve(__dirname, 'fixtures/kept_591f031.json'), 'utf8'));
+
+    expect([...exports].sort()).toEqual([...recorded.wasm_exports].sort());
+  });
+
   it('swing_05 exports no swing function', () => {
     const wasm = fs.readFileSync(path.resolve(__dirname, '../public/pkg/metrorig_audio_bg.wasm'));
     const exports = WebAssembly.Module.exports(new WebAssembly.Module(wasm)).map(entry => entry.name);
