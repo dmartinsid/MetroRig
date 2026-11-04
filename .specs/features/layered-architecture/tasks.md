@@ -389,14 +389,16 @@ T23 → T24
 
 **Done when**:
 
-- [ ] `tests/state.test.ts` passes with only its import paths changed
-- [ ] Gate check passes: `cargo test --manifest-path engine/Cargo.toml && npx vitest run`
-- [ ] Test count: every vitest test of T1 passes
+- [x] `tests/state.test.ts` passes with only its import paths changed
+- [x] Gate check passes: `cargo test --manifest-path engine/Cargo.toml && npx vitest run`
+- [x] Test count: every vitest test of T1 passes
 
 **Tests**: unit
 **Gate**: full
 
 **Commit**: `refactor(web): split persistence from the state manager`
+
+**Status**: ✅ Complete
 
 ---
 

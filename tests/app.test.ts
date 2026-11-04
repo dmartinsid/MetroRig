@@ -254,7 +254,7 @@ describe('Integration Test', () => {
   });
 });
 
-import { StateManager } from '../src/state';
+import { StateManager } from '../src/app/stateManager';
 
 describe('StateManager IndexedDB Upgrade', () => {
   it('should initialize StateManager and allow saving custom grooves', async () => {

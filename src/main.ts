@@ -1,5 +1,6 @@
 import { MetronomeNode, TickDetail } from './audio/MetronomeNode';
-import { StateManager } from './state';
+import { StateManager } from './app/stateManager';
+import { browserPreferences } from './storage/preferences';
 import { FACTORY_PRESETS, FACTORY_GROOVES, SPEED_TRAINER_PRESETS } from './data/factory';
 import { Preset, StoredPreset, TrainerSettings, ViewMode, normalizePreset, completeKit, startBpmFor } from './domain/preset';
 import { getBeatsPerMeasure, getBeatForStep, isSustainedStep, measureLengthFor } from './domain/meter';
@@ -1082,7 +1083,7 @@ async function syncClickSound() {
 
 clickSoundSelector.onchange = async () => {
   const sound = clickSoundSelector.value;
-  localStorage.setItem('metrorig_click_sound', sound);
+  browserPreferences.set('clickSound', sound);
   if (isAudioInit) {
     try {
       await syncClickSound();
@@ -1093,7 +1094,7 @@ clickSoundSelector.onchange = async () => {
 };
 
 // Initialize dropdown value from localStorage
-const storedClickSound = localStorage.getItem('metrorig_click_sound') || 'digital';
+const storedClickSound = browserPreferences.get('clickSound') || 'digital';
 clickSoundSelector.value = storedClickSound;
 
 function mixButton(id: string, text: string, title: string, onPress: () => void) {
@@ -1326,14 +1327,14 @@ padStop.onclick = () => {
 
 // The engine crossfades to the same chord in the new timbre. With no chord, the next one takes it
 padTimbreSelect.onchange = () => {
-  localStorage.setItem('metrorig_pad_timbre', padTimbreSelect.value);
+  browserPreferences.set('padTimbre', padTimbreSelect.value);
   if (soundingChord) playChord(soundingChord);
   loadSelectedTimbre();
 };
 
 padVolumeSlider.oninput = () => {
   padVolumeValue.textContent = padVolumeSlider.value;
-  localStorage.setItem('metrorig_pad_volume', padVolumeSlider.value);
+  browserPreferences.set('padVolume', padVolumeSlider.value);
   sendPadVolume();
 };
 
@@ -1370,7 +1371,7 @@ function drawTimbreSelect() {
     option.textContent = name;
     padTimbreSelect.appendChild(option);
   });
-  padTimbreSelect.value = PAD_TIMBRES[parseTimbre(localStorage.getItem('metrorig_pad_timbre'))].name;
+  padTimbreSelect.value = PAD_TIMBRES[parseTimbre(browserPreferences.get('padTimbre'))].name;
 }
 
 // Initial draw and population
@@ -1383,7 +1384,7 @@ drawFigurePalette();
 drawGrid();
 drawChordSelector();
 drawTimbreSelect();
-padVolumeSlider.value = String(parseVolume(localStorage.getItem('metrorig_pad_volume')));
+padVolumeSlider.value = String(parseVolume(browserPreferences.get('padVolume')));
 padVolumeValue.textContent = padVolumeSlider.value;
 renderImprov();
 if (state.activeViewMode === 'improv') loadSelectedTimbre();
