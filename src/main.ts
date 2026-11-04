@@ -1,5 +1,6 @@
 import { MetronomeNode, TickDetail } from './audio/MetronomeNode';
-import { StateManager, FACTORY_PRESETS, FACTORY_GROOVES, SPEED_TRAINER_PRESETS } from './state';
+import { StateManager } from './state';
+import { FACTORY_PRESETS, FACTORY_GROOVES, SPEED_TRAINER_PRESETS } from './data/factory';
 import { Preset, StoredPreset, TrainerSettings, ViewMode, normalizePreset, completeKit, startBpmFor } from './domain/preset';
 import { getBeatsPerMeasure, getBeatForStep, isSustainedStep, measureLengthFor } from './domain/meter';
 import { FIGURES, applyFigure, barCount, barOfStep, barSteps, patternLength, stepInBar, writeBar } from './domain/pattern';
