@@ -1,12 +1,14 @@
 import { MetronomeNode, TickDetail } from './audio/MetronomeNode';
-import { StateManager, FACTORY_PRESETS, FACTORY_GROOVES, SPEED_TRAINER_PRESETS, Preset, StoredPreset, TrainerSettings, ViewMode, FIGURES, getBeatsPerMeasure, getBeatForStep, isSustainedStep, applyFigure, measureLengthFor, normalizePreset, completeKit, startBpmFor } from './state';
-import { barCount, barOfStep, barSteps, patternLength, stepInBar, writeBar } from './bars';
-import { STADIUM_GROUPS, STEP_ACCENT, STEP_GHOST, STEP_NORMAL, TRACKS, groupHit, nextStepValue, takesOf } from './kit';
+import { StateManager, FACTORY_PRESETS, FACTORY_GROOVES, SPEED_TRAINER_PRESETS } from './state';
+import { Preset, StoredPreset, TrainerSettings, ViewMode, normalizePreset, completeKit, startBpmFor } from './domain/preset';
+import { getBeatsPerMeasure, getBeatForStep, isSustainedStep, measureLengthFor } from './domain/meter';
+import { FIGURES, applyFigure, barCount, barOfStep, barSteps, patternLength, stepInBar, writeBar } from './domain/pattern';
+import { STADIUM_GROUPS, STEP_ACCENT, STEP_GHOST, STEP_NORMAL, TRACKS, groupHit, nextStepValue, takesOf } from './domain/kit';
 import { VisualScheduler } from './visualSync';
-import { audibleSteps, createTrackMix, isAudible, toggleMute, toggleSolo } from './trackMix';
+import { audibleSteps, createTrackMix, isAudible, toggleMute, toggleSolo } from './domain/mix';
 import { formatBarStep, formatClock, formatLatency, formatSteps, formatTimer, nextDenominator } from './display';
-import { GENRE_TABS, SONGS, GenreTab, Song, songToPreset, songsForGenre } from './songs';
-import { CHORD_FAMILIES, CHORD_TYPES, ChordId, PAD_TIMBRES, PadFile, ROOTS, chordName, chordNotes, chordOfRoot, chordOfType, nextChord, parseTimbre, parseVolume, timbreNotes } from './chords';
+import { GENRE_TABS, SONGS, GenreTab, Song, songToPreset, songsForGenre } from './domain/songs';
+import { CHORD_FAMILIES, CHORD_TYPES, ChordId, PAD_TIMBRES, PadFile, ROOTS, chordName, chordNotes, chordOfRoot, chordOfType, nextChord, parseTimbre, parseVolume, timbreNotes } from './domain/chords';
 import workletUrl from './audio/metronome-processor?url';
 
 declare const gsap: any;

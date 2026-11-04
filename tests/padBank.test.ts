@@ -2,7 +2,7 @@ import { createHash } from 'crypto';
 import { describe, it, expect } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
-import { CHORD_TYPES, PAD_TIMBRES, ROOTS, chordMidi, timbreNotes } from '../src/chords';
+import { CHORD_TYPES, PAD_TIMBRES, ROOTS, chordMidi, timbreNotes } from '../src/domain/chords';
 
 const padsDir = path.resolve(__dirname, '../public/pads');
 const licensePath = path.resolve(__dirname, '../public/kit/LICENSE.md');

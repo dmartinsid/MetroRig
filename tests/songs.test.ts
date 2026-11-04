@@ -1,8 +1,8 @@
 import { createHash } from 'crypto';
 import { describe, it, expect } from 'vitest';
-import { SONGS, songToPreset, songsForGenre } from '../src/songs';
-import { TRACKS } from '../src/kit';
-import { measureLengthFor } from '../src/state';
+import { SONGS, songToPreset, songsForGenre } from '../src/domain/songs';
+import { TRACKS } from '../src/domain/kit';
+import { measureLengthFor } from '../src/domain/meter';
 import { barsToGrid } from '../scripts/tab_to_grid.js';
 import tabs from './fixtures/song_tabs.json';
 

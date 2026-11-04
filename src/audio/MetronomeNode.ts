@@ -1,5 +1,5 @@
 import { visualDelayMs } from '../visualSync';
-import type { TrainerSettings } from '../state';
+import type { TrainerSettings } from '../domain/preset';
 
 export interface TickDetail {
   beatIndex: number;

@@ -1,6 +1,6 @@
 """Decodes each file of every bank in PAD_TIMBRES and fails if a loop wrap breaks TIM-21.
 
-The tables are read from src/chords.ts, so this proof follows what the engine is given. A wrap goes
+The tables are read from src/domain/chords.ts, so this proof follows what the engine is given. A wrap goes
 from loop_end to loop_start, and loop_end is inclusive: its sample stands for loop_start's, so the
 frame played before the wrap is loop_end - 1. No channel may step there above its largest step in the
 10 ms before. New Age keeps the bound it shipped with: loop_end's sample equals loop_start's.

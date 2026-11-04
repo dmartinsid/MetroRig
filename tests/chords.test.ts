@@ -1,6 +1,6 @@
 import { createHash } from 'crypto';
 import { describe, it, expect } from 'vitest';
-import { CHORD_FAMILIES, CHORD_TYPES, chordOfRoot, chordOfType, DEFAULT_TIMBRE, PAD_TIMBRES, ROOTS, chordMidi, chordName, chordNotes, nextChord, parseTimbre, parseVolume, timbreNotes } from '../src/chords';
+import { CHORD_FAMILIES, CHORD_TYPES, chordOfRoot, chordOfType, DEFAULT_TIMBRE, PAD_TIMBRES, ROOTS, chordMidi, chordName, chordNotes, nextChord, parseTimbre, parseVolume, timbreNotes } from '../src/domain/chords';
 
 // The roots and types as the spec lists them, in PAD-01 and PAD-02
 const SPEC_ROOTS = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B'];

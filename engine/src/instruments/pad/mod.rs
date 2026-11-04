@@ -402,7 +402,7 @@ mod tests {
     }
 
     fn chords_ts() -> String {
-        std::fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/../src/chords.ts")).unwrap()
+        std::fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/../src/domain/chords.ts")).unwrap()
     }
 
     // The shipped New Age files. The level of real audio is what PAD-14, PAD-20 and PAD-27 are about.
@@ -465,7 +465,7 @@ mod tests {
         }
     }
 
-    // What a timbre plays for a chord, as timbreNotes in src/chords.ts says
+    // What a timbre plays for a chord, as timbreNotes in src/domain/chords.ts says
     fn timbre_notes(chord: &[u8], timbre: u8) -> Vec<u8> {
         let bass = if timbre == ORCHESTRA { vec![chord[0] - 24, chord[0] - 12] } else { Vec::new() };
         [&bass[..], chord].concat()
@@ -986,7 +986,7 @@ mod tests {
         }
     }
 
-    // The 12 roots × 34 types of the Improv screen, as CHORD_TYPES in src/chords.ts lists them
+    // The 12 roots × 34 types of the Improv screen, as CHORD_TYPES in src/domain/chords.ts lists them
     fn all_chords() -> Vec<Vec<u8>> {
         let source = chords_ts();
         let types: Vec<Vec<u8>> = source.lines().filter(|line| line.contains("family: '") && line.contains("semitones: ["))

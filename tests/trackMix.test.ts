@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { audibleSteps, createTrackMix, isAudible, toggleMute, toggleSolo } from '../src/trackMix';
+import { audibleSteps, createTrackMix, isAudible, toggleMute, toggleSolo } from '../src/domain/mix';
 
 const audible = (mix: ReturnType<typeof createTrackMix>) => [0, 1, 2, 3].filter(id => isAudible(mix, id));
 
