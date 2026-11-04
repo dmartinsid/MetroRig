@@ -295,15 +295,17 @@ T23 → T24
 
 **Done when**:
 
-- [ ] Every golden scenario passes
-- [ ] `python3 -I tests/fixtures/tests_kept.py rust` exits 0
-- [ ] Gate check passes: `cargo test --manifest-path engine/Cargo.toml`
-- [ ] Test count: 149 Rust tests pass
+- [x] Every golden scenario passes
+- [x] `python3 -I tests/fixtures/tests_kept.py rust` exits 0
+- [x] Gate check passes: `cargo test --manifest-path engine/Cargo.toml`
+- [x] Test count: 149 Rust tests pass
 
 **Tests**: unit
 **Gate**: quick
 
 **Commit**: `refactor(engine): compose the engine and confine the FFI`
+
+**Status**: ✅ Complete
 
 ---
 
@@ -762,5 +764,5 @@ Proof: run js | ✓ copy_wasm > exits 1 naming the path when the build is missin
 ## Handoff
 
 **Settled mid-build:** Execution by batch sub-agents - user: "aprovo, vamos de sub agents"; 2026-11-04, after the batch 1 worker stopped mid-T7 and T7-T8 finished inline: the remaining tasks also by sub-agents - user: "Pode seguir todas as proximas tasks com subagents"
-**Dispatched:** batch 1 (Phases 1-2, T1-T8) at e6c9c7c - stopped mid-T7 without a report; T7 and T8 finished inline
+**Dispatched:** batch 1 (Phases 1-2, T1-T8) at e6c9c7c - stopped mid-T7 without a report; T7 and T8 finished inline; batch 2 (Phases 3-5, T9-T16) at f704fe3
 **Walked:** none

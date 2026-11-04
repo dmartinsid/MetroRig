@@ -1,7 +1,8 @@
 // The golden output: each scenario renders 4 s at 44100 Hz through the `extern "C"` functions alone, in the
 // worklet's 128-frame blocks, and its fingerprint must equal the one taken on the engine of commit 591f031.
 // A refactor that moves engine code must leave every sample bit for bit where it was.
-use crate::*;
+use crate::engine::Engine;
+use crate::ffi::*;
 use std::panic;
 
 const SR: f32 = 44100.0;
