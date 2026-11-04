@@ -1,4 +1,4 @@
-import { parseVolume } from '../domain/chords';
+import type { ChordId } from '../domain/chords';
 import { TRACKS, nextStepValue } from '../domain/kit';
 import { measureLengthFor } from '../domain/meter';
 import { createTrackMix, toggleMute, toggleSolo, type TrackMix } from '../domain/mix';
@@ -7,6 +7,7 @@ import { completeKit, normalizePreset, type CustomGroove, type Preset, type Stor
 import { songToPreset, type Song } from '../domain/songs';
 import type { TickDetail } from '../audio/MetronomeNode';
 import { VisualScheduler } from '../audio/visualSync';
+import { Improv } from './improv';
 import { factoryGroove, factoryPreset, parseSource, song as findSong } from './library';
 import type { Dialogs, EnginePort, Preferences, SessionChange } from './ports';
 import type { StateManager } from './stateManager';
@@ -31,6 +32,7 @@ export class Session {
   private prefs: Preferences;
   private dialogs: Dialogs;
   private transport: Transport;
+  readonly improv: Improv;
   private visualScheduler = new VisualScheduler();
   private listeners = new Set<(change: SessionChange) => void>();
 
@@ -59,7 +61,12 @@ export class Session {
       preset: () => this.state.activePreset,
       mix: this.mix,
       clickSound: () => this.clickSound,
-      padVolume: () => parseVolume(this.prefs.get('padVolume')),
+      padVolume: () => this.improv.padVolume,
+    });
+    this.improv = new Improv(engine, prefs, {
+      startEngine: () => this.transport.startEngine(),
+      sendPadVolume: () => this.transport.sendPadVolume(),
+      changed: () => this.emit('improv'),
     });
     engine.addEventListener('tick', (e) => {
       const detail = (e as CustomEvent<TickDetail>).detail;
@@ -179,6 +186,30 @@ export class Session {
   setView(mode: ViewMode) {
     this.state.setViewMode(mode);
     this.emit('view');
+    if (mode === 'improv') this.improv.loadSelectedTimbre();
+  }
+
+  // --- Improv ---
+
+  pressChord(chord: ChordId): Promise<void> {
+    return this.improv.pressChord(chord);
+  }
+
+  stopChord() {
+    this.improv.stopChord();
+  }
+
+  setTimbre(name: string) {
+    this.improv.setTimbre(name);
+  }
+
+  setPadVolume(volume: number) {
+    this.improv.setPadVolume(volume);
+  }
+
+  // Readies the selected timbre, as opening Improv does
+  loadSelectedTimbre(): Promise<void> {
+    return this.improv.loadSelectedTimbre();
   }
 
   // --- Editing ---

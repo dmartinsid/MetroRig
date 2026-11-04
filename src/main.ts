@@ -10,7 +10,7 @@ import { STADIUM_GROUPS, STEP_ACCENT, STEP_GHOST, STEP_NORMAL, TRACKS, groupHit 
 import { isAudible } from './domain/mix';
 import { formatBarStep, formatClock, formatLatency, formatSteps, formatTimer, nextDenominator } from './ui/format';
 import { GENRE_TABS, SONGS, GenreTab, Song, songsForGenre } from './domain/songs';
-import { CHORD_FAMILIES, CHORD_TYPES, ChordId, PAD_TIMBRES, PadFile, ROOTS, chordName, chordNotes, chordOfRoot, chordOfType, nextChord, parseTimbre, parseVolume, timbreNotes } from './domain/chords';
+import { CHORD_FAMILIES, CHORD_TYPES, PAD_TIMBRES, ROOTS, chordName, chordNotes, chordOfRoot, chordOfType } from './domain/chords';
 import workletUrl from './audio/metronome-processor?url';
 
 declare const gsap: any;
@@ -185,11 +185,6 @@ function populatePresetsDropdown(selectedId?: string) {
 function syncStadiumPresetSelector() {
   stadiumPresetSelector.value = presetSelector.value;
   if (stadiumPresetSelector.selectedIndex < 0) stadiumPresetSelector.value = '';
-}
-
-// The slider runs from 0 to 100, the engine from 0 to 1
-function sendPadVolume() {
-  audioNode.padVolume(Number(padVolumeSlider.value) / 100);
 }
 
 function readTrainerInputs(): TrainerSettings {
@@ -482,6 +477,7 @@ session.subscribe(change => {
   else if (change === 'tick') renderTick();
   else if (change === 'preset') renderPreset();
   else if (change === 'view') renderView();
+  else if (change === 'improv') renderImprov();
 });
 renderView();
 
@@ -489,7 +485,6 @@ renderView();
 viewLinks.forEach(link => {
   link.onclick = () => {
     session.setView(link.dataset.view as ViewMode);
-    if (session.view === 'improv') loadSelectedTimbre();
   };
 });
 
@@ -884,127 +879,34 @@ function drawGroovesScreen() {
   updateSongCards();
 }
 
-// What the engine holds, which is what the screen shows
-let soundingChord: ChordId | null = null;
-// Where the clicks lead, ahead of soundingChord while the engine starts, so the last click wins
-let clickedChord: ChordId | null = null;
-let audioFailed = false;
-let selectedChord: ChordId = { root: 0, type: 0 }; // What a click on a root or type keeps the other half of
 const rootButtons: HTMLButtonElement[] = [];
 const typeButtons: HTMLButtonElement[] = [];
-
-async function engineReady(): Promise<boolean> {
-  try {
-    await session.startEngine();
-    audioFailed = false;
-    return true;
-  } catch {
-    audioFailed = true;
-    return false;
-  }
-}
-
-function selectedTimbre() {
-  return parseTimbre(padTimbreSelect.value);
-}
-
-function playChord({ root, type }: ChordId) {
-  audioNode.padPlay(timbreNotes(root, type, selectedTimbre()), selectedTimbre());
-}
-
-function settleChord() {
-  if (clickedChord !== soundingChord) {
-    soundingChord = clickedChord;
-    if (soundingChord) playChord(soundingChord);
-    else audioNode.padStop();
-  }
-  renderImprov();
-}
-
-async function pressChord(chord: ChordId) {
-  audioNode.resumeContext(); // A browser only honours it within the click
-  selectedChord = chord;
-  clickedChord = nextChord(clickedChord, chord);
-  renderImprov();
-  if (!(await engineReady())) clickedChord = null;
-  settleChord();
-}
-
-// Per timbre: every file at first, then only the ones that failed
-const padLoads = PAD_TIMBRES.map(({ files }) => ({ toLoad: files, failed: 0, isLoading: false }));
-let padLoadQueue = Promise.resolve();
-
-// One file at a time across the timbres, so no audio block carries more than one copy
-function loadTimbre(timbre: number) {
-  const load = padLoads[timbre];
-  if (load.isLoading) return;
-  load.isLoading = true;
-  padLoadQueue = padLoadQueue.then(async () => {
-    const failed: PadFile[] = [];
-    audioNode.padLoadBegin(timbre);
-    for (const file of load.toLoad) {
-      try {
-        await audioNode.padLoad(timbre, file.key, file.url, file.loopStart, file.loopEnd);
-      } catch (err) {
-        console.error(`Failed to load ${file.url}:`, err);
-        failed.push(file);
-      }
-    }
-    audioNode.padLoadEnd(timbre);
-    load.toLoad = failed;
-    load.failed = failed.length;
-    load.isLoading = false;
-    renderImprov();
-  });
-}
-
-// Makes no sound, and leaves the kit to Play
-async function loadSelectedTimbre() {
-  if (await engineReady()) loadTimbre(selectedTimbre());
-  renderImprov();
-}
-
-function padNoticeText() {
-  if (audioFailed) return 'Audio unavailable';
-  const timbre = selectedTimbre();
-  const { failed } = padLoads[timbre];
-  if (failed === 0) return '';
-  return failed === PAD_TIMBRES[timbre].files.length ? 'Samples unavailable · synth only' : 'Some samples unavailable';
-}
 
 function renderImprov() {
   const mark = (button: HTMLButtonElement, sounding: boolean, selected: boolean) => {
     button.setAttribute('aria-pressed', String(sounding));
     button.dataset.state = sounding ? 'sounding' : selected ? 'selected' : '';
   };
+  const { soundingChord, selectedChord } = session.improv;
   rootButtons.forEach((button, root) => mark(button, soundingChord?.root === root, selectedChord.root === root));
   typeButtons.forEach((button, type) => mark(button, soundingChord?.type === type, selectedChord.type === type));
   padStatus.textContent = soundingChord
     ? `${chordName(soundingChord.root, soundingChord.type)} · ${chordNotes(soundingChord.root, soundingChord.type).join(' ')}`
     : 'No chord playing';
   padStatus.classList.toggle('sounding', soundingChord !== null);
-  padNotice.textContent = padNoticeText();
+  padNotice.textContent = session.improv.notice();
   padNotice.hidden = !padNotice.textContent;
   padStop.disabled = !soundingChord;
   improvDot.classList.toggle('lit', soundingChord !== null);
 }
 
-padStop.onclick = () => {
-  clickedChord = null;
-  settleChord();
-};
+padStop.onclick = () => session.stopChord();
 
-// The engine crossfades to the same chord in the new timbre. With no chord, the next one takes it
-padTimbreSelect.onchange = () => {
-  browserPreferences.set('padTimbre', padTimbreSelect.value);
-  if (soundingChord) playChord(soundingChord);
-  loadSelectedTimbre();
-};
+padTimbreSelect.onchange = () => session.setTimbre(padTimbreSelect.value);
 
 padVolumeSlider.oninput = () => {
   padVolumeValue.textContent = padVolumeSlider.value;
-  browserPreferences.set('padVolume', padVolumeSlider.value);
-  sendPadVolume();
+  session.setPadVolume(Number(padVolumeSlider.value));
 };
 
 function chordButton(label: string, onclick: () => void) {
@@ -1017,9 +919,9 @@ function chordButton(label: string, onclick: () => void) {
 }
 
 function drawChordSelector() {
-  ROOTS.forEach((name, root) => rootButtons.push(chordButton(name, () => pressChord(chordOfRoot(selectedChord, root)))));
+  ROOTS.forEach((name, root) => rootButtons.push(chordButton(name, () => session.pressChord(chordOfRoot(session.improv.selectedChord, root)))));
   chordRoots.append(...rootButtons);
-  CHORD_TYPES.forEach(({ suffix }, type) => typeButtons.push(chordButton(suffix || 'maj', () => pressChord(chordOfType(selectedChord, type)))));
+  CHORD_TYPES.forEach(({ suffix }, type) => typeButtons.push(chordButton(suffix || 'maj', () => session.pressChord(chordOfType(session.improv.selectedChord, type)))));
   CHORD_FAMILIES.forEach(family => {
     const section = document.createElement('section');
     section.className = 'chord-family';
@@ -1040,7 +942,7 @@ function drawTimbreSelect() {
     option.textContent = name;
     padTimbreSelect.appendChild(option);
   });
-  padTimbreSelect.value = PAD_TIMBRES[parseTimbre(browserPreferences.get('padTimbre'))].name;
+  padTimbreSelect.value = session.improv.timbre;
 }
 
 // Initial draw and population
@@ -1053,7 +955,7 @@ drawFigurePalette();
 drawGrid();
 drawChordSelector();
 drawTimbreSelect();
-padVolumeSlider.value = String(parseVolume(browserPreferences.get('padVolume')));
+padVolumeSlider.value = String(session.improv.padVolume);
 padVolumeValue.textContent = padVolumeSlider.value;
 renderImprov();
-if (session.view === 'improv') loadSelectedTimbre();
+if (session.view === 'improv') session.loadSelectedTimbre();
