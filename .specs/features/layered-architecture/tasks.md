@@ -319,15 +319,17 @@ T23 → T24
 
 **Done when**:
 
-- [ ] Every Rust check of the layer test passes
-- [ ] `tests/wasm.test.ts` passes on the rebuilt file
-- [ ] Gate check passes: `npm run build && cargo test --manifest-path engine/Cargo.toml && npx vitest run`
-- [ ] Test count: every vitest test of T1 plus the new ones pass
+- [x] Every Rust check of the layer test passes
+- [x] `tests/wasm.test.ts` passes on the rebuilt file
+- [x] Gate check passes: `npm run build && cargo test --manifest-path engine/Cargo.toml && npx vitest run`
+- [x] Test count: every vitest test of T1 plus the new ones pass
 
 **Tests**: unit
 **Gate**: build
 
 **Commit**: `test(engine): guard the engine layers and ship the rebuilt wasm`
+
+**Status**: ✅ Complete
 
 ---
 
