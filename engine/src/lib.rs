@@ -1,7 +1,9 @@
 #![allow(dead_code)]
+mod dsp;
 mod pad;
 #[cfg(test)]
 mod golden_tests;
+use dsp::sample::{trim_onset, Sample};
 use std::slice;
 
 const MAX_SAMPLES: usize = 13; // 0: Click, then the kit in src/kit.ts
@@ -19,11 +21,6 @@ const GAIN_GHOST: f32 = 0.3;
 const STEPS_COUNT: usize = 128; // 4 bars of the longest bar
 const BAR_STEPS_MAX: usize = 32;
 const BARS_MAX: usize = 4;
-
-struct Sample {
-    left_channel: Vec<f32>,
-    right_channel: Vec<f32>,
-}
 
 #[derive(Clone, Copy)]
 enum Source {
@@ -180,20 +177,6 @@ fn step_dynamic(step: u8) -> usize {
         2 => DYNAMIC_ACCENT,
         3 => DYNAMIC_GHOST,
         _ => DYNAMIC_NORMAL,
-    }
-}
-
-// Starts at the first frame reaching 1% of peak. A silent sample matches at frame 0.
-fn trim_onset(left: &[f32], right: &[f32]) -> Sample {
-    let peak = left.iter().chain(right).fold(0.0f32, |peak, s| peak.max(s.abs()));
-    let threshold = peak * 0.01;
-    let onset = (0..left.len())
-        .find(|&i| left[i].abs() >= threshold || right[i].abs() >= threshold)
-        .unwrap_or(0);
-
-    Sample {
-        left_channel: left[onset..].to_vec(),
-        right_channel: right[onset..].to_vec(),
     }
 }
 
