@@ -5,7 +5,7 @@ import { browserPreferences } from './storage/preferences';
 import { mount as mountHeader } from './ui/header';
 import { mount as mountEditor } from './ui/editor';
 import { mount as mountStadium } from './ui/stadium';
-import { GENRE_TABS, GenreTab, Song, songsForGenre } from './domain/songs';
+import { mount as mountGrooves } from './ui/grooves';
 import { CHORD_FAMILIES, CHORD_TYPES, PAD_TIMBRES, ROOTS, chordName, chordNotes, chordOfRoot, chordOfType } from './domain/chords';
 import workletUrl from './audio/metronome-processor?url';
 
@@ -22,11 +22,9 @@ const session = new Session({
 mountHeader(session);
 mountEditor(session);
 mountStadium(session);
+mountGrooves(session);
 
 // Elements
-const genreTabs = document.getElementById('genre-tabs') as HTMLElement;
-const songGrid = document.getElementById('song-grid') as HTMLElement;
-
 const padStatus = document.getElementById('pad-status') as HTMLElement;
 const padNotice = document.getElementById('pad-notice') as HTMLElement;
 const chordRoots = document.getElementById('chord-roots') as HTMLElement;
@@ -39,76 +37,8 @@ const padTimbreSelect = document.getElementById('pad-timbre') as HTMLSelectEleme
 
 // Subscriptions & Events
 session.subscribe(change => {
-  if (change === 'playback' || change === 'preset' || change === 'library') updateSongCards();
-  else if (change === 'improv') renderImprov();
+  if (change === 'improv') renderImprov();
 });
-
-let activeGenre: GenreTab = 'All';
-
-function drawGenreTabs() {
-  genreTabs.innerHTML = '';
-  GENRE_TABS.forEach(genre => {
-    const tab = document.createElement('button');
-    tab.className = 'genre-tab';
-    tab.innerText = genre;
-    tab.setAttribute('aria-pressed', String(genre === activeGenre));
-    tab.onclick = () => {
-      activeGenre = genre;
-      drawGroovesScreen();
-    };
-    genreTabs.appendChild(tab);
-  });
-}
-
-function songCard(song: Song) {
-  const card = document.createElement('article');
-  card.className = 'song-card card';
-  card.setAttribute('data-song', song.id);
-
-  const texts: [string, string][] = [
-    ['song-title', song.title],
-    ['song-artist', song.artist],
-    ['song-section', song.section],
-    ['song-bpm', `${song.bpm} BPM`],
-    ['song-meter', song.timeSignature],
-  ];
-  texts.forEach(([className, text]) => {
-    const line = document.createElement('span');
-    line.className = className;
-    line.innerText = text;
-    card.appendChild(line);
-  });
-
-  const play = document.createElement('button');
-  play.className = 'song-play';
-  play.setAttribute('data-song', song.id);
-  play.setAttribute('aria-label', `Play ${song.title}`);
-  play.onclick = () => session.playSong(song);
-  card.appendChild(play);
-
-  const open = document.createElement('button');
-  open.className = 'song-open';
-  open.innerText = 'Open in Editor';
-  open.onclick = () => {
-    if (session.useSong(song)) session.setView('editor');
-  };
-  card.appendChild(open);
-  return card;
-}
-
-function updateSongCards() {
-  songGrid.querySelectorAll<HTMLElement>('.song-play').forEach(button => {
-    const playing = session.isPlaying && session.preset.id === button.dataset.song;
-    button.innerText = playing ? '■' : '▶';
-  });
-}
-
-function drawGroovesScreen() {
-  drawGenreTabs();
-  songGrid.innerHTML = '';
-  songsForGenre(activeGenre).forEach(song => songGrid.appendChild(songCard(song)));
-  updateSongCards();
-}
 
 const rootButtons: HTMLButtonElement[] = [];
 const typeButtons: HTMLButtonElement[] = [];
@@ -177,7 +107,6 @@ function drawTimbreSelect() {
 }
 
 // Initial draw and population
-drawGroovesScreen();
 drawChordSelector();
 drawTimbreSelect();
 padVolumeSlider.value = String(session.improv.padVolume);
