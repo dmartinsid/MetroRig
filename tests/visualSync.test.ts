@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { visualDelayMs, VisualScheduler } from '../src/visualSync';
+import { visualDelayMs, VisualScheduler } from '../src/audio/visualSync';
 
 describe('Visual sync', () => {
   afterEach(() => {
