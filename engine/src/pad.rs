@@ -1,5 +1,8 @@
 // The chord pad: held chords mixed over the drums. The page says which notes to hold; everything else
 // runs here, on the audio thread, where only `load` may allocate: a chord starts, changes and stops on fixed arrays.
+use crate::dsp::chorus::Chorus;
+use crate::dsp::filter::low_pass;
+use crate::dsp::reverb::{Reverb, REVERB_DRY};
 use std::f32::consts::{FRAC_PI_2, TAU};
 
 const MAX_CHORDS: usize = 3;
@@ -17,26 +20,6 @@ const DETUNE: [f32; SAWS] = [-0.19, -0.11, -0.05, 0.0, 0.05, 0.11, 0.19]; // Sem
 const CUTOFF_HZ: f32 = 900.0;
 const CUTOFF_SWING_HZ: f32 = 350.0;
 const CUTOFF_LFO_HZ: f32 = 0.13;
-
-// Demo 2's ffmpeg chorus, `0.6:0.9:45|60|75:0.35|0.3|0.3:0.15|0.23|0.31:2|2.5|3`, in opposite phase left and right.
-// Each tap's delay swings from its base up by its depth.
-// SPEC_DEVIATION: the taps sit at half the demo's level, and COMB_FEEDBACK and REVERB_WET below demo 3's 0.9 and 0.1
-// Reason: at the demos' values both colour some notes more than others, past PAD-14's 3 dB and PAD-07's 5 cents
-const CHORUS_TAPS: usize = 3;
-const CHORUS_DELAY_MS: [f32; CHORUS_TAPS] = [45.0, 60.0, 75.0];
-const CHORUS_DEPTH_MS: [f32; CHORUS_TAPS] = [2.0, 2.5, 3.0];
-const CHORUS_RATE_HZ: [f32; CHORUS_TAPS] = [0.15, 0.23, 0.31];
-const CHORUS_TAP_GAIN: [f32; CHORUS_TAPS] = [0.175, 0.15, 0.15];
-const CHORUS_DRY: f32 = 0.6;
-const CHORUS_OUTPUT: f32 = 0.9;
-
-// Demo 3's reverb, its lengths in frames at 44.1 kHz
-const COMB_FRAMES: [[usize; 4]; 2] = [[3114, 3234, 2982, 2844], [3160, 3280, 3028, 2890]];
-const ALL_PASS_FRAMES: [[usize; 2]; 2] = [[556, 441], [579, 464]];
-const COMB_FEEDBACK: f32 = 0.87;
-const COMB_DAMPING: f32 = 0.4;
-const REVERB_DRY: f32 = 0.7;
-const REVERB_WET: f32 = 0.08;
 
 const SILENCE: f32 = 3.2e-5; // -90 dBFS
 
@@ -227,127 +210,6 @@ impl Slot {
             self.count = 0;
         }
         self.gain * (self.level * FRAC_PI_2).sin()
-    }
-}
-
-struct Chorus {
-    left: Vec<f32>,
-    right: Vec<f32>,
-    write: usize,
-    phases: [f32; CHORUS_TAPS],
-    steps: [f32; CHORUS_TAPS], // Phase per frame
-    delays: [f32; CHORUS_TAPS], // Frames
-    depths: [f32; CHORUS_TAPS], // Frames
-}
-
-impl Chorus {
-    fn new(sample_rate: f32) -> Chorus {
-        let frames = |ms: f32| ms * sample_rate / 1000.0;
-        let length = (frames(CHORUS_DELAY_MS[2] + CHORUS_DEPTH_MS[2]) as usize) + 2;
-        Chorus {
-            left: vec![0.0; length],
-            right: vec![0.0; length],
-            write: 0,
-            phases: [0.0; CHORUS_TAPS],
-            steps: CHORUS_RATE_HZ.map(|hz| hz / sample_rate),
-            delays: CHORUS_DELAY_MS.map(frames),
-            depths: CHORUS_DEPTH_MS.map(frames),
-        }
-    }
-
-    fn run(&mut self, left: f32, right: f32) -> (f32, f32) {
-        self.left[self.write] = left;
-        self.right[self.write] = right;
-        let (mut wet_left, mut wet_right) = (0.0, 0.0);
-        for tap in 0..CHORUS_TAPS {
-            self.phases[tap] = (self.phases[tap] + self.steps[tap]).fract();
-            let swing = (TAU * self.phases[tap]).sin();
-            let delay_left = self.delays[tap] + self.depths[tap] * (1.0 + swing) * 0.5;
-            let delay_right = self.delays[tap] + self.depths[tap] * (1.0 - swing) * 0.5;
-            wet_left += CHORUS_TAP_GAIN[tap] * read_delayed(&self.left, self.write, delay_left);
-            wet_right += CHORUS_TAP_GAIN[tap] * read_delayed(&self.right, self.write, delay_right);
-        }
-        self.write = (self.write + 1) % self.left.len();
-        ((left * CHORUS_DRY + wet_left) * CHORUS_OUTPUT, (right * CHORUS_DRY + wet_right) * CHORUS_OUTPUT)
-    }
-
-    fn clear(&mut self) {
-        self.left.fill(0.0);
-        self.right.fill(0.0);
-    }
-}
-
-fn read_delayed(line: &[f32], write: usize, delay: f32) -> f32 {
-    let length = line.len();
-    let whole = delay as usize;
-    let fraction = delay - whole as f32;
-    let nearer = line[(write + length - whole) % length];
-    let farther = line[(write + 2 * length - whole - 1) % length];
-    nearer + fraction * (farther - nearer)
-}
-
-struct Comb {
-    line: Vec<f32>,
-    index: usize,
-    damped: f32,
-}
-
-impl Comb {
-    fn run(&mut self, input: f32) -> f32 {
-        let output = self.line[self.index];
-        self.damped = output * (1.0 - COMB_DAMPING) + self.damped * COMB_DAMPING;
-        self.line[self.index] = input + self.damped * COMB_FEEDBACK;
-        self.index = (self.index + 1) % self.line.len();
-        output
-    }
-}
-
-struct AllPass {
-    line: Vec<f32>,
-    index: usize,
-}
-
-impl AllPass {
-    fn run(&mut self, input: f32) -> f32 {
-        let delayed = self.line[self.index];
-        self.line[self.index] = input + delayed * 0.5;
-        self.index = (self.index + 1) % self.line.len();
-        delayed - input
-    }
-}
-
-struct Reverb {
-    combs: [[Comb; 4]; 2], // Left, right
-    all_passes: [[AllPass; 2]; 2],
-}
-
-impl Reverb {
-    fn new(sample_rate: f32) -> Reverb {
-        let scaled = |frames: usize| (frames as f32 * sample_rate / 44100.0) as usize;
-        Reverb {
-            combs: COMB_FRAMES.map(|lengths| lengths.map(|length| Comb { line: vec![0.0; scaled(length)], index: 0, damped: 0.0 })),
-            all_passes: ALL_PASS_FRAMES.map(|lengths| lengths.map(|length| AllPass { line: vec![0.0; scaled(length)], index: 0 })),
-        }
-    }
-
-    fn run(&mut self, left: f32, right: f32) -> (f32, f32) {
-        let input = (left + right) * 0.5;
-        let mut channel = |side: usize| {
-            let wet: f32 = self.combs[side].iter_mut().map(|comb| comb.run(input)).sum();
-            self.all_passes[side].iter_mut().fold(wet, |signal, all_pass| all_pass.run(signal))
-        };
-        let (wet_left, wet_right) = (channel(0), channel(1));
-        (left * REVERB_DRY + wet_left * REVERB_WET, right * REVERB_DRY + wet_right * REVERB_WET)
-    }
-
-    fn clear(&mut self) {
-        for comb in self.combs.iter_mut().flatten() {
-            comb.line.fill(0.0);
-            comb.damped = 0.0;
-        }
-        for all_pass in self.all_passes.iter_mut().flatten() {
-            all_pass.line.fill(0.0);
-        }
     }
 }
 
@@ -616,11 +478,6 @@ impl Pad {
             (past_left * SAMPLE_GAIN, past_right * SAMPLE_GAIN),
         )
     }
-}
-
-fn low_pass(poles: &mut [f32; 2], input: f32, smoothing: f32) {
-    poles[0] += smoothing * (input - poles[0]);
-    poles[1] += smoothing * (poles[0] - poles[1]);
 }
 
 #[cfg(test)]

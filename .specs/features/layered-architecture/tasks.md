@@ -154,15 +154,17 @@ T23 → T24
 
 **Done when**:
 
-- [ ] `dsp` uses no other crate module
-- [ ] Golden and kept-test proofs pass
-- [ ] Gate check passes: `cargo test --manifest-path engine/Cargo.toml`
-- [ ] Test count: 143 Rust tests pass
+- [x] `dsp` uses no other crate module
+- [x] Golden and kept-test proofs pass
+- [x] Gate check passes: `cargo test --manifest-path engine/Cargo.toml`
+- [x] Test count: 143 Rust tests pass
 
 **Tests**: unit
 **Gate**: quick
 
 **Commit**: `refactor(engine): extract the dsp layer`
+
+**Status**: ✅ Complete
 
 ---
 
