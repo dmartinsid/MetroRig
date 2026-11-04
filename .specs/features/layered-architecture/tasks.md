@@ -434,14 +434,16 @@ T23 → T24
 
 **Done when**:
 
-- [ ] Session tests for play and stop, loading a preset, saving a preset, loading a song, editing a step and setting the Trainer pass, with no DOM
-- [ ] Gate check passes: `cargo test --manifest-path engine/Cargo.toml && npx vitest run`
-- [ ] Test count: every vitest test of T1 plus the new ones pass
+- [x] Session tests for play and stop, loading a preset, saving a preset, loading a song, editing a step and setting the Trainer pass, with no DOM
+- [x] Gate check passes: `cargo test --manifest-path engine/Cargo.toml && npx vitest run`
+- [x] Test count: every vitest test of T1 plus the new ones pass
 
 **Tests**: unit
 **Gate**: full
 
 **Commit**: `refactor(web): run the transport and editing rules in a Session`
+
+**Status**: ✅ Complete
 
 ---
 
