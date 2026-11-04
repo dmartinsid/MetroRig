@@ -272,14 +272,16 @@ T23 → T24
 
 **Done when**:
 
-- [ ] Golden `pad_changes_chord_and_timbre` passes
-- [ ] Gate check passes: `cargo test --manifest-path engine/Cargo.toml`
-- [ ] Test count: 149 Rust tests pass
+- [x] Golden `pad_changes_chord_and_timbre` passes
+- [x] Gate check passes: `cargo test --manifest-path engine/Cargo.toml`
+- [x] Test count: 149 Rust tests pass
 
 **Tests**: unit
 **Gate**: quick
 
 **Commit**: `refactor(engine): split the pad into its own instrument folder`
+
+**Status**: ✅ Complete
 
 ---
 
@@ -759,6 +761,6 @@ Proof: run js | ✓ copy_wasm > exits 1 naming the path when the build is missin
 
 ## Handoff
 
-**Settled mid-build:** Execution by batch sub-agents - user: "aprovo, vamos de sub agents"
-**Dispatched:** batch 1 (Phases 1-2, T1-T8) at e6c9c7c
+**Settled mid-build:** Execution by batch sub-agents - user: "aprovo, vamos de sub agents"; 2026-11-04, after the batch 1 worker stopped mid-T7 and T7-T8 finished inline: the remaining tasks also by sub-agents - user: "Pode seguir todas as proximas tasks com subagents"
+**Dispatched:** batch 1 (Phases 1-2, T1-T8) at e6c9c7c - stopped mid-T7 without a report; T7 and T8 finished inline
 **Walked:** none
