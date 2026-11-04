@@ -5,6 +5,8 @@ mod sequencer;
 #[cfg(test)]
 mod golden_tests;
 use dsp::sample::{trim_onset, Sample};
+use sequencer::clock::Clock;
+use sequencer::pattern::{Pattern, STEPS_COUNT};
 use sequencer::trainer::{Curve, StepType, Trainer, TrainerSettings};
 use std::slice;
 
@@ -20,9 +22,6 @@ const FADE_SECONDS: f32 = 0.005;
 const GAIN_NORMAL: f32 = 0.7;
 const GAIN_ACCENT: f32 = 1.0;
 const GAIN_GHOST: f32 = 0.3;
-const STEPS_COUNT: usize = 128; // 4 bars of the longest bar
-const BAR_STEPS_MAX: usize = 32;
-const BARS_MAX: usize = 4;
 
 #[derive(Clone, Copy)]
 enum Source {
@@ -37,10 +36,6 @@ struct FadingVoice {
     offset: usize,
     level: f32,
     elapsed: usize, // Frames of the fade already played
-}
-
-struct SequencerTrack {
-    steps: [u8; STEPS_COUNT], // 0 = Off, 1 = Low, 2 = High
 }
 
 fn step_type_from_ffi(value: u32) -> Option<StepType> {
@@ -61,12 +56,9 @@ fn curve_from_ffi(value: u32) -> Option<Curve> {
 
 pub struct Engine {
     sample_rate: f32,
-    bpm: f64,
     is_playing: bool,
     current_sample_index: u64,
-    samples_per_step: f64,
-    step_index: usize,
-    samples_in_current_step: f64,
+    clock: Clock,
     
     // Synthesis params for click (Oscillator)
     click_phase: f32,
@@ -86,19 +78,14 @@ pub struct Engine {
     fade_frames: usize,
 
     // Sequencer Grid
-    tracks: [SequencerTrack; MAX_SAMPLES],
+    pattern: Pattern,
 
     // Tempo Trainer State
     trainer: Trainer,
-    first_hit: bool, // The next hit opens a run, so no measure has finished
     
     // Events queued for Javascript
     last_tick_index: i32, // -1 if no tick in last process
     last_tick_bpm: f64,
-
-    // Dynamic pattern looping
-    measure_length: usize, // The steps of one bar
-    bars: usize,
 
 
     // Sound selection
@@ -127,16 +114,11 @@ fn step_dynamic(step: u8) -> usize {
 
 impl Engine {
     pub fn new(sample_rate: f32) -> Self {
-        let tracks = std::array::from_fn(|_| SequencerTrack { steps: [0; STEPS_COUNT] });
-        
-        let mut eng = Engine {
+        Engine {
             sample_rate,
-            bpm: 120.0,
             is_playing: false,
             current_sample_index: 0,
-            samples_per_step: 0.0,
-            step_index: 0,
-            samples_in_current_step: 0.0,
+            clock: Clock::new(sample_rate),
             click_phase: 0.0,
             active_click_freq: 0.0,
             active_click_amp: 0.0,
@@ -150,25 +132,19 @@ impl Engine {
             playback_gain: [GAIN_NORMAL; MAX_SAMPLES],
             fading: [None; MAX_SAMPLES],
             fade_frames: (sample_rate * FADE_SECONDS).round() as usize,
-            tracks,
+            pattern: Pattern::new(),
             trainer: Trainer::new(),
-            first_hit: false,
             last_tick_index: -1,
             last_tick_bpm: 120.0,
-            measure_length: 16,
-            bars: 1,
             click_mode: 0,
             click_accent: false,
             pad: pad::Pad::new(sample_rate),
-        };
-        eng.recalc_tempo();
-        eng
+        }
     }
 
     pub fn start(&mut self) {
         if let Some(bpm) = self.trainer.on_start(self.is_playing) {
-            self.bpm = bpm;
-            self.recalc_tempo();
+            self.clock.set_bpm(bpm);
         }
 
         self.next_take = [[0; DYNAMICS]; MAX_SAMPLES];
@@ -180,9 +156,8 @@ impl Engine {
         self.click_accent = false;
 
         self.is_playing = true;
-        self.step_index = 0;
-        self.first_hit = true;
-        self.samples_in_current_step = 0.0;
+        self.pattern.restart();
+        self.clock.start();
     }
 
     pub fn stop(&mut self) {
@@ -190,29 +165,19 @@ impl Engine {
         self.fading = [None; MAX_SAMPLES];
     }
 
-    fn recalc_tempo(&mut self) {
-        // Assuming 16th notes: 4 steps per beat. 
-        // Beats per second = bpm / 60
-        // Steps per second = (bpm / 60) * 4
-        // Samples per step = sample_rate / steps_per_second
-        let steps_per_second = (self.bpm / 60.0) * 4.0;
-        self.samples_per_step = self.sample_rate as f64 / steps_per_second;
-    }
-
     fn trigger_step(&mut self) {
-        if self.step_index % self.measure_length == 0 {
-            let first = std::mem::take(&mut self.first_hit);
-            if let Some(bpm) = self.trainer.on_bar_start(first, self.bpm, self.sample_rate) {
-                self.bpm = bpm;
-                self.recalc_tempo();
+        if self.pattern.is_bar_start() {
+            let first = self.clock.end_first_hit();
+            if let Some(bpm) = self.trainer.on_bar_start(first, self.clock.bpm(), self.sample_rate) {
+                self.clock.set_bpm(bpm);
             }
         }
 
-        self.last_tick_index = self.step_index as i32;
-        self.last_tick_bpm = self.bpm;
+        self.last_tick_index = self.pattern.index() as i32;
+        self.last_tick_bpm = self.clock.bpm();
 
         // Check click track
-        let click_step = self.tracks[0].steps[self.step_index];
+        let click_step = self.pattern.step(0);
         if click_step > 0 {
             self.click_accent = click_step == 2;
             if self.click_mode == 0 {
@@ -226,13 +191,13 @@ impl Engine {
         }
 
         // A closing hat cuts the open one, as on a real stand
-        if self.tracks[HI_HAT_TRACK].steps[self.step_index] > 0 {
+        if self.pattern.step(HI_HAT_TRACK) > 0 {
             self.playback_active[OPEN_HAT_TRACK] = false;
         }
 
         // Check the drum tracks
         for i in 1..MAX_SAMPLES {
-            let step = self.tracks[i].steps[self.step_index];
+            let step = self.pattern.step(i);
             if step > 0 {
                 if let Some(source) = self.next_source(i, step) {
                     if self.playback_active[i] {
@@ -253,7 +218,7 @@ impl Engine {
         }
 
         // Update step index
-        self.step_index = (self.step_index + 1) % self.pattern_length();
+        self.pattern.advance();
     }
 
     // A track with a bank plays it. Only a track without one plays its single sample.
@@ -288,10 +253,6 @@ impl Engine {
         }
     }
 
-    fn pattern_length(&self) -> usize {
-        self.measure_length * self.bars
-    }
-
     // A preset load: the old Trainer stops now, and its counters go with it.
     fn replace_trainer(&mut self, settings: TrainerSettings) {
         self.trainer.replace(settings, self.is_playing);
@@ -302,10 +263,10 @@ impl Engine {
     }
 
     fn process_tick_samples(&mut self) {
-        let next = self.trainer.on_frame(self.bpm, self.samples_per_step, self.measure_length, self.sample_rate);
+        let clock = &self.clock;
+        let next = self.trainer.on_frame(clock.bpm(), clock.samples_per_step(), self.pattern.measure_length(), self.sample_rate);
         if let Some(bpm) = next {
-            self.bpm = bpm;
-            self.recalc_tempo();
+            self.clock.set_bpm(bpm);
         }
     }
 
@@ -321,16 +282,11 @@ impl Engine {
         let len = out_l.len();
         for i in 0..len {
             // 1. Process timing
-            if self.first_hit {
-                self.trigger_step(); // No time has passed yet, whatever the tempo
-            } else {
+            if !self.clock.is_first_hit() {
                 self.process_tick_samples();
-
-                self.samples_in_current_step += 1.0;
-                if self.samples_in_current_step >= self.samples_per_step {
-                    self.samples_in_current_step -= self.samples_per_step;
-                    self.trigger_step();
-                }
+            }
+            if self.clock.advance() {
+                self.trigger_step(); // The first hit has no time to wait, whatever the tempo
             }
 
             // 2. Synthesize Click (decaying sine wave) or Play Sample
@@ -445,8 +401,7 @@ pub extern "C" fn engine_stop(ptr: *mut Engine) {
 pub extern "C" fn engine_set_bpm(ptr: *mut Engine, bpm: f64) {
     if ptr.is_null() || bpm <= 0.0 || !bpm.is_finite() { return; }
     let engine = unsafe { &mut *ptr };
-    engine.bpm = bpm;
-    engine.recalc_tempo();
+    engine.clock.set_bpm(bpm);
 }
 
 #[no_mangle]
@@ -488,19 +443,14 @@ pub extern "C" fn engine_update_grid(ptr: *mut Engine, sample_id: u32, steps_ptr
     if ptr.is_null() || steps_ptr.is_null() || sample_id >= MAX_SAMPLES as u32 || length > STEPS_COUNT { return; }
     let engine = unsafe { &mut *ptr };
     let steps_slice = unsafe { slice::from_raw_parts(steps_ptr, length) };
-    let track_steps = &mut engine.tracks[sample_id as usize].steps;
-    track_steps[..length].copy_from_slice(steps_slice);
-    track_steps[length..].fill(0);
+    engine.pattern.update_grid(sample_id as usize, steps_slice);
 }
 
 #[no_mangle]
 pub extern "C" fn engine_set_measure_length(ptr: *mut Engine, length: u32) {
-    if ptr.is_null() || length == 0 || length > BAR_STEPS_MAX as u32 { return; }
+    if ptr.is_null() { return; }
     let engine = unsafe { &mut *ptr };
-    engine.measure_length = length as usize;
-    if engine.step_index >= engine.pattern_length() {
-        engine.step_index = 0;
-    }
+    engine.pattern.set_measure_length(length as usize);
 }
 
 // The next step plays bar 1, on the pulse already running: nothing stops or starts
@@ -508,17 +458,14 @@ pub extern "C" fn engine_set_measure_length(ptr: *mut Engine, length: u32) {
 pub extern "C" fn engine_restart_pattern(ptr: *mut Engine) {
     if ptr.is_null() { return; }
     let engine = unsafe { &mut *ptr };
-    engine.step_index = 0;
+    engine.pattern.restart();
 }
 
 #[no_mangle]
 pub extern "C" fn engine_set_bars(ptr: *mut Engine, bars: u32) {
-    if ptr.is_null() || bars == 0 || bars > BARS_MAX as u32 { return; }
+    if ptr.is_null() { return; }
     let engine = unsafe { &mut *ptr };
-    engine.bars = bars as usize;
-    if engine.step_index >= engine.pattern_length() {
-        engine.step_index = 0;
-    }
+    engine.pattern.set_bars(bars as usize);
 }
 
 fn trainer_settings(
@@ -1495,7 +1442,7 @@ mod tests {
     }
 
     fn live_bpm(run: &Run) -> f64 {
-        unsafe { (*run.ptr).bpm }
+        unsafe { (*run.ptr).clock.bpm }
     }
 
     #[test]
@@ -1649,19 +1596,19 @@ mod tests {
     #[test]
     fn test_engine_init() {
         let engine = Engine::new(44100.0);
-        assert_eq!(engine.bpm, 120.0);
+        assert_eq!(engine.clock.bpm, 120.0);
         assert_eq!(engine.is_playing, false);
         
         // Verify recalc_tempo correctly computes step size
         // At 120 BPM: 2 beats/sec -> 8 steps/sec. At 44100Hz, samples per step = 44100 / 8 = 5512.5
-        assert_eq!(engine.samples_per_step, 5512.5);
+        assert_eq!(engine.clock.samples_per_step, 5512.5);
     }
 
     #[test]
     fn test_click_synthesis() {
         let mut engine = Engine::new(44100.0);
         engine.start();
-        engine.tracks[0].steps[0] = 2; // Accent click on step 0
+        engine.pattern.tracks[0].steps[0] = 2; // Accent click on step 0
         
         let mut buf_l = vec![0.0f32; 100];
         let mut buf_r = vec![0.0f32; 100];
@@ -1676,7 +1623,7 @@ mod tests {
     fn test_drum_sample_trigger() {
         let mut engine = Engine::new(44100.0);
         engine.start();
-        engine.tracks[1].steps[0] = 1; // Trigger kick drum on step 0
+        engine.pattern.tracks[1].steps[0] = 1; // Trigger kick drum on step 0
         
         let left_sample = vec![0.5f32, 1.0f32, 0.5f32];
         let right_sample = vec![-0.5f32, -1.0f32, -0.5f32];
@@ -2261,27 +2208,27 @@ mod tests {
         // one after it, trigger 33, is the beat 1 that ends the second measure.
         for _ in 0..32 {
             engine.trigger_step();
-            assert_eq!(engine.bpm, 120.0); // Not incremented yet
+            assert_eq!(engine.clock.bpm, 120.0); // Not incremented yet
         }
         
         // Trigger 33 fires beat 1 at the new BPM
         engine.trigger_step();
-        assert_eq!(engine.bpm, 125.0); // Incremented by 5.0
+        assert_eq!(engine.clock.bpm, 125.0); // Incremented by 5.0
         assert_eq!(engine.last_tick_bpm, 125.0);
 
         // Complete another 2 measures (32 more triggers)
         for _ in 0..31 {
             engine.trigger_step();
-            assert_eq!(engine.bpm, 125.0);
+            assert_eq!(engine.clock.bpm, 125.0);
         }
         engine.trigger_step();
-        assert_eq!(engine.bpm, 130.0); // Incremented to target
+        assert_eq!(engine.clock.bpm, 130.0); // Incremented to target
 
         // Complete another 2 measures: should clamp at target (130)
         for _ in 0..32 {
             engine.trigger_step();
         }
-        assert_eq!(engine.bpm, 130.0); // Clamped at target
+        assert_eq!(engine.clock.bpm, 130.0); // Clamped at target
     }
 
     #[test]
@@ -2302,19 +2249,19 @@ mod tests {
         let mut buf_l = vec![0.0f32; 441];
         let mut buf_r = vec![0.0f32; 441];
         engine.fill_buffers(&mut buf_l, &mut buf_r);
-        assert_eq!(engine.bpm, 120.0);
+        assert_eq!(engine.clock.bpm, 120.0);
 
         // The increment still waits for beat 1, 88200 samples in (2 s at 120 BPM).
         let mut rest_l = vec![0.0f32; 88200 - 441];
         let mut rest_r = vec![0.0f32; 88200 - 441];
         engine.fill_buffers(&mut rest_l, &mut rest_r);
-        assert_eq!(engine.bpm, 120.0);
+        assert_eq!(engine.clock.bpm, 120.0);
 
         // Process 1 more sample to reach beat 1
         let mut single_l = vec![0.0f32; 1];
         let mut single_r = vec![0.0f32; 1];
         engine.fill_buffers(&mut single_l, &mut single_r);
-        assert_eq!(engine.bpm, 125.0); // Incremented by 5.0
+        assert_eq!(engine.clock.bpm, 125.0); // Incremented by 5.0
         assert_eq!(engine.last_tick_index, 0);
     }
 
@@ -2338,7 +2285,7 @@ mod tests {
         engine.fill_buffers(&mut buf_l, &mut buf_r);
         // After 1 second (44100 samples), BPM should have increased by approximately 5.0
         // (Since it recalculates samples per step dynamically, the linear increment is very close)
-        assert!((engine.bpm - 125.0).abs() < 0.1);
+        assert!((engine.clock.bpm - 125.0).abs() < 0.1);
     }
 
     #[test]
@@ -2422,12 +2369,12 @@ mod tests {
         let run = Run::new(120.0, &[1; 16]);
         for bars in [0, 5, 128] {
             engine_set_bars(run.ptr, bars);
-            assert_eq!(unsafe { &*run.ptr }.bars, 1, "{} bars", bars);
+            assert_eq!(unsafe { &*run.ptr }.pattern.bars, 1, "{} bars", bars);
         }
         engine_set_bars(std::ptr::null_mut(), 2); // Must not crash
         for bars in 1..=4 {
             engine_set_bars(run.ptr, bars);
-            assert_eq!(unsafe { &*run.ptr }.bars, bars as usize);
+            assert_eq!(unsafe { &*run.ptr }.pattern.bars, bars as usize);
         }
     }
 
@@ -2435,9 +2382,9 @@ mod tests {
     fn fewer_bars_return_a_late_step_to_the_start() {
         let run = four_bars(120.0);
         let engine = unsafe { &mut *run.ptr };
-        engine.step_index = 40;
+        engine.pattern.step_index = 40;
         engine_set_bars(run.ptr, 2);
-        assert_eq!(engine.step_index, 0);
+        assert_eq!(engine.pattern.step_index, 0);
     }
 
     #[test]
@@ -2446,17 +2393,17 @@ mod tests {
         let mut grid = [0u8; 128];
         grid[127] = 2;
         engine_update_grid(run.ptr, 1, grid.as_ptr(), grid.len());
-        assert_eq!(unsafe { &*run.ptr }.tracks[1].steps[127], 2);
+        assert_eq!(unsafe { &*run.ptr }.pattern.tracks[1].steps[127], 2);
 
         // One bar stops at 32 steps, however long the pattern may grow
         engine_set_measure_length(run.ptr, 32);
-        assert_eq!(unsafe { &*run.ptr }.measure_length, 32);
+        assert_eq!(unsafe { &*run.ptr }.pattern.measure_length, 32);
         engine_set_measure_length(run.ptr, 33);
-        assert_eq!(unsafe { &*run.ptr }.measure_length, 32);
+        assert_eq!(unsafe { &*run.ptr }.pattern.measure_length, 32);
 
         let too_long = [0u8; 129];
         engine_update_grid(run.ptr, 1, too_long.as_ptr(), too_long.len());
-        assert_eq!(unsafe { &*run.ptr }.tracks[1].steps[127], 2);
+        assert_eq!(unsafe { &*run.ptr }.pattern.tracks[1].steps[127], 2);
     }
 
     #[test]
@@ -2502,11 +2449,11 @@ mod tests {
         for _ in 0..11 {
             engine.trigger_step();
         }
-        assert_eq!(engine.step_index, 11);
+        assert_eq!(engine.pattern.step_index, 11);
         
         // The 12th trigger should wrap step_index back to 0
         engine.trigger_step();
-        assert_eq!(engine.step_index, 0);
+        assert_eq!(engine.pattern.step_index, 0);
     }
 
     #[test]
@@ -2514,16 +2461,16 @@ mod tests {
         // Test both even and odd lengths
         for length in [12, 15, 16, 20] {
             let mut engine = Engine::new(44100.0);
-            engine.measure_length = length;
+            engine.pattern.measure_length = length;
             engine.start();
             
             let mut total_limit = 0.0;
             for _ in 0..length {
-                total_limit += engine.samples_per_step;
+                total_limit += engine.clock.samples_per_step;
                 engine.trigger_step();
             }
             
-            let expected_total = engine.samples_per_step * (length as f64);
+            let expected_total = engine.clock.samples_per_step * (length as f64);
             assert!((total_limit - expected_total).abs() < 1e-5, "Drift detected on length {}: total_limit={}, expected={}", length, total_limit, expected_total);
         }
     }
@@ -2558,7 +2505,7 @@ mod tests {
         engine_set_click_mode(&mut engine as *mut Engine, 1);
         
         // Set accent click on step 0
-        engine.tracks[0].steps[0] = 2; // Accent
+        engine.pattern.tracks[0].steps[0] = 2; // Accent
         
         let mut buf_l = vec![0.0f32; 3];
         let mut buf_r = vec![0.0f32; 3];
@@ -2574,7 +2521,7 @@ mod tests {
         assert_eq!(buf_r[2], -0.6);
 
         // Now test non-accented click (volume is 0.5)
-        engine.tracks[0].steps[1] = 1; // Normal click
+        engine.pattern.tracks[0].steps[1] = 1; // Normal click
         
         engine.trigger_step(); // Triggers step 1 manually, increments to step 2
         
