@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 mod pad;
+#[cfg(test)]
+mod golden_tests;
 use std::slice;
 
 const MAX_SAMPLES: usize = 13; // 0: Click, then the kit in src/kit.ts
