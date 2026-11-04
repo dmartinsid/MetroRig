@@ -1,0 +1,420 @@
+import { parseVolume } from '../domain/chords';
+import { TRACKS, nextStepValue } from '../domain/kit';
+import { measureLengthFor } from '../domain/meter';
+import { createTrackMix, toggleMute, toggleSolo, type TrackMix } from '../domain/mix';
+import { FIGURES, applyFigure, barCount, barOfStep, barSteps, patternLength, stepInBar, writeBar } from '../domain/pattern';
+import { completeKit, normalizePreset, type CustomGroove, type Preset, type StoredPreset, type TrainerSettings, type ViewMode } from '../domain/preset';
+import { songToPreset, type Song } from '../domain/songs';
+import type { TickDetail } from '../audio/MetronomeNode';
+import { VisualScheduler } from '../audio/visualSync';
+import { factoryGroove, factoryPreset, parseSource, song as findSong } from './library';
+import type { Dialogs, EnginePort, Preferences, SessionChange } from './ports';
+import type { StateManager } from './stateManager';
+import { Transport } from './transport';
+
+export type Figure = typeof FIGURES[number];
+export type TimeSignatureResult = 'changed' | 'too-long' | 'declined' | 'unchanged';
+
+export interface SessionOptions {
+  engine: EnginePort;
+  state: StateManager;
+  prefs: Preferences;
+  dialogs: Dialogs;
+  wasmUrl: string;
+  workletUrl: string;
+}
+
+// Every rule the page runs, behind the commands the screens call. The engine and the storage come in as arguments
+export class Session {
+  private engine: EnginePort;
+  private state: StateManager;
+  private prefs: Preferences;
+  private dialogs: Dialogs;
+  private transport: Transport;
+  private visualScheduler = new VisualScheduler();
+  private listeners = new Set<(change: SessionChange) => void>();
+
+  readonly mix: TrackMix = createTrackMix();
+  figure: Figure | null = null; // Stamped by grid clicks; null toggles single steps
+  // The bar the Editor shows, and the bar in play, which is the first one when stopped
+  viewBar = 0;
+  playBar = 0;
+  // The bar count since Play and the step last drawn
+  position = { bar: 1, step: -1 };
+  // The first Play waits for the kit to load, and a song pressed meanwhile must not stop it
+  isStarting = false;
+  hasUnsavedEdits = false;
+  selectedPresetValue = 'factory:default'; // Where the selector returns when a load is declined
+  private selectorValue = 'factory:default'; // What the preset selector asks for last
+  lastTick: TickDetail | null = null;
+  clickSound: string;
+
+  constructor({ engine, state, prefs, dialogs, wasmUrl, workletUrl }: SessionOptions) {
+    this.engine = engine;
+    this.state = state;
+    this.prefs = prefs;
+    this.dialogs = dialogs;
+    this.clickSound = prefs.get('clickSound') || 'digital';
+    this.transport = new Transport(engine, { wasmUrl, workletUrl }, {
+      preset: () => this.state.activePreset,
+      mix: this.mix,
+      clickSound: () => this.clickSound,
+      padVolume: () => parseVolume(this.prefs.get('padVolume')),
+    });
+    engine.addEventListener('tick', (e) => {
+      const detail = (e as CustomEvent<TickDetail>).detail;
+      this.visualScheduler.schedule(() => this.onTick(detail), this.engine.visualDelayMs());
+    });
+  }
+
+  get preset(): Preset {
+    return this.state.activePreset;
+  }
+
+  get isPlaying(): boolean {
+    return this.state.isPlaying;
+  }
+
+  get view(): ViewMode {
+    return this.state.activeViewMode;
+  }
+
+  get isAudioInit(): boolean {
+    return this.transport.isAudioInit;
+  }
+
+  subscribe(listener: (change: SessionChange) => void): () => void {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  }
+
+  private emit(change: SessionChange) {
+    this.listeners.forEach(listener => listener(change));
+  }
+
+  private markEdited() {
+    this.hasUnsavedEdits = true;
+    this.emit('edits');
+  }
+
+  sampleRate(): number {
+    return this.engine.sampleRate();
+  }
+
+  latencyMs(): number {
+    return this.engine.visualDelayMs();
+  }
+
+  startEngine(): Promise<void> {
+    return this.transport.startEngine();
+  }
+
+  // --- Transport ---
+
+  togglePlay(): void {
+    this.isStarting = !this.state.isPlaying;
+    this.transport.initAudio().then(() => {
+      if (this.state.isPlaying) {
+        this.engine.stop();
+        this.state.isPlaying = false;
+        this.visualScheduler.cancelAll();
+        this.viewBar = 0;
+        this.playBar = 0;
+        this.position = { bar: 1, step: -1 };
+      } else {
+        this.viewBar = 0; // A bar pressed while stopped gives way to the first bar in play
+        this.transport.syncAudioSettings();
+        this.engine.start();
+        this.state.isPlaying = true;
+      }
+      this.emit('playback');
+    }).finally(() => {
+      this.isStarting = false;
+    });
+  }
+
+  // Draws one tick once its sound has left the device
+  private onTick(detail: TickDetail) {
+    // Ticks still in flight after stop must not restart anything
+    if (!this.state.isPlaying) return;
+    // The engine may not have taken a shorter pattern yet
+    if (detail.beatIndex >= patternLength(this.preset)) return;
+
+    this.lastTick = detail;
+    const measureLength = this.preset.measureLength || 16;
+    const step = stepInBar(detail.beatIndex, measureLength);
+
+    // A bar pressed during playback holds until here
+    const bar = barOfStep(detail.beatIndex, measureLength);
+    if (bar !== this.playBar) {
+      this.playBar = bar;
+      this.viewBar = bar;
+      this.emit('grid');
+    }
+
+    // Steps only rise within a bar, so anything else is a wrap to the next one
+    if (step <= this.position.step) this.position.bar++;
+    this.position.step = step;
+    this.emit('tick');
+  }
+
+  setBpm(bpm: number) {
+    this.preset.bpm = bpm;
+    if (this.transport.isAudioInit) this.engine.setBpm(bpm);
+    this.markEdited();
+  }
+
+  async setClickSound(sound: string) {
+    this.clickSound = sound;
+    this.prefs.set('clickSound', sound);
+    if (this.transport.isAudioInit) {
+      try {
+        await this.transport.syncClickSound();
+      } catch (err) {
+        console.error("Failed to sync click sound on selector change:", err);
+      }
+    }
+  }
+
+  setView(mode: ViewMode) {
+    this.state.setViewMode(mode);
+    this.emit('view');
+  }
+
+  // --- Editing ---
+
+  setTimeSignature(num: number, den: number): TimeSignatureResult {
+    const sigStr = `${num}/${den}`;
+    const measureLength = measureLengthFor(num, den);
+    const preset = this.preset;
+
+    // Clamp to 32 steps max
+    if (measureLength > 32) return 'too-long';
+
+    if (barCount(preset) > 1) {
+      if (sigStr === preset.timeSignature) return 'unchanged';
+      if (!this.dialogs.confirm('Changing the time signature keeps only bar 1. Continue?')) return 'declined';
+    }
+
+    this.visualScheduler.cancelAll(); // Ticks of the old bar length must not draw on the new one
+    const oldLength = preset.measureLength || 16;
+    preset.timeSignature = sigStr;
+    preset.measureLength = measureLength;
+    preset.bars = 1;
+    this.viewBar = 0;
+    this.playBar = 0;
+
+    // Resize gridData tracks to match the new length
+    for (const { id: trackId } of TRACKS) {
+      const oldSteps = barSteps(preset.gridData[trackId] || [], 0, oldLength);
+      const newSteps = new Array(measureLength).fill(0);
+      for (let i = 0; i < Math.min(oldSteps.length, measureLength); i++) {
+        newSteps[i] = oldSteps[i];
+      }
+      preset.gridData[trackId] = newSteps;
+    }
+
+    this.emit('grid');
+    this.transport.syncPlaybackSettings();
+    this.markEdited();
+    return 'changed';
+  }
+
+  // Changes one step of the bar on view, or stamps the selected figure over its quarter note
+  editStep(trackId: number, step: number) {
+    const preset = this.preset;
+    const measureLength = preset.measureLength || 16;
+    const allSteps = preset.gridData[trackId] ??= new Array(patternLength(preset)).fill(0);
+    const trackSteps = barSteps(allSteps, this.viewBar, measureLength);
+    if (this.figure) {
+      applyFigure(trackSteps, step, this.figure.pattern, measureLength);
+    } else {
+      trackSteps[step] = nextStepValue(trackId, trackSteps[step]);
+    }
+    writeBar(allSteps, this.viewBar, measureLength, trackSteps);
+
+    if (this.transport.isAudioInit) this.transport.sendTrack(trackId);
+    this.emit('grid');
+    this.markEdited();
+  }
+
+  selectFigure(figure: Figure | null) {
+    this.figure = figure;
+  }
+
+  showBar(bar: number) {
+    this.viewBar = bar;
+    this.emit('grid');
+  }
+
+  toggleMute(trackId: number) {
+    toggleMute(this.mix, trackId);
+    this.sendMix();
+  }
+
+  toggleSolo(trackId: number) {
+    toggleSolo(this.mix, trackId);
+    this.sendMix();
+  }
+
+  private sendMix() {
+    if (this.transport.isAudioInit) TRACKS.forEach(({ id }) => this.transport.sendTrack(id));
+    this.emit('mix');
+  }
+
+  // During playback a running Trainer takes the change on beat 1
+  setTrainer(settings: TrainerSettings) {
+    this.preset.trainerSettings = settings;
+    this.transport.syncPlaybackSettings();
+    this.markEdited();
+  }
+
+  // --- Library ---
+
+  // Loads what the preset selector names. False when a song is declined, so the selector goes back
+  loadPreset(value: string): boolean {
+    this.selectorValue = value;
+    const source = parseSource(value);
+    if (source?.kind === 'factory') {
+      const preset = factoryPreset(source.id);
+      if (preset) this.applyPreset(preset);
+    } else if (source?.kind === 'song') {
+      const song = findSong(source.id);
+      if (song && !this.useSong(song)) {
+        this.selectorValue = this.selectedPresetValue;
+        return false;
+      }
+    } else if (source?.kind === 'user') {
+      this.state.getAllPresets().then(userPresets => {
+        const p = userPresets.find(up => up.id === source.id);
+        if (p) this.applyPreset(p);
+      });
+    }
+    return true;
+  }
+
+  private applyPreset(storedPreset: StoredPreset) {
+    this.visualScheduler.cancelAll(); // Ticks of the previous preset must not overwrite this one
+    const preset = completeKit(normalizePreset(storedPreset));
+    this.state.activePreset = preset;
+    this.viewBar = 0;
+    this.playBar = 0;
+
+    if (!preset.timeSignature || !preset.timeSignature.includes('/')) {
+      const map: Record<number, { num: string, den: string }> = {
+        12: { num: '3', den: '4' },
+        14: { num: '7', den: '8' },
+        16: { num: '4', den: '4' }
+      };
+      const parsed = map[preset.measureLength] || { num: String(preset.measureLength), den: '16' };
+      preset.timeSignature = `${parsed.num}/${parsed.den}`;
+    }
+
+    this.transport.syncAudioSettings();
+    // A pattern of 4 bars starts from its first bar, without touching the pulse
+    if (this.transport.isAudioInit && this.state.isPlaying && barCount(preset) > 1) this.engine.restartPattern();
+
+    this.hasUnsavedEdits = false;
+    this.selectedPresetValue = this.selectorValue;
+    this.emit('preset');
+  }
+
+  // Stores a copy of the pattern under a new name and makes it the active preset
+  savePreset(name: string): Promise<void> {
+    const id = 'user_' + Date.now();
+    const preset = this.preset;
+    const newPreset: Preset = {
+      id,
+      name: name.trim() || 'Custom Preset',
+      bpm: preset.bpm,
+      timeSignature: preset.timeSignature,
+      measureLength: preset.measureLength || 16,
+      bars: barCount(preset),
+      gridData: JSON.parse(JSON.stringify(preset.gridData)),
+      trainerSettings: JSON.parse(JSON.stringify(preset.trainerSettings))
+    };
+
+    return this.state.savePreset(newPreset).then(() => {
+      this.state.activePreset = newPreset;
+      this.hasUnsavedEdits = false;
+      this.selectedPresetValue = `user:${id}`;
+      this.selectorValue = this.selectedPresetValue;
+      this.emit('library');
+    });
+  }
+
+  userPresets(): Promise<Preset[]> {
+    return this.state.getAllPresets();
+  }
+
+  isSongLoaded(song: Song): boolean {
+    return this.preset.id === song.id;
+  }
+
+  // Loads a song unless the user keeps the edits it would replace
+  useSong(song: Song): boolean {
+    if (this.isSongLoaded(song)) return true;
+    if (this.hasUnsavedEdits && !this.dialogs.confirm(`Discard your unsaved changes and load ${song.title}?`)) return false;
+    this.selectorValue = `song:${song.id}`;
+    this.applyPreset(songToPreset(song));
+    return true;
+  }
+
+  playSong(song: Song) {
+    const loaded = this.isSongLoaded(song);
+    if (!this.useSong(song)) return;
+    if (loaded || !(this.state.isPlaying || this.isStarting)) this.togglePlay(); // Playing another song carries on at its tempo
+  }
+
+  // Writes a groove's drum tracks over the bar on view
+  applyGroove(value: string) {
+    const source = parseSource(value);
+    const activeLen = this.preset.measureLength || 16;
+
+    const applyPattern = (length: number, tracks: Record<number, number[]>) => {
+      for (const { id: trackId } of TRACKS.slice(1)) {
+        const srcPattern = tracks[trackId] || [];
+        const destPattern = new Array(activeLen).fill(0);
+        for (let i = 0; i < activeLen; i++) {
+          destPattern[i] = srcPattern[i % length] || 0;
+        }
+        writeBar(this.preset.gridData[trackId] ??= [], this.viewBar, activeLen, destPattern);
+      }
+      this.emit('grid');
+      this.transport.syncPlaybackSettings();
+      this.markEdited();
+    };
+
+    if (source?.kind === 'factory') {
+      const g = factoryGroove(source.id);
+      if (g) applyPattern(g.length, g.tracks);
+    } else if (source?.kind === 'user') {
+      this.state.getAllGrooves().then(grooves => {
+        const g = grooves.find(ug => ug.id === source.id);
+        if (g) applyPattern(g.measureLength, g.gridData);
+      });
+    }
+  }
+
+  // Stores the drum tracks of the bar on view as a groove
+  saveGroove(name: string): Promise<void> {
+    const activeLen = this.preset.measureLength || 16;
+    const gridData: Record<number, number[]> = {};
+    for (const { id: trackId } of TRACKS.slice(1)) {
+      const srcTrack = barSteps(this.preset.gridData[trackId] || [], this.viewBar, activeLen);
+      const paddedTrack = new Array(activeLen).fill(0);
+      for (let i = 0; i < Math.min(srcTrack.length, activeLen); i++) {
+        paddedTrack[i] = srcTrack[i];
+      }
+      gridData[trackId] = paddedTrack;
+    }
+
+    const id = 'groove_' + Date.now();
+    const newGroove: CustomGroove = { id, name, gridData, measureLength: activeLen };
+    return this.state.saveGroove(newGroove);
+  }
+
+  userGrooves(): Promise<CustomGroove[]> {
+    return this.state.getAllGrooves();
+  }
+}

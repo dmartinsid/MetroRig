@@ -1,24 +1,29 @@
-import { MetronomeNode, TickDetail } from './audio/MetronomeNode';
+import { MetronomeNode } from './audio/MetronomeNode';
 import { StateManager } from './app/stateManager';
+import { Session } from './app/session';
 import { browserPreferences } from './storage/preferences';
 import { FACTORY_PRESETS, FACTORY_GROOVES, SPEED_TRAINER_PRESETS } from './data/factory';
-import { Preset, StoredPreset, TrainerSettings, ViewMode, normalizePreset, completeKit, startBpmFor } from './domain/preset';
-import { getBeatsPerMeasure, getBeatForStep, isSustainedStep, measureLengthFor } from './domain/meter';
-import { FIGURES, applyFigure, barCount, barOfStep, barSteps, patternLength, stepInBar, writeBar } from './domain/pattern';
-import { STADIUM_GROUPS, STEP_ACCENT, STEP_GHOST, STEP_NORMAL, TRACKS, groupHit, nextStepValue, takesOf } from './domain/kit';
-import { VisualScheduler } from './audio/visualSync';
-import { audibleSteps, createTrackMix, isAudible, toggleMute, toggleSolo } from './domain/mix';
+import { TrainerSettings, ViewMode, startBpmFor } from './domain/preset';
+import { getBeatsPerMeasure, getBeatForStep, isSustainedStep } from './domain/meter';
+import { FIGURES, barCount, barSteps, patternLength } from './domain/pattern';
+import { STADIUM_GROUPS, STEP_ACCENT, STEP_GHOST, STEP_NORMAL, TRACKS, groupHit } from './domain/kit';
+import { isAudible } from './domain/mix';
 import { formatBarStep, formatClock, formatLatency, formatSteps, formatTimer, nextDenominator } from './ui/format';
-import { GENRE_TABS, SONGS, GenreTab, Song, songToPreset, songsForGenre } from './domain/songs';
+import { GENRE_TABS, SONGS, GenreTab, Song, songsForGenre } from './domain/songs';
 import { CHORD_FAMILIES, CHORD_TYPES, ChordId, PAD_TIMBRES, PadFile, ROOTS, chordName, chordNotes, chordOfRoot, chordOfType, nextChord, parseTimbre, parseVolume, timbreNotes } from './domain/chords';
 import workletUrl from './audio/metronome-processor?url';
 
 declare const gsap: any;
 
-const state = new StateManager();
 const audioNode = new MetronomeNode();
-const visualScheduler = new VisualScheduler();
-const trackMix = createTrackMix();
+const session = new Session({
+  engine: audioNode,
+  state: new StateManager(),
+  prefs: browserPreferences,
+  dialogs: { confirm: message => confirm(message) },
+  wasmUrl: '/pkg/metrorig_audio_bg.wasm', // Compiled through Vite's public folder
+  workletUrl,
+});
 
 // Elements
 const viewLinks = [...document.querySelectorAll<HTMLButtonElement>('.view-link')];
@@ -100,15 +105,11 @@ const padVolumeSlider = document.getElementById('pad-volume') as HTMLInputElemen
 const padVolumeValue = document.getElementById('pad-volume-value') as HTMLElement;
 const padTimbreSelect = document.getElementById('pad-timbre') as HTMLSelectElement;
 
-let hasUnsavedEdits = false;
-let selectedPresetValue = 'factory:default'; // Where the selector returns when a load is declined
-
-// Helper to show save button when preset is modified
-function markPresetAsModified() {
-  hasUnsavedEdits = true;
+// Shows the save button once the preset is modified
+function showEdits() {
   // Pre-populate with the current preset name so user can build on it
   if (!presetNameInput.value) {
-    presetNameInput.value = state.activePreset.name;
+    presetNameInput.value = session.preset.name;
   }
   gsap.killTweensOf(saveToast);
   gsap.set(saveToast, { display: 'flex' });
@@ -156,7 +157,7 @@ function populatePresetsDropdown(selectedId?: string) {
   });
 
   // Load User Presets from database
-  state.getAllPresets().then(userPresets => {
+  session.userPresets().then(userPresets => {
     groupUser.innerHTML = '';
     if (userPresets.length === 0) {
       const opt = document.createElement('option');
@@ -174,7 +175,7 @@ function populatePresetsDropdown(selectedId?: string) {
     if (selectedId) {
       presetSelector.value = selectedId;
     } else {
-      presetSelector.value = `factory:${state.activePreset.id}`;
+      presetSelector.value = `factory:${session.preset.id}`;
     }
     syncStadiumPresetSelector();
   });
@@ -186,89 +187,9 @@ function syncStadiumPresetSelector() {
   if (stadiumPresetSelector.selectedIndex < 0) stadiumPresetSelector.value = '';
 }
 
-// A file that fails leaves its hit to the next loaded take, or its track silent, and the rest of the kit playing
-async function loadKit() {
-  const loads: { url: string; load: Promise<void> }[] = [];
-  for (const track of TRACKS) {
-    if (track.sample) loads.push({ url: track.sample, load: audioNode.loadSample(track.id, track.sample) });
-    if (track.bank) {
-      for (const { dynamic, take, url } of takesOf(track)) {
-        loads.push({ url, load: audioNode.loadTake(track.id, dynamic, take, url, track.bank.trim) });
-      }
-    }
-  }
-  const results = await Promise.allSettled(loads.map(({ load }) => load));
-  results.forEach((result, i) => {
-    if (result.status === 'rejected') console.error(`Failed to load ${loads[i].url}:`, result.reason);
-  });
-}
-
-async function launchEngine() {
-  // Compile Wasm and launch worklet using assets loaded through Vite
-  await audioNode.init('/pkg/metrorig_audio_bg.wasm', workletUrl);
-  sendPadVolume();
-}
-
 // The slider runs from 0 to 100, the engine from 0 to 1
 function sendPadVolume() {
   audioNode.padVolume(Number(padVolumeSlider.value) / 100);
-}
-
-// Runs once; a failure clears it, so the next use retries
-let enginePromise: Promise<void> | null = null;
-
-function startEngine(): Promise<void> {
-  enginePromise ??= launchEngine().catch(err => {
-    enginePromise = null;
-    throw err;
-  });
-  return enginePromise;
-}
-
-// Initialize Metronome Engine
-let isAudioInit = false;
-async function initAudio() {
-  if (isAudioInit) return;
-  await startEngine();
-
-  await loadKit();
-
-  isAudioInit = true;
-  await syncClickSound(); // Wait for click sound loading
-  syncAudioSettings();
-}
-
-// Sends the start tempo, so it runs only on Play and preset load
-function syncAudioSettings() {
-  if (!isAudioInit) return;
-
-  audioNode.setBpm(startBpmFor(state.activePreset));
-  syncMeterAndGrid();
-  audioNode.replaceTrainer(readTrainerInputs()); // Applies now
-}
-
-// Sends everything but BPM, so a change during playback keeps the live tempo.
-// A running Trainer takes the change on beat 1.
-function syncPlaybackSettings() {
-  if (!isAudioInit) return;
-
-  syncMeterAndGrid();
-  audioNode.setTrainer(readTrainerInputs());
-}
-
-function syncMeterAndGrid() {
-  // Set measure length
-  audioNode.setMeasureLength(state.activePreset.measureLength || 16);
-  audioNode.setBars(barCount(state.activePreset));
-
-  // Update active tracks
-  TRACKS.forEach(track => sendTrack(track.id));
-}
-
-// The one path to the engine: silenced tracks play an empty grid, the preset keeps its steps
-function sendTrack(trackId: number) {
-  const steps = state.activePreset.gridData[trackId] || new Array(patternLength(state.activePreset)).fill(0);
-  audioNode.updateGrid(trackId, audibleSteps(trackMix, trackId, steps));
 }
 
 function readTrainerInputs(): TrainerSettings {
@@ -286,14 +207,11 @@ function readTrainerInputs(): TrainerSettings {
 // Draw Sequencer Grid
 const SUBDIVISION_LABELS: Record<number, string[]> = { 2: ['', '&'], 4: ['', 'e', '&', 'a'] };
 
-// Figure stamped by grid clicks; null toggles single steps
-let activeFigure: typeof FIGURES[number] | null = null;
-
 function drawFigurePalette() {
   figurePalette.innerHTML = '';
   [null, ...FIGURES].forEach(figure => {
     const btn = document.createElement('button');
-    btn.className = figure === activeFigure ? 'figure-btn active' : 'figure-btn';
+    btn.className = figure === session.figure ? 'figure-btn active' : 'figure-btn';
     btn.innerText = figure ? figure.name : 'Step';
     if (figure) {
       const pattern = document.createElement('span');
@@ -302,34 +220,27 @@ function drawFigurePalette() {
       btn.appendChild(pattern);
     }
     btn.onclick = () => {
-      activeFigure = figure;
+      session.selectFigure(figure);
       drawFigurePalette();
     };
     figurePalette.appendChild(btn);
   });
 }
 
-// The bar the Editor shows, and the bar in play, which is the first one when stopped
-let viewBar = 0;
-let playBar = 0;
-
 function drawBarSelector() {
-  barSelector.hidden = barCount(state.activePreset) === 1;
-  barButtons.forEach((button, bar) => button.setAttribute('aria-pressed', String(bar === viewBar)));
+  barSelector.hidden = barCount(session.preset) === 1;
+  barButtons.forEach((button, bar) => button.setAttribute('aria-pressed', String(bar === session.viewBar)));
 }
 
 barButtons.forEach((button, bar) => {
-  button.onclick = () => {
-    viewBar = bar;
-    drawGrid();
-  };
+  button.onclick = () => session.showBar(bar);
 });
 
 function drawGrid() {
   drawBarSelector();
   gridContainer.innerHTML = '';
-  const { gridData, timeSignature } = state.activePreset;
-  const measureLength = state.activePreset.measureLength || 16;
+  const { gridData, timeSignature } = session.preset;
+  const measureLength = session.preset.measureLength || 16;
   const beats = getBeatsPerMeasure(timeSignature, measureLength);
   const stepsPerBeat = measureLength / beats;
 
@@ -373,14 +284,14 @@ function drawGrid() {
     label.className = 'track-label';
     label.setAttribute('data-track', String(trackId));
     label.innerText = name;
-    const silenced = !isAudible(trackMix, trackId);
+    const silenced = !isAudible(session.mix, trackId);
     label.classList.toggle('silenced', silenced);
     label.style.gridRow = row;
     label.style.gridColumn = '1';
     gridContainer.appendChild(label);
 
-    const allSteps = gridData[trackId] ??= new Array(patternLength(state.activePreset)).fill(0);
-    const trackSteps = barSteps(allSteps, viewBar, measureLength);
+    const allSteps = gridData[trackId] ??= new Array(patternLength(session.preset)).fill(0);
+    const trackSteps = barSteps(allSteps, session.viewBar, measureLength);
 
     for (let step = 0; step < measureLength; step++) {
       const cell = document.createElement('div');
@@ -403,18 +314,7 @@ function drawGrid() {
       }
       if (isSustainedStep(trackSteps, step, measureLength, beats)) cell.classList.add('sustain');
 
-      cell.onclick = () => {
-        if (activeFigure) {
-          applyFigure(trackSteps, step, activeFigure.pattern, measureLength);
-        } else {
-          trackSteps[step] = nextStepValue(trackId, trackSteps[step]);
-        }
-        writeBar(allSteps, viewBar, measureLength, trackSteps);
-
-        if (isAudioInit) sendTrack(trackId);
-        drawGrid();
-        markPresetAsModified();
-      };
+      cell.onclick = () => session.editStep(trackId, step);
 
       gridContainer.appendChild(cell);
     }
@@ -426,16 +326,15 @@ function drawGrid() {
 
 function applyTrackMix() {
   for (const { id: trackId } of TRACKS) {
-    document.getElementById(`mute-${trackId}`)!.setAttribute('aria-pressed', String(trackMix.muted.has(trackId)));
-    document.getElementById(`solo-${trackId}`)!.setAttribute('aria-pressed', String(trackMix.soloed.has(trackId)));
-    if (isAudioInit) sendTrack(trackId);
+    document.getElementById(`mute-${trackId}`)!.setAttribute('aria-pressed', String(session.mix.muted.has(trackId)));
+    document.getElementById(`solo-${trackId}`)!.setAttribute('aria-pressed', String(session.mix.soloed.has(trackId)));
   }
   drawGrid();
 }
 
 function updatePatternBar() {
-  patternName.textContent = `PAT: ${state.activePreset.name}`;
-  patternSteps.textContent = formatSteps(patternLength(state.activePreset));
+  patternName.textContent = `PAT: ${session.preset.name}`;
+  patternSteps.textContent = formatSteps(patternLength(session.preset));
 }
 
 // Draw Stadium beat clock: one ring per group, one slice per step, 12 o'clock is step 0
@@ -451,15 +350,15 @@ function clockPoint(fraction: number, radius: number): [number, number] {
 }
 
 function drawBeatClock() {
-  const { gridData, timeSignature } = state.activePreset;
-  const measureLength = state.activePreset.measureLength || 16;
+  const { gridData, timeSignature } = session.preset;
+  const measureLength = session.preset.measureLength || 16;
   const beats = getBeatsPerMeasure(timeSignature, measureLength);
   clockFace.innerHTML = '';
 
   STADIUM_GROUPS.forEach(({ trackIds }, ring) => {
     const radius = CLOCK_RING_OUTER - CLOCK_RING_WIDTH * ring;
     const innerRadius = radius - CLOCK_RING_WIDTH + CLOCK_RING_GAP;
-    const ringSteps = Array.from({ length: measureLength }, (_, step) => (groupHit(trackIds, gridData, playBar * measureLength + step) ? 1 : 0));
+    const ringSteps = Array.from({ length: measureLength }, (_, step) => (groupHit(trackIds, gridData, session.playBar * measureLength + step) ? 1 : 0));
     for (let step = 0; step < measureLength; step++) {
       // A slice can't span the full circle, which a single-step measure would need
       const [x1, y1] = clockPoint(step / measureLength, radius);
@@ -523,55 +422,34 @@ function resetBeatClock() {
 // Handle Play/Stop state
 let timerInterval: any = null;
 let startTime = 0;
-let currentBar = 1;
-let lastStep = -1;
 
 function resetPosition() {
-  currentBar = 1;
-  lastStep = -1;
   patternPosValue.textContent = formatBarStep(1, 1);
 }
 
-// The first Play waits for the kit to load, and a song pressed meanwhile must not stop it
-let isStarting = false;
+function renderPlayback() {
+  if (!session.isPlaying) {
+    btnPlay.classList.remove('playing');
+    btnStadiumPlay.classList.remove('playing');
+    clearInterval(timerInterval);
+    drawGrid();
+    resetBeatClock();
+    resetPosition();
+    sequencerDot.classList.remove('lit');
+    bpmNumber.innerText = String(session.preset.bpm);
+    stadiumBpm.innerText = session.preset.bpm.toFixed(1);
+    updateSongCards();
+  } else {
+    drawGrid();
+    btnPlay.classList.add('playing');
+    btnStadiumPlay.classList.add('playing');
+    sequencerDot.classList.add('lit');
 
-function togglePlay() {
-  isStarting = !state.isPlaying;
-  initAudio().then(() => {
-    if (state.isPlaying) {
-      audioNode.stop();
-      state.isPlaying = false;
-      btnPlay.classList.remove('playing');
-      btnStadiumPlay.classList.remove('playing');
-      clearInterval(timerInterval);
-      visualScheduler.cancelAll();
-      viewBar = 0;
-      playBar = 0;
-      drawGrid();
-      resetBeatClock();
-      resetPosition();
-      sequencerDot.classList.remove('lit');
-      bpmNumber.innerText = String(state.activePreset.bpm);
-      stadiumBpm.innerText = state.activePreset.bpm.toFixed(1);
-      updateSongCards();
-    } else {
-      viewBar = 0; // A bar pressed while stopped gives way to the first bar in play
-      drawGrid();
-      syncAudioSettings();
-      audioNode.start();
-      state.isPlaying = true;
-      btnPlay.classList.add('playing');
-      btnStadiumPlay.classList.add('playing');
-      sequencerDot.classList.add('lit');
-
-      startTime = Date.now();
-      updateTimers(0);
-      timerInterval = setInterval(updatePracticeTimer, 1000);
-      updateSongCards();
-    }
-  }).finally(() => {
-    isStarting = false;
-  });
+    startTime = Date.now();
+    updateTimers(0);
+    timerInterval = setInterval(updatePracticeTimer, 1000);
+    updateSongCards();
+  }
 }
 
 function updatePracticeTimer() {
@@ -585,23 +463,33 @@ function updateTimers(seconds: number) {
 }
 
 // Subscriptions & Events
-state.subscribe((s) => {
-  // Sync View Mode
+function renderView() {
   (Object.keys(views) as ViewMode[]).forEach(mode => {
-    views[mode].classList.toggle('hidden', mode !== s.activeViewMode);
+    views[mode].classList.toggle('hidden', mode !== session.view);
   });
   viewLinks.forEach(link => {
-    if (link.dataset.view === s.activeViewMode) link.setAttribute('aria-current', 'page');
+    if (link.dataset.view === session.view) link.setAttribute('aria-current', 'page');
     else link.removeAttribute('aria-current');
   });
-  if (s.activeViewMode === 'stadium') updateStadiumStatus(); // The Trainer form lives in the Editor
+  if (session.view === 'stadium') updateStadiumStatus(); // The Trainer form lives in the Editor
+}
+
+session.subscribe(change => {
+  if (change === 'grid') drawGrid();
+  else if (change === 'mix') applyTrackMix();
+  else if (change === 'edits') showEdits();
+  else if (change === 'playback') renderPlayback();
+  else if (change === 'tick') renderTick();
+  else if (change === 'preset') renderPreset();
+  else if (change === 'view') renderView();
 });
+renderView();
 
 // UI Event Bindings
 viewLinks.forEach(link => {
   link.onclick = () => {
-    state.setViewMode(link.dataset.view as ViewMode);
-    if (state.activeViewMode === 'improv') loadSelectedTimbre();
+    session.setView(link.dataset.view as ViewMode);
+    if (session.view === 'improv') loadSelectedTimbre();
   };
 });
 
@@ -610,9 +498,7 @@ bpmSlider.oninput = () => {
   bpmNumber.innerText = String(bpm);
   bpmSliderValue.innerText = String(bpm);
   stadiumBpm.innerText = bpm.toFixed(1);
-  state.activePreset.bpm = bpm;
-  if (isAudioInit) audioNode.setBpm(bpm);
-  markPresetAsModified();
+  session.setBpm(bpm);
   updatePanelHeader();
 };
 
@@ -623,57 +509,24 @@ function updateTimeSignature() {
   timeSigNum.value = String(num);
 
   const den = Number(timeSigDen.value);
-  const sigStr = `${num}/${den}`;
-  
-  const measureLength = measureLengthFor(num, den);
 
   const showActiveTimeSignature = () => {
-    if (!state.activePreset.timeSignature) return;
-    const parts = state.activePreset.timeSignature.split('/');
+    if (!session.preset.timeSignature) return;
+    const parts = session.preset.timeSignature.split('/');
     timeSigNum.value = parts[0];
     timeSigDen.value = parts[1];
   };
 
-  // Clamp to 32 steps max
-  if (measureLength > 32) {
+  const result = session.setTimeSignature(num, den);
+  if (result === 'too-long') {
     alert("Time signature exceeds the maximum limit of 32 steps!");
     showActiveTimeSignature();
-    return;
+  } else if (result === 'declined') {
+    showActiveTimeSignature();
+  } else if (result === 'changed') {
+    grooveSelector.value = "";
+    updatePanelHeader();
   }
-
-  if (barCount(state.activePreset) > 1) {
-    if (sigStr === state.activePreset.timeSignature) return;
-    if (!confirm('Changing the time signature keeps only bar 1. Continue?')) {
-      showActiveTimeSignature();
-      return;
-    }
-  }
-
-  grooveSelector.value = "";
-
-  visualScheduler.cancelAll(); // Ticks of the old bar length must not draw on the new one
-  const oldLength = state.activePreset.measureLength || 16;
-  state.activePreset.timeSignature = sigStr;
-  state.activePreset.measureLength = measureLength;
-  state.activePreset.bars = 1;
-  viewBar = 0;
-  playBar = 0;
-
-  // Resize gridData tracks to match the new length
-  for (const { id: trackId } of TRACKS) {
-    const oldSteps = barSteps(state.activePreset.gridData[trackId] || [], 0, oldLength);
-    const newSteps = new Array(measureLength).fill(0);
-    for (let i = 0; i < Math.min(oldSteps.length, measureLength); i++) {
-      newSteps[i] = oldSteps[i];
-    }
-    state.activePreset.gridData[trackId] = newSteps;
-  }
-
-  drawGrid();
-  syncPlaybackSettings();
-  markPresetAsModified();
-
-  updatePanelHeader();
 }
 
 timeSigNum.onchange = updateTimeSignature;
@@ -701,17 +554,14 @@ function stepDenominator(direction: 1 | -1) {
 (document.getElementById('time-sig-den-up') as HTMLButtonElement).onclick = () => stepDenominator(1);
 (document.getElementById('time-sig-den-down') as HTMLButtonElement).onclick = () => stepDenominator(-1);
 
-btnPlay.onclick = togglePlay;
-btnStadiumPlay.onclick = togglePlay;
+btnPlay.onclick = () => session.togglePlay();
+btnStadiumPlay.onclick = () => session.togglePlay();
 
 // React to trainer config updates dynamically
 const formInputs = [trainerEnable, trainerStart, trainerTarget, trainerInc, trainerType, trainerVal, trainerCurve];
 formInputs.forEach(el => {
   el.onchange = () => {
-    // Sync DOM trainer values back into state so saves are accurate
-    state.activePreset.trainerSettings = readTrainerInputs();
-    syncPlaybackSettings();
-    markPresetAsModified();
+    session.setTrainer(readTrainerInputs());
   };
 });
 
@@ -750,12 +600,9 @@ function formatLiveBpm(bpm: number): string {
   return Number.isInteger(bpm) ? String(bpm) : bpm.toFixed(1);
 }
 
-// Draws one tick once its sound has left the device
-function renderTick({ beatIndex, currentBpm, activeTrackIds }: TickDetail) {
-  // Ticks still in flight after stop must not restart anything
-  if (!state.isPlaying) return;
-  // The engine may not have taken a shorter pattern yet
-  if (beatIndex >= patternLength(state.activePreset)) return;
+// Draws the tick the Session took, once its sound has left the device
+function renderTick() {
+  const { currentBpm, activeTrackIds } = session.lastTick!;
 
   // Update BPM text
   bpmNumber.innerText = formatLiveBpm(Number(currentBpm));
@@ -763,24 +610,12 @@ function renderTick({ beatIndex, currentBpm, activeTrackIds }: TickDetail) {
 
   updateStadiumStatus();
 
-  const { timeSignature } = state.activePreset;
-  const measureLength = state.activePreset.measureLength || 16;
-  const step = stepInBar(beatIndex, measureLength);
+  const { timeSignature } = session.preset;
+  const measureLength = session.preset.measureLength || 16;
+  const step = session.position.step;
+  patternPosValue.textContent = formatBarStep(session.position.bar, step + 1);
 
-  // A bar pressed during playback holds until here
-  const bar = barOfStep(beatIndex, measureLength);
-  if (bar !== playBar) {
-    playBar = bar;
-    viewBar = bar;
-    drawGrid();
-  }
-
-  // Steps only rise within a bar, so anything else is a wrap to the next one
-  if (step <= lastStep) currentBar++;
-  lastStep = step;
-  patternPosValue.textContent = formatBarStep(currentBar, step + 1);
-
-  if (step === 0) footerLatency.textContent = formatLatency(audioNode.visualDelayMs());
+  if (step === 0) footerLatency.textContent = formatLatency(session.latencyMs());
 
   // Beat clock
   const beats = getBeatsPerMeasure(timeSignature, measureLength);
@@ -794,7 +629,7 @@ function renderTick({ beatIndex, currentBpm, activeTrackIds }: TickDetail) {
 
   // Orbs keep a steady color and only nudge in size, avoiding luminance flashes
   const ids: number[] = activeTrackIds ?? [];
-  const audible = ids.filter(trackId => isAudible(trackMix, trackId));
+  const audible = ids.filter(trackId => isAudible(session.mix, trackId));
   STADIUM_GROUPS.forEach(({ trackIds }, group) => {
     if (!trackIds.some(trackId => audible.includes(trackId))) return;
     const orb = orbs[group];
@@ -806,36 +641,12 @@ function renderTick({ beatIndex, currentBpm, activeTrackIds }: TickDetail) {
   });
 }
 
-// Handle Tick triggers from audio worklet thread
-audioNode.addEventListener('tick', (e) => {
-  const detail = (e as CustomEvent<TickDetail>).detail;
-  visualScheduler.schedule(() => renderTick(detail), audioNode.visualDelayMs());
-});
-
 // Handle Preset Dropdown Selection Change
 presetSelector.onchange = () => {
-  const val = presetSelector.value;
-  let targetPreset: Preset | undefined;
   syncStadiumPresetSelector();
-
-  if (val.startsWith('factory:')) {
-    const pid = val.replace('factory:', '');
-    targetPreset = [...FACTORY_PRESETS, ...SPEED_TRAINER_PRESETS].find(p => p.id === pid);
-    if (targetPreset) {
-      loadPresetIntoUI(targetPreset);
-    }
-  } else if (val.startsWith('song:')) {
-    const song = SONGS.find(s => s.id === val.replace('song:', ''));
-    if (song && !useSong(song)) {
-      presetSelector.value = selectedPresetValue;
-      syncStadiumPresetSelector();
-    }
-  } else if (val.startsWith('user:')) {
-    const pid = val.replace('user:', '');
-    state.getAllPresets().then(userPresets => {
-      const p = userPresets.find(up => up.id === pid);
-      if (p) loadPresetIntoUI(p);
-    });
+  if (!session.loadPreset(presetSelector.value)) {
+    presetSelector.value = session.selectedPresetValue;
+    syncStadiumPresetSelector();
   }
 };
 
@@ -846,49 +657,35 @@ stadiumPresetSelector.onchange = () => {
 };
 
 function updatePanelHeader() {
-  const { name, bpm, measureLength } = state.activePreset;
+  const { name, bpm, measureLength } = session.preset;
   panelHeaderText.textContent = `${name}  ·  ${measureLengthToTimeSig(measureLength || 16)}  ·  ${bpm} BPM`;
 }
 
 function measureLengthToTimeSig(len: number): string {
-  // Try to parse from state.activePreset.timeSignature first
-  if (state.activePreset.timeSignature && state.activePreset.timeSignature.includes('/')) {
-    return state.activePreset.timeSignature;
+  // Try to parse from the preset's timeSignature first
+  if (session.preset.timeSignature && session.preset.timeSignature.includes('/')) {
+    return session.preset.timeSignature;
   }
   const map: Record<number, string> = { 12: '3/4', 14: '7/8', 16: '4/4' };
   return map[len] ?? `${len} steps`;
 }
 
-function loadPresetIntoUI(storedPreset: StoredPreset) {
-  visualScheduler.cancelAll(); // Ticks of the previous preset must not overwrite this one
-  const preset = completeKit(normalizePreset(storedPreset));
-  state.activePreset = preset;
-  viewBar = 0;
-  playBar = 0;
+// The Session loaded a preset: the controls follow it
+function renderPreset() {
+  const preset = session.preset;
   const ts = preset.trainerSettings;
-  
-  bpmSlider.value = String(state.activePreset.bpm);
-  bpmSliderValue.innerText = String(state.activePreset.bpm);
+  presetSelector.value = session.selectedPresetValue;
+  syncStadiumPresetSelector();
+
+  bpmSlider.value = String(preset.bpm);
+  bpmSliderValue.innerText = String(preset.bpm);
   // During playback the engine jumps to the preset's start tempo
-  const shownBpm = state.isPlaying ? startBpmFor(preset) : preset.bpm;
+  const shownBpm = session.isPlaying ? startBpmFor(preset) : preset.bpm;
   bpmNumber.innerText = String(shownBpm);
-  
-  // parse timeSignature
-  if (preset.timeSignature && preset.timeSignature.includes('/')) {
-    const parts = preset.timeSignature.split('/');
-    timeSigNum.value = parts[0];
-    timeSigDen.value = parts[1];
-  } else {
-    const map: Record<number, {num: string, den: string}> = {
-      12: { num: '3', den: '4' },
-      14: { num: '7', den: '8' },
-      16: { num: '4', den: '4' }
-    };
-    const parsed = map[preset.measureLength] || { num: String(preset.measureLength), den: '16' };
-    timeSigNum.value = parsed.num;
-    timeSigDen.value = parsed.den;
-    state.activePreset.timeSignature = `${parsed.num}/${parsed.den}`;
-  }
+
+  const parts = preset.timeSignature.split('/');
+  timeSigNum.value = parts[0];
+  timeSigDen.value = parts[1];
 
   // Sync trainer DOM inputs from preset state
   trainerEnable.checked = ts.enabled;
@@ -906,6 +703,19 @@ function loadPresetIntoUI(storedPreset: StoredPreset) {
   }
   
   presetNameInput.value = '';
+  hideSaveToast();
+  
+  drawGrid();
+  grooveSelector.value = "";
+
+  updatePanelHeader();
+
+  stadiumBpm.innerText = shownBpm.toFixed(1);
+  updateStadiumStatus();
+  updateSongCards();
+}
+
+function hideSaveToast() {
   gsap.killTweensOf(saveToast);
   gsap.to(saveToast, {
     y: -20,
@@ -917,57 +727,16 @@ function loadPresetIntoUI(storedPreset: StoredPreset) {
       gsap.set(saveToast, { display: 'none' });
     }
   });
-  
-  drawGrid();
-  syncAudioSettings();
-  // A pattern of 4 bars starts from its first bar, without touching the pulse
-  if (isAudioInit && state.isPlaying && barCount(preset) > 1) audioNode.restartPattern();
-  grooveSelector.value = "";
-
-  updatePanelHeader();
-
-  stadiumBpm.innerText = shownBpm.toFixed(1);
-  updateStadiumStatus();
-  hasUnsavedEdits = false;
-  selectedPresetValue = presetSelector.value;
-  updateSongCards();
 }
 
 btnSave.onclick = () => {
-  const name = presetNameInput.value.trim() || 'Custom Preset';
-  const id = 'user_' + Date.now();
-  
-  const newPreset: Preset = {
-    id,
-    name,
-    bpm: state.activePreset.bpm,
-    timeSignature: state.activePreset.timeSignature,
-    measureLength: state.activePreset.measureLength || 16,
-    bars: barCount(state.activePreset),
-    gridData: JSON.parse(JSON.stringify(state.activePreset.gridData)),
-    trainerSettings: JSON.parse(JSON.stringify(state.activePreset.trainerSettings))
-  };
-  
-  state.savePreset(newPreset).then(() => {
-    state.activePreset = newPreset;
+  session.savePreset(presetNameInput.value).then(() => {
     drawGrid(); // Cell handlers must hold the saved copy's steps
     updatePanelHeader();
-    populatePresetsDropdown(`user:${id}`);
+    populatePresetsDropdown(session.selectedPresetValue);
     presetNameInput.value = '';
-    hasUnsavedEdits = false;
-    selectedPresetValue = `user:${id}`;
     updateSongCards();
-    gsap.killTweensOf(saveToast);
-    gsap.to(saveToast, {
-      y: -20,
-      opacity: 0,
-      duration: 0.2,
-      ease: 'power2.in',
-      pointerEvents: 'none',
-      onComplete: () => {
-        gsap.set(saveToast, { display: 'none' });
-      }
-    });
+    hideSaveToast();
   });
 };
 
@@ -984,7 +753,7 @@ function populateGroovesDropdown() {
   });
   grooveSelector.appendChild(factoryGroup);
 
-  state.getAllGrooves().then(userGrooves => {
+  session.userGrooves().then(userGrooves => {
     if (userGrooves.length > 0) {
       const userGroup = document.createElement('optgroup');
       userGroup.label = "User Grooves";
@@ -1002,100 +771,23 @@ function populateGroovesDropdown() {
 grooveSelector.onchange = () => {
   const val = grooveSelector.value;
   if (!val) return;
-
-  const activeLen = state.activePreset.measureLength || 16;
-
-  const applyPattern = (length: number, tracks: Record<number, number[]>) => {
-    for (const { id: trackId } of TRACKS.slice(1)) {
-      const srcPattern = tracks[trackId] || [];
-      const destPattern = new Array(activeLen).fill(0);
-      for (let i = 0; i < activeLen; i++) {
-        destPattern[i] = srcPattern[i % length] || 0;
-      }
-      writeBar(state.activePreset.gridData[trackId] ??= [], viewBar, activeLen, destPattern);
-    }
-    drawGrid();
-    syncPlaybackSettings();
-    markPresetAsModified();
-  };
-
-  if (val.startsWith('factory:')) {
-    const gid = val.replace('factory:', '');
-    const g = FACTORY_GROOVES.find(fg => fg.id === gid);
-    if (g) applyPattern(g.length, g.tracks);
-  } else if (val.startsWith('user:')) {
-    const gid = val.replace('user:', '');
-    state.getAllGrooves().then(grooves => {
-      const g = grooves.find(ug => ug.id === gid);
-      if (g) applyPattern(g.measureLength, g.gridData);
-    });
-  }
+  session.applyGroove(val);
 };
 
 btnSaveGroove.onclick = () => {
   const name = prompt("Enter a name for your Drum Groove:");
   if (!name) return;
 
-  const activeLen = state.activePreset.measureLength || 16;
-  const gridData: Record<number, number[]> = {};
-  for (const { id: trackId } of TRACKS.slice(1)) {
-    const srcTrack = barSteps(state.activePreset.gridData[trackId] || [], viewBar, activeLen);
-    const paddedTrack = new Array(activeLen).fill(0);
-    for (let i = 0; i < Math.min(srcTrack.length, activeLen); i++) {
-      paddedTrack[i] = srcTrack[i];
-    }
-    gridData[trackId] = paddedTrack;
-  }
-
-  const id = 'groove_' + Date.now();
-  const newGroove = { id, name, gridData, measureLength: activeLen };
-
-  state.saveGroove(newGroove).then(() => {
+  session.saveGroove(name).then(() => {
     populateGroovesDropdown();
     alert(`Groove "${name}" saved successfully!`);
   });
 };
 
-// Click Sound logic
-let activeClickLoadId = 0;
+clickSoundSelector.onchange = () => session.setClickSound(clickSoundSelector.value);
 
-async function syncClickSound() {
-  if (!isAudioInit) return;
-  const sound = clickSoundSelector.value;
-  if (sound === 'digital') {
-    activeClickLoadId++;
-    audioNode.setClickMode(0);
-  } else {
-    const loadId = ++activeClickLoadId;
-    try {
-      await audioNode.loadSample(0, `/${sound}.wav`);
-      if (loadId === activeClickLoadId) {
-        audioNode.setClickMode(1);
-      }
-    } catch (err) {
-      console.error("Failed to load click sample, falling back to digital synth:", err);
-      if (loadId === activeClickLoadId) {
-        audioNode.setClickMode(0);
-      }
-    }
-  }
-}
-
-clickSoundSelector.onchange = async () => {
-  const sound = clickSoundSelector.value;
-  browserPreferences.set('clickSound', sound);
-  if (isAudioInit) {
-    try {
-      await syncClickSound();
-    } catch (err) {
-      console.error("Failed to sync click sound on selector change:", err);
-    }
-  }
-};
-
-// Initialize dropdown value from localStorage
-const storedClickSound = browserPreferences.get('clickSound') || 'digital';
-clickSoundSelector.value = storedClickSound;
+// Initialize dropdown value from the stored choice
+clickSoundSelector.value = session.clickSound;
 
 function mixButton(id: string, text: string, title: string, onPress: () => void) {
   const button = document.createElement('button');
@@ -1104,10 +796,7 @@ function mixButton(id: string, text: string, title: string, onPress: () => void)
   button.innerText = text;
   button.title = title;
   button.setAttribute('aria-pressed', 'false');
-  button.onclick = () => {
-    onPress();
-    applyTrackMix();
-  };
+  button.onclick = onPress;
   return button;
 }
 
@@ -1121,8 +810,8 @@ function drawMixCards() {
     trackName.innerText = label;
     card.append(
       trackName,
-      mixButton(`mute-${id}`, 'M', `Mute ${name}`, () => toggleMute(trackMix, id)),
-      mixButton(`solo-${id}`, 'S', `Solo ${name}`, () => toggleSolo(trackMix, id)),
+      mixButton(`mute-${id}`, 'M', `Mute ${name}`, () => session.toggleMute(id)),
+      mixButton(`solo-${id}`, 'S', `Solo ${name}`, () => session.toggleSolo(id)),
     );
     trackMixCards.appendChild(card);
   });
@@ -1168,42 +857,22 @@ function songCard(song: Song) {
   play.className = 'song-play';
   play.setAttribute('data-song', song.id);
   play.setAttribute('aria-label', `Play ${song.title}`);
-  play.onclick = () => playSong(song);
+  play.onclick = () => session.playSong(song);
   card.appendChild(play);
 
   const open = document.createElement('button');
   open.className = 'song-open';
   open.innerText = 'Open in Editor';
   open.onclick = () => {
-    if (useSong(song)) state.setViewMode('editor');
+    if (session.useSong(song)) session.setView('editor');
   };
   card.appendChild(open);
   return card;
 }
 
-function isSongLoaded(song: Song) {
-  return state.activePreset.id === song.id;
-}
-
-// Loads a song unless the user keeps the edits it would replace
-function useSong(song: Song): boolean {
-  if (isSongLoaded(song)) return true;
-  if (hasUnsavedEdits && !confirm(`Discard your unsaved changes and load ${song.title}?`)) return false;
-  presetSelector.value = `song:${song.id}`;
-  syncStadiumPresetSelector();
-  loadPresetIntoUI(songToPreset(song));
-  return true;
-}
-
-function playSong(song: Song) {
-  const loaded = isSongLoaded(song);
-  if (!useSong(song)) return;
-  if (loaded || !(state.isPlaying || isStarting)) togglePlay(); // Playing another song carries on at its tempo
-}
-
 function updateSongCards() {
   songGrid.querySelectorAll<HTMLElement>('.song-play').forEach(button => {
-    const playing = state.isPlaying && state.activePreset.id === button.dataset.song;
+    const playing = session.isPlaying && session.preset.id === button.dataset.song;
     button.innerText = playing ? '■' : '▶';
   });
 }
@@ -1226,7 +895,7 @@ const typeButtons: HTMLButtonElement[] = [];
 
 async function engineReady(): Promise<boolean> {
   try {
-    await startEngine();
+    await session.startEngine();
     audioFailed = false;
     return true;
   } catch {
@@ -1375,7 +1044,7 @@ function drawTimbreSelect() {
 }
 
 // Initial draw and population
-footerClock.textContent = formatClock(audioNode.sampleRate());
+footerClock.textContent = formatClock(session.sampleRate());
 populatePresetsDropdown();
 populateGroovesDropdown();
 drawMixCards();
@@ -1387,4 +1056,4 @@ drawTimbreSelect();
 padVolumeSlider.value = String(parseVolume(browserPreferences.get('padVolume')));
 padVolumeValue.textContent = padVolumeSlider.value;
 renderImprov();
-if (state.activeViewMode === 'improv') loadSelectedTimbre();
+if (session.view === 'improv') loadSelectedTimbre();
