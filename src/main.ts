@@ -2,14 +2,13 @@ import { MetronomeNode } from './audio/MetronomeNode';
 import { StateManager } from './app/stateManager';
 import { Session } from './app/session';
 import { browserPreferences } from './storage/preferences';
-import { FACTORY_GROOVES } from './data/factory';
-import { TrainerSettings, startBpmFor } from './domain/preset';
+import { startBpmFor } from './domain/preset';
 import { mount as mountHeader } from './ui/header';
+import { mount as mountEditor } from './ui/editor';
 import { getBeatsPerMeasure, getBeatForStep, isSustainedStep } from './domain/meter';
-import { FIGURES, barCount, barSteps, patternLength } from './domain/pattern';
-import { STADIUM_GROUPS, STEP_ACCENT, STEP_GHOST, STEP_NORMAL, TRACKS, groupHit } from './domain/kit';
+import { STADIUM_GROUPS, groupHit } from './domain/kit';
 import { isAudible } from './domain/mix';
-import { formatBarStep, formatSteps, formatTimer, nextDenominator } from './ui/format';
+import { formatTimer } from './ui/format';
 import { GENRE_TABS, GenreTab, Song, songsForGenre } from './domain/songs';
 import { CHORD_FAMILIES, CHORD_TYPES, PAD_TIMBRES, ROOTS, chordName, chordNotes, chordOfRoot, chordOfType } from './domain/chords';
 import workletUrl from './audio/metronome-processor?url';
@@ -27,24 +26,14 @@ const session = new Session({
 });
 
 mountHeader(session);
+mountEditor(session);
 
 // Elements
-
 const stadiumBpm = document.getElementById('stadium-bpm') as HTMLElement;
 const stadiumTimer = document.getElementById('stadium-timer') as HTMLElement;
 const editorTimer = document.getElementById('editor-timer') as HTMLElement;
 const stadiumStatus = document.getElementById('stadium-status') as HTMLElement;
 const stadiumStatusDot = document.getElementById('stadium-status-dot') as HTMLElement;
-const sequencerDot = document.getElementById('sequencer-dot') as HTMLElement;
-const patternName = document.getElementById('pattern-name') as HTMLElement;
-const patternSteps = document.getElementById('pattern-steps') as HTMLElement;
-const patternPosValue = document.getElementById('pattern-pos-value') as HTMLElement;
-
-const panelHeaderText = document.getElementById('panel-header-text') as HTMLElement;
-const trainerToggle = document.getElementById('trainer-toggle') as HTMLElement;
-const trainerBody = document.getElementById('trainer-body') as HTMLElement;
-const trainerChevron = document.getElementById('trainer-chevron') as HTMLElement;
-const trainerDot = document.getElementById('trainer-dot') as HTMLElement;
 const clockFace = document.getElementById('clock-face') as unknown as SVGGElement;
 const clockHand = document.getElementById('clock-hand') as unknown as SVGGElement;
 const orbs = [0, 1, 2, 3].map(i => document.getElementById(`orb-${i}`) as HTMLElement);
@@ -55,21 +44,9 @@ const trainerTarget = document.getElementById('trainer-target') as HTMLInputElem
 const trainerInc = document.getElementById('trainer-inc') as HTMLInputElement;
 const trainerType = document.getElementById('trainer-type') as HTMLSelectElement;
 const trainerVal = document.getElementById('trainer-val') as HTMLInputElement;
-const trainerCurve = document.getElementById('trainer-curve') as HTMLSelectElement;
 
-const trackMixCards = document.getElementById('track-mix') as HTMLElement;
 const genreTabs = document.getElementById('genre-tabs') as HTMLElement;
 const songGrid = document.getElementById('song-grid') as HTMLElement;
-const figurePalette = document.getElementById('figure-palette') as HTMLElement;
-const barSelector = document.getElementById('bar-selector') as HTMLElement;
-const barButtons = [...barSelector.querySelectorAll<HTMLButtonElement>('.bar-btn')];
-const gridContainer = document.getElementById('grid-container') as HTMLElement;
-
-const timeSigNum = document.getElementById('time-sig-num') as HTMLInputElement;
-const timeSigDen = document.getElementById('time-sig-den') as HTMLSelectElement;
-
-const grooveSelector = document.getElementById('groove-selector') as HTMLSelectElement;
-const btnSaveGroove = document.getElementById('btn-save-groove') as HTMLButtonElement;
 
 const padStatus = document.getElementById('pad-status') as HTMLElement;
 const padNotice = document.getElementById('pad-notice') as HTMLElement;
@@ -80,151 +57,6 @@ const improvDot = document.getElementById('improv-dot') as HTMLElement;
 const padVolumeSlider = document.getElementById('pad-volume') as HTMLInputElement;
 const padVolumeValue = document.getElementById('pad-volume-value') as HTMLElement;
 const padTimbreSelect = document.getElementById('pad-timbre') as HTMLSelectElement;
-
-function readTrainerInputs(): TrainerSettings {
-  return {
-    enabled: trainerEnable.checked,
-    startBpm: Number(trainerStart.value),
-    targetBpm: Number(trainerTarget.value),
-    increment: Number(trainerInc.value),
-    stepType: trainerType.value as 'measures' | 'seconds',
-    stepValue: Number(trainerVal.value),
-    curve: trainerCurve.value as 'stepped' | 'smooth'
-  };
-}
-
-// Draw Sequencer Grid
-const SUBDIVISION_LABELS: Record<number, string[]> = { 2: ['', '&'], 4: ['', 'e', '&', 'a'] };
-
-function drawFigurePalette() {
-  figurePalette.innerHTML = '';
-  [null, ...FIGURES].forEach(figure => {
-    const btn = document.createElement('button');
-    btn.className = figure === session.figure ? 'figure-btn active' : 'figure-btn';
-    btn.innerText = figure ? figure.name : 'Step';
-    if (figure) {
-      const pattern = document.createElement('span');
-      pattern.className = 'figure-pattern';
-      pattern.innerText = figure.pattern.map(hit => (hit ? '●' : '·')).join('');
-      btn.appendChild(pattern);
-    }
-    btn.onclick = () => {
-      session.selectFigure(figure);
-      drawFigurePalette();
-    };
-    figurePalette.appendChild(btn);
-  });
-}
-
-function drawBarSelector() {
-  barSelector.hidden = barCount(session.preset) === 1;
-  barButtons.forEach((button, bar) => button.setAttribute('aria-pressed', String(bar === session.viewBar)));
-}
-
-barButtons.forEach((button, bar) => {
-  button.onclick = () => session.showBar(bar);
-});
-
-function drawGrid() {
-  drawBarSelector();
-  gridContainer.innerHTML = '';
-  const { gridData, timeSignature } = session.preset;
-  const measureLength = session.preset.measureLength || 16;
-  const beats = getBeatsPerMeasure(timeSignature, measureLength);
-  const stepsPerBeat = measureLength / beats;
-
-  // A narrow spacer column separates beats, so each step maps to its own grid column
-  const templateColumns = ['auto'];
-  const stepColumns: number[] = [];
-  for (let step = 0; step < measureLength; step++) {
-    const isBeatStart = (step * beats) % measureLength === 0;
-    if (step > 0 && isBeatStart) templateColumns.push('0.5rem');
-    templateColumns.push('1fr');
-    stepColumns.push(templateColumns.length);
-  }
-  gridContainer.style.gridTemplateColumns = templateColumns.join(' ');
-
-  const beatSubLabel = document.createElement('div');
-  beatSubLabel.className = 'step-count-label';
-  beatSubLabel.innerText = 'BEAT/SUB';
-  beatSubLabel.style.gridRow = '1';
-  beatSubLabel.style.gridColumn = '1';
-  gridContainer.appendChild(beatSubLabel);
-
-  // Count row: 1 e & a 2 e & a ...
-  for (let step = 0; step < measureLength; step++) {
-    const beat = getBeatForStep(step, measureLength, beats);
-    const isBeatStart = (step * beats) % measureLength === 0;
-    const count = document.createElement('div');
-    count.className = isBeatStart ? 'step-count beat-start' : 'step-count';
-    count.innerText = isBeatStart
-      ? String(beat + 1)
-      : SUBDIVISION_LABELS[stepsPerBeat]?.[step - beat * stepsPerBeat] ?? '';
-    count.style.gridRow = '1';
-    count.style.gridColumn = String(stepColumns[step]);
-    gridContainer.appendChild(count);
-  }
-
-  for (const [index, { id: trackId, name }] of TRACKS.entries()) {
-    const row = String(index + 2); // Ids are not in grid order
-
-    // Label cell
-    const label = document.createElement('div');
-    label.className = 'track-label';
-    label.setAttribute('data-track', String(trackId));
-    label.innerText = name;
-    const silenced = !isAudible(session.mix, trackId);
-    label.classList.toggle('silenced', silenced);
-    label.style.gridRow = row;
-    label.style.gridColumn = '1';
-    gridContainer.appendChild(label);
-
-    const allSteps = gridData[trackId] ??= new Array(patternLength(session.preset)).fill(0);
-    const trackSteps = barSteps(allSteps, session.viewBar, measureLength);
-
-    for (let step = 0; step < measureLength; step++) {
-      const cell = document.createElement('div');
-      cell.className = silenced ? 'step-cell silenced' : 'step-cell';
-      cell.setAttribute('data-track', String(trackId));
-      cell.style.gridRow = row;
-      cell.style.gridColumn = String(stepColumns[step]);
-
-      if (trackSteps[step] === STEP_NORMAL) {
-        cell.classList.add('active');
-        cell.innerText = '●';
-      }
-      if (trackSteps[step] === STEP_ACCENT) {
-        cell.classList.add('accent');
-        cell.innerText = '▲';
-      }
-      if (trackSteps[step] === STEP_GHOST) {
-        cell.classList.add('ghost');
-        cell.innerText = '•';
-      }
-      if (isSustainedStep(trackSteps, step, measureLength, beats)) cell.classList.add('sustain');
-
-      cell.onclick = () => session.editStep(trackId, step);
-
-      gridContainer.appendChild(cell);
-    }
-  }
-
-  updatePatternBar();
-  drawBeatClock();
-}
-
-function applyTrackMix() {
-  for (const { id: trackId } of TRACKS) {
-    document.getElementById(`mute-${trackId}`)!.setAttribute('aria-pressed', String(session.mix.muted.has(trackId)));
-    document.getElementById(`solo-${trackId}`)!.setAttribute('aria-pressed', String(session.mix.soloed.has(trackId)));
-  }
-  drawGrid();
-}
-
-function updatePatternBar() {
-  patternName.textContent = `PAT: ${session.preset.name}`;
-  patternSteps.textContent = formatSteps(patternLength(session.preset));
-}
 
 // Draw Stadium beat clock: one ring per group, one slice per step, 12 o'clock is step 0
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -312,22 +144,15 @@ function resetBeatClock() {
 let timerInterval: any = null;
 let startTime = 0;
 
-function resetPosition() {
-  patternPosValue.textContent = formatBarStep(1, 1);
-}
-
 function renderPlayback() {
   if (!session.isPlaying) {
     clearInterval(timerInterval);
-    drawGrid();
+    drawBeatClock();
     resetBeatClock();
-    resetPosition();
-    sequencerDot.classList.remove('lit');
     stadiumBpm.innerText = session.preset.bpm.toFixed(1);
     updateSongCards();
   } else {
-    drawGrid();
-    sequencerDot.classList.add('lit');
+    drawBeatClock();
 
     startTime = Date.now();
     updateTimers(0);
@@ -353,19 +178,17 @@ function renderView() {
 
 function renderTempo() {
   stadiumBpm.innerText = session.preset.bpm.toFixed(1);
-  updatePanelHeader();
 }
 
 // The pattern was saved as a user preset
 function renderSaved() {
-  drawGrid();
-  updatePanelHeader();
+  drawBeatClock();
   updateSongCards();
 }
 
 session.subscribe(change => {
-  if (change === 'grid') drawGrid();
-  else if (change === 'mix') applyTrackMix();
+  if (change === 'grid') drawBeatClock();
+  else if (change === 'mix') drawBeatClock();
   else if (change === 'playback') renderPlayback();
   else if (change === 'tick') renderTick();
   else if (change === 'preset') renderPreset();
@@ -375,89 +198,6 @@ session.subscribe(change => {
   else if (change === 'library') renderSaved();
 });
 renderView();
-
-// UI Event Bindings
-
-function updateTimeSignature() {
-  let num = parseInt(timeSigNum.value, 10);
-  if (isNaN(num) || num < 1) num = 1;
-  if (num > 16) num = 16;
-  timeSigNum.value = String(num);
-
-  const den = Number(timeSigDen.value);
-
-  const showActiveTimeSignature = () => {
-    if (!session.preset.timeSignature) return;
-    const parts = session.preset.timeSignature.split('/');
-    timeSigNum.value = parts[0];
-    timeSigDen.value = parts[1];
-  };
-
-  const result = session.setTimeSignature(num, den);
-  if (result === 'too-long') {
-    alert("Time signature exceeds the maximum limit of 32 steps!");
-    showActiveTimeSignature();
-  } else if (result === 'declined') {
-    showActiveTimeSignature();
-  } else if (result === 'changed') {
-    grooveSelector.value = "";
-    updatePanelHeader();
-  }
-}
-
-timeSigNum.onchange = updateTimeSignature;
-timeSigDen.onchange = updateTimeSignature;
-
-// A stepper at its stop changes nothing, so it must not count as an edit
-function stepNumerator(delta: number) {
-  const numerator = Number(timeSigNum.value);
-  const next = Math.min(16, Math.max(1, numerator + delta));
-  if (next === numerator) return;
-  timeSigNum.value = String(next);
-  updateTimeSignature();
-}
-
-function stepDenominator(direction: 1 | -1) {
-  const denominator = Number(timeSigDen.value);
-  const next = nextDenominator(denominator, direction);
-  if (next === denominator) return;
-  timeSigDen.value = String(next);
-  updateTimeSignature();
-}
-
-(document.getElementById('time-sig-num-up') as HTMLButtonElement).onclick = () => stepNumerator(1);
-(document.getElementById('time-sig-num-down') as HTMLButtonElement).onclick = () => stepNumerator(-1);
-(document.getElementById('time-sig-den-up') as HTMLButtonElement).onclick = () => stepDenominator(1);
-(document.getElementById('time-sig-den-down') as HTMLButtonElement).onclick = () => stepDenominator(-1);
-
-// React to trainer config updates dynamically
-const formInputs = [trainerEnable, trainerStart, trainerTarget, trainerInc, trainerType, trainerVal, trainerCurve];
-formInputs.forEach(el => {
-  el.onchange = () => {
-    session.setTrainer(readTrainerInputs());
-  };
-});
-
-let trainerOpen = true;
-gsap.set(trainerChevron, { rotation: 180 });
-trainerToggle.onclick = () => {
-  trainerOpen = !trainerOpen;
-  if (trainerOpen) {
-    gsap.to(trainerBody, { height: 'auto', duration: 0.3, ease: 'power2.out' });
-    gsap.to(trainerChevron, { rotation: 180, duration: 0.3, ease: 'power2.out' });
-  } else {
-    gsap.to(trainerBody, { height: 0, duration: 0.25, ease: 'power2.in' });
-    gsap.to(trainerChevron, { rotation: 0, duration: 0.25, ease: 'power2.in' });
-  }
-};
-
-trainerEnable.addEventListener('change', () => {
-  if (trainerEnable.checked) {
-    trainerDot.classList.add('visible');
-  } else {
-    trainerDot.classList.remove('visible');
-  }
-});
 
 function updateStadiumStatus() {
   const bars = trainerVal.value === '1' ? 'bar' : 'bars';
@@ -480,7 +220,6 @@ function renderTick() {
   const { timeSignature } = session.preset;
   const measureLength = session.preset.measureLength || 16;
   const step = session.position.step;
-  patternPosValue.textContent = formatBarStep(session.position.bar, step + 1);
 
   // Beat clock
   const beats = getBeatsPerMeasure(timeSignature, measureLength);
@@ -506,126 +245,17 @@ function renderTick() {
   });
 }
 
-function updatePanelHeader() {
-  const { name, bpm, measureLength } = session.preset;
-  panelHeaderText.textContent = `${name}  ·  ${measureLengthToTimeSig(measureLength || 16)}  ·  ${bpm} BPM`;
-}
-
-function measureLengthToTimeSig(len: number): string {
-  // Try to parse from the preset's timeSignature first
-  if (session.preset.timeSignature && session.preset.timeSignature.includes('/')) {
-    return session.preset.timeSignature;
-  }
-  const map: Record<number, string> = { 12: '3/4', 14: '7/8', 16: '4/4' };
-  return map[len] ?? `${len} steps`;
-}
-
 // The Session loaded a preset: the controls follow it
 function renderPreset() {
   const preset = session.preset;
-  const ts = preset.trainerSettings;
   // During playback the engine jumps to the preset's start tempo
   const shownBpm = session.isPlaying ? startBpmFor(preset) : preset.bpm;
 
-  const parts = preset.timeSignature.split('/');
-  timeSigNum.value = parts[0];
-  timeSigDen.value = parts[1];
-
-  // Sync trainer DOM inputs from preset state
-  trainerEnable.checked = ts.enabled;
-  trainerStart.value = String(ts.startBpm);
-  trainerTarget.value = String(ts.targetBpm);
-  trainerInc.value = String(ts.increment);
-  trainerType.value = ts.stepType;
-  trainerVal.value = String(ts.stepValue);
-  trainerCurve.value = ts.curve;
-
-  if (ts.enabled) {
-    trainerDot.classList.add('visible');
-  } else {
-    trainerDot.classList.remove('visible');
-  }
-
-  drawGrid();
-  grooveSelector.value = "";
-
-  updatePanelHeader();
+  drawBeatClock();
 
   stadiumBpm.innerText = shownBpm.toFixed(1);
   updateStadiumStatus();
   updateSongCards();
-}
-
-function populateGroovesDropdown() {
-  grooveSelector.innerHTML = '<option value="">-- Choose a Groove --</option>';
-  
-  const factoryGroup = document.createElement('optgroup');
-  factoryGroup.label = "Factory Grooves";
-  FACTORY_GROOVES.forEach(g => {
-    const opt = document.createElement('option');
-    opt.value = `factory:${g.id}`;
-    opt.innerText = g.name;
-    factoryGroup.appendChild(opt);
-  });
-  grooveSelector.appendChild(factoryGroup);
-
-  session.userGrooves().then(userGrooves => {
-    if (userGrooves.length > 0) {
-      const userGroup = document.createElement('optgroup');
-      userGroup.label = "User Grooves";
-      userGrooves.forEach(g => {
-        const opt = document.createElement('option');
-        opt.value = `user:${g.id}`;
-        opt.innerText = g.name;
-        userGroup.appendChild(opt);
-      });
-      grooveSelector.appendChild(userGroup);
-    }
-  });
-}
-
-grooveSelector.onchange = () => {
-  const val = grooveSelector.value;
-  if (!val) return;
-  session.applyGroove(val);
-};
-
-btnSaveGroove.onclick = () => {
-  const name = prompt("Enter a name for your Drum Groove:");
-  if (!name) return;
-
-  session.saveGroove(name).then(() => {
-    populateGroovesDropdown();
-    alert(`Groove "${name}" saved successfully!`);
-  });
-};
-
-function mixButton(id: string, text: string, title: string, onPress: () => void) {
-  const button = document.createElement('button');
-  button.className = 'mix-btn';
-  button.id = id;
-  button.innerText = text;
-  button.title = title;
-  button.setAttribute('aria-pressed', 'false');
-  button.onclick = onPress;
-  return button;
-}
-
-function drawMixCards() {
-  TRACKS.forEach(({ id, name, label }) => {
-    const card = document.createElement('div');
-    card.className = 'track-mix-card card';
-    card.setAttribute('data-track', String(id));
-    const trackName = document.createElement('span');
-    trackName.className = 'track-mix-name';
-    trackName.innerText = label;
-    card.append(
-      trackName,
-      mixButton(`mute-${id}`, 'M', `Mute ${name}`, () => session.toggleMute(id)),
-      mixButton(`solo-${id}`, 'S', `Solo ${name}`, () => session.toggleSolo(id)),
-    );
-    trackMixCards.appendChild(card);
-  });
 }
 
 let activeGenre: GenreTab = 'All';
@@ -762,11 +392,8 @@ function drawTimbreSelect() {
 }
 
 // Initial draw and population
-populateGroovesDropdown();
-drawMixCards();
 drawGroovesScreen();
-drawFigurePalette();
-drawGrid();
+drawBeatClock();
 drawChordSelector();
 drawTimbreSelect();
 padVolumeSlider.value = String(session.improv.padVolume);
