@@ -226,14 +226,16 @@ T23 → T24
 
 **Done when**:
 
-- [ ] Golden `synth_click` and `sample_click` pass
-- [ ] Gate check passes: `cargo test --manifest-path engine/Cargo.toml`
-- [ ] Test count: 149 Rust tests pass
+- [x] Golden `synth_click` and `sample_click` pass
+- [x] Gate check passes: `cargo test --manifest-path engine/Cargo.toml`
+- [x] Test count: 149 Rust tests pass
 
 **Tests**: unit
 **Gate**: quick
 
 **Commit**: `refactor(engine): extract the click instrument`
+
+**Status**: ✅ Complete
 
 ---
 

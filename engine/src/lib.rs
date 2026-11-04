@@ -4,7 +4,9 @@ mod pad;
 mod sequencer;
 #[cfg(test)]
 mod golden_tests;
+mod instruments;
 use dsp::sample::{trim_onset, Sample};
+use instruments::click::Click;
 use sequencer::clock::Clock;
 use sequencer::pattern::{Pattern, STEPS_COUNT};
 use sequencer::trainer::{Curve, StepType, Trainer, TrainerSettings};
@@ -60,10 +62,7 @@ pub struct Engine {
     current_sample_index: u64,
     clock: Clock,
     
-    // Synthesis params for click (Oscillator)
-    click_phase: f32,
-    active_click_freq: f32,
-    active_click_amp: f32,
+    click: Click,
 
     // Drum samples playback state
     samples: [Option<Sample>; MAX_SAMPLES],
@@ -89,8 +88,6 @@ pub struct Engine {
 
 
     // Sound selection
-    click_mode: u32, // 0 = Synth, 1 = Sample
-    click_accent: bool,
 
     pad: pad::Pad,
 }
@@ -119,9 +116,7 @@ impl Engine {
             is_playing: false,
             current_sample_index: 0,
             clock: Clock::new(sample_rate),
-            click_phase: 0.0,
-            active_click_freq: 0.0,
-            active_click_amp: 0.0,
+            click: Click::new(sample_rate),
             samples: std::array::from_fn(|_| None),
             bank: std::array::from_fn(|_| std::array::from_fn(|_| std::array::from_fn(|_| None))),
             next_take: [[0; DYNAMICS]; MAX_SAMPLES],
@@ -136,8 +131,6 @@ impl Engine {
             trainer: Trainer::new(),
             last_tick_index: -1,
             last_tick_bpm: 120.0,
-            click_mode: 0,
-            click_accent: false,
             pad: pad::Pad::new(sample_rate),
         }
     }
@@ -151,9 +144,7 @@ impl Engine {
         self.playback_active = [false; MAX_SAMPLES];
         self.playback_offsets = [0; MAX_SAMPLES];
         self.fading = [None; MAX_SAMPLES];
-        self.active_click_amp = 0.0;
-        self.click_phase = 0.0;
-        self.click_accent = false;
+        self.click.reset();
 
         self.is_playing = true;
         self.pattern.restart();
@@ -177,18 +168,7 @@ impl Engine {
         self.last_tick_bpm = self.clock.bpm();
 
         // Check click track
-        let click_step = self.pattern.step(0);
-        if click_step > 0 {
-            self.click_accent = click_step == 2;
-            if self.click_mode == 0 {
-                self.active_click_freq = if self.click_accent { 880.0 } else { 440.0 };
-                self.active_click_amp = 1.0;
-                self.click_phase = 0.0;
-            } else if self.samples[0].is_some() {
-                self.playback_active[0] = true;
-                self.playback_offsets[0] = 0;
-            }
-        }
+        self.click.trigger(self.pattern.step(0));
 
         // A closing hat cuts the open one, as on a real stand
         if self.pattern.step(HI_HAT_TRACK) > 0 {
@@ -290,37 +270,7 @@ impl Engine {
             }
 
             // 2. Synthesize Click (decaying sine wave) or Play Sample
-            let mut click_out_l = 0.0;
-            let mut click_out_r = 0.0;
-            if self.click_mode == 0 {
-                if self.active_click_amp > 0.0 {
-                    let click_out = (self.click_phase * 2.0 * std::f32::consts::PI).sin() * self.active_click_amp;
-                    self.click_phase += self.active_click_freq / self.sample_rate;
-                    if self.click_phase >= 1.0 {
-                        self.click_phase -= 1.0;
-                    }
-                    self.active_click_amp *= 0.9995; // Decay rate
-                    if self.active_click_amp < 0.001 {
-                        self.active_click_amp = 0.0;
-                    }
-                    click_out_l = click_out * 0.5;
-                    click_out_r = click_out * 0.5;
-                }
-            } else if self.playback_active[0] {
-                if let Some(ref sample) = self.samples[0] {
-                    let offset = self.playback_offsets[0];
-                    if offset < sample.left_channel.len() {
-                        let vol = if self.click_accent { 1.0 } else { 0.5 };
-                        click_out_l = sample.left_channel[offset] * vol;
-                        click_out_r = sample.right_channel[offset] * vol;
-                        self.playback_offsets[0] += 1;
-                    } else {
-                        self.playback_active[0] = false;
-                    }
-                } else {
-                    self.playback_active[0] = false;
-                }
-            }
+            let (click_out_l, click_out_r) = self.click.render();
 
             // 3. Play Drum Samples
             let mut drums_l = 0.0;
@@ -416,7 +366,12 @@ pub extern "C" fn engine_load_sample(
     let engine = unsafe { &mut *ptr };
     let left_slice = unsafe { slice::from_raw_parts(left_ptr, length) };
     let right_slice = unsafe { slice::from_raw_parts(right_ptr, length) };
-    engine.samples[sample_id as usize] = Some(trim_onset(left_slice, right_slice));
+    let sample = trim_onset(left_slice, right_slice);
+    if sample_id == 0 {
+        engine.click.load(sample);
+    } else {
+        engine.samples[sample_id as usize] = Some(sample);
+    }
 }
 
 // Dynamic: 0 Ghost, 1 Normal, 2 Accent
@@ -522,7 +477,7 @@ pub extern "C" fn engine_set_trainer(
 pub extern "C" fn engine_set_click_mode(ptr: *mut Engine, mode: u32) {
     if ptr.is_null() { return; }
     let engine = unsafe { &mut *ptr };
-    engine.click_mode = mode;
+    engine.click.set_mode(mode);
 }
 
 // Holds the first `count` notes in a timbre. A chord has at most 7, and the rest of the arguments are ignored
@@ -2481,11 +2436,11 @@ mod tests {
         engine.start();
         
         // Default mode is synth (0)
-        assert_eq!(engine.click_mode, 0);
+        assert_eq!(engine.click.mode, 0);
         
         // Switch to sample mode (1)
         engine_set_click_mode(&mut engine as *mut Engine, 1);
-        assert_eq!(engine.click_mode, 1);
+        assert_eq!(engine.click.mode, 1);
     }
 
     #[test]
@@ -2496,7 +2451,7 @@ mod tests {
         // Load dummy click sample (slot 0)
         let sample_l = vec![0.2f32, 0.4f32, 0.6f32];
         let sample_r = vec![-0.2f32, -0.4f32, -0.6f32];
-        engine.samples[0] = Some(Sample {
+        engine.click.sample = Some(Sample {
             left_channel: sample_l.clone(),
             right_channel: sample_r.clone(),
         });
