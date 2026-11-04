@@ -9,6 +9,7 @@ import type { CustomGroove, PracticeLog, Preset, TrainerSettings } from '../../s
 import { FACTORY_PRESETS } from '../../src/data/factory';
 import { SONGS, songToPreset } from '../../src/domain/songs';
 import { TRACKS } from '../../src/domain/kit';
+import { DEFAULT_TIMBRE, PAD_TIMBRES, timbreNotes } from '../../src/domain/chords';
 
 // --- Fakes: the engine records every call, the storage lives in memory ---
 
@@ -228,5 +229,88 @@ describe('Session', () => {
     expect(engine.sent('setBpm')).toEqual([]); // The live tempo carries on
     expect(session.preset.trainerSettings).toEqual(trainer);
     expect(session.hasUnsavedEdits).toBe(true);
+  });
+
+  it('presses a chord', async () => {
+    const { session, engine } = setup();
+    const cMajor = { root: 0, type: 0 };
+    const sweep = PAD_TIMBRES.findIndex(({ name }) => name === 'Sweep');
+    expect(sweep).not.toBe(DEFAULT_TIMBRE);
+    session.setTimbre('Sweep');
+    await flush();
+
+    await session.pressChord(cMajor);
+
+    expect(engine.sent('padPlay')).toEqual([[timbreNotes(0, 0, sweep), sweep]]);
+    expect(session.improv.soundingChord).toEqual(cMajor);
+
+    // The same chord again lets it go
+    await session.pressChord(cMajor);
+    expect(engine.sent('padStop')).toHaveLength(1);
+    expect(session.improv.soundingChord).toBeNull();
+  });
+
+  it('changes the timbre', async () => {
+    const { session, engine, prefs } = setup();
+    const orchestra = PAD_TIMBRES.findIndex(({ name }) => name === 'Orchestra');
+    const dMinor = { root: 2, type: 1 };
+    await session.pressChord(dMinor);
+    engine.calls.length = 0;
+
+    session.setTimbre('Orchestra');
+    await flush();
+
+    expect(engine.sent('padPlay')).toEqual([[timbreNotes(2, 1, orchestra), orchestra]]);
+    expect(engine.sent('padLoadBegin')).toEqual([[orchestra]]);
+    expect(engine.sent('padLoad').map(([timbre, key, url]) => [timbre, key, url]))
+      .toEqual(PAD_TIMBRES[orchestra].files.map(({ key, url }) => [orchestra, key, url]));
+    expect(engine.sent('padLoadEnd')).toEqual([[orchestra]]);
+    expect(prefs.get('padTimbre')).toBe('Orchestra');
+    expect(session.improv.timbre).toBe('Orchestra');
+  });
+
+  it('changes the pad volume', async () => {
+    const { session, engine, prefs } = setup();
+
+    session.setPadVolume(40);
+
+    expect(engine.sent('padVolume')).toEqual([[0.4]]);
+    expect(prefs.get('padVolume')).toBe('40');
+    expect(session.improv.padVolume).toBe(40);
+
+    // The engine starts at the stored volume
+    session.togglePlay();
+    await flush();
+    expect(engine.sent('padVolume').at(-1)).toEqual([0.4]);
+  });
+
+  it('sends every engine and storage call through the adapters it receives', async () => {
+    // Without a DOM there is no localStorage or IndexedDB, so a call that went around the adapters would throw
+    expect(typeof localStorage).toBe('undefined');
+    expect(typeof indexedDB).toBe('undefined');
+    const { session, engine, database, prefs } = setup();
+
+    session.togglePlay();
+    await flush();
+    session.editStep(1, 0);
+    session.setTrainer(trainer);
+    await session.setClickSound('woodblock');
+    session.setView('improv');
+    await session.pressChord({ root: 0, type: 0 });
+    session.setPadVolume(30);
+    await session.savePreset('Kept');
+    await session.saveGroove('Beat');
+    await flush();
+
+    expect(engine.methods()).toEqual(expect.arrayContaining([
+      'init', 'loadSample', 'loadTake', 'setClickMode', 'setBpm', 'setMeasureLength', 'setBars', 'updateGrid',
+      'replaceTrainer', 'start', 'setTrainer', 'padPlay', 'padVolume', 'padLoadBegin', 'padLoad', 'padLoadEnd',
+    ]));
+    expect(engine.sent('loadSample')).toContainEqual([0, '/woodblock.wav']);
+    expect([...database.presets.values()].map(preset => preset.name)).toEqual(['Kept']);
+    expect([...database.grooves.values()].map(groove => groove.name)).toEqual(['Beat']);
+    expect(Object.fromEntries(prefs.values)).toEqual({
+      clickSound: 'woodblock', viewMode: 'improv', padVolume: '30',
+    });
   });
 });

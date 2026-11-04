@@ -457,14 +457,16 @@ T23 → T24
 
 **Done when**:
 
-- [ ] Session tests for pressing a chord, changing the timbre and changing the pad volume pass, with no DOM
-- [ ] Gate check passes: `cargo test --manifest-path engine/Cargo.toml && npx vitest run`
-- [ ] Test count: every vitest test of T1 plus the new ones pass
+- [x] Session tests for pressing a chord, changing the timbre and changing the pad volume pass, with no DOM
+- [x] Gate check passes: `cargo test --manifest-path engine/Cargo.toml && npx vitest run`
+- [x] Test count: every vitest test of T1 plus the new ones pass
 
 **Tests**: unit
 **Gate**: full
 
 **Commit**: `refactor(web): run the Improv rules in the Session`
+
+**Status**: ✅ Complete
 
 ---
 
