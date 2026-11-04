@@ -25,7 +25,9 @@ STRETCH_BLOCKS = STRETCH_FRAMES // BLOCK_FRAMES
 ATTACK_BLOCKS = 60  # 600 ms
 LOUDEST_STRETCH_DB = 6  # A flat stretch this far under the loudest one is the release
 FLATTEN_PASSES = 4
-FULL_SCALE_RMS = 10 ** (-22 / 20)  # A note at level 0 dB
+# A note at level 0 dB. 3.6 dB under the -22 dB it had while the chord sat under the bass, so the bank keeps
+# its loudness against the other timbres (TIM-19) and its size under TIM-36's 12 MB
+FULL_SCALE_RMS = 10 ** (-25.6 / 20)
 HEADROOM_PEAK = 0.97
 PITCH_RATE = SAMPLE_RATE // 4
 VIBRATO_REACH = 0.022  # Of a harmonic's frequency, about 38 cents
@@ -44,12 +46,16 @@ CONTRABASS = 'Strings/Solo Contrabass/SusVib/BKCtbss_SusVib_{}_v1_rr1.wav'
 
 NOTE_NAMES = ('C', 'Cs', 'D', 'Ds', 'E', 'F', 'Fs', 'G', 'Gs', 'A', 'As', 'B')
 
-# Levels in dB, the balance the approved demo measures: cello and violin even, violas 7 dB under, and a
-# low cello 5 dB over them, with the contrabass 10 dB under that cello and 4 dB under on the lowest notes
+# Levels in dB. The bass is the balance the approved demo measures: a low cello with the contrabass 10 dB under
+# it, and 4 dB under it alone on the lowest notes.
+# SPEC_DEVIATION: the cello of key 47, the violas and the violins sit at the low cello's level, where the demo puts
+# cello and violin 5 dB under it and the violas 12 dB under
+# Reason: the chord's 3rd and 5th fall on the violas, so at the demo's balance the user heard the bass and could not
+# tell a major chord from a minor one
 LOW_CELLO = 5
 LOW_CONTRABASS = -5
 LOWEST_CONTRABASS = -4
-VIOLA_LEVEL = -7
+CHORD_LEVEL = LOW_CELLO
 # key: (recording, name, measured MIDI note, level in dB), ...
 BANK = {
     23: ((CONTRABASS, 'F#0', 30, LOWEST_CONTRABASS),),
@@ -58,14 +64,14 @@ BANK = {
     35: ((CELLO, 'C1', 36, LOW_CELLO), (CONTRABASS, 'C1', 36, LOW_CONTRABASS)),
     39: ((CELLO, 'E1', 40, LOW_CELLO), (CONTRABASS, 'E1', 40, LOW_CONTRABASS)),
     43: ((CELLO, 'G1', 43, LOW_CELLO), (CONTRABASS, 'G#1', 44, LOW_CONTRABASS)),
-    47: ((CELLO, 'B1', 47, 0),),
-    51: ((VIOLA, 'E2', 52, VIOLA_LEVEL),),
-    55: ((VIOLA, 'B2', 59, VIOLA_LEVEL),),
-    59: ((VIOLIN, 'B2', 59, 0),),
-    63: ((VIOLIN, 'D3', 62, 0),),
-    67: ((VIOLIN, 'F#3', 66, 0),),
-    71: ((VIOLIN, 'C4', 72, 0),),
-    75: ((VIOLIN, 'E4', 76, 0),),
+    47: ((CELLO, 'B1', 47, CHORD_LEVEL),),
+    51: ((VIOLA, 'E2', 52, CHORD_LEVEL),),
+    55: ((VIOLA, 'B2', 59, CHORD_LEVEL),),
+    59: ((VIOLIN, 'B2', 59, CHORD_LEVEL),),
+    63: ((VIOLIN, 'D3', 62, CHORD_LEVEL),),
+    67: ((VIOLIN, 'F#3', 66, CHORD_LEVEL),),
+    71: ((VIOLIN, 'C4', 72, CHORD_LEVEL),),
+    75: ((VIOLIN, 'E4', 76, CHORD_LEVEL),),
 }
 
 

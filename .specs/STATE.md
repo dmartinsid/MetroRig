@@ -212,3 +212,11 @@
 - **Date**: 2026-11-03
 - **Status**: active (AD-026)
 
+### AD-027
+- **Decision**: In the Orchestra bank, the cello of key 47, the violas and the violins sit at the low cello's level, so every note of the chord stands as loud as each bass note. The whole bank sits 3.6 dB lower (`FULL_SCALE_RMS` at -25.6 dB), so Orchestra keeps New Age's loudness. This replaces the approved demo's balance above key 43, which put cello and violin 5 dB under the low cello and the violas 12 dB under it.
+- **Reason**: The user, in the running app on 2026-11-03: "No modo orchestra o grave ta em um volume bom, mas o resto ta baixo, tipo maior pra menor nao ta claro". The 3rd and 5th of most chords fall on the viola files, which measured -29 dB RMS against the low cello's -16.6 dB.
+- **Trade-off**: The bass is 3.6 dB quieter in absolute terms, but it keeps its level against each chord note. Louder files compress worse, and the lower reference keeps `public/pads/` at 11.83 MB, under TIM-36.
+- **Scope**: pad-timbres; `scripts/build_orchestra_bank.py`, `public/pads/orchestra/`
+- **Heard**: not yet heard in the running app
+- **Date**: 2026-11-03
+- **Status**: active (AD-027)
