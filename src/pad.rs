@@ -741,37 +741,18 @@ mod tests {
         assert!((level - expected).abs() < 0.02, "at {second} s: level {level}, expected {expected}");
     }
 
-    struct BankFile {
-        key: u8,
-        audio: Vec<f32>,
-        loop_start: usize,
-        loop_end: usize,
-    }
-
     fn numbers(text: &str) -> Vec<usize> {
         text.split(|c: char| !c.is_ascii_digit()).filter(|word| !word.is_empty()).map(|word| word.parse().unwrap()).collect()
     }
 
-    // The shipped New Age files, as src/chords.ts lists them. The level of real audio is what PAD-14, PAD-20 and PAD-27 are about
-    fn bank() -> &'static [BankFile] {
-        static BANK: OnceLock<Vec<BankFile>> = OnceLock::new();
-        BANK.get_or_init(|| {
-            let root = env!("CARGO_MANIFEST_DIR");
-            let source = std::fs::read_to_string(format!("{root}/src/chords.ts")).unwrap();
-            let files: Vec<BankFile> = source.lines().filter(|line| line.contains("url: '/pads/new-age/")).map(|line| {
-                let parts: Vec<&str> = line.split('\'').collect();
-                let (key, loops) = (numbers(parts[0]), numbers(parts[2]));
-                let output = Command::new("ffmpeg")
-                    .args(["-v", "error", "-i", &format!("{root}/public{}", parts[1]), "-f", "f32le", "-ac", "1", "-"])
-                    .output()
-                    .expect("ffmpeg decodes the bank");
-                assert!(output.status.success());
-                let audio = output.stdout.chunks_exact(4).map(|bytes| f32::from_le_bytes(bytes.try_into().unwrap())).collect();
-                BankFile { key: key[0] as u8, audio, loop_start: loops[0], loop_end: loops[1] }
-            }).collect();
-            assert_eq!(files.len(), 9);
-            files
-        })
+    fn chords_ts() -> String {
+        std::fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/src/chords.ts")).unwrap()
+    }
+
+    // The shipped New Age files. The level of real audio is what PAD-14, PAD-20 and PAD-27 are about.
+    // They are mono, so each file's left and right are the same samples
+    fn bank() -> &'static [TimbreFile] {
+        &timbre_banks()[NEW_AGE as usize]
     }
 
     struct TimbreFile {
@@ -787,7 +768,7 @@ mod tests {
         static BANKS: OnceLock<[Vec<TimbreFile>; TIMBRES]> = OnceLock::new();
         BANKS.get_or_init(|| {
             let root = env!("CARGO_MANIFEST_DIR");
-            let source = std::fs::read_to_string(format!("{root}/src/chords.ts")).unwrap();
+            let source = chords_ts();
             let folders = ["/pads/choir/", "/pads/new-age/", "/pads/orchestra/", "/pads/sweep/"];
             let banks = std::array::from_fn(|timbre| {
                 let Some(folder) = folders.get(timbre) else { return Vec::new() };
@@ -836,7 +817,7 @@ mod tests {
 
     fn load_bank(pad: &mut Pad) {
         for file in bank() {
-            pad.load(NEW_AGE, file.key, &file.audio, &file.audio, file.loop_start, file.loop_end);
+            pad.load(NEW_AGE, file.key, &file.left, &file.right, file.loop_start, file.loop_end);
         }
     }
 
@@ -1349,16 +1330,14 @@ mod tests {
         }
     }
 
+    // The 12 roots × 34 types of the Improv screen, as CHORD_TYPES in src/chords.ts lists them
     fn all_chords() -> Vec<Vec<u8>> {
-        const TYPES: [&[u8]; 34] = [
-            &[0, 4, 7], &[0, 3, 7], &[0, 3, 6], &[0, 4, 8], &[0, 2, 7], &[0, 5, 7],
-            &[0, 4, 7, 9], &[0, 3, 7, 9], &[0, 4, 7, 10], &[0, 4, 7, 11], &[0, 3, 7, 10], &[0, 3, 7, 11], &[0, 3, 6, 10], &[0, 3, 6, 9], &[0, 5, 7, 10],
-            &[0, 4, 7, 14], &[0, 3, 7, 14], &[0, 4, 7, 10, 14], &[0, 3, 7, 10, 14], &[0, 4, 7, 11, 14], &[0, 5, 7, 10, 14], &[0, 4, 7, 9, 14],
-            &[0, 4, 7, 17], &[0, 7, 10, 14, 17], &[0, 3, 10, 14, 17], &[0, 4, 10, 14, 18], &[0, 4, 11, 14, 18],
-            &[0, 4, 10, 14, 21], &[0, 3, 10, 14, 21],
-            &[0, 4, 7, 10, 13], &[0, 4, 7, 10, 15], &[0, 4, 8, 10], &[0, 4, 6, 10], &[0, 4, 7, 10, 20],
-        ];
-        (45..=56u8).flat_map(|root| TYPES.iter().map(move |semitones| semitones.iter().map(|semitone| root + semitone).collect())).collect()
+        let source = chords_ts();
+        let types: Vec<Vec<u8>> = source.lines().filter(|line| line.contains("family: '") && line.contains("semitones: ["))
+            .map(|line| numbers(line.split("semitones: [").nth(1).unwrap().split(']').next().unwrap()).iter().map(|&n| n as u8).collect())
+            .collect();
+        assert_eq!(types.len(), 34);
+        (45..=56u8).flat_map(|root| types.iter().map(move |semitones| semitones.iter().map(|semitone| root + semitone).collect())).collect()
     }
 
     fn peak(signal: &[f32]) -> f32 {
@@ -1892,7 +1871,7 @@ mod tests {
         let mut pad = Pad::new(RATE);
         for timbre in [CHOIR, NEW_AGE, ORCHESTRA, SWEEP] {
             for file in bank() {
-                pad.load(timbre, file.key, &file.audio, &file.audio, file.loop_start, file.loop_end);
+                pad.load(timbre, file.key, &file.left, &file.right, file.loop_start, file.loop_end);
             }
         }
         let (mut left, mut right) = ([0.0f32; 128], [0.0f32; 128]);
