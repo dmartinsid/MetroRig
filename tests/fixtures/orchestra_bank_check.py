@@ -14,20 +14,28 @@ names. It exits non-zero if they are missing.
 import argparse
 import array
 import cmath
+import importlib.util
 import math
 import os
 import pathlib
-import re
 import subprocess
 import sys
 import tempfile
 
-ROOT = pathlib.Path(__file__).resolve().parents[2]
-BUILDER = ROOT / 'scripts/build_orchestra_bank.py'
+def load_pad_files():
+    """tests/fixtures/pad_files.py, by its path: -I leaves this folder off sys.path."""
+    path = pathlib.Path(__file__).resolve().with_name('pad_files.py')
+    spec = importlib.util.spec_from_file_location('pad_files', path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+pad_files = load_pad_files()
+
+BUILDER = pad_files.ROOT / 'scripts/build_orchestra_bank.py'
 DEFAULT_VSCO = pathlib.Path.home() / '.cache/metrorig/vsco-2-ce'
-ENTRY = re.compile(r"\{\s*key:\s*(\d+),\s*url:\s*'([^']+)',\s*loopStart:\s*(\d+),\s*loopEnd:\s*(\d+)\s*\}")
-ORCHESTRA = re.compile(r"\{\s*name:\s*'Orchestra',\s*files:\s*(\w+),")
-BANK_SIZE = 14
+BANK_SIZE = pad_files.BANK_SIZES['Orchestra']
 SAMPLE_RATE = 44100
 
 PITCH_LIMIT_CENTS = 10
@@ -48,19 +56,12 @@ LEVEL_HOP = SAMPLE_RATE // 100
 
 
 def read_bank():
-    source = (ROOT / 'src/chords.ts').read_text()
-    timbre = ORCHESTRA.search(source)
-    table = re.search(rf'\b{timbre.group(1)}\b[^=]*=\s*\[(.*?)\];', source, re.S) if timbre else None
-    entries = ENTRY.findall(table.group(1)) if table else []
-    if len(entries) != BANK_SIZE:
-        sys.exit(f'Orchestra: expected {BANK_SIZE} entries, parsed {len(entries)}')
-    return [(int(key), ROOT / 'public' / url.lstrip('/')) for key, url, _, _ in entries]
+    return [(int(key), pad_files.path_of(url)) for key, url, _, _ in pad_files.read_banks()['Orchestra']]
 
 
 def decode(path, arguments):
-    command = ['ffmpeg', '-nostdin', '-v', 'error', '-i', str(path), *arguments, '-c:a', 'pcm_f32le', '-f', 'f32le', '-']
     samples = array.array('f')
-    samples.frombytes(subprocess.run(command, check=True, capture_output=True).stdout)
+    samples.frombytes(pad_files.ffmpeg(path, [*arguments, '-c:a', 'pcm_f32le'], 'f32le'))
     return samples
 
 

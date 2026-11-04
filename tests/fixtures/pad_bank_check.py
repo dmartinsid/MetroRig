@@ -6,50 +6,37 @@ frame played before the wrap is loop_end - 1. No channel may step there above it
 10 ms before. New Age keeps the bound it shipped with: loop_end's sample equals loop_start's.
 """
 import array
+import importlib.util
 import pathlib
-import re
-import subprocess
 import sys
 
-ROOT = pathlib.Path(__file__).resolve().parents[2]
-ENTRY = re.compile(r"\{\s*key:\s*(\d+),\s*url:\s*'([^']+)',\s*loopStart:\s*(\d+),\s*loopEnd:\s*(\d+)\s*\}")
-TIMBRE = re.compile(r"\{\s*name:\s*'([^']+)',\s*files:\s*(\w+|\[\]),\s*bass:\s*(?:true|false)\s*\}")
-BANK_SIZES = {'Choir': 5, 'New Age': 9, 'Orchestra': 14, 'Sweep': 9, 'Analog': 0}
+
+def load_pad_files():
+    """tests/fixtures/pad_files.py, by its path: -I leaves this folder off sys.path."""
+    path = pathlib.Path(__file__).resolve().with_name('pad_files.py')
+    spec = importlib.util.spec_from_file_location('pad_files', path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+pad_files = load_pad_files()
 EXACT_BANKS = ('New Age',)
 TEN_MS = 441
 
 
-def read_banks():
-    source = (ROOT / 'src/chords.ts').read_text()
-    block = re.search(r'PAD_TIMBRES\b[^=]*=\s*\[(.*?)\];', source, re.S)
-    timbres = TIMBRE.findall(block.group(1)) if block else []
-    if [name for name, _ in timbres] != list(BANK_SIZES):
-        sys.exit(f'PAD_TIMBRES: expected {list(BANK_SIZES)}, parsed {[name for name, _ in timbres]}')
-    banks = {}
-    for name, files in timbres:
-        table = re.search(rf'\b{files}\b[^=]*=\s*\[(.*?)\];', source, re.S) if files != '[]' else None
-        entries = ENTRY.findall(table.group(1)) if table else []
-        if len(entries) != BANK_SIZES[name]:
-            sys.exit(f'{name}: expected {BANK_SIZES[name]} entries, parsed {len(entries)}')
-        banks[name] = entries
-    return banks
-
-
 def decode(path):
     """Each channel of the file."""
-    channels = int(subprocess.run(['ffprobe', '-v', 'error', '-show_entries', 'stream=channels', '-of', 'csv=p=0',
-                                   str(path)], check=True, capture_output=True, text=True).stdout.split(',')[0])
-    raw = subprocess.run(['ffmpeg', '-v', 'error', '-i', str(path), '-f', 's16le', '-'],
-                         check=True, capture_output=True).stdout
+    count = pad_files.channels(path)
     samples = array.array('h')
-    samples.frombytes(raw)
-    return [samples[channel::channels] for channel in range(channels)]
+    samples.frombytes(pad_files.ffmpeg(path, [], 's16le'))
+    return [samples[channel::count] for channel in range(count)]
 
 
 def check(bank, url, start, end):
     """The problems of one file, and its largest step at the wrap."""
     problems, wrap = [], 0
-    for samples in decode(ROOT / 'public' / url.lstrip('/')):
+    for samples in decode(pad_files.path_of(url)):
         if len(samples) <= end:
             return [f'{url}: the loop ends past the file'], wrap
         last = end - 1
@@ -65,7 +52,7 @@ def check(bank, url, start, end):
 
 def main():
     problems = []
-    for bank, entries in read_banks().items():
+    for bank, entries in pad_files.read_banks().items():
         for key, url, loop_start, loop_end in entries:
             found, wrap = check(bank, url, int(loop_start), int(loop_end))
             problems += found
