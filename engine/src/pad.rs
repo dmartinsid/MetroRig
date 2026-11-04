@@ -746,7 +746,7 @@ mod tests {
     }
 
     fn chords_ts() -> String {
-        std::fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/src/chords.ts")).unwrap()
+        std::fs::read_to_string(concat!(env!("CARGO_MANIFEST_DIR"), "/../src/chords.ts")).unwrap()
     }
 
     // The shipped New Age files. The level of real audio is what PAD-14, PAD-20 and PAD-27 are about.
@@ -776,7 +776,7 @@ mod tests {
                 lines.map(|line| {
                     let parts: Vec<&str> = line.split('\'').collect();
                     let (key, loops) = (numbers(parts[0]), numbers(parts[2]));
-                    let path = format!("{root}/public{}", parts[1]);
+                    let path = format!("{root}/../public{}", parts[1]);
                     let output = Command::new("ffmpeg")
                         .args(["-v", "error", "-i", &path, "-f", "f32le", "-"])
                         .output()

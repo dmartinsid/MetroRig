@@ -129,16 +129,18 @@ T23 → T24
 
 **Done when**:
 
-- [ ] No `.rs` file under `src/`
-- [ ] `npm run build` exits 0 and `tests/wasm.test.ts` passes on the rebuilt file
-- [ ] `copy_wasm` test passes: exit 1 with the path printed
-- [ ] Gate check passes: `npm run build && cargo test --manifest-path engine/Cargo.toml && npx vitest run`
-- [ ] Test count: 143 Rust tests pass
+- [x] No `.rs` file under `src/`
+- [x] `npm run build` exits 0 and `tests/wasm.test.ts` passes on the rebuilt file
+- [x] `copy_wasm` test passes: exit 1 with the path printed
+- [x] Gate check passes: `npm run build && cargo test --manifest-path engine/Cargo.toml && npx vitest run`
+- [x] Test count: 143 Rust tests pass
 
 **Tests**: unit
 **Gate**: build
 
 **Commit**: `refactor(engine): move the crate to engine/`
+
+**Status**: ✅ Complete
 
 ---
 

@@ -1268,7 +1268,7 @@ mod tests {
 
     #[test]
     fn onset_02_woodblock_on_the_step() {
-        let path = concat!(env!("CARGO_MANIFEST_DIR"), "/public/woodblock.wav");
+        let path = concat!(env!("CARGO_MANIFEST_DIR"), "/../public/woodblock.wav");
         let (left, right) = read_wav(path);
         let peak = left.iter().chain(&right).fold(0.0f32, |peak, s| peak.max(s.abs()));
         assert!(peak > 0.0);

@@ -6,10 +6,10 @@
   "scripts": {
     "dev": "vite",
     "download:sounds": "node scripts/download_sounds.js",
-    "build:wasm": "cargo build --target wasm32-unknown-unknown --release && node scripts/copy_wasm.js",
+    "build:wasm": "cargo build --manifest-path engine/Cargo.toml --target wasm32-unknown-unknown --release && node scripts/copy_wasm.js",
     "build": "npm run build:wasm && vite build",
     "test:js": "vitest run",
-    "test:rust": "cargo test"
+    "test:rust": "cargo test --manifest-path engine/Cargo.toml"
   },
   "devDependencies": {
     "happy-dom": "^20.10.6",
