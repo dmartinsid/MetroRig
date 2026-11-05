@@ -151,6 +151,16 @@ function rustImports(file: RustFile): { layer: string; text: string }[] {
 
 const layerOf = (name: string) => modulePath(name)[0] ?? 'lib';
 
+// Each import that reaches a layer the file's layer may not use, naming the file and the import
+function rustCrossings(files: RustFile[]): string[] {
+  return files.flatMap(file => {
+    const layer = layerOf(file.name);
+    return rustImports(file)
+      .filter(use => use.layer !== layer && !RUST_LAYERS[layer].includes(use.layer))
+      .map(use => `${file.name} (${layer}) uses ${use.text}`);
+  });
+}
+
 function structFields(source: string, name: string): { field: string; type: string }[] {
   const body = source.match(new RegExp(`struct\\s+${name}\\s*\\{([\\s\\S]*?)\\n\\}`));
   if (!body) return [];
@@ -200,15 +210,7 @@ describe('Layers', () => {
   });
 
   it('engine modules depend downward only', () => {
-    const crossings = productionRustFiles()
-      .filter(file => file.name !== 'lib.rs')
-      .flatMap(file => {
-        const layer = layerOf(file.name);
-        return rustImports(file)
-          .filter(use => use.layer !== layer && !RUST_LAYERS[layer].includes(use.layer))
-          .map(use => `${file.name} (${layer}) uses ${use.text}`);
-      });
-    expect(crossings).toEqual([]);
+    expect(rustCrossings(productionRustFiles().filter(file => file.name !== 'lib.rs'))).toEqual([]);
     expect(Object.keys(RUST_LAYERS).sort()).toEqual(
       [...new Set(productionRustFiles().filter(file => file.name !== 'lib.rs').map(file => layerOf(file.name)))].sort());
   });
@@ -373,6 +375,25 @@ describe('Layers', () => {
       { name: 'src/domain/kit.ts', source: "export { barSteps } from './pattern';" },
     ];
     expect(tsCycles(cycle)).toEqual(['src/domain/pattern.ts -> src/domain/kit.ts -> src/domain/pattern.ts']);
+    const rustCrossing: RustFile[] = [
+      { name: 'instruments/click.rs', production: 'use crate::engine::Engine;' },
+      { name: 'instruments/drums.rs', production: 'use crate::{dsp::sample, engine::Engine};' },
+      { name: 'sequencer/clock.rs', production: 'use crate::{dsp::{sample::trim_onset}, engine::{Engine, Event as E}};' },
+      { name: 'instruments/click.rs', production: 'use super::super::engine::Engine;' },
+      { name: 'instruments/pad/voice.rs', production: 'use super::super::super::{dsp::gain, ffi::{tick}};' },
+      // Allowed: downward, grouped and nested, and super:: staying in the layer
+      { name: 'engine/mod.rs', production: 'use crate::{sequencer::{clock::Clock, trainer::Trainer}, instruments::drums::Drums};' },
+      { name: 'instruments/pad/voice.rs', production: 'use super::super::click::Click;' },
+    ];
+    expect(rustCrossings(rustCrossing)).toEqual([
+      'instruments/click.rs (instruments) uses crate::engine::Engine',
+      'instruments/drums.rs (instruments) uses crate::engine::Engine',
+      'sequencer/clock.rs (sequencer) uses crate::dsp::sample::trim_onset',
+      'sequencer/clock.rs (sequencer) uses crate::engine::Engine',
+      'sequencer/clock.rs (sequencer) uses crate::engine::Event',
+      'instruments/click.rs (instruments) uses super::super::engine::Engine',
+      'instruments/pad/voice.rs (instruments) uses super::super::super::ffi::tick',
+    ]);
   });
 
   it('ui holds one module per screen and the header', () => {
