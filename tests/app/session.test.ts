@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest';
-import { Session } from '../../src/app/session';
+import { Session, trainerStatusText } from '../../src/app/session';
 import { StateManager } from '../../src/app/stateManager';
 import type { EnginePort } from '../../src/app/ports';
 import type { Database } from '../../src/storage/database';
@@ -229,6 +229,21 @@ describe('Session', () => {
     expect(engine.sent('setBpm')).toEqual([]); // The live tempo carries on
     expect(session.preset.trainerSettings).toEqual(trainer);
     expect(session.hasUnsavedEdits).toBe(true);
+  });
+
+  it('shows the Trainer fields as typed', () => {
+    const { session } = setup();
+    const typed = { enabled: true, startBpm: '080', targetBpm: '160', increment: '', stepType: 'measures', stepValue: '1.0' };
+
+    session.setTrainerFields(typed);
+    expect(trainerStatusText(session.trainerFields)).toBe('Trainer 080 → 160 BPM · + every 1.0 bars');
+
+    // A loaded preset puts its own settings in the form
+    session.loadPreset('factory:trainer_calvagada_148_190');
+    expect(trainerStatusText(session.trainerFields)).toBe('Trainer 148 → 190 BPM · +2 every 3 bars');
+    expect(trainerStatusText({ ...typed, stepValue: '1' })).toBe('Trainer 080 → 160 BPM · + every 1 bar');
+    expect(trainerStatusText({ ...typed, stepType: 'seconds' })).toBe('Trainer 080 → 160 BPM · + every 1.0 s');
+    expect(trainerStatusText({ ...typed, enabled: false })).toBe('Trainer Off');
   });
 
   it('presses a chord', async () => {

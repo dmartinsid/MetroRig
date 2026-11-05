@@ -1370,6 +1370,26 @@ describe('Interface V2', () => {
     expect(byId('stadium-status-dot').classList.contains('lit')).toBe(false);
   });
 
+  it('stad_07b trainer status shows the fields as typed', async () => {
+    localStorage.removeItem('metrorig_view_mode');
+    await openPage();
+    await selectPreset('factory:default');
+
+    byId('trainer-enable').checked = true;
+    byId('trainer-enable').dispatchEvent(new Event('change'));
+    const type = (id: string, value: string) => {
+      byId<HTMLInputElement>(id).value = value;
+      byId(id).dispatchEvent(new Event('input'));
+      byId(id).dispatchEvent(new Event('change'));
+    };
+    type('trainer-start', '080');
+    type('trainer-val', '1.0');
+    type('trainer-inc', '');
+    byId<HTMLButtonElement>('nav-stadium').click();
+    expect(byId('stadium-status').innerText).toBe('Trainer 080 → 160 BPM · + every 1.0 bars');
+    localStorage.removeItem('metrorig_view_mode');
+  });
+
   it('stad_10 orb pulse', async () => {
     await openPage();
     await clickPlay();
