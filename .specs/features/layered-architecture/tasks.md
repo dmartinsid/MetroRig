@@ -794,5 +794,5 @@ Proof: run js | ✓ copy_wasm > exits 1 naming the path when the build is missin
 ## Handoff
 
 **Settled mid-build:** Execution by batch sub-agents - user: "aprovo, vamos de sub agents"; 2026-11-04, after the batch 1 worker stopped mid-T7 and T7-T8 finished inline: the remaining tasks also by sub-agents - user: "Pode seguir todas as proximas tasks com subagents"
-**Dispatched:** batch 1 (Phases 1-2, T1-T8) at e6c9c7c - stopped mid-T7 without a report; T7 and T8 finished inline; batch 2 (Phases 3-5, T9-T16) at f704fe3 - returned, T9-T16 done; batch 3 (Phases 6-7, T17-T24) at db75884 - returned, T17-T24 done
+**Dispatched:** batch 1 (Phases 1-2, T1-T8) at e6c9c7c - stopped mid-T7 without a report; T7 and T8 finished inline; batch 2 (Phases 3-5, T9-T16) at f704fe3 - returned, T9-T16 done; batch 3 (Phases 6-7, T17-T24) at db75884 - returned, T17-T24 done; Verifier at 54012f0 - returned FAIL, F1-F8; fixer for F1-F8 at 54012f0 - returned, F1-F8 closed at 4d90ab6
 **Walked:** none - every story's Independent Test is a command (cargo test, vitest, reading CONTRIBUTING.md), run by check_proofs.py; no criterion cites a capture, so no pictures
