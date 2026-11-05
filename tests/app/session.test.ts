@@ -147,6 +147,8 @@ describe('Session', () => {
     expect([...grids.keys()].sort((a, b) => a - b)).toEqual(TRACKS.map(track => track.id).sort((a, b) => a - b));
     expect(grids.get(1)).toEqual(rock.gridData[1]);
     expect(grids.get(2)).toEqual(rock.gridData[2]);
+    // Every track: the preset's steps, or a silent bar for a track the preset leaves out
+    TRACKS.forEach(({ id }) => expect(grids.get(id), `track ${id}`).toEqual(rock.gridData[id] ?? new Array(16).fill(0)));
     expect(session.selectedPresetValue).toBe('factory:rock');
     expect(session.hasUnsavedEdits).toBe(false);
   });
