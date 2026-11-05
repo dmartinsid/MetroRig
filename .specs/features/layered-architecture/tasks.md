@@ -590,14 +590,16 @@ T23 → T24
 
 **Done when**:
 
-- [ ] `python3 -I tests/fixtures/tests_kept.py js` exits 0
-- [ ] Gate check passes: `npm run build && cargo test --manifest-path engine/Cargo.toml && npx vitest run`
-- [ ] Test count: every vitest test of T1 plus the new ones pass
+- [x] `python3 -I tests/fixtures/tests_kept.py js` exits 0
+- [x] Gate check passes: `npm run build && cargo test --manifest-path engine/Cargo.toml && npx vitest run`
+- [x] Test count: every vitest test of T1 plus the new ones pass
 
 **Tests**: integration
 **Gate**: build
 
 **Commit**: `refactor(web): reduce main.ts to the composition root`
+
+**Status**: ✅ Complete
 
 ---
 

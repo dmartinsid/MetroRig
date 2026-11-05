@@ -1,3 +1,4 @@
+// The composition root: builds the audio node, the storage and the Session, then mounts the header and the screens on it
 import { MetronomeNode } from './audio/MetronomeNode';
 import { StateManager } from './app/stateManager';
 import { Session } from './app/session';
