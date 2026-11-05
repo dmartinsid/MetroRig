@@ -207,3 +207,148 @@ describe('Layers', () => {
     }
   });
 });
+
+// --- TypeScript ---
+
+const SRC = path.join(ROOT, 'src');
+
+// The app's layers, each with the layers below it that it may import; main.ts composes them all
+const TS_LAYERS: Record<string, string[]> = {
+  domain: [],
+  data: ['domain'],
+  storage: ['domain'],
+  audio: ['domain'],
+  app: ['domain', 'data', 'storage', 'audio'],
+  ui: ['app', 'domain'],
+  main: ['domain', 'data', 'storage', 'audio', 'app', 'ui'],
+};
+
+interface TsFile {
+  name: string; // relative to the repository root, with `/`
+  source: string;
+}
+
+function sourceFiles(): TsFile[] {
+  return filesUnder(SRC, '.ts').map(file => ({
+    name: path.relative(ROOT, file).split(path.sep).join('/'),
+    source: fs.readFileSync(file, 'utf8'),
+  }));
+}
+
+// Every module a file names: static imports and re-exports, side-effect imports, dynamic imports and `?url` imports
+function tsImports(source: string): string[] {
+  const code = withoutComments(source);
+  const patterns = [
+    /\b(?:import|export)\s+[^'";]*?\bfrom\s*['"]([^'"]+)['"]/g,
+    /\bimport\s*['"]([^'"]+)['"]/g,
+    /\bimport\(\s*['"]([^'"]+)['"]\s*\)/g,
+  ];
+  return patterns.flatMap(pattern => [...code.matchAll(pattern)].map(match => match[1]));
+}
+
+// The file an import names, relative to the repository root, or null for a package
+function resolveImport(from: string, specifier: string): string | null {
+  if (!specifier.startsWith('.')) return null;
+  const target = path.posix.normalize(path.posix.join(path.posix.dirname(from), specifier.replace(/\?.*$/, '')));
+  return target.endsWith('.ts') ? target : `${target}.ts`;
+}
+
+// `src/main.ts` is main, `src/app/session.ts` is app, anything outside src/ is outside
+function tsLayerOf(name: string): string {
+  if (name === 'src/main.ts') return 'main';
+  const parts = name.split('/');
+  return parts[0] === 'src' && parts.length > 2 ? parts[1] : 'outside';
+}
+
+function tsCrossings(files: TsFile[]): string[] {
+  return files.flatMap(file => {
+    const layer = tsLayerOf(file.name);
+    return tsImports(file.source).flatMap(specifier => {
+      const target = resolveImport(file.name, specifier);
+      if (target === null) return [];
+      const targetLayer = tsLayerOf(target);
+      const allowed = targetLayer === layer || (TS_LAYERS[layer] ?? []).includes(targetLayer);
+      return allowed ? [] : [`${file.name} (${layer}) imports '${specifier}' (${targetLayer})`];
+    });
+  });
+}
+
+// Each cycle as the chain of files that closes it, found by a depth-first walk over the import graph
+function tsCycles(files: TsFile[]): string[] {
+  const graph = new Map(files.map(file => [file.name, tsImports(file.source)
+    .map(specifier => resolveImport(file.name, specifier))
+    .filter((target): target is string => target !== null)]));
+  const cycles: string[] = [];
+  const done = new Set<string>();
+  const visit = (file: string, trail: string[]) => {
+    if (trail.includes(file)) {
+      cycles.push([...trail.slice(trail.indexOf(file)), file].join(' -> '));
+      return;
+    }
+    if (done.has(file)) return;
+    for (const target of graph.get(file) ?? []) visit(target, [...trail, file]);
+    done.add(file);
+  };
+  for (const file of graph.keys()) visit(file, []);
+  return cycles;
+}
+
+describe('Layers', () => {
+  it('src holds the six layers and main.ts alone at its root', () => {
+    const entries = fs.readdirSync(SRC, { withFileTypes: true });
+    expect(entries.filter(entry => entry.isDirectory()).map(entry => entry.name).sort())
+      .toEqual(['app', 'audio', 'data', 'domain', 'storage', 'ui']);
+    expect(entries.filter(entry => !entry.isDirectory()).map(entry => entry.name)).toEqual(['main.ts']);
+  });
+
+  it('src imports downward only', () => {
+    const files = sourceFiles();
+    expect(files.length).toBeGreaterThan(20);
+    expect(tsCrossings(files)).toEqual([]);
+    // Every layer holds code, and only main.ts imports ui
+    expect([...new Set(files.map(file => tsLayerOf(file.name)))].sort()).toEqual(Object.keys(TS_LAYERS).sort());
+    const intoUi = files.filter(file => tsLayerOf(file.name) !== 'ui' && tsImports(file.source)
+      .some(specifier => tsLayerOf(resolveImport(file.name, specifier) ?? '') === 'ui'));
+    expect(intoUi.map(file => file.name)).toEqual(['src/main.ts']);
+  });
+
+  it('src has no import cycle', () => {
+    expect(tsCycles(sourceFiles())).toEqual([]);
+  });
+
+  it('a crossing import fails naming the file and the import', () => {
+    const crossing = [
+      { name: 'src/domain/meter.ts', source: "import { Session } from '../app/session';" },
+      { name: 'src/app/session.ts', source: "import { mount } from '../ui/editor';" },
+      { name: 'src/ui/editor.ts', source: "const node = await import('../audio/MetronomeNode');" },
+      { name: 'src/audio/visualSync.ts', source: "import workletUrl from '../storage/database?url';" },
+      { name: 'src/ui/header.ts', source: "import { FACTORY_PRESETS } from '../data/factory';" },
+    ];
+    expect(tsCrossings(crossing)).toEqual([
+      "src/domain/meter.ts (domain) imports '../app/session' (app)",
+      "src/app/session.ts (app) imports '../ui/editor' (ui)",
+      "src/ui/editor.ts (ui) imports '../audio/MetronomeNode' (audio)",
+      "src/audio/visualSync.ts (audio) imports '../storage/database?url' (storage)",
+      "src/ui/header.ts (ui) imports '../data/factory' (data)",
+    ]);
+    const cycle = [
+      { name: 'src/domain/pattern.ts', source: "import { TRACKS } from './kit';" },
+      { name: 'src/domain/kit.ts', source: "export { barSteps } from './pattern';" },
+    ];
+    expect(tsCycles(cycle)).toEqual(['src/domain/pattern.ts -> src/domain/kit.ts -> src/domain/pattern.ts']);
+  });
+
+  it('ui holds one module per screen and the header', () => {
+    const missing = ['header', 'editor', 'stadium', 'grooves', 'improv'].filter(screen => {
+      const file = path.join(SRC, 'ui', `${screen}.ts`);
+      return !fs.existsSync(file) || !/export function mount\(session: Session\)/.test(fs.readFileSync(file, 'utf8'));
+    });
+    expect(missing).toEqual([]);
+  });
+
+  it('main.ts holds at most 150 lines', () => {
+    const lines = fs.readFileSync(path.join(SRC, 'main.ts'), 'utf8').trimEnd().split('\n').length;
+    expect(lines).toBeGreaterThan(0);
+    expect(lines).toBeLessThanOrEqual(150);
+  });
+});
