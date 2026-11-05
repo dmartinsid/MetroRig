@@ -93,21 +93,58 @@ function modulePath(name: string): string[] {
   return last === 'mod' || last === 'lib' ? parts.slice(0, -1) : parts;
 }
 
-// Every crate module a file names: `crate::x`, `crate::{x, y}` and `super::` resolved from where the file sits
+// Every path of a `use` tree, braces matched at any depth: `dsp::{sample::{trim_onset}, Engine}` is
+// dsp::sample::trim_onset and dsp::Engine. `start` is just past `crate::` or `super::`
+function useTreePaths(source: string, start: number): string[] {
+  let i = start;
+  const skipSpace = () => { while (/\s/.test(source[i] ?? '')) i++; };
+  function item(): string[] {
+    skipSpace();
+    if (source[i] === '{') return group();
+    const segment = source.slice(i).match(/^[\w*]+/)?.[0] ?? '';
+    i += segment.length;
+    skipSpace();
+    if (source.startsWith('::', i)) {
+      i += 2;
+      return item().map(rest => `${segment}::${rest}`);
+    }
+    const alias = source.slice(i).match(/^as\s+\w+/)?.[0];
+    if (alias) i += alias.length;
+    return [segment];
+  }
+  function group(): string[] {
+    i++; // the `{`
+    const paths: string[] = [];
+    for (;;) {
+      skipSpace();
+      if (source[i] === '}' || i >= source.length) { i++; break; }
+      if (source[i] === ',') { i++; continue; }
+      const before = i;
+      paths.push(...item());
+      if (i === before) i++; // A character no use tree holds
+    }
+    return paths.filter(Boolean);
+  }
+  return item().filter(Boolean);
+}
+
+// Every crate module a file names: `crate::x`, `crate::{x, y::{z}}` and `super::` resolved from where the file sits
 function rustImports(file: RustFile): { layer: string; text: string }[] {
   const found: { layer: string; text: string }[] = [];
-  for (const match of file.production.matchAll(/crate::\{([^}]*)\}/g)) {
-    for (const item of match[1].split(',').map(part => part.trim()).filter(Boolean)) {
-      found.push({ layer: item.split('::')[0], text: `crate::{${item}}` });
+  for (const match of file.production.matchAll(/\bcrate::|\b(?:super::)+/g)) {
+    const start = match.index! + match[0].length;
+    if (match[0] === 'crate::') {
+      for (const path of useTreePaths(file.production, start)) {
+        found.push({ layer: path.split('::')[0], text: `crate::${path}` });
+      }
+      continue;
     }
-  }
-  for (const match of file.production.matchAll(/crate::(\w+)/g)) {
-    found.push({ layer: match[1], text: match[0] });
-  }
-  for (const match of file.production.matchAll(/\b((?:super::)+)(\w+)?/g)) {
-    const levels = match[1].split('super::').length - 1;
-    const target = [...modulePath(file.name).slice(0, -levels), match[2] ?? ''].filter(Boolean);
-    found.push({ layer: target[0] ?? '', text: match[0] });
+    const levels = match[0].split('super::').length - 1;
+    const paths = useTreePaths(file.production, start);
+    for (const path of paths.length > 0 ? paths : ['']) {
+      const target = [...modulePath(file.name).slice(0, -levels), ...path.split('::')].filter(Boolean);
+      found.push({ layer: target[0] ?? '', text: `${match[0]}${path}` });
+    }
   }
   return found;
 }
