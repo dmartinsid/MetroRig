@@ -1,6 +1,6 @@
 # layered-architecture proofs
 
-**HEAD**: 54012f0
+**HEAD**: 6b39208
 **Tree**: clean
 **Shell**: /bin/sh
 **Result**: 47 pass, 0 fail
@@ -64,13 +64,13 @@
 
 stderr | tests/app.test.ts > Improv > tim_30 brackets each load, so its files reach the notes once all have come or failed
 Failed to load /pads/choir/Fs3.flac: Error: 404
-    at MockMetronomeNode.<anonymous> (/home/deivid/Projects/Github/MetroRig/tests/app.test.ts:3238:52)
+    at MockMetronomeNode.<anonymous> (/home/deivid/Projects/Github/MetroRig/tests/app.test.ts:3258:52)
     at MockMetronomeNode.mockCall (file:///home/deivid/Projects/Github/MetroRig/node_modules/@vitest/spy/dist/index.js:50:17)
     at MockMetronomeNode.spy [as padLoad] (file:///home/deivid/Projects/Github/MetroRig/node_modules/tinyspy/dist/index.js:42:80)
     at /home/deivid/Projects/Github/MetroRig/src/app/improv.ts:83:29
     at processTicksAndRejections (node:internal/process/task_queues:104:5)
 Failed to load /pads/choir/Fs3.flac: Error: 404
-    at MockMetronomeNode.<anonymous> (/home/deivid/Projects/Github/MetroRig/tests/app.test.ts:3238:52)
+    at MockMetronomeNode.<anonymous> (/home/deivid/Projects/Github/MetroRig/tests/app.test.ts:3258:52)
     at MockMetronomeNode.mockCall (file:///home/deivid/Projects/Github/MetroRig/node_modules/@vitest/spy/dist/index.js:50:17)
     at MockMetronomeNode.spy [as padLoad] (file:///home/deivid/Projects/Github/MetroRig/node_modules/tinyspy/dist/index.js:42:80)
     at /home/deivid/Projects/Github/MetroRig/src/app/improv.ts:83:29
@@ -85,7 +85,7 @@ test instruments::pad::tests::tim_16_notes_within_5_cents ... ok
 test instruments::pad::tests::tim_20_default_peak ... ok
 test instruments::pad::tests::tim_30_synth_holds_while_loading ... ok
 
-test result: ok. 149 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 195.15s
+test result: ok. 149 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 195.53s
 
 
 running 0 tests
@@ -101,11 +101,13 @@ test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; fini
 
 ```
 rust: 136 of 136 recorded tests pass
+rust: 136 of 136 recorded tests keep their assertions
 ```
 
 `python3 -I tests/fixtures/golden_first.py` - exit 0
 
 ```
+golden commit 181d14f: 7 of 7 golden tests pass on its archive
 golden commit 181d14f; 10 of 10 engine commits follow it
 ```
 
@@ -113,6 +115,7 @@ golden commit 181d14f; 10 of 10 engine commits follow it
 
 ```
 js: 433 of 433 recorded tests pass
+js: 433 of 433 recorded tests keep their assertions
 ```
 
 `npm run build` - exit 0
@@ -130,8 +133,8 @@ computing gzip size...
 dist/assets/metronome-processor-mzbFy-xz.ts  10.61 kB
 dist/index.html                              15.22 kB │ gzip:  3.72 kB
 dist/assets/index-Con4F8W0.css               27.48 kB │ gzip:  5.56 kB
-dist/assets/index-B8PwSyVZ.js                60.94 kB │ gzip: 17.87 kB
-✓ built in 345ms
+dist/assets/index-BsoD4mM2.js                61.50 kB │ gzip: 18.01 kB
+✓ built in 309ms
     Finished `release` profile [optimized] target(s) in 0.00s
 ```
 
