@@ -186,6 +186,10 @@ describe('Session', () => {
     expect(session.preset.gridData).toEqual(expected.gridData);
     expect(engine.sent('setBpm')).toEqual([[song.bpm]]);
     expect(engine.sent('setMeasureLength')).toEqual([[song.measureLength]]);
+    // Every track of the song reaches the engine
+    const grids = new Map(engine.sent('updateGrid').map(([trackId, steps]) => [trackId, steps]));
+    expect([...grids.keys()].sort((a, b) => a - b)).toEqual(TRACKS.map(track => track.id).sort((a, b) => a - b));
+    TRACKS.forEach(({ id }) => expect(grids.get(id), `track ${id}`).toEqual(expected.gridData[id]));
     expect(session.selectedPresetValue).toBe(`song:${song.id}`);
   });
 
