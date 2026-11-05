@@ -636,14 +636,16 @@ T23 → T24
 
 **Done when**:
 
-- [ ] Docs tests pass
-- [ ] Gate check passes: `npm run build && cargo test --manifest-path engine/Cargo.toml && npx vitest run`
-- [ ] Test count: every vitest test of T1 plus the new ones pass
+- [x] Docs tests pass
+- [x] Gate check passes: `npm run build && cargo test --manifest-path engine/Cargo.toml && npx vitest run`
+- [x] Test count: every vitest test of T1 plus the new ones pass
 
 **Tests**: unit
 **Gate**: build
 
 **Commit**: `docs: describe the layers of the engine and the app`
+
+**Status**: ✅ Complete
 
 ---
 

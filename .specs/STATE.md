@@ -220,3 +220,11 @@
 - **Heard**: not yet heard in the running app
 - **Date**: 2026-11-03
 - **Status**: active (AD-027)
+
+### AD-028
+- **Decision**: MetroRig's code sits in two layer stacks, and each layer depends only on the layers below it. In `src/`: `domain` imports nothing from `src/`; `data`, `storage` and `audio` import only `domain`; `app` imports `domain`, `data`, `storage` and `audio`; `ui` imports `app` and `domain`; only `src/main.ts` imports `ui`. In `engine/src/`: `dsp` and `sequencer` use no other crate module, `instruments` uses `dsp`, `engine` uses `sequencer`, `instruments` and `dsp`, and `ffi` uses `engine` and holds every `extern "C"` function and every `unsafe` block outside tests. Every rule a user sees runs in `app` or `domain`; `ui` renders Session state. `tests/layers.test.ts` enforces the rule and fails naming the file and the import.
+- **Reason**: The architecture review of 2026-11-03, candidates 1, 2 and 3, chosen by the user: "Vamos mandar bala no 1, 2 e 3". The engine sat in two files of 3053 and 2393 lines, and `src/main.ts` mixed four screens with start-up, storage and app rules, so each change meant reading unrelated code and app rules were testable only through the DOM.
+- **Trade-off**: More files, and a screen reaches another screen's state only through Session changes. The engine stays one crate, so the rule is checked by a test rather than by the compiler.
+- **Scope**: layered-architecture; `src/`, `engine/src/`, `tests/layers.test.ts`
+- **Date**: 2026-11-04
+- **Status**: active (AD-028)

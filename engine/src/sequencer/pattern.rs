@@ -1,5 +1,5 @@
 // What each step of each track holds, and which step plays next
-pub const TRACKS: usize = 13; // 0: Click, then the kit in src/kit.ts
+pub const TRACKS: usize = 13; // 0: Click, then the kit in src/domain/kit.ts
 pub const STEPS_COUNT: usize = 128; // 4 bars of the longest bar
 pub const BAR_STEPS_MAX: usize = 32;
 pub const BARS_MAX: usize = 4;
