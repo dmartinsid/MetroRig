@@ -1,4 +1,4 @@
-import type { Session } from '../app/session';
+import type { Session, TrainerFields } from '../app/session';
 import { getBeatsPerMeasure, getBeatForStep, isSustainedStep } from '../domain/meter';
 import { FIGURES, barCount, barSteps, patternLength } from '../domain/pattern';
 import type { TrainerSettings } from '../domain/preset';
@@ -51,6 +51,17 @@ export function mount(session: Session): void {
       stepType: trainerType.value as 'measures' | 'seconds',
       stepValue: Number(trainerVal.value),
       curve: trainerCurve.value as 'stepped' | 'smooth'
+    };
+  }
+
+  function readTrainerFields(): TrainerFields {
+    return {
+      enabled: trainerEnable.checked,
+      startBpm: trainerStart.value,
+      targetBpm: trainerTarget.value,
+      increment: trainerInc.value,
+      stepType: trainerType.value,
+      stepValue: trainerVal.value,
     };
   }
 
@@ -316,7 +327,9 @@ export function mount(session: Session): void {
   // React to trainer config updates dynamically
   const formInputs = [trainerEnable, trainerStart, trainerTarget, trainerInc, trainerType, trainerVal, trainerCurve];
   formInputs.forEach(el => {
+    el.oninput = () => session.setTrainerFields(readTrainerFields());
     el.onchange = () => {
+      session.setTrainerFields(readTrainerFields());
       session.setTrainer(readTrainerInputs());
     };
   });

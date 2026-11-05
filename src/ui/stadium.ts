@@ -1,4 +1,4 @@
-import type { Session } from '../app/session';
+import { trainerStatusText, type Session } from '../app/session';
 import { getBeatsPerMeasure, getBeatForStep, isSustainedStep } from '../domain/meter';
 import { startBpmFor } from '../domain/preset';
 import { STADIUM_GROUPS, groupHit } from '../domain/kit';
@@ -130,15 +130,11 @@ export function mount(session: Session): void {
     stadiumTimer.innerText = time;
   }
 
-  // The Trainer settings the Editor form last wrote
+  // The Trainer fields as the Editor form shows them
   function updateStadiumStatus() {
-    const ts = session.preset.trainerSettings;
-    const bars = ts.stepValue === 1 ? 'bar' : 'bars';
-    const unit = ts.stepType === 'measures' ? bars : 's';
-    stadiumStatus.innerText = ts.enabled
-      ? `Trainer ${ts.startBpm} → ${ts.targetBpm} BPM · +${ts.increment} every ${ts.stepValue} ${unit}`
-      : 'Trainer Off';
-    stadiumStatusDot.classList.toggle('lit', ts.enabled);
+    const fields = session.trainerFields;
+    stadiumStatus.innerText = trainerStatusText(fields);
+    stadiumStatusDot.classList.toggle('lit', fields.enabled);
   }
 
   // Draws the tick the Session took, once its sound has left the device

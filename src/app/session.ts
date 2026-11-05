@@ -15,6 +15,35 @@ import type { StateManager } from './stateManager';
 import { Transport } from './transport';
 
 export type Figure = typeof FIGURES[number];
+
+// The Trainer form's fields as the user typed them: the Stadium prints this text, not the numbers
+export interface TrainerFields {
+  enabled: boolean;
+  startBpm: string;
+  targetBpm: string;
+  increment: string;
+  stepType: string;
+  stepValue: string;
+}
+
+export function trainerFieldsOf(ts: TrainerSettings): TrainerFields {
+  return {
+    enabled: ts.enabled,
+    startBpm: String(ts.startBpm),
+    targetBpm: String(ts.targetBpm),
+    increment: String(ts.increment),
+    stepType: ts.stepType,
+    stepValue: String(ts.stepValue),
+  };
+}
+
+export function trainerStatusText(fields: TrainerFields): string {
+  const bars = fields.stepValue === '1' ? 'bar' : 'bars';
+  const unit = fields.stepType === 'measures' ? bars : 's';
+  return fields.enabled
+    ? `Trainer ${fields.startBpm} → ${fields.targetBpm} BPM · +${fields.increment} every ${fields.stepValue} ${unit}`
+    : 'Trainer Off';
+}
 export type TimeSignatureResult = 'changed' | 'too-long' | 'declined' | 'unchanged';
 
 export interface SessionOptions {
@@ -50,6 +79,7 @@ export class Session {
   selectedPresetValue = 'factory:default'; // Where the selector returns when a load is declined
   private selectorValue = 'factory:default'; // What the preset selector asks for last
   lastTick: TickDetail | null = null;
+  private typedTrainer: TrainerFields | null = null; // Null while the form shows the preset's settings
   clickSound: string;
   // What the selectors list
   readonly factoryPresets = FACTORY_PRESETS;
@@ -299,6 +329,15 @@ export class Session {
     this.emit('mix');
   }
 
+  // The Trainer form as the user left it, typed or not yet committed
+  get trainerFields(): TrainerFields {
+    return this.typedTrainer ?? trainerFieldsOf(this.preset.trainerSettings);
+  }
+
+  setTrainerFields(fields: TrainerFields) {
+    this.typedTrainer = fields;
+  }
+
   // During playback a running Trainer takes the change on beat 1
   setTrainer(settings: TrainerSettings) {
     this.preset.trainerSettings = settings;
@@ -353,6 +392,7 @@ export class Session {
 
     this.hasUnsavedEdits = false;
     this.selectedPresetValue = this.selectorValue;
+    this.typedTrainer = null; // The form now shows this preset's settings
     this.emit('preset');
   }
 
