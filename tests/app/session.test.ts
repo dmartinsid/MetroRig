@@ -293,9 +293,11 @@ describe('Session', () => {
   it('changes the pad volume', async () => {
     const { session, engine, prefs } = setup();
 
+    session.setPadVolume(0);
+    session.setPadVolume(100);
     session.setPadVolume(40);
 
-    expect(engine.sent('padVolume')).toEqual([[0.4]]);
+    expect(engine.sent('padVolume')).toEqual([[0], [1], [0.4]]);
     expect(prefs.get('padVolume')).toBe('40');
     expect(session.improv.padVolume).toBe(40);
 
