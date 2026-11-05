@@ -1105,7 +1105,7 @@ describe('Interface V2', () => {
     byId('trainer-enable').dispatchEvent(new Event('change'));
     expect(byId('trainer-dot').classList.contains('visible')).toBe(true);
 
-    const css = fs.readFileSync(path.resolve(__dirname, '../src/index.css'), 'utf8');
+    const css = fs.readFileSync(path.resolve(__dirname, '../src/ui/index.css'), 'utf8');
     expect(css).not.toMatch(/@keyframes|animation\s*:/);
     expect(mockGsap.fromTo.mock.calls.some(call => call[0] === byId('trainer-dot'))).toBe(false);
     expect(mockGsap.to.mock.calls.some(call => call[0] === byId('trainer-dot'))).toBe(false);
