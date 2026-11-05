@@ -1,7 +1,7 @@
 // The kit: a single sample or a bank of takes per track, played at the step's dynamic
 use crate::dsp::sample::Sample;
 
-pub const TRACKS: usize = 13; // 0: Click, then the kit in src/kit.ts
+pub const TRACKS: usize = 13; // 0: Click, then the kit in src/domain/kit.ts
 pub const DYNAMICS: usize = 3;
 pub const TAKES: usize = 3;
 const DYNAMIC_GHOST: usize = 0;

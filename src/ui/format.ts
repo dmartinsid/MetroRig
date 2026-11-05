@@ -1,5 +1,5 @@
 const RENDER_QUANTUM = 128; // Frames in every AudioWorklet block
-const MAX_STEPS = 128; // STEPS_COUNT in src/lib.rs
+const MAX_STEPS = 128; // STEPS_COUNT in engine/src/sequencer/pattern.rs
 const DENOMINATORS = [4, 8, 16];
 
 const pad = (value: number): string => String(value).padStart(2, '0');
