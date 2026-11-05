@@ -1,0 +1,3027 @@
+{
+ "rust": {
+  "pad::tests::ad_022_every_timbre_rises_8_db": [
+   "assert!((raised - plain - 8.0).abs() < 0.01, \"timbre {timbre} rises {} dB\", raised - plain)"
+  ],
+  "pad::tests::chd_06_every_orchestra_note_has_its_file": [
+   "assert_eq!(chords.len(), 408)",
+   "assert_ne!(file, NO_FILE, \"note {note} has no file\")",
+   "assert!(pad.banks[ORCHESTRA as usize][file].key.abs_diff(note) <= 2, \"note {note}\")"
+  ],
+  "pad::tests::pad_04_first_chord_fades_in_over_1_5_s": [
+   "assert_level(&signal, CHORD_A, 0.02, equal_power(0.02))",
+   "assert_level(&signal, CHORD_A, 0.75, equal_power(0.75))",
+   "assert_level(&signal, CHORD_A, 1.2, equal_power(1.2))",
+   "assert!(level_at(&signal, CHORD_A, 1.3) < 0.985, \"full level came before 1.5 s\")",
+   "assert_level(&signal, CHORD_A, 1.52, 1.0)",
+   "assert_level(&signal, CHORD_A, 2.5, 1.0)",
+   "assert!(level(0.0) < level(2.5) - 12.0)",
+   "assert!(level(0.0) < level(0.4) && level(0.4) < level(0.8) && level(0.8) < level(1.2))"
+  ],
+  "pad::tests::pad_05_held_chord_never_ends": [
+   "assert!(left.iter().zip(&right).skip(frame_after_fade).all(|(l, r)| *l != 0.0 || *r != 0.0))",
+   "assert!((db(rms(second)) - reference).abs() < 3.0, \"the level moved {} dB\", db(rms(second)) - reference)",
+   "assert!(left.iter().zip(&right).skip(frame_after_fade).all(|(l, r)| *l != 0.0 || *r != 0.0))",
+   "assert!((db(rms(second)) - reference).abs() < 9.0, \"the level moved {} dB\", db(rms(second)) - reference)"
+  ],
+  "pad::tests::pad_06_loop_wrap_adds_no_step": [
+   "assert!(largest_at_wrap <= largest_before, \"key {} note {note}: step {largest_at_wrap} after {largest_before}\", file.key)",
+   "assert!(wraps >= 2, \"key {}: only {wraps} wraps\", file.key)"
+  ],
+  "pad::tests::pad_07_cents_helper_measures_a_known_offset": [
+   "assert!((cents(hz, 440.0) - centre).abs() < 0.5, \"{centre}\")"
+  ],
+  "pad::tests::pad_07_notes_within_5_cents": [
+   "assert!(centre.abs() <= 5.0, \"note {note} is {centre} cents off\")",
+   "assert!(peak.abs() <= 5.0, \"note {note} is {peak} cents off\")"
+  ],
+  "pad::tests::pad_08_crossfades_over_1_5_s": [
+   "assert_level(&signal, CHORD_A, 1.98, 1.0)",
+   "assert_level(&signal, CHORD_B, 1.98, 0.0)",
+   "assert_level(&signal, CHORD_B, second, equal_power(into_fade))",
+   "assert_level(&signal, CHORD_A, second, equal_power(FADE_SECONDS - into_fade))",
+   "assert!((power - 1.0).abs() < 0.05, \"the crossfade dips or swells: {power}\")",
+   "assert_level(&signal, CHORD_A, 3.52, 0.0)",
+   "assert_level(&signal, CHORD_B, 3.52, 1.0)"
+  ],
+  "pad::tests::pad_09_stop_fades_over_1_5_s": [
+   "assert_level(&signal, CHORD_A, 1.98, 1.0)",
+   "assert_level(&signal, CHORD_A, 2.75, equal_power(0.75))",
+   "assert_level(&signal, CHORD_A, 3.2, equal_power(0.3))",
+   "assert_level(&signal, CHORD_A, 3.52, 0.0)",
+   "assert!(rms(&left[..(0.5 * RATE) as usize]) > 0.0)",
+   "assert!(db(rms(after(&left, 1.6, RATE)).max(rms(after(&right, 1.6, RATE)))) < -100.0)"
+  ],
+  "pad::tests::pad_10_settles_on_the_last_chord": [
+   "assert_level(&signal, CHORD_E, 3.0, 1.0)",
+   "assert_level(&signal, chord, 3.0, 0.0)"
+  ],
+  "pad::tests::pad_11_fade_continues_from_its_level": [
+   "assert_level(&signal, CHORD_A, 0.48, equal_power(0.48))",
+   "assert_level(&signal, CHORD_A, 0.52, (level_of_a_at(0.52) * FRAC_PI_2).sin())",
+   "assert_level(&signal, CHORD_A, 0.77, (level_of_a_at(0.77) * FRAC_PI_2).sin())",
+   "assert_level(&signal, CHORD_A, 1.02, 0.0)",
+   "assert_level(&signal, CHORD_B, 0.73, equal_power(0.23))",
+   "assert_level(&signal, CHORD_B, 0.77, (level_of_b_at(0.77) * FRAC_PI_2).sin())",
+   "assert_level(&signal, CHORD_C, 1.5, equal_power(0.75))",
+   "assert!(step(click - 0.002..click + 0.002) <= 1.2 * step(click - 0.02..click - 0.002))"
+  ],
+  "pad::tests::pad_12_at_most_3_chords": [
+   "assert!(level_at(&signal, CHORD_A, 1.335) > 0.5)",
+   "assert_level(&signal, CHORD_A, 1.385, 0.0)",
+   "assert_level(&signal, CHORD_D, tenth_of_ms as f32 / 10000.0, 0.0)",
+   "assert!(level_at(&signal, CHORD_E, 1.335) < 0.01)",
+   "assert_level(&signal, CHORD_E, 1.75, equal_power(1.75 - 1.37))",
+   "assert_eq!(most, Some(3))"
+  ],
+  "pad::tests::pad_12_eviction_takes_20_ms": [
+   "assert!(pad.slots.iter().all(|slot| slot.count > 0), \"a free slot means no eviction, from {fading} s of fade\")",
+   "assert_eq!(pad.slots[0].voices[0].note, CHORD_A[0], \"gone before 19 ms, from {fading} s of fade\")",
+   "assert!(pad.slots[0].level > 0.0, \"silent before 19 ms, from {fading} s of fade\")",
+   "assert_eq!(pad.slots[0].voices[0].note, CHORD_D[0], \"still held at 21 ms, from {fading} s of fade\")"
+  ],
+  "pad::tests::pad_13_one_chord_after_fades": [
+   "assert_eq!(sounding(&signal, 1.8), 1)",
+   "assert_eq!(sounding(&signal, 2.2), 2)",
+   "assert_eq!(sounding(&signal, 4.2), 1)",
+   "assert_eq!(sounding(&signal, 4.2), 0)"
+  ],
+  "pad::tests::pad_14_chords_match_within_3_db": [
+   "assert!(loudest.0 - quietest.0 <= 3.0, \"{quietest:?} against {loudest:?}\")",
+   "assert!((triad - five_notes).abs() <= 3.0, \"triad {triad} dB, 5 notes {five_notes} dB\")"
+  ],
+  "pad::tests::pad_17_note_mixes_both_layers": [
+   "assert!(10.0 * (sample / synth).log10() > -12.0, \"the sample layer is missing: {sample} against {synth}\")",
+   "assert!(10.0 * (sample / synth).log10() < 12.0, \"the synth layer is missing: {sample} against {synth}\")"
+  ],
+  "pad::tests::pad_18_synth_detunes_and_filters": [
+   "assert_eq!(peaks.len(), 7, \"peaks at {peaks:?} cents\")",
+   "assert!((peak - detune).abs() <= 1.0, \"peaks at {peaks:?} cents\")",
+   "assert!(power_at(&windowed_left, flat, RATE) > 10.0 * power_at(&windowed_right, flat, RATE))",
+   "assert!(power_at(&windowed_right, sharp, RATE) > 10.0 * power_at(&windowed_left, sharp, RATE))",
+   "assert!(open > fundamental / 10000.0, \"no harmonics: this is not a sawtooth\")",
+   "assert!(10.0 * (open / closed).log10() > 6.0, \"open {open} closed {closed}\")"
+  ],
+  "pad::tests::pad_19_output_is_stereo": [
+   "assert!(similarity < 0.95, \"left and right correlate at {similarity}\")",
+   "assert!(similarity < 0.95, \"the sample layer correlates at {similarity}\")",
+   "assert!(height_left > 0.2 && height_right > 0.2, \"echoes of {height_left} and {height_right}\")",
+   "assert!((time_left - time_right).abs() > 0.5, \"echoes at {time_left} and {time_right} ms\")",
+   "assert!(tallest_in(49.0, 59.8) < 1e-3 * left[impulse_at].abs(), \"something answers between the taps\")",
+   "assert!(tallest_in(63.5, 65.5) > 1e-3 * left[impulse_at].abs(), \"the reverb does not answer\")",
+   "assert!(db(rms(after(&left, 1.6, RATE))) > -70.0, \"no reverb tail\")"
+  ],
+  "pad::tests::pad_20_layer_balance": [
+   "assert!((1.0..=3.0).contains(&difference), \"the sample layer is {difference} dB above the synth\")"
+  ],
+  "pad::tests::pad_27_default_peak": [
+   "assert!(db(*loudest) <= PEAK_LIMIT, \"{chord:?} peaks at {} dBFS\", db(*loudest))",
+   "assert!(db(crossfade_peak) <= PEAK_LIMIT, \"a crossfade peaks at {} dBFS\", db(crossfade_peak))"
+  ],
+  "pad::tests::pad_39_fading_chord_returns": [
+   "assert_level(&signal, CHORD_A, 2.73, equal_power(0.77))",
+   "assert_level(&signal, CHORD_A, 2.77, equal_power(0.77))",
+   "assert_level(&signal, CHORD_A, 3.0, equal_power(1.0))",
+   "assert!(level_at(&signal, CHORD_A, 3.3) < 0.985, \"full level came too soon\")",
+   "assert_level(&signal, CHORD_A, 3.52, 1.0)",
+   "assert_level(&signal, CHORD_A, 4.5, 1.0)",
+   "assert_level(&signal, CHORD_A, 2.77, equal_power(0.77))",
+   "assert_level(&signal, CHORD_A, 3.6, 1.0)",
+   "assert_level(&signal, CHORD_B, 3.6, 0.0)"
+  ],
+  "pad::tests::pad_42_volume_has_no_click": [
+   "assert!(largest_step(&across) <= 1.25 * full_step, \"from {from} to {to}: step {} after {full_step}\", largest_step(&across))",
+   "assert!((rms(settled) - to * full_level).abs() <= 0.1 * full_level, \"from {from} to {to}: level {}\", rms(settled))",
+   "assert_eq!(peak(&signal), 0.0)",
+   "assert!(left.iter().all(|value| *value == 0.5) && right.iter().all(|value| *value == -0.5))"
+  ],
+  "pad::tests::pad_48_synth_sounds_without_samples": [
+   "assert!(db(rms(after(&left, FADE_END, RATE))) > -40.0)",
+   "assert!(powers.iter().all(|power| *power > loudest / 20.0), \"a note is missing: {powers:?}\")"
+  ],
+  "pad::tests::pad_49_late_samples_fade_in": [
+   "assert_level(&signal, CHORD_A, loaded_at - 0.02, 0.0)",
+   "assert_level(&signal, CHORD_A, loaded_at + 0.02, equal_power(0.02))",
+   "assert_level(&signal, CHORD_A, loaded_at + 0.75, equal_power(0.75))",
+   "assert!(level_at(&signal, CHORD_A, loaded_at + 1.3) < 0.985, \"full level came before 1.5 s\")",
+   "assert_level(&signal, CHORD_A, loaded_at + 1.2, equal_power(1.2))",
+   "assert_level(&signal, CHORD_A, loaded_at + 1.52, 1.0)",
+   "assert_level(&signal, CHORD_A, loaded_at + 2.5, 1.0)",
+   "assert!(heard(&signal, nearer_tone, 2.5) > 1000.0 * heard(&signal, 110.0 * moved, 2.5), \"the first file stayed\")",
+   "assert!(step(&signal, 0, swap_end) <= 1.25 * step(&bare_signal, 0, swap_end), \"the swap clicks\")"
+  ],
+  "pad::tests::pad_50_nearest_loaded_file": [
+   "assert!(heard > 100.0 * not_heard, \"note {note}: {heard} at {expected} Hz, {not_heard} at {other} Hz\")"
+  ],
+  "pad::tests::pad_52_synth_alone": [
+   "assert!(db(rms(after(&left, FADE_END, RATE))) > -40.0)",
+   "assert!(between < fundamental / 1000.0, \"between {between} fundamental {fundamental}\")"
+  ],
+  "pad::tests::pad_58_pitch_holds_at_48_khz": [
+   "assert!(centre.abs() <= 5.0, \"note {note} is {centre} cents off\")",
+   "assert!(peak.abs() <= 5.0, \"note {note} is {peak} cents off\")"
+  ],
+  "pad::tests::pad_59_no_allocation": [
+   "assert!(allocations() > before)",
+   "assert_eq!(allocations(), before)"
+  ],
+  "pad::tests::pad_60_balance_across_every_chord": [
+   "assert!(lowest >= -2.5 && highest <= 4.5, \"from {lowest} to {highest} dB\")"
+  ],
+  "pad::tests::pad_61_load_clamps_a_loop_end_past_the_file": [
+   "assert_eq!(pad.banks[NEW_AGE as usize][0].loop_end, tone.len() - 1)"
+  ],
+  "pad::tests::pad_61_load_refuses_an_empty_loop": [
+   "assert!(pad.banks[NEW_AGE as usize].is_empty())"
+  ],
+  "pad::tests::pad_tail_ends_in_silence": [
+   "assert!(pad.is_silent())",
+   "assert!(!pad.is_silent())",
+   "assert!(seconds < 30.0, \"the tail never ended\")",
+   "assert!(seconds > FADE_SECONDS, \"silent after {seconds} s, before the fade ended\")",
+   "assert!(left.iter().all(|value| *value == 0.25) && right.iter().all(|value| *value == -0.25))",
+   "assert!(!pad.is_silent())",
+   "assert!(db(rms(after(&left, FADE_END, rate))) > -40.0)",
+   "assert!((at_44100 - at_48000).abs() < 0.1 * at_44100, \"{at_44100} s against {at_48000} s\")"
+  ],
+  "pad::tests::tim_03_timbre_change_crossfades_the_chord": [
+   "assert!(tone_level(&signal, hz_to, 1.98) < 0.01 * full_to, \"{to} sounds before its pick\")",
+   "assert!((come - equal_power(into_fade)).abs() < 0.02, \"{from} to {to}: {come} at {into_fade} s\")",
+   "assert!((gone - equal_power(FADE_SECONDS - into_fade)).abs() < 0.02, \"{from} to {to}: {gone} at {into_fade} s\")",
+   "assert!((gone * gone + come * come - 1.0).abs() < 0.05, \"the crossfade dips or swells\")",
+   "assert!(tone_level(&signal, hz_to, 3.3) / full_to < 0.985, \"full level came before 1.5 s\")",
+   "assert!(tone_level(&signal, hz_from, 3.52) < 0.01 * full_from, \"{from} stayed past 1.5 s\")",
+   "assert!((tone_level(&signal, hz, 2.75) / full - equal_power(0.75)).abs() < 0.02)",
+   "assert!(tone_level(&signal, hz, 3.52) < 0.01 * full)",
+   "assert_eq!(held, [(CHOIR, 0.0), (SWEEP, 1.0)])"
+  ],
+  "pad::tests::tim_05_settles_on_the_last_timbre": [
+   "assert!(full > 0.0)",
+   "assert!((tone_level(&signal, tone_of_timbre(last), 3.5) / full - 1.0).abs() < 0.02, \"{last} did not settle\")",
+   "assert!(tone_level(&signal, *hz, 3.5) < 0.01 * full, \"timbre {timbre} is still heard\")"
+  ],
+  "pad::tests::tim_09_choir_balance": [
+   "assert!((1.0..=3.0).contains(&difference), \"the samples sit {difference} dB above the synth\")"
+  ],
+  "pad::tests::tim_10_new_age_is_unchanged": [
+   "assert_eq!(new_age_hash(|pad, notes| pad.play(notes, NEW_AGE), load_bank), NEW_AGE_BEFORE_TIMBRES)"
+  ],
+  "pad::tests::tim_11_sweep_mixes_both_layers": [
+   "assert!(sample > -60.0 && synth > -60.0, \"a layer is missing: samples {sample} dB, synth {synth} dB\")",
+   "assert!((1.0..=3.0).contains(&(sample - synth)), \"the samples sit {} dB above the synth\", sample - synth)"
+  ],
+  "pad::tests::tim_12_analog_reads_no_file": [
+   "assert!(pad.banks[ANALOG as usize].is_empty(), \"Analog took a file\")",
+   "assert_eq!(bits(&bare_left), bits(&left))",
+   "assert_eq!(bits(&bare_right), bits(&right))",
+   "assert!(db(rms(after(&left, FADE_END, RATE))) > -40.0, \"the synth is missing\")"
+  ],
+  "pad::tests::tim_13_orchestra_has_no_synth": [
+   "assert!(layers.iter().all(|((left, right), _, _)| *left == 0.0 && *right == 0.0), \"the synth sounds\")",
+   "assert!(db(rms(after(&files, FADE_END, RATE))) > -40.0, \"the sections are missing\")"
+  ],
+  "pad::tests::tim_15_seven_notes_keep_the_rules": [
+   "assert_eq!(pad.slots[0].count, 7)",
+   "assert!((level / full_lone - 1.0 / 7f32.sqrt()).abs() < 0.01, \"a note sits at {level} against {full_lone}\")",
+   "assert!((level / full - equal_power(0.75)).abs() < 0.02, \"the fade reads {}\", level / full)",
+   "assert_eq!(pad.slots[0].target, 0.0)",
+   "assert!((pad.slots[0].level - 0.5).abs() < 0.01 && (pad.slots[1].level - 0.5).abs() < 0.01)",
+   "assert_eq!((pad.slots[0].target, pad.slots[1].target), (1.0, 0.0))",
+   "assert_eq!(pad.slots[1].count, 0)",
+   "assert!(pad.slots.iter().all(|slot| slot.count == 0))",
+   "assert!(pad.slots.iter().all(|slot| slot.count == 7))",
+   "assert_eq!(pad.slots[0].timbre, ORCHESTRA, \"gone before 19 ms\")",
+   "assert_eq!((pad.slots[0].timbre, pad.slots[0].notes, pad.slots[0].count), (SWEEP, OTHER_SEVEN, 7))",
+   "assert_eq!(&pad.slots[0].notes[..pad.slots[0].count], SEVEN)"
+  ],
+  "pad::tests::tim_16_notes_within_5_cents": [
+   "assert!((reading - 4.0).abs() < 0.5, \"a tone 4 cents sharp reads {reading}\")",
+   "assert!(centre.abs() <= 5.0, \"timbre {timbre}, note {note} leaves {centre} cents off\")",
+   "assert!(centre.abs() <= limit, \"timbre {timbre}, note {note} is heard {centre} cents off\")"
+  ],
+  "pad::tests::tim_18_chords_match_within_3_db": [
+   "assert_eq!(held.len(), 408)",
+   "assert!(level(highest) - level(lowest) <= 3.0, \"timbre {timbre}, {name}: {:?} at {} against {:?} at {}\", lowest.chord, level(lowest), highest.chord, level(highest))"
+  ],
+  "pad::tests::tim_19_timbres_match_within_3_db": [
+   "assert!(highest - lowest <= 3.0, \"{:?}: {levels:?}\", held[0][chord].chord)"
+  ],
+  "pad::tests::tim_20_default_peak": [
+   "assert!(db(loudest.peak) <= PEAK_LIMIT, \"timbre {timbre}: {:?} peaks at {} dBFS\", loudest.chord, db(loudest.peak))",
+   "assert!(db(highest) <= PEAK_LIMIT, \"a crossfade peaks at {} dBFS\", db(highest))"
+  ],
+  "pad::tests::tim_23_no_allocation": [
+   "assert!(allocations() > before)",
+   "assert_eq!(allocations(), before)"
+  ],
+  "pad::tests::tim_30_synth_holds_while_loading": [
+   "assert!(db(rms(after(&left, FADE_END, RATE))) > -45.0, \"timbre {timbre} is silent\")",
+   "assert!(powers.iter().all(|power| *power > loudest / 20.0), \"timbre {timbre} misses a note: {powers:?}\")",
+   "assert!(slot.voices[..slot.count].iter().all(|voice| voice.file == NO_FILE), \"timbre {timbre}, {loaded} files\")",
+   "assert_eq!(bits(&left), bits(&bare.0), \"timbre {timbre}, {loaded} files\")",
+   "assert_eq!(bits(&right), bits(&bare.1), \"timbre {timbre}, {loaded} files\")",
+   "assert_eq!(bits(&held(ORCHESTRA).0), bits(&held(ANALOG).0))",
+   "assert_ne!(bits(&held(CHOIR).0), bits(&held(ANALOG).0))",
+   "assert!(highest - lowest <= 3.0, \"chords sit from {lowest} to {highest} dB on the synth\")",
+   "assert!(db(loudest.peak) <= PEAK_LIMIT, \"{:?} peaks at {} dBFS on the synth\", loudest.chord, db(loudest.peak))"
+  ],
+  "pad::tests::tim_31_late_files_fade_in": [
+   "assert!(full > 0.0)",
+   "assert_eq!(tone_level(&files, hz, loaded_at - 0.02), 0.0)",
+   "assert!((level - equal_power(into_fade)).abs() < 0.02, \"timbre {timbre}: {level} at {into_fade} s\")",
+   "assert!(tone_level(&files, hz, loaded_at + 1.3) / full < 0.985, \"full level came before 1.5 s\")",
+   "assert!((tone_level(&files, hz, loaded_at + 1.52) / full - 1.0).abs() < 0.02)",
+   "assert_eq!(synth(&loaded), synth(&bare), \"timbre {timbre}: the files moved the synth\")"
+  ],
+  "pad::tests::tim_32_orchestra_replaces_the_synth": [
+   "assert_eq!(synth_level(loaded_at - 0.03), 1.0)",
+   "assert_eq!(tone_level(&files, hz, loaded_at - 0.02), 0.0)",
+   "assert!((rising - equal_power(into_fade)).abs() < 0.02, \"the sections stand at {rising} after {into_fade} s\")",
+   "assert!((leaving - equal_power(FADE_SECONDS - into_fade)).abs() < 0.03, \"the synth stands at {leaving} after {into_fade} s\")",
+   "assert!((leaving * leaving + rising * rising - 1.0).abs() < 0.06, \"the swap dips or swells\")",
+   "assert!(synth_level(loaded_at + 1.3) > 0.1, \"the synth left before 1.5 s\")",
+   "assert!(synth[past_fade..].iter().all(|value| *value == 0.0 || value.abs() < 1e-30))"
+  ],
+  "pad::tests::tim_33_other_timbre_load_changes_nothing": [
+   "assert_eq!(bits(&left), bits(&other_left), \"a load for timbre {timbre} moved the sound\")",
+   "assert_eq!(bits(&right), bits(&other_right), \"a load for timbre {timbre} moved the sound\")",
+   "assert_ne!(bits(&left), bits(&run(Some(CHOIR)).0))",
+   "assert_eq!(pad.slots[0].voices[0].next_file, NO_FILE)",
+   "assert_eq!(pad.slots[1].voices[0].next_file, 0)"
+  ],
+  "pad::tests::tim_34_failed_file_takes_the_nearest_loaded": [
+   "assert_ne!(file, NO_FILE, \"note {note} has no file with {lost} failed\")",
+   "assert_eq!(distance, nearest, \"note {note} with {lost} failed\")"
+  ],
+  "pad::tests::tim_35_retry_while_held_keeps_the_sound": [
+   "assert!(moved.abs() < 1.0, \"timbre {timbre}: the files moved {moved} dB at {second} s\")",
+   "assert!(heard(own_hz, retried_at + 2.5) > 1000.0 * heard(near_hz * 2f32.powf(4.0 / 12.0), retried_at + 2.5), \"timbre {timbre}: the retried file never took over\")",
+   "assert!(layers.iter().all(|((left, right), _, _)| *left == 0.0 && *right == 0.0), \"the Analog synth reached the Orchestra\")"
+  ],
+  "pad::tests::tim_44_pitch_holds_at_48_khz": [
+   "assert!(centre.abs() <= 5.0, \"timbre {timbre}, note {note} is {centre} cents off\")",
+   "assert!(peak.abs() <= 5.0, \"timbre {timbre}, note {note} is {peak} cents off\")"
+  ],
+  "tests::a_take_outside_the_bank_is_refused": [
+   "assert!(unsafe { &*run.ptr }.bank.iter().flatten().flatten().all(Option::is_none))"
+  ],
+  "tests::a_take_trims_its_onset_like_a_sample": [
+   "assert_eq!(stored.left_channel, vec![0.5, 1.0])",
+   "assert_eq!(stored.right_channel, vec![0.5, 1.0])"
+  ],
+  "tests::bars_outside_1_to_4_are_refused": [
+   "assert_eq!(unsafe { &*run.ptr }.bars, 1, \"{} bars\", bars)",
+   "assert_eq!(unsafe { &*run.ptr }.bars, bars as usize)"
+  ],
+  "tests::bpm_01_quarter_note_in_every_meter": [
+   "assert_within_one_sample(hit.pos as f64, k as f64 * quarter, &what)",
+   "assert_eq!(run.hits.len(), clicks_per_minute)"
+  ],
+  "tests::click_01_accent_has_no_echo": [
+   "assert_eq!(sounding_frames(&left, &right), vec![0])",
+   "assert!(*sounding.last().unwrap() < 14000, \"sound at {:?}\", sounding.last())"
+  ],
+  "tests::dyn_01_a_voice_keeps_the_gain_of_its_own_step": [
+   "assert_eq!(left[10], 0.3)",
+   "assert_eq!(left[frames - 10], 1.0)"
+  ],
+  "tests::dyn_01_an_unknown_value_plays_normal": [
+   "assert_eq!(drum_peak(1, 9), 0.7)"
+  ],
+  "tests::dyn_01_step_values_set_the_gain": [
+   "assert_eq!(drum_peak(1, 3), 0.3)",
+   "assert_eq!(drum_peak(1, 1), 0.7)",
+   "assert_eq!(drum_peak(1, 2), 1.0)",
+   "assert_eq!(drum_peak(2, 3), 0.9 * 0.3)",
+   "assert_eq!(drum_peak(8, 3), 0.7 * 0.3)"
+  ],
+  "tests::fewer_bars_return_a_late_step_to_the_start": [
+   "assert_eq!(engine.step_index, 0)"
+  ],
+  "tests::hk_02_kick_and_toms_map_their_dynamics": [
+   "assert_eq!(left[0], take_level(dynamic, 0), \"track {} step {}\", track, step)",
+   "assert_eq!(right[0], -take_level(dynamic, 0), \"track {} step {}\", track, step)"
+  ],
+  "tests::hk_04_takes_rotate_per_dynamic": [
+   "assert_eq!(played_steps(&run, 4), takes(1, [0, 1, 2, 0]))",
+   "assert_eq!(of(0), takes(0, [0, 1, 2, 0]))",
+   "assert_eq!(of(1), takes(2, [0, 1, 2, 0]))",
+   "assert_eq!(played_steps(&run, 4), [ take_level(1, 0), take_level(1, 0), take_level(1, 1), take_level(1, 1), ])"
+  ],
+  "tests::hk_05_play_restarts_the_takes": [
+   "assert_eq!(played_steps(&run, 8), first_takes)",
+   "assert_eq!(played_steps(&run, 8), first_takes)"
+  ],
+  "tests::hk_06_bank_hit_has_no_step_gain": [
+   "assert_eq!(out_l[0], 0.5, \"track {} step {}\", track, step)",
+   "assert_eq!(out_r[0], -0.25, \"track {} step {}\", track, step)"
+  ],
+  "tests::hk_07_a_finished_voice_adds_nothing": [
+   "assert_eq!(*sounding_frames(&left, &right).last().unwrap(), frames - 1)",
+   "assert!(unsafe { &*run.ptr }.fading.iter().all(Option::is_none))"
+  ],
+  "tests::hk_07_open_hat_cut_stays_hard": [
+   "assert_eq!(*open_hat_frames(&hi_hat).last().unwrap(), cut_at - 1)",
+   "assert_eq!(left[cut_at], 0.7 * GAIN_NORMAL)"
+  ],
+  "tests::hk_07_replaced_hit_fades_over_5_ms": [
+   "assert!(left[..hit].iter().all(|&frame| frame == 0.5))",
+   "assert!((left[hit + frame] - 0.5 * ramp).abs() < 1e-6, \"frame {}\", frame)",
+   "assert!((right[hit + frame] + 0.5 * ramp).abs() < 1e-6, \"frame {}\", frame)",
+   "assert_eq!(*sounding_frames(&left, &right).last().unwrap(), hit + fade - 1)",
+   "assert_eq!(left[hit], old + new)",
+   "assert!((left[hit + 110] - (old * (1.0 - 110.0 / fade) + new)).abs() < 1e-6)",
+   "assert_eq!(left[hit + 500], new)",
+   "assert_eq!(*sounding_frames(&left, &right).last().unwrap(), hit + 49)"
+  ],
+  "tests::hk_07_stop_and_play_clear_the_fade": [
+   "assert!(unsafe { &*run.ptr }.fading[2].is_some())",
+   "assert!(!fading_after(engine_stop))",
+   "assert!(!fading_after(engine_start))"
+  ],
+  "tests::hk_08_single_sample_keeps_its_gains": [
+   "assert_eq!(drum_peak(track, 3), 0.7 * 0.3, \"track {}\", track)",
+   "assert_eq!(drum_peak(track, 1), 0.7 * 0.7, \"track {}\", track)",
+   "assert_eq!(drum_peak(track, 2), 0.7 * 1.0, \"track {}\", track)",
+   "assert_eq!(left[0], 0.7 * 0.3)"
+  ],
+  "tests::hk_12_missing_take_is_skipped": [
+   "assert_eq!(played_with(&[(1, 1), (1, 2)], 1, 4), levels(&[(1, 1), (1, 2), (1, 1), (1, 2)]))",
+   "assert_eq!(played_with(&[(1, 0), (1, 2)], 1, 4), levels(&[(1, 0), (1, 2), (1, 0), (1, 2)]))",
+   "assert_eq!(played_with(&[(1, 0), (1, 1)], 1, 4), levels(&[(1, 0), (1, 1), (1, 0), (1, 1)]))",
+   "assert_eq!(played_with(&[(1, 2)], 1, 3), levels(&[(1, 2), (1, 2), (1, 2)]))"
+  ],
+  "tests::hk_13_missing_dynamic_falls_back": [
+   "assert_eq!(played_with(&all_but(0), ghost, 1), levels(&[(1, 0)]))",
+   "assert_eq!(played_with(&all_but(2), accent, 1), levels(&[(1, 0)]))",
+   "assert_eq!(played_with(&all_but(1), normal, 1), levels(&[(2, 0)]))",
+   "assert_eq!(played_with(&all_but(1), ghost, 1), levels(&[(0, 0)]))",
+   "assert_eq!(played_with(&[(2, 0)], ghost, 1), levels(&[(2, 0)]))",
+   "assert_eq!(played_with(&[(0, 0)], accent, 1), levels(&[(0, 0)]))",
+   "assert_eq!(played_with(&normals, ghost, 4), levels(&[(1, 0), (1, 1), (1, 2), (1, 0)]))"
+  ],
+  "tests::hk_14_track_with_no_takes_is_silent": [
+   "assert_eq!(played_with(&[], 1, 3), [0.0, 0.0, 0.0])",
+   "assert_eq!(played_steps(&run, 3), levels(&[(1, 0), (1, 1), (1, 2)]))"
+  ],
+  "tests::hk_33_loop_keeps_the_rotation": [
+   "assert_eq!(hits, [0, 1, 2, 0, 1, 2].map(|take| take_level(1, take)))"
+  ],
+  "tests::hk_34_changed_dynamic_uses_its_next_take": [
+   "assert_eq!(left[2], take_level(1, 0))",
+   "assert_eq!(left[step.ceil() as usize + 2], take_level(1, 1))",
+   "assert_eq!(left.into_iter().find(|&level| level != 0.0), Some(take_level(2, 0)))",
+   "assert_eq!(left.into_iter().find(|&level| level != 0.0), Some(take_level(1, 2)))"
+  ],
+  "tests::hk_36_click_restarts_with_no_fade": [
+   "assert!(left[0] > 0.0)",
+   "assert!(left[hit] < left[hit - 1])",
+   "assert_eq!(left[hit + frame], left[frame], \"frame {}\", frame)"
+  ],
+  "tests::holds_128_steps": [
+   "assert_eq!(unsafe { &*run.ptr }.tracks[1].steps[127], 2)",
+   "assert_eq!(unsafe { &*run.ptr }.measure_length, 32)",
+   "assert_eq!(unsafe { &*run.ptr }.measure_length, 32)",
+   "assert_eq!(unsafe { &*run.ptr }.tracks[1].steps[127], 2)"
+  ],
+  "tests::kit_02_every_drum_track_plays_its_sample": [
+   "assert_eq!(drum_peak(track, 2), expected, \"track {}\", track)"
+  ],
+  "tests::kit_02_tracks_11_and_12_play_their_samples": [
+   "assert_eq!(drum_peak(11, 2), 0.9 * GAIN_ACCENT)",
+   "assert_eq!(drum_peak(12, 2), 0.9 * GAIN_ACCENT)"
+  ],
+  "tests::kit_04_another_piece_does_not_choke_open_hat": [
+   "assert_eq!(*sounding_frames(&left, &right).last().unwrap(), 19999)"
+  ],
+  "tests::kit_04_hi_hat_chokes_open_hat": [
+   "assert_within_one_sample(*sounding.last().unwrap() as f64 + 1.0, cut_at, \"open hat cut\")",
+   "assert_eq!(*open_hat_frames(&[0; 16]).last().unwrap(), 19999)"
+  ],
+  "tests::kit_05_output_stays_in_range": [
+   "assert_eq!(left[0], sign, \"every voice at once reaches full scale and stops there\")",
+   "assert_eq!(right[0], sign)",
+   "assert!(left.iter().chain(right.iter()).all(|frame| frame.abs() <= 1.0))"
+  ],
+  "tests::kit_07_click_needs_no_drum_samples": [
+   "assert_eq!(left[0], 1.0)"
+  ],
+  "tests::one_bar_still_wraps_at_its_length": [
+   "assert_eq!(run.hits[15].step, 15)",
+   "assert_eq!(run.hits[16].step, 0)"
+  ],
+  "tests::onset_01_trims_before_one_percent": [
+   "assert_eq!(out_l, expected_l)",
+   "assert_eq!(out_r, expected_r)"
+  ],
+  "tests::onset_02_woodblock_on_the_step": [
+   "assert!(peak > 0.0)",
+   "assert_within_one_sample(first_audible as f64, step_position, &what)"
+  ],
+  "tests::onset_03_silent_sample_unchanged": [
+   "assert_eq!(stored.left_channel, silence)",
+   "assert_eq!(stored.right_channel, silence)"
+  ],
+  "tests::pad_23_sounds_while_stopped": [
+   "assert_eq!(sounding_frames(&left[held..], &right[held..]).len(), FADED_IN - held)",
+   "assert!(peak(&left[held..]) > 0.003, \"left peak {}\", peak(&left[held..]))",
+   "assert!(peak(&right[held..]) > 0.003, \"right peak {}\", peak(&right[held..]))",
+   "assert_eq!(engine_get_tick(run.ptr, &mut bpm), -1)",
+   "assert_eq!(sounding_frames(&left, &right).len(), BLOCK as usize)"
+  ],
+  "tests::pad_24_play_and_stop_keep_the_pad": [
+   "assert_eq!(bits(&left), bits(&quiet_left))",
+   "assert_eq!(bits(&right), bits(&quiet_right))",
+   "assert!(peak(&left) > 0.003, \"left peak {}\", peak(&left))"
+  ],
+  "tests::pad_28_hits_keep_their_time": [
+   "assert!(peak(&pad) > 0.003, \"pad peak {}\", peak(&pad))",
+   "assert_eq!(plain_hits.len(), mixed_hits.len(), \"hit count at {} BPM\", bpm)",
+   "assert!(mixed_hits.len() as f64 >= 20.0 * SR as f64 / ideal - 1.0, \"hits at {} BPM\", bpm)",
+   "assert_within_one_sample(mixed as f64, plain as f64, &what)",
+   "assert_within_one_sample(mixed as f64, k as f64 * ideal, &what)"
+  ],
+  "tests::pad_29_silent_pad_changes_nothing": [
+   "assert_eq!(session_hash(&left, &right), DRUMS_BEFORE_THE_PAD)",
+   "assert!(tail_seconds < 60, \"the tail never ended\")",
+   "assert_eq!(sounding_frames(&quiet_left, &quiet_right), Vec::<usize>::new())",
+   "assert_eq!(bits(&left), bits(&after_left))",
+   "assert_eq!(bits(&right), bits(&after_right))"
+  ],
+  "tests::pad_shares_the_output_clamp": [
+   "assert_eq!(peak(&left), 1.0)",
+   "assert_eq!(peak(&right), 1.0)",
+   "assert_eq!(peak(&left), 1.0)",
+   "assert_eq!(peak(&right), 1.0)"
+  ],
+  "tests::pattern_wraps_after_four_bars": [
+   "assert_eq!(steps, expected)",
+   "assert_intervals_at(&run, 0..65, 120.0)"
+  ],
+  "tests::play_01_stop_is_silent": [
+   "assert!(!sounding_frames(&left, &right).is_empty())",
+   "assert_eq!(sounding_frames(&left, &right), Vec::<usize>::new())"
+  ],
+  "tests::play_02_restart_has_no_leftovers": [
+   "assert!(!sounding_frames(&left, &right).is_empty())",
+   "assert_within_one_sample(first_sound as f64, first_enabled, &what)"
+  ],
+  "tests::play_03_fires_step_zero_first": [
+   "assert_ne!(run.hits.last().unwrap().step, 0)",
+   "assert_eq!(run.hits[0].pos, 0)",
+   "assert_eq!(run.hits[0].step, 0)",
+   "assert_eq!(run.hits[1].step, 1)",
+   "assert_within_one_sample(run.interval(0), step_samples(SR, 120.0), \"first step\")"
+  ],
+  "tests::play_04_settings_before_first_hit_keep_it_on_sample_zero": [
+   "assert_eq!(run.hits[0].pos, 0)",
+   "assert_hits_at(&run, 0..2, 60.0)",
+   "assert_intervals_at(&run, 0..1, 60.0)",
+   "assert_eq!(run.hits[0].pos, 0)",
+   "assert_intervals_at(&run, 0..1, 120.0)"
+  ],
+  "tests::restart_returns_to_bar_one_on_the_pulse": [
+   "assert_eq!(run.hits[last - 1].step, last as i32 - 1)",
+   "assert_eq!(run.hits[last + 1].step, 1)",
+   "assert_intervals_at(&run, 0..39, 120.0)"
+  ],
+  "tests::smooth_trainer_ignores_bars": [
+   "assert_eq!(bpm_after(4), bpm_after(1))",
+   "assert!(bpm_after(4) > 107.0 && bpm_after(4) < 109.0)"
+  ],
+  "tests::test_click_mode_switching": [
+   "assert_eq!(engine.click_mode, 0)",
+   "assert_eq!(engine.click_mode, 1)"
+  ],
+  "tests::test_click_sample_playback": [
+   "assert_eq!(buf_l[0], 0.2)",
+   "assert_eq!(buf_r[0], -0.2)",
+   "assert_eq!(buf_l[1], 0.4)",
+   "assert_eq!(buf_r[1], -0.4)",
+   "assert_eq!(buf_l[2], 0.6)",
+   "assert_eq!(buf_r[2], -0.6)",
+   "assert_eq!(buf_l2[0], 0.2 * 0.5)",
+   "assert_eq!(buf_r2[0], -0.2 * 0.5)",
+   "assert_eq!(buf_l2[1], 0.4 * 0.5)",
+   "assert_eq!(buf_r2[1], -0.4 * 0.5)"
+  ],
+  "tests::test_click_synthesis": [
+   "assert!(buf_l[1] != 0.0)",
+   "assert_eq!(buf_l[1], buf_r[1])"
+  ],
+  "tests::test_drum_sample_trigger": [
+   "assert_eq!(buf_l[0], 0.5 * GAIN_NORMAL)",
+   "assert_eq!(buf_r[0], -0.5 * GAIN_NORMAL)",
+   "assert_eq!(buf_l[1], 1.0 * GAIN_NORMAL)",
+   "assert_eq!(buf_r[1], -1.0 * GAIN_NORMAL)"
+  ],
+  "tests::test_engine_init": [
+   "assert_eq!(engine.bpm, 120.0)",
+   "assert_eq!(engine.is_playing, false)",
+   "assert_eq!(engine.samples_per_step, 5512.5)"
+  ],
+  "tests::test_measure_length_looping": [
+   "assert_eq!(engine.step_index, 11)",
+   "assert_eq!(engine.step_index, 0)"
+  ],
+  "tests::test_measure_total_duration_no_drift": [
+   "assert!((total_limit - expected_total).abs() < 1e-5, \"Drift detected on length {}: total_limit={}, expected={}\", length, total_limit, expected_total)"
+  ],
+  "tests::test_raw_ffi": [
+   "assert!(!ptr.is_null())",
+   "assert_eq!(tick, -1)"
+  ],
+  "tests::test_trainer_smooth_seconds": [
+   "assert!((engine.bpm - 125.0).abs() < 0.1)"
+  ],
+  "tests::test_trainer_stepped_measures": [
+   "assert_eq!(engine.bpm, 120.0)",
+   "assert_eq!(engine.bpm, 125.0)",
+   "assert_eq!(engine.last_tick_bpm, 125.0)",
+   "assert_eq!(engine.bpm, 125.0)",
+   "assert_eq!(engine.bpm, 130.0)",
+   "assert_eq!(engine.bpm, 130.0)"
+  ],
+  "tests::test_trainer_stepped_seconds": [
+   "assert_eq!(engine.bpm, 120.0)",
+   "assert_eq!(engine.bpm, 120.0)",
+   "assert_eq!(engine.bpm, 125.0)",
+   "assert_eq!(engine.last_tick_index, 0)"
+  ],
+  "tests::tim_45_timbre_leaves_the_drums_alone": [
+   "assert_eq!(session_hash(&left, &right), DRUMS_BEFORE_THE_PAD)",
+   "assert_eq!(bits(&left), bits(&selected_left), \"timbre {timbre}\")",
+   "assert_eq!(bits(&right), bits(&selected_right), \"timbre {timbre}\")",
+   "assert_eq!(unsafe { &*played }.pad.is_silent(), false)",
+   "assert!(tail_seconds < 60, \"the tail never ended\")",
+   "assert_eq!(bits(&left), bits(&after_left), \"timbre {timbre}\")",
+   "assert_eq!(bits(&right), bits(&after_right), \"timbre {timbre}\")",
+   "assert!(unsafe { &*ptr }.pad.is_silent())"
+  ],
+  "tests::time_01_hits_within_one_sample": [
+   "assert_within_one_sample(hit.pos as f64, k as f64 * ideal, &what)",
+   "assert_within_one_sample(run.hits.len() as f64, expected_hits, \"hit count\")"
+  ],
+  "tests::time_02_one_hour_no_drift": [
+   "assert_eq!(run.hits.len() as u64, 60 * bpm as u64, \"hit count at {} BPM\", bpm)",
+   "assert_within_one_sample(hit.pos as f64, k as f64 * ideal, &what)",
+   "assert_within_one_sample(run.hits[last].pos as f64, last as f64 * ideal, &what)"
+  ],
+  "tests::time_03_every_step_same_duration": [
+   "assert_eq!(run.hits[k].step as usize, k % length)",
+   "assert_within_one_sample(run.interval(k), ideal, \"step duration\")"
+  ],
+  "tests::train_01_first_hit_at_start_bpm": [
+   "assert_eq!(run.hits[0].pos, 0)",
+   "assert_hits_at(&run, 0..16, 80.0)",
+   "assert_hits_at(&run, 16..32, 85.0)",
+   "assert_hits_at(&run, 32..33, 90.0)",
+   "assert_intervals_at(&run, 0..16, 80.0)",
+   "assert_intervals_at(&run, 16..32, 85.0)",
+   "assert_hits_at(&run, 0..16, 80.0)",
+   "assert_intervals_at(&run, 0..16, 80.0)",
+   "assert_hits_at(&run, 16..17, 85.0)",
+   "assert_hits_at(&run, 0..32, 80.0)",
+   "assert_hits_at(&run, 32..33, 85.0)",
+   "assert_hits_at(&run, 0..2, 100.0)",
+   "assert_intervals_at(&run, 0..1, 100.0)",
+   "assert_eq!(run.hits[0].pos, 0)",
+   "assert_eq!(run.hits[0].bpm, 80.0)"
+  ],
+  "tests::train_02_bars_change_on_beat_one": [
+   "assert_hits_at(&run, 0..16, 80.0)",
+   "assert_hits_at(&run, 16..32, 85.0)",
+   "assert_hits_at(&run, 32..34, 90.0)",
+   "assert_intervals_at(&run, 0..16, 80.0)",
+   "assert_intervals_at(&run, 16..32, 85.0)",
+   "assert_intervals_at(&run, 32..33, 90.0)",
+   "assert_hits_at(&run, 0..32, 80.0)",
+   "assert_hits_at(&run, 32..34, 85.0)",
+   "assert_intervals_at(&run, 0..32, 80.0)",
+   "assert_intervals_at(&run, 32..33, 85.0)"
+  ],
+  "tests::train_03_seconds_change_on_beat_one": [
+   "assert_hits_at(&run, 0..32, 120.0)",
+   "assert_intervals_at(&run, 0..32, 120.0)",
+   "assert_hits_at(&run, 32..33, 125.0)",
+   "assert_hits_at(&run, 32..64, 125.0)",
+   "assert_intervals_at(&run, 32..64, 125.0)",
+   "assert_hits_at(&run, 64..66, 130.0)",
+   "assert_intervals_at(&run, 64..65, 130.0)",
+   "assert_hits_at(&run, 16..17, 125.0)",
+   "assert_hits_at(&run, 0..32, 120.0)",
+   "assert_hits_at(&run, 32..33, 125.0)"
+  ],
+  "tests::train_04_smooth_is_continuous": [
+   "assert!(run.hits[k].bpm > run.hits[k - 1].bpm, \"hit {} did not rise\", k)",
+   "assert!((run.hits[k].bpm - (100.0 + 5.0 * elapsed_seconds)).abs() < 0.1)",
+   "assert!(run.hits[k].bpm > run.hits[k - 1].bpm, \"hit {} did not rise\", k)",
+   "assert!((run.hits[16].bpm - 104.0).abs() < 0.1, \"got {}\", run.hits[16].bpm)"
+  ],
+  "tests::train_05_edit_keeps_live_bpm": [
+   "assert_hits_at(&run, 16..32, 85.0)",
+   "assert_intervals_at(&run, 16..31, 85.0)"
+  ],
+  "tests::train_06_edit_applies_on_beat_one": [
+   "assert_hits_at(&run, 32..49, 88.0)",
+   "assert_hits_at(&run, 32..48, 95.0)",
+   "assert_hits_at(&run, 48..49, 105.0)",
+   "assert_hits_at(&run, 32..48, 85.0)",
+   "assert_hits_at(&run, 48..49, 90.0)",
+   "assert_hits_at(&run, 32..64, 85.0)",
+   "assert_hits_at(&run, 64..96, 90.0)",
+   "assert_hits_at(&run, 96..97, 95.0)",
+   "assert_hits_at(&run, 21..33, 85.0)",
+   "assert!(run.hits[33].bpm > 85.0)",
+   "assert!(run.hits[34].bpm > run.hits[33].bpm)"
+  ],
+  "tests::train_07_start_edit_waits_for_play": [
+   "assert_hits_at(&run, 16..32, 85.0)",
+   "assert_hits_at(&run, 32..33, 90.0)",
+   "assert_hits_at(&run, 0..2, 70.0)",
+   "assert_intervals_at(&run, 0..1, 70.0)"
+  ],
+  "tests::train_08_disable_holds_live_bpm": [
+   "assert_hits_at(&run, 16..16 * 5, 85.0)",
+   "assert_intervals_at(&run, 16..16 * 5 - 1, 85.0)",
+   "assert_hits_at(&run, 16..16 * 3, 85.0)",
+   "assert!(run.hits[4].bpm > 100.0)",
+   "assert_eq!(run.hits[5].bpm, run.hits[6].bpm)"
+  ],
+  "tests::train_09_enable_continues_from_live_bpm": [
+   "assert_hits_at(&run, 0..48, 100.0)",
+   "assert_intervals_at(&run, 0..48, 100.0)",
+   "assert_hits_at(&run, 48..49, 105.0)"
+  ],
+  "tests::train_11_continues_from_slider_value": [
+   "assert_hits_at(&run, 9..16, 120.0)",
+   "assert_intervals_at(&run, 9..16, 120.0)",
+   "assert_hits_at(&run, 16..32, 125.0)",
+   "assert_hits_at(&run, 32..33, 130.0)"
+  ],
+  "tests::train_15_never_passes_target": [
+   "assert!(hit.bpm <= 112.0, \"curve {} reached {}\", curve, hit.bpm)",
+   "assert_eq!(run.hits[last].bpm, 112.0, \"curve {}\", curve)",
+   "assert_intervals_at(&run, last - 16..last, 112.0)"
+  ],
+  "tests::train_16_holds_start_at_target": [
+   "assert_hits_at(&run, 0..16 * 4, start)",
+   "assert_intervals_at(&run, 0..16 * 4 - 1, start)"
+  ],
+  "tests::train_17_preset_load_replaces_trainer": [
+   "assert_hits_at(&run, 15..17, 100.0)",
+   "assert_hits_at(&run, 7..17, 100.0)",
+   "assert_hits_at(&run, 6..32, 100.0)",
+   "assert_hits_at(&run, 32..33, 105.0)"
+  ],
+  "tests::train_18_preset_counts_a_full_bar": [
+   "assert_hits_at(&run, 15..32, 100.0)",
+   "assert_intervals_at(&run, 15..31, 100.0)",
+   "assert_hits_at(&run, 32..33, 105.0)"
+  ],
+  "tests::train_19_new_schedule_counts_from_beat_one": [
+   "assert_hits_at(&run, 0..48, 100.0)",
+   "assert_hits_at(&run, 48..49, 105.0)",
+   "assert!(live_bpm(&run) < 100.1, \"live BPM {}\", live_bpm(&run))",
+   "assert!(live_bpm(&run) > 104.9 && live_bpm(&run) < 105.1, \"live BPM {}\", live_bpm(&run))"
+  ],
+  "tests::train_20_value_edit_keeps_interval_progress": [
+   "assert_hits_at(&run, 0..32, 100.0)",
+   "assert_hits_at(&run, 32..33, 110.0)"
+  ],
+  "tests::train_21_settings_before_first_hit_apply_on_it": [
+   "assert_hits_at(&run, 0..16, 100.0)",
+   "assert_hits_at(&run, 16..32, 105.0)",
+   "assert_hits_at(&run, 32..33, 110.0)",
+   "assert_hits_at(&run, 0..16, 100.0)",
+   "assert_hits_at(&run, 16..17, 110.0)",
+   "assert_eq!(run.hits[0].pos, 0)",
+   "assert_hits_at(&run, 0..16, 80.0)",
+   "assert_intervals_at(&run, 0..16, 80.0)",
+   "assert_hits_at(&run, 16..17, 85.0)",
+   "assert_eq!(run.hits[0].bpm, 100.0)"
+  ],
+  "tests::train_enable_counts_a_full_interval": [
+   "assert_hits_at(&run, 0..32, 100.0)",
+   "assert_hits_at(&run, 32..33, 105.0)"
+  ],
+  "tests::train_start_edit_keeps_counters": [
+   "assert_hits_at(&run, 0..32, 120.0)",
+   "assert_hits_at(&run, 32..33, 125.0)"
+  ],
+  "tests::train_unchanged_settings_keep_counters": [
+   "assert_hits_at(&run, 0..32, 120.0)",
+   "assert_hits_at(&run, 32..33, 125.0)",
+   "assert_hits_at(&run, 0..32, 120.0)",
+   "assert_hits_at(&run, 32..33, 125.0)"
+  ],
+  "tests::train_unknown_mode_keeps_active_settings": [
+   "assert_eq!(trainer.start_bpm, 100.0)",
+   "assert_eq!(trainer.target_bpm, 160.0)",
+   "assert_eq!(trainer.increment, 5.0)"
+  ],
+  "tests::trainer_counts_each_bar": [
+   "assert_hits_at(&run, 0..32, 80.0)",
+   "assert_hits_at(&run, 32..64, 85.0)",
+   "assert_hits_at(&run, 64..66, 90.0)"
+  ]
+ },
+ "js": {
+  "Bars > a pattern of 4 bars holds 4 times its bar": [
+   "expect(barCount({ measureLength: 16, bars: 4 })).toBe(4);",
+   "expect(patternLength({ measureLength: 16, bars: 4 })).toBe(64);",
+   "expect(patternLength({ measureLength: 12, bars: 4 })).toBe(48);"
+  ],
+  "Bars > a pattern with no bar count holds 1 bar": [
+   "expect(barCount({ measureLength: 16 })).toBe(1);",
+   "expect(patternLength({ measureLength: 12 })).toBe(12);"
+  ],
+  "Bars > places every bar boundary": [
+   "expect(barOfStep(step, 16)).toBe(bar);",
+   "expect(stepInBar(step, 16)).toBe(inBar);"
+  ],
+  "Bars > reads each bar of a pattern": [
+   "expect(barSteps(steps, 0, 4)).toEqual([0, 1, 2, 3]);",
+   "expect(barSteps(steps, 3, 4)).toEqual([12, 13, 14, 15]);"
+  ],
+  "Bars > writes a bar shorter than the measure as empty steps": [
+   "expect(steps).toEqual([1, 1, 1, 1, 2, 0, 0, 0]);"
+  ],
+  "Bars > writes one bar and leaves the others": [
+   "expect(steps).toEqual([0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 1, 0, 0, 0, 0]);"
+  ],
+  "Beat counter helpers > should fall back to the measure length without a time signature": [
+   "expect(getBeatsPerMeasure('', 16)).toBe(4);"
+  ],
+  "Beat counter helpers > should map steps to beats": [
+   "expect([0, 3, 4, 8, 15].map(step => getBeatForStep(step, 16, 4))).toEqual([0, 0, 1, 2, 3]);",
+   "expect([0, 1, 2, 13].map(step => getBeatForStep(step, 14, 7))).toEqual([0, 0, 1, 6]);"
+  ],
+  "Beat counter helpers > should read beats per measure from the time signature": [
+   "expect(getBeatsPerMeasure('4/4', 16)).toBe(4);",
+   "expect(getBeatsPerMeasure('7/8', 14)).toBe(7);"
+  ],
+  "Chord clicks > chd_19 a root keeps the selected type": [
+   "expect(chordOfRoot(Am7, D)).toEqual({ root: D, type: Am7.type });",
+   "expect(nextChord(null, chordOfRoot(Am7, D))).toEqual({ root: D, type: Am7.type });"
+  ],
+  "Chord clicks > chd_20 a type keeps the selected root": [
+   "expect(chordOfType(Am7, m9)).toEqual({ root: Am7.root, type: m9 });",
+   "expect(nextChord(null, chordOfType(Am7, m9))).toEqual({ root: Am7.root, type: m9 });"
+  ],
+  "Chord clicks > chd_21 another root changes the sounding chord": [
+   "expect(nextChord(Am7, chordOfRoot(Am7, D))).toEqual({ root: D, type: Am7.type });"
+  ],
+  "Chord clicks > chd_22 another type changes the sounding chord": [
+   "expect(nextChord(Am7, chordOfType(Am7, m9))).toEqual({ root: Am7.root, type: m9 });"
+  ],
+  "Chord clicks > chd_23 the sounding root or type stops it": [
+   "expect(nextChord(Am7, chordOfRoot(Am7, Am7.root))).toBeNull();",
+   "expect(nextChord(Am7, chordOfType(Am7, Am7.type))).toBeNull();"
+  ],
+  "Chord library > chd_01 offers 408 chords": [
+   "expect(ROOTS).toHaveLength(12);",
+   "expect(CHORD_TYPES).toHaveLength(34);",
+   "expect(names).toHaveLength(408);",
+   "expect(new Set(names).size).toBe(408);",
+   "expect(chordName(ROOTS.indexOf('B'), typeIndex('m7(b5)'))).toBe('Bm7(b5)');",
+   "expect(chordName(ROOTS.indexOf('G'), typeIndex('7(b13)'))).toBe('G7(b13)');"
+  ],
+  "Chord library > chd_02 semitones of each type": [
+   "expect(CHORD_TYPES.map(({ family, suffix, semitones, degrees }) => [family, suffix, semitones, degrees])).toEqual(LIBRARY);",
+   "expect(CHORD_FAMILIES).toEqual(['Triads', 'Sevenths', 'Ninths', 'Elevenths', 'Thirteenths', 'Altered']);",
+   "CHORD_TYPES.forEach(({ semitones, degrees }) => { expect(semitones.length).toBeLessThanOrEqual(5); expect(degrees).toHaveLength(semitones.length); });"
+  ],
+  "Chord library > chd_03 voices every root": [
+   "ROOTS.forEach((name, root) => { expect(chordMidi(root, typeIndex(suffix))).toEqual(semitones.map(semitone => SPEC_ROOT_MIDI[name] + semitone)); });",
+   "expect(Math.max(...ROOTS.flatMap((_, root) => CHORD_TYPES.flatMap((_, type) => chordMidi(root, type))))).toBe(77);"
+  ],
+  "Chord library > chd_04 spells the new chords": [
+   "expect(notesOf('C', '11')).toBe('C G Bb D F');",
+   "expect(notesOf('C', '7(b13)')).toBe('C E G Bb Ab');",
+   "expect(notesOf('C', 'dim7')).toBe('C Eb Gb A');",
+   "expect(notesOf('C', 'm11')).toBe('C Eb Bb D F');",
+   "expect(notesOf('C', '7(#11)')).toBe('C E Bb D F#');",
+   "expect(notesOf('C', '7M(#11)')).toBe('C E B D F#');",
+   "expect(notesOf('C', '13')).toBe('C E Bb D A');",
+   "expect(notesOf('C', '7(b9)')).toBe('C E G Bb Db');",
+   "expect(notesOf('C', '7(#9)')).toBe('C E G Bb D#');",
+   "expect(notesOf('C', '7(#5)')).toBe('C E G# Bb');",
+   "expect(notesOf('C', '7(b5)')).toBe('C E Gb Bb');",
+   "expect(notesOf('B', 'm7(b5)')).toBe('B D F A');",
+   "expect(notesOf('C', '6/9')).toBe('C E G A D');",
+   "expect(notesOf('Ab', '13')).toBe('Ab C Gb Bb F');",
+   "expect(notesOf('F#', '7(#9)')).toBe('F# A# C# E A');",
+   "expect(notesOf('Bb', '11')).toBe('Bb F Ab C Eb');",
+   "expect(notesOf('Eb', '7(b13)')).toBe('Eb G Bb Db Cb');",
+   "expect(notesOf('B', '7(#11)')).toBe('B D# A C# E#');",
+   "ROOTS.forEach((rootName, root) => CHORD_TYPES.forEach(({ degrees }, type) => { const midi = chordMidi(root, type); const notes = chordNotes(root, type); expect(notes.map(note => pitchOf(note) % 12)).toEqual(midi.map(note => note % 12)); notes.forEach((note, index) => { const letter = letters[(letters.indexOf(rootName[0]) + degrees[index] - 1) % 7]; const away = Math.abs((pitchOf(letter) - pitchOf(note) + 18) % 12 - 6); if (away <= 1) expect(note[0]).toBe(letter); else expect(ROOTS).toContain(note); }); }));"
+  ],
+  "Chord library > chd_05 keeps the old types": [
+   "expect(CHORD_TYPES[typeIndex(suffix)].semitones).toEqual(semitones);",
+   "expect(notesOf('Eb', 'm')).toBe('Eb Gb Bb');",
+   "expect(notesOf('Ab', 'm')).toBe('Ab Cb Eb');",
+   "expect(notesOf('Eb', 'dim')).toBe('Eb Gb A');",
+   "expect(notesOf('C', '7M(9)')).toBe('C E G B D');",
+   "expect(rows).toHaveLength(168);",
+   "expect(createHash('sha256').update(rows.join('\\n')).digest('hex')).toBe('6f45f0584f0abd3d8bf2d68b9cca02e6ef269edc6451b6a93bd10b06b1c1a89b');"
+  ],
+  "Chord selector > chd_15 lists the roots": [
+   "expect(labels('#chord-roots button')).toEqual(['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'Ab', 'A', 'Bb', 'B']);"
+  ],
+  "Chord selector > chd_16 groups the types": [
+   "expect(labels('#chord-types h2')).toEqual(['Triads', 'Sevenths', 'Ninths', 'Elevenths', 'Thirteenths', 'Altered']);",
+   "expect(CHORD_FAMILIES).toEqual(labels('#chord-types h2'));",
+   "expect(families.map(family => family.querySelectorAll('button').length)).toEqual([6, 9, 7, 5, 2, 5]);",
+   "expect(labels('#chord-types .chord-family:nth-child(4) button')).toEqual(['add11', '11', 'm11', '7(#11)', '7M(#11)']);",
+   "expect(document.querySelectorAll('#chord-types button')).toHaveLength(34);"
+  ],
+  "Chord selector > chd_17 labels the types": [
+   "expect(labels('#chord-types button')).toEqual(CHORD_TYPES.map(({ suffix }) => suffix || 'maj'));",
+   "expect(labels('#chord-types button')[0]).toBe('maj');"
+  ],
+  "Chord selector > chd_18 opens on C major": [
+   "expect(state(rootButton('C'))).toBe('selected');",
+   "expect(state(typeButton('maj'))).toBe('selected');",
+   "expect(document.querySelectorAll('#chord-roots [data-state=\"selected\"], #chord-types [data-state=\"selected\"]')).toHaveLength(2);",
+   "expect(plays()).toEqual([]);",
+   "expect(shown()).toBe('No chord playing');"
+  ],
+  "Chord selector > chd_19 root plays the selected type": [
+   "expect(plays()).toEqual([[[45, 49, 52], 0]]);",
+   "expect(shown()).toBe('A · A C# E');",
+   "expect(plays()[plays().length - 1]).toEqual([[50, 53, 57, 60], 0]);",
+   "expect(shown()).toBe('Dm7 · D F A C');"
+  ],
+  "Chord selector > chd_20 type plays on the selected root": [
+   "expect(plays()).toEqual([[[48, 51, 55, 58], 0]]);",
+   "expect(shown()).toBe('Cm7 · C Eb G Bb');",
+   "expect(plays()[plays().length - 1]).toEqual([[45, 49, 52, 55], 0]);",
+   "expect(shown()).toBe('A7 · A C# E G');"
+  ],
+  "Chord selector > chd_21 another root keeps the type": [
+   "expect(plays()[1]).toEqual([[50, 53, 57, 60], 0]);",
+   "expect(shown()).toBe('Dm7 · D F A C');",
+   "expect(stops()).toBe(0);"
+  ],
+  "Chord selector > chd_22 another type keeps the root": [
+   "expect(plays()[1]).toEqual([[50, 53, 57, 60, 64], 0]);",
+   "expect(shown()).toBe('Dm9 · D F A C E');",
+   "expect(stops()).toBe(0);"
+  ],
+  "Chord selector > chd_23 the sounding root or type stops it": [
+   "expect(stops()).toBe(1);",
+   "expect(shown()).toBe('No chord playing');",
+   "expect(stops()).toBe(2);",
+   "expect(shown()).toBe('No chord playing');"
+  ],
+  "Chord selector > chd_24 marks the sounding chord": [
+   "expect(state(rootButton('B'))).toBe('sounding');",
+   "expect(state(typeButton('m7(b5)'))).toBe('sounding');",
+   "expect(rootButton('B').getAttribute('aria-pressed')).toBe('true');",
+   "expect(typeButton('m7(b5)').getAttribute('aria-pressed')).toBe('true');",
+   "expect(pressedChords()).toEqual(['Bm7(b5)']);",
+   "expect(state(rootButton('C'))).toBe('');",
+   "expect(shown()).toBe('Bm7(b5) · B D F A');",
+   "expect(document.querySelectorAll('[data-state=\"sounding\"]')).toHaveLength(2);"
+  ],
+  "Chord selector > chd_25 marks the selection": [
+   "expect(state(rootButton('G'))).toBe('selected');",
+   "expect(rootButton('G').getAttribute('aria-pressed')).toBe('false');",
+   "expect(state(typeButton('maj'))).toBe('selected');",
+   "expect(typeButton('maj').getAttribute('aria-pressed')).toBe('false');"
+  ],
+  "Chord selector > chd_26 keeps the selection after a stop": [
+   "expect(shown()).toBe('No chord playing');",
+   "expect(state(rootButton('Eb'))).toBe('selected');",
+   "expect(state(typeButton('13'))).toBe('selected');",
+   "expect(shown()).toBe('Eb13 · Eb G Db F C');"
+  ],
+  "Chord selector > chd_27 uses real buttons": [
+   "expect(buttons).toHaveLength(46);",
+   "buttons.forEach(button => { expect(button.tagName).toBe('BUTTON'); expect(button.type).toBe('button'); expect(button.tabIndex).toBe(0); expect(button.disabled).toBe(false); });"
+  ],
+  "Chord selector > chd_33 settles on the last chord": [
+   "expect(shown()).toBe('Em7 · E G B D');",
+   "expect(plays()).toEqual([[[52, 55, 59, 62], 0]]);"
+  ],
+  "Chord selector > chd_34 a timbre pick replays a new chord": [
+   "expect(plays()[plays().length - 1]).toEqual([[21, 33, 45, 52, 55, 59, 62], 2]);",
+   "expect(stops()).toBe(0);"
+  ],
+  "Chord selector > chd_35 resumes audio within the click": [
+   "expect(mockNode.resumeContext).toHaveBeenCalledTimes(1);",
+   "expect(mockNode.resumeContext).toHaveBeenCalledTimes(2);"
+  ],
+  "Chord selector > chd_36 click during a fade": [
+   "expect(plays()[plays().length - 1]).toEqual([[50, 53, 57], 0]);",
+   "expect(shown()).toBe('Dm · D F A');"
+  ],
+  "Chords > pad_01 names the chords": [
+   "expect(ROOTS).toEqual(SPEC_ROOTS);",
+   "expect(chordName(ROOTS.indexOf('C'), typeIndex('7M(9)'))).toBe('C7M(9)');",
+   "expect(chordName(ROOTS.indexOf('Eb'), typeIndex('m'))).toBe('Ebm');",
+   "expect(chordName(ROOTS.indexOf('F#'), typeIndex(''))).toBe('F#');"
+  ],
+  "Chords > pad_02 semitones of each type": [
+   "expect(CHORD_TYPES[type].semitones).toEqual(semitones);",
+   "ROOTS.forEach((name, root) => { const midi = chordMidi(root, type); expect(midi.map(note => note - midi[0])).toEqual(semitones); expect(midi[0]).toBe(SPEC_ROOT_MIDI[name]); });"
+  ],
+  "Chords > pad_03 voices every root in range": [
+   "expect([...rootNotes].sort((a, b) => a - b)).toEqual([45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56]);",
+   "expect(rootNotes[ROOTS.indexOf('A')]).toBe(45);",
+   "expect(rootNotes[ROOTS.indexOf('C')]).toBe(48);",
+   "expect(rootNotes[ROOTS.indexOf('Ab')]).toBe(56);",
+   "ROOTS.forEach((_, root) => CHORD_TYPES.forEach((_, type) => { const [bass, ...others] = chordMidi(root, type); expect(others.every(note => note > bass)).toBe(true); expect(bass).toBeGreaterThanOrEqual(45); expect(bass).toBeLessThanOrEqual(56); }));"
+  ],
+  "Chords > pad_09 the same chord stops": [
+   "expect(nextChord(null, cm7)).toEqual(cm7);",
+   "expect(nextChord(cm7, f7)).toEqual(f7);",
+   "expect(nextChord(cm7, sameRoot)).toEqual(sameRoot);",
+   "expect(nextChord(cm7, { ...cm7 })).toBeNull();"
+  ],
+  "Chords > pad_34 spelling": [
+   "expect(notesOf('Eb', 'm')).toBe('Eb Gb Bb');",
+   "expect(notesOf('Ab', 'm')).toBe('Ab Cb Eb');",
+   "expect(notesOf('Eb', 'dim')).toBe('Eb Gb A');",
+   "expect(notesOf('C', '7M(9)')).toBe('C E G B D');",
+   "expect(notesOf('C#', '')).toBe('C# E# G#');",
+   "expect(notesOf('F#', 'aug')).toBe('F# A# D');",
+   "expect(notesOf('Ab', 'dim')).toBe('Ab Cb D');",
+   "expect(notesOf('C', 'sus4')).toBe('C F G');",
+   "expect(notesOf('C', 'sus2')).toBe('C D G');",
+   "expect(notesOf('A', '6')).toBe('A C# E F#');",
+   "ROOTS.forEach((_, root) => CHORD_TYPES.forEach((_, type) => { const notes = chordNotes(root, type); expect(notes).toHaveLength(CHORD_TYPES[type].semitones.length); expect(notes.every(note => /^[A-G][#b]?$/.test(note))).toBe(true); expect(notes.map(note => pitchOf(note) % 12)).toEqual(chordMidi(root, type).map(note => note % 12)); }));"
+  ],
+  "Chords > pad_44 parses the volume": [
+   "expect(parseVolume('0')).toBe(0);",
+   "expect(parseVolume('30')).toBe(30);",
+   "expect(parseVolume('100')).toBe(100);",
+   "expect(parseVolume(bad)).toBe(70);"
+  ],
+  "Display rules > clock label shows the rate and the render quantum": [
+   "expect(formatClock(44100)).toBe('AUDIO CLOCK: 44.1 kHz 128 SPLS (2.9ms)');",
+   "expect(formatClock(48000)).toBe('AUDIO CLOCK: 48.0 kHz 128 SPLS (2.7ms)');"
+  ],
+  "Display rules > denominator moves through 4, 8 and 16 and stops at each end": [
+   "expect(nextDenominator(4, 1)).toBe(8);",
+   "expect(nextDenominator(8, 1)).toBe(16);",
+   "expect(nextDenominator(16, 1)).toBe(16);",
+   "expect(nextDenominator(16, -1)).toBe(8);",
+   "expect(nextDenominator(8, -1)).toBe(4);",
+   "expect(nextDenominator(4, -1)).toBe(4);"
+  ],
+  "Display rules > latency label shows a value or a placeholder": [
+   "expect(formatLatency(null)).toBe('LATENCY: --');",
+   "expect(formatLatency(12.34)).toBe('LATENCY: 12.3ms');",
+   "expect(formatLatency(0)).toBe('LATENCY: 0.0ms');"
+  ],
+  "Display rules > position label pads bar and step": [
+   "expect(formatBarStep(1, 1)).toBe('BAR 01 · STEP 01');",
+   "expect(formatBarStep(12, 32)).toBe('BAR 12 · STEP 32');",
+   "expect(formatBarStep(100, 3)).toBe('BAR 100 · STEP 03');"
+  ],
+  "Display rules > steps label reads the pattern over the engine limit": [
+   "expect(formatSteps(16)).toBe('STEPS: 16/128');",
+   "expect(formatSteps(7)).toBe('STEPS: 7/128');",
+   "expect(formatSteps(64)).toBe('STEPS: 64/128');"
+  ],
+  "Display rules > time_01 timer format": [
+   "expect(formatTimer(0)).toBe('00:00:00');",
+   "expect(formatTimer(59)).toBe('00:00:59');",
+   "expect(formatTimer(61)).toBe('00:01:01');",
+   "expect(formatTimer(3600 + 240 + 12)).toBe('01:04:12');"
+  ],
+  "Display rules > time_05 hours past 99": [
+   "expect(formatTimer(99 * 3600 + 59 * 60 + 59)).toBe('99:59:59');",
+   "expect(formatTimer(100 * 3600)).toBe('100:00:00');"
+  ],
+  "Factory Presets Tests > should contain default presets with measure lengths": [
+   "expect(FACTORY_PRESETS.length).toBeGreaterThan(0);",
+   "expect(default44).toBeDefined();",
+   "expect(default44?.measureLength).toBe(16);",
+   "expect(preset34).toBeDefined();",
+   "expect(preset34?.measureLength).toBe(12);"
+  ],
+  "Factory grooves > edit_23 five named grooves": [
+   "expect(FACTORY_GROOVES.map(groove => groove.name)).toEqual([ 'Rock Groove', 'Metal Groove', 'Blues Shuffle', 'Jazz Swing', 'Metalcore Breakdown', ]);",
+   "expect(metalcore.length).toBe(16);",
+   "expect(metalcore.tracks[1]).toEqual([1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0]);",
+   "expect(metalcore.tracks[2]).toEqual([0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0]);",
+   "expect(metalcore.tracks[3]).toEqual([1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]);"
+  ],
+  "Grooves Library > dyn_02 drum cell cycle": [
+   "expect(stepThrough(8)).toEqual(['active', 'accent', 'ghost', '']);"
+  ],
+  "Grooves Library > dyn_03 click cell cycle": [
+   "expect(stepThrough(0)).toEqual(['active', 'accent', '', 'active']);"
+  ],
+  "Grooves Library > dyn_04 cell symbols": [
+   "expect(symbols).toEqual(['●', '▲', '•']);"
+  ],
+  "Grooves Library > dyn_05 figure writes normal": [
+   "expect([0, 1, 2, 3].map(step => cell(9, step).classList.contains('active'))).toEqual([true, true, true, true]);"
+  ],
+  "Grooves Library > dyn_06 dynamics survive save and load": [
+   "expect(saved.gridData[1][0]).toBe(2);",
+   "expect(saved.gridData[2][0]).toBe(3);",
+   "expect(cell(1, 0).classList.contains('accent')).toBe(true);",
+   "expect(cell(2, 0).classList.contains('ghost')).toBe(true);"
+  ],
+  "Grooves Library > edge_02 load keeps the mix": [
+   "expect(byId('solo-2').getAttribute('aria-pressed')).toBe('true');",
+   "expect(cell(1, 0).classList.contains('silenced')).toBe(true);",
+   "expect(kick.every(value => value === 0)).toBe(true);"
+  ],
+  "Grooves Library > edt_01 grid holds every track": [
+   "expect([...document.querySelectorAll('.track-label')].map(label => (label as HTMLElement).innerText)).toEqual([ 'Click', 'Kick', 'Snare', 'Hi-hat', 'Open Hat', 'Ride', 'Ride Bell', 'Crash', 'China', 'High Tom', 'Mid Tom', 'Low Tom', 'Floor Tom', ]);",
+   "expect(document.querySelectorAll('.step-cell')).toHaveLength(13 * 16);"
+  ],
+  "Grooves Library > edt_02 thirteen mix cards": [
+   "expect(cards.map(card => card.querySelector('.track-mix-name')?.textContent)).toEqual([ 'CLICK', 'KICK', 'SNARE', 'HI-HAT', 'OPEN HAT', 'RIDE', 'RIDE BELL', 'CRASH', 'CHINA', 'HIGH TOM', 'MID TOM', 'LOW TOM', 'FLOOR TOM', ]);",
+   "cards.forEach((card, position) => { const trackId = ids[position]; expect(card.dataset.track).toBe(String(trackId)); expect(card.querySelector(`#mute-${trackId}`)?.textContent).toBe('M'); expect(card.querySelector(`#solo-${trackId}`)?.textContent).toBe('S'); });"
+  ],
+  "Grooves Library > edt_03 new track obeys mix": [
+   "expect(china()).toBe(1);",
+   "expect(byId('mute-8').getAttribute('aria-pressed')).toBe('true');",
+   "expect(china()).toBe(0);",
+   "expect(cell(8, 0).classList.contains('silenced')).toBe(true);",
+   "expect(china()).toBe(1);",
+   "expect(cell(1, 0).classList.contains('silenced')).toBe(true);"
+  ],
+  "Grooves Library > edt_04 groove clears other tracks": [
+   "expect(cell(7, 0).classList.contains('active')).toBe(false);",
+   "expect(cell(1, 2).classList.contains('active')).toBe(false);",
+   "expect(cell(1, 0).classList.contains('active')).toBe(true);",
+   "expect(cell(0, 0).classList.contains('accent')).toBe(true);",
+   "expect(cell(0, 4).classList.contains('active')).toBe(true);"
+  ],
+  "Grooves Library > edt_05 save groove keeps the kit": [
+   "expect(Object.keys(saved.gridData)).toEqual(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12']);",
+   "expect(saved.gridData[7][0]).toBe(1);",
+   "expect(saved.gridData[10][3]).toBe(2);"
+  ],
+  "Grooves Library > edt_06 an old preset loads through the page": [
+   "expect(document.querySelectorAll('.step-cell')).toHaveLength(13 * 16);",
+   "expect(document.querySelectorAll('.step-cell[data-track=\"8\"].active')).toHaveLength(0);",
+   "expect(cell(2, 1).classList.contains('active')).toBe(true);",
+   "expect(snare[1]).toBe(1);",
+   "expect(calls('updateGrid').map(([trackId]) => trackId)).toContain(10);"
+  ],
+  "Grooves Library > grv_01 tabs": [
+   "expect([...document.querySelectorAll<HTMLElement>('#grooves-view .genre-tab')].map(tab => tab.innerText)) .toEqual(['All', 'Rock', 'Metal', 'Metalcore', 'Blues']);"
+  ],
+  "Grooves Library > grv_02 all shows fourteen": [
+   "expect(genreTab('All').getAttribute('aria-pressed')).toBe('true');",
+   "expect(cards()).toHaveLength(14);"
+  ],
+  "Grooves Library > grv_03 genre counts": [
+   "const shown = (name: string) => { genreTab(name).click(); expect(genreTab(name).getAttribute('aria-pressed')).toBe('true'); return cards().map(card => card.querySelector('.song-artist')?.textContent); };",
+   "expect(shown('Rock')).toEqual(['AC/DC', 'AC/DC']);",
+   "expect(shown('Metal')).toHaveLength(5);",
+   "expect(new Set(shown('Metal'))).toEqual(new Set(['Iron Maiden', 'Metallica']));",
+   "expect(new Set(shown('Metalcore'))).toEqual(new Set(['Bullet for My Valentine']));",
+   "expect(shown('Metalcore')).toHaveLength(3);",
+   "expect(shown('Blues')).toHaveLength(4);",
+   "expect(new Set(shown('Blues'))).toEqual(new Set(['Eric Clapton', 'Cream (Eric Clapton)', 'B.B. King']));",
+   "expect(shown('All')).toHaveLength(14);"
+  ],
+  "Grooves Library > grv_04 card fields": [
+   "expect([field('title'), field('artist'), field('section'), field('bpm'), field('meter')]) .toEqual(['Back in Black', 'AC/DC', 'Verse', '94 BPM', '4/4']);"
+  ],
+  "Grooves Library > grv_05 play stays on screen": [
+   "expect(byId('pattern-name').textContent).toBe('PAT: Enter Sandman');",
+   "expect(calls('start')).toHaveLength(1);",
+   "expect(byId('btn-play').classList.contains('playing')).toBe(true);",
+   "expect(shownScreens()).toEqual(['grooves-view']);"
+  ],
+  "Grooves Library > grv_06 playing mark": [
+   "expect(songButton('Battery', '.song-play').textContent).toBe('▶');",
+   "expect(songButton('Battery', '.song-play').textContent).toBe('■');",
+   "expect(songButton('Cocaine', '.song-play').textContent).toBe('▶');",
+   "expect(songButton('Battery', '.song-play').textContent).toBe('■');",
+   "expect(songButton('Battery', '.song-play').textContent).toBe('▶');"
+  ],
+  "Grooves Library > grv_07 stop keeps song": [
+   "expect(calls('stop')).toHaveLength(1);",
+   "expect(byId('btn-play').classList.contains('playing')).toBe(false);",
+   "expect(songButton('Cocaine', '.song-play').textContent).toBe('▶');",
+   "expect(byId('pattern-name').textContent).toBe('PAT: Cocaine');"
+  ],
+  "Grooves Library > grv_08 switch during playback": [
+   "expect(calls('start')).toHaveLength(1);",
+   "expect(calls('stop')).toHaveLength(0);",
+   "expect(lastCall('setBpm')).toEqual([212]);",
+   "expect(songButton('Master of Puppets', '.song-play').textContent).toBe('■');",
+   "expect(songButton('Back in Black', '.song-play').textContent).toBe('▶');"
+  ],
+  "Grooves Library > grv_08 switch while the kit still loads": [
+   "expect(calls('start')).toHaveLength(1);",
+   "expect(calls('stop')).toHaveLength(0);",
+   "expect(byId('pattern-name').textContent).toBe('PAT: Battery');",
+   "expect(songButton('Battery', '.song-play').textContent).toBe('■');"
+  ],
+  "Grooves Library > grv_09 open in editor": [
+   "expect(shownScreens()).toEqual(['editor-view']);",
+   "expect(byId('nav-editor').getAttribute('aria-current')).toBe('page');",
+   "expect(byId('pattern-name').textContent).toBe('PAT: Battery');",
+   "expect(byId('btn-play').classList.contains('playing')).toBe(false);"
+  ],
+  "Grooves Library > grv_10 loaded song keeps edits": [
+   "expect(shownScreens()).toEqual(['editor-view']);",
+   "expect(cell(8, 1).classList.contains('active')).toBe(true);",
+   "expect(cell(8, 1).classList.contains('active')).toBe(true);",
+   "expect(asked).not.toHaveBeenCalled();"
+  ],
+  "Grooves Library > grv_11 asks before replacing edits": [
+   "expect(asked).not.toHaveBeenCalled();",
+   "expect(asked).toHaveBeenCalledOnce();",
+   "expect(byId('pattern-name').textContent).toBe('PAT: Cocaine');",
+   "expect(asked).toHaveBeenCalledTimes(2);",
+   "expect(byId('pattern-name').textContent).toBe('PAT: Enter Sandman');"
+  ],
+  "Grooves Library > grv_12 decline changes nothing": [
+   "expect(byId('pattern-name').textContent).toBe('PAT: Battery');",
+   "expect(cell(8, 1).classList.contains('active')).toBe(true);",
+   "expect(audioCalls).toEqual([]);",
+   "expect(byId('btn-play').classList.contains('playing')).toBe(true);",
+   "expect(shownScreens()).toEqual(['grooves-view']);",
+   "expect(byId('pattern-name').textContent).toBe('PAT: Battery');",
+   "expect(byId('preset-selector').value).toBe('song:song_battery');",
+   "expect(cell(8, 1).classList.contains('active')).toBe(true);"
+  ],
+  "Grooves Library > grv_12 decline keeps the screen on open in editor": [
+   "expect(shownScreens()).toEqual(['grooves-view']);",
+   "expect(byId('pattern-name').textContent).not.toContain('Battery');"
+  ],
+  "Grooves Library > kit_06 failed sample stays local": [
+   "expect(mockLoadSample.mock.calls.map(([id]) => id).sort((a, b) => a - b)).toEqual([3, 4, 5, 6, 7, 8]);",
+   "expect(logged).toHaveBeenCalledWith('Failed to load /kit/china.wav:', failure);",
+   "expect(calls('start')).toHaveLength(1);",
+   "expect(byId('btn-play').classList.contains('playing')).toBe(true);"
+  ],
+  "Grooves Library > nav_01 header links": [
+   "expect([...document.querySelectorAll('header nav button')].map(link => link.textContent)).toEqual(['Editor', 'Stadium', 'Grooves', 'Improv']);"
+  ],
+  "Grooves Library > nav_02 editor link": [
+   "expect(shownScreens()).toEqual(['editor-view']);"
+  ],
+  "Grooves Library > nav_03 stadium link": [
+   "expect(shownScreens()).toEqual(['stadium-view']);"
+  ],
+  "Grooves Library > nav_04 grooves link": [
+   "expect(shownScreens()).toEqual(['grooves-view']);"
+  ],
+  "Grooves Library > nav_05 aria current": [
+   "expect(current()).toEqual([['Editor', 'page']]);",
+   "expect(current()).toEqual([['Grooves', 'page']]);",
+   "expect(current()).toEqual([['Stadium', 'page']]);"
+  ],
+  "Grooves Library > nav_06 no toggle no presets": [
+   "expect(byId('btn-toggle-view')).toBeNull();",
+   "expect(header.textContent).not.toContain('GO TO');",
+   "expect([...header.querySelectorAll('nav button')].map(link => link.textContent)).not.toContain('Presets');"
+  ],
+  "Grooves Library > nav_07 reload opens the last screen": [
+   "expect(shownScreens()).toEqual(['grooves-view']);",
+   "expect(byId('nav-grooves').getAttribute('aria-current')).toBe('page');"
+  ],
+  "Grooves Library > nav_08 playback survives screen change": [
+   "expect(audioCalls).toEqual([]);",
+   "expect(byId('btn-play').classList.contains('playing')).toBe(true);"
+  ],
+  "Grooves Library > song_05 load replaces everything": [
+   "expect(byId('time-sig-num').value).toBe('3');",
+   "expect(byId('bpm-slider').value).toBe('154');",
+   "expect(byId('time-sig-num').value).toBe('4');",
+   "expect(byId('time-sig-den').value).toBe('4');",
+   "expect(lastCall('setMeasureLength')).toEqual([16]);",
+   "expect(byId('trainer-enable').checked).toBe(false);",
+   "expect(cell(7, 3).classList.contains('active')).toBe(false);",
+   "expect(cell(1, 3).classList.contains('active')).toBe(true);"
+  ],
+  "Grooves Library > song_06 card matches tempo bus": [
+   "expect(songButton('The Trooper', '.song-bpm').textContent).toBe(`${byId('bpm-number').innerText} BPM`);",
+   "expect(byId('bpm-number').innerText).toBe('162');"
+  ],
+  "Grooves Library > song_07 songs group": [
+   "expect((group as any).label).toBe('Songs');",
+   "expect(group.children).toHaveLength(14);",
+   "expect(byId('pattern-name').textContent).toBe('PAT: Enter Sandman');",
+   "expect(byId('preset-selector').value).toBe('song:song_enter_sandman');",
+   "expect(byId('preset-selector').value).toBe('song:song_cocaine');"
+  ],
+  "Grooves Library > song_08 save leaves catalog": [
+   "expect(saved.id).toMatch(/^user_/);",
+   "expect(saved.gridData[8][0]).toBe(1);",
+   "expect(saved.bpm).toBe(194);",
+   "expect(SONGS).toEqual(original);",
+   "expect(byId('preset-selector').value).toBe(`user:${saved.id}`);"
+  ],
+  "Grooves Library > std_01 four group labels": [
+   "expect([...document.querySelectorAll('.clock-legend span')].map(entry => entry.textContent)).toEqual(labels);",
+   "expect([...document.querySelectorAll('.orb-name')].map(name => name.textContent)).toEqual(labels);",
+   "expect(document.querySelectorAll('.orb')).toHaveLength(4);",
+   "expect(rings).toEqual(new Set(['0', '1', '2', '3']));"
+  ],
+  "Grooves Library > std_04 ring lights for any track of its group": [
+   "expect(ringOn(2, 1)).toBe(true);",
+   "expect(ringOn(3, 5)).toBe(true);",
+   "expect(ringOn(3, 1)).toBe(false);"
+  ],
+  "Grooves Library > std_05 orb pulses for its group": [
+   "expect(orbPulsed(2)).toBe(true);",
+   "expect(orbPulsed(3)).toBe(false);",
+   "expect(orbPulsed(3)).toBe(true);",
+   "expect(orbPulsed(2)).toBe(false);"
+  ],
+  "Grooves Library > std_06 silenced group stays still": [
+   "expect(orbPulsed(2)).toBe(false);",
+   "expect(orbPulsed(3)).toBe(true);"
+  ],
+  "House Kit > hk_01 nine takes of each piece": [
+   "expect(fs.readdirSync(houseDir).sort()).toEqual(Object.keys(RECORDINGS).sort());",
+   "expect(houseFiles).toHaveLength(54);",
+   "Object.keys(RECORDINGS).forEach(piece => { const expected = houseFiles.filter(file => file.startsWith(`${piece}/`)).map(file => path.basename(file)); expect(fs.readdirSync(path.join(houseDir, piece)).sort()).toEqual(expected.sort()); });",
+   "expect(pieces.map(track => track.bank!.folder)).toEqual(['kick', 'snare', 'tom-10', 'tom-12', 'tom-14', 'tom-16']);",
+   "pieces.forEach(track => { const takes = takesOf(track); expect(takes, track.name).toHaveLength(9); expect(takes.map(({ dynamic, take }) => [dynamic, take]), track.name).toEqual( [0, 1, 2].flatMap(dynamic => [0, 1, 2].map(take => [dynamic, take]))); takes.forEach(({ url }) => expect(fs.existsSync(path.join(publicDir, url)), url).toBe(true)); });",
+   "expect(takesOf(TRACKS.find(track => track.name === 'Hi-hat')!)).toEqual([]);"
+  ],
+  "House Kit > hk_03 snare recordings": [
+   "expect(dynamics).toEqual([ ['/kit/house/snare/soft-1.wav', '/kit/house/snare/soft-2.wav', '/kit/house/snare/soft-3.wav'], ['/kit/house/snare/hard-1.wav', '/kit/house/snare/hard-2.wav', '/kit/house/snare/hard-3.wav'], ['/kit/house/snare/crack-1.wav', '/kit/house/snare/crack-2.wav', '/kit/house/snare/crack-3.wav'], ]);"
+  ],
+  "House Kit > hk_09 format and tail": [
+   "houseFiles.forEach(file => { const { encoding, channels, sampleRate, bits, samples, frames } = readWav(file); expect({ file, encoding, channels, sampleRate, bits }).toEqual({ file, encoding: 1, channels: 2, sampleRate: 44100, bits: 16, }); const reachesTail = (frame: number) => Math.max(Math.abs(samples[2 * frame]), Math.abs(samples[2 * frame + 1])) >= TAIL_LEVEL; let framesAfterSound = 0; while (!reachesTail(frames - 1 - framesAfterSound)) framesAfterSound++; // The cut frame sits at -60 dBFS, and the fade pulls the last ones under it. So only about // the fade stays under -60 dBFS: more is a late cut or padding, less is a cut above -60. expect(framesAfterSound, file).toBeGreaterThanOrEqual(FADE_FRAMES * 0.9); expect(framesAfterSound, file).toBeLessThanOrEqual(4410); // 100 ms: a low tom's last swings // The fade lands on 0, on the last frames only: no silence was padded after it let silentFrames = 0; while (samples[2 * (frames - 1 - silentFrames)] === 0 && samples[2 * (frames - 1 - silentFrames) + 1] === 0) { silentFrames++; } expect(silentFrames, file).toBeGreaterThanOrEqual(1); expect(silentFrames, file).toBeLessThan(FADE_FRAMES / 2); });"
+  ],
+  "House Kit > hk_10 recorded levels": [
+   "Object.entries(RECORDINGS).forEach(([piece, recordings]) => { recordings.forEach((recording, index) => { expect(Math.abs(meanPeakDb(piece, recording) - levels[piece][index]), `${piece}/${recording}`).toBeLessThanOrEqual(0.05); }); });",
+   "Object.keys(RECORDINGS).forEach(piece => { const peaks = houseFiles.filter(file => file.startsWith(`${piece}/`)).map(peakOf); expect(toDb(Math.max(...peaks)), piece).toBeGreaterThanOrEqual(-1); });"
+  ],
+  "House Kit > hk_11 size limit": [
+   "expect(kitFiles.length).toBeGreaterThanOrEqual(54 + 5);",
+   "expect(bytes.reduce((total, size) => total + size)).toBeLessThanOrEqual(20 * 1024 * 1024);"
+  ],
+  "House Kit > hk_12 logs a failed take": [
+   "expect(logged).toHaveBeenCalledWith('Failed to load /kit/house/snare/hard-2.wav:', failure);",
+   "expect(logged.mock.calls.filter(([message]) => String(message).startsWith('Failed to load'))).toHaveLength(1);",
+   "expect(taken()).toHaveLength(54);",
+   "expect(calls('start')).toHaveLength(1);",
+   "expect(byId('btn-play').classList.contains('playing')).toBe(true);"
+  ],
+  "House Kit > hk_15 rows follow the track order": [
+   "expect(labels.map(label => label.innerText)).toEqual([ 'Click', 'Kick', 'Snare', 'Hi-hat', 'Open Hat', 'Ride', 'Ride Bell', 'Crash', 'China', 'High Tom', 'Mid Tom', 'Low Tom', 'Floor Tom', ]);",
+   "expect(labels.map(rowOf)).toEqual([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]);",
+   "labels.forEach(label => { const cells = document.querySelectorAll<HTMLElement>(`.step-cell[data-track=\"${label.dataset.track}\"]`); expect(cells).toHaveLength(16); cells.forEach(step => expect(rowOf(step), label.innerText).toBe(rowOf(label))); });"
+  ],
+  "House Kit > hk_15 thirteen tracks in order": [
+   "expect(TRACKS).toHaveLength(13);",
+   "expect(TRACKS.map(track => track.name)).toEqual([ 'Click', 'Kick', 'Snare', 'Hi-hat', 'Open Hat', 'Ride', 'Ride Bell', 'Crash', 'China', 'High Tom', 'Mid Tom', 'Low Tom', 'Floor Tom', ]);",
+   "expect(TRACKS.map(track => track.label)).toEqual([ 'CLICK', 'KICK', 'SNARE', 'HI-HAT', 'OPEN HAT', 'RIDE', 'RIDE BELL', 'CRASH', 'CHINA', 'HIGH TOM', 'MID TOM', 'LOW TOM', 'FLOOR TOM', ]);"
+  ],
+  "House Kit > hk_16 ids stay": [
+   "expect(before.map(idOf)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);",
+   "expect(idOf('Mid Tom')).toBe(11);",
+   "expect(idOf('Low Tom')).toBe(12);"
+  ],
+  "House Kit > hk_17 thirteen rows and cards": [
+   "expect(document.querySelectorAll('.track-label')).toHaveLength(13);",
+   "expect(document.querySelectorAll('.track-mix-card')).toHaveLength(13);",
+   "expect(document.querySelectorAll('.step-cell')).toHaveLength(13 * 16);",
+   "NEW_TOMS.forEach(trackId => { expect(document.querySelectorAll(`.step-cell[data-track=\"${trackId}\"]`)).toHaveLength(16); expect(document.querySelector(`.track-mix-card[data-track=\"${trackId}\"]`)).not.toBeNull(); });"
+  ],
+  "House Kit > hk_18 new tom cells cycle and play": [
+   "expect(seen, `track ${trackId}`).toEqual(['active', 'accent', 'ghost', '']);",
+   "expect(sentTo(11)[1]).toBe(1);",
+   "expect(sentTo(12)[2]).toBe(2);"
+  ],
+  "House Kit > hk_19 mute and solo the new toms": [
+   "expect(sentTo(11)[0]).toBe(1);",
+   "expect(sentTo(11)).toEqual(silence);",
+   "expect(sentTo(12)[0]).toBe(1);",
+   "expect(cell(11, 0).classList.contains('silenced')).toBe(true);",
+   "expect(sentTo(11)[0]).toBe(1);",
+   "expect(sentTo(12)[0]).toBe(1);",
+   "expect(sentTo(11)).toEqual(silence);",
+   "expect(cell(11, 0).classList.contains('silenced')).toBe(true);",
+   "expect(cell(12, 0).classList.contains('silenced')).toBe(false);",
+   "expect(sentTo(12)).toEqual(silence);",
+   "expect(sentTo(11)[0]).toBe(1);",
+   "expect(cell(12, 0).classList.contains('silenced')).toBe(true);",
+   "expect(sentTo(12)[0]).toBe(1);",
+   "expect(sentTo(11)[0]).toBe(1);",
+   "expect(sentTo(12)).toEqual(silence);",
+   "expect(cell(12, 0).classList.contains('silenced')).toBe(true);",
+   "expect(cell(11, 0).classList.contains('silenced')).toBe(false);"
+  ],
+  "House Kit > hk_21 new toms light the stadium group": [
+   "expect(ringOn(3)).toBe(true);",
+   "expect(ringOn(5)).toBe(true);",
+   "expect(ringOn(4)).toBe(false);",
+   "expect(orbPulsed(2), `track ${trackId}`).toBe(true);",
+   "expect(orbPulsed(3)).toBe(false);"
+  ],
+  "House Kit > hk_21 the toms group lights all four toms and the snare": [
+   "expect(group('SNARE/TOMS').trackIds).toEqual([2, 9, 11, 12, 10]);"
+  ],
+  "House Kit > hk_28 license facts": [
+   "expect(section.startsWith('## The House Kit')).toBe(true);",
+   "['The House Kit', 'Better Mixes', 'https://www.youtube.com/@BetterMixes', 'https://www.bettermixes.com/drumsamples', 'No written terms were found', '`Blend`', 'no gain', 'Thank you'].forEach(fact => expect(section, fact).toContain(fact));",
+   "expect(Object.keys(sources).sort()).toEqual(Object.keys(RECORDINGS).sort());",
+   "Object.entries(RECORDINGS).forEach(([piece, recordings]) => recordings.forEach(recording => { const recorded = recording[0].toUpperCase() + recording.slice(1); expect(section, `${piece}/${recording}`).toContain( `| \\`house/${piece}/${recording}-<take>.wav\\` | \\`${sources[piece]}/${recorded} <take>.wav\\` |`); }));",
+   "expect(section).toContain('`<take>` is 1, 2 or 3');",
+   "expect(license).not.toMatch(/^Each file in this folder .*peak-normalized to -1 dBFS, at 44\\.1/);"
+  ],
+  "House Kit > hk_29 release is the user account": [
+   "expect(section).toContain(\"The release for general use is the user's account of the video https://www.youtube.com/watch?v=WFS0_5Qsc1w\");"
+  ],
+  "House Kit > hk_30 readme credit": [
+   "expect(readme).toContain('[Better Mixes](https://www.youtube.com/@BetterMixes)');",
+   "expect(readme).toMatch(/Thank you, Better Mixes/);",
+   "expect(readme).toContain('13 tracks');"
+  ],
+  "House Kit > hk_31 footer credit": [
+   "expect(footer.textContent).toContain('Kick, snare and toms: The House Kit by Better Mixes — thanks!');",
+   "['editor-view', 'stadium-view', 'grooves-view'].forEach(id => { expect(document.getElementById(id)!.contains(footer), id).toBe(false); });",
+   "expect(footer.parentElement).toBe(document.getElementById('editor-view')!.parentElement);"
+  ],
+  "House Kit > hk_32 footer link": [
+   "expect(links).toHaveLength(1);",
+   "expect(links[0].textContent).toBe('Better Mixes');",
+   "expect(links[0].getAttribute('href')).toBe('https://www.youtube.com/@BetterMixes');",
+   "expect(links[0].target).toBe('_blank');",
+   "expect(links[0].rel).toContain('noopener');"
+  ],
+  "House Kit > hk_35 kick and snare layers": [
+   "Object.entries(pieces as Record<string, { worst: number; loudest: number }>).forEach(([piece, { worst }]) => { expect(worst, piece).toBeLessThanOrEqual(4); });",
+   "expect(pieces.kick.loudest).toBe(32767);",
+   "expect(pieces.snare.loudest).toBe(32767);",
+   "expect(filters['Kick/Close']).toBe('highpass=f=2000:poles=2');",
+   "expect(filters['Kick/Room']).toBeNull();",
+   "expect(filters['Snare/Close']).toBeNull();",
+   "expect(filters['Snare/Room']).toBeNull();",
+   "expect(Object.keys(filters).filter(source => /Close|Room/.test(source)).sort()) .toEqual(['Kick/Close', 'Kick/Room', 'Snare/Close', 'Snare/Room']);",
+   "['kick', 'snare'].forEach(piece => { const peaks = houseFiles.filter(file => file.startsWith(`${piece}/`)).map(peakOf); expect(toDb(Math.max(...peaks)), piece).toBeGreaterThanOrEqual(-0.1); });",
+   "['`Kick/Close`', '`Kick/Room`', '`Snare/Close`', '`Snare/Room`'].forEach(source => expect(license).toContain(source));"
+  ],
+  "House Kit > kick and toms recordings by dynamic": [
+   "['Kick', 'High Tom', 'Mid Tom', 'Low Tom', 'Floor Tom'].forEach(name => { const track = TRACKS.find(piece => piece.name === name)!; const recordings = [0, 1, 2].map(dynamic => path.basename(takesOf(track).find(take => take.dynamic === dynamic)!.url, '-1.wav')); expect(recordings, name).toEqual(['soft', 'med', 'hard']); });"
+  ],
+  "House Kit > loads every take of each bank at its trim, and no bank piece as a single sample": [
+   "expect(loads).toHaveLength(54);",
+   "bankIds.forEach(trackId => { const own = loads.filter(load => load.trackId === trackId); expect(own, `track ${trackId}`).toHaveLength(9); expect(new Set(own.map(load => load.url)).size).toBe(9); const trim = TRACKS.find(track => track.id === trackId)!.bank!.trim; expect(trim).toBeGreaterThan(0); own.forEach(load => expect(load.trim).toBe(trim)); });",
+   "expect(loads.find(load => load.trackId === 2 && load.dynamic === 2 && load.take === 1)!.url).toBe('/kit/house/snare/crack-2.wav');",
+   "expect(loads.find(load => load.trackId === 12 && load.dynamic === 1 && load.take === 0)!.url).toBe('/kit/house/tom-14/med-1.wav');",
+   "expect(mockLoadSample.mock.calls.map(([id]) => id).filter(id => bankIds.includes(id))).toEqual([]);"
+  ],
+  "Improv > pad_15 Improv starts the engine and leaves the kit alone": [
+   "expect(mockInit).not.toHaveBeenCalled();",
+   "expect(mockInit).toHaveBeenCalledTimes(1);",
+   "expect(mockLoadTake).not.toHaveBeenCalled();",
+   "expect(mockLoadSample).not.toHaveBeenCalled();"
+  ],
+  "Improv > pad_15 Play after Improv shares the engine and loads the kit": [
+   "expect(mockInit).toHaveBeenCalledTimes(1);",
+   "expect(mockLoadTake).toHaveBeenCalledTimes(54);",
+   "expect(calls('start')).toHaveLength(1);",
+   "expect(byId('btn-play').classList.contains('playing')).toBe(true);"
+  ],
+  "Improv > pad_15 chord does not wait for the kit": [
+   "expect(mockLoadTake).toHaveBeenCalled();",
+   "expect(byId('btn-play').classList.contains('playing')).toBe(false);",
+   "expect(calls('padPlay')).toEqual([[[48, 52, 55, 59, 62], 0]]);",
+   "expect(shownChord()).toBe('C7M(9) · C E G B D');",
+   "expect(pressedChords()).toEqual(['C7M(9)']);",
+   "expect(byId('btn-play').classList.contains('playing')).toBe(false);"
+  ],
+  "Improv > pad_15 the chord shows once the engine started": [
+   "expect(calls('padPlay')).toEqual([]);",
+   "expect(shownChord()).toBe('No chord playing');",
+   "expect(pressedChords()).toEqual([]);",
+   "expect(calls('padPlay')).toEqual([[[48, 51, 55, 58], 0]]);",
+   "expect(shownChord()).toBe('Cm7 · C Eb G Bb');",
+   "expect(pressedChords()).toEqual(['Cm7']);"
+  ],
+  "Improv > pad_15 the last click wins while the engine starts": [
+   "expect(calls('padPlay')).toEqual([[[53, 57, 60, 63], 0]]);",
+   "expect(pressedChords()).toEqual(['F7']);"
+  ],
+  "Improv > pad_16 engine failure": [
+   "expect(notice()).toBe('Audio unavailable');",
+   "expect(notice()).toBe('Audio unavailable');",
+   "expect(shownChord()).toBe('No chord playing');",
+   "expect(pressedChords()).toEqual([]);",
+   "expect(calls('padPlay')).toEqual([]);",
+   "expect(mockInit).toHaveBeenCalledTimes(3);",
+   "expect(notice()).toBeNull();",
+   "expect(shownChord()).toBe('C · C E G');",
+   "expect(calls('padPlay')).toEqual([[[48, 52, 55], 0]]);"
+  ],
+  "Improv > pad_24 transport sends no pad command": [
+   "expect(calls('start')).toHaveLength(1);",
+   "expectChordKept();",
+   "expect(calls('stop')).toHaveLength(1);",
+   "expectChordKept();",
+   "expect(calls('stop')).toHaveLength(2);",
+   "expectChordKept();"
+  ],
+  "Improv > pad_25 loading a pattern sends no pad command": [
+   "expect(byId('pattern-name').textContent).toBe('PAT: Rock Groove');",
+   "expectChordKept();",
+   "expect(byId('pattern-name').textContent).toBe(`PAT: ${SONGS[0].title}`);",
+   "expectChordKept();",
+   "expectChordKept();"
+  ],
+  "Improv > pad_26 screens send no pad command": [
+   "expectChordKept();"
+  ],
+  "Improv > pad_30 link and title": [
+   "expect(links.map(link => link.textContent)).toEqual(['Editor', 'Stadium', 'Grooves', 'Improv']);",
+   "expect(shownScreens()).toEqual(['editor-view']);",
+   "expect(shownScreens()).toEqual(['improv-view']);",
+   "expect(links[3].getAttribute('aria-current')).toBe('page');",
+   "expect(document.querySelector('#improv-view h1')?.textContent).toBe('Improv · Chord Pads');"
+  ],
+  "Improv > pad_32 shows the sounding chord": [
+   "expect(shownChord()).toBe('C7M(9) · C E G B D');",
+   "expect(pressedChords()).toEqual(['C7M(9)']);",
+   "expect(shownChord()).toBe('Ebm · Eb Gb Bb');",
+   "expect(pressedChords()).toEqual(['Ebm']);",
+   "expect(calls('padPlay')).toEqual([[[48, 52, 55, 59, 62], 0], [[51, 54, 58], 0]]);",
+   "expect(calls('padStop')).toEqual([]);"
+  ],
+  "Improv > pad_33 idle text": [
+   "expect(shownChord()).toBe('No chord playing');",
+   "expect(shownChord()).toBe('No chord playing');",
+   "expect(pressedChords()).toEqual([]);",
+   "expect(calls('padStop')).toHaveLength(1);",
+   "expect(calls('padPlay')).toHaveLength(1);",
+   "expect(shownChord()).toBe('Cm7 · C Eb G Bb');",
+   "expect(calls('padPlay')).toHaveLength(2);"
+  ],
+  "Improv > pad_35 stop button": [
+   "expect(stop.textContent).toBe('Stop');",
+   "expect(calls('padStop')).toHaveLength(1);",
+   "expect(calls('padPlay')).toHaveLength(1);",
+   "expect(shownChord()).toBe('No chord playing');",
+   "expect(pressedChords()).toEqual([]);",
+   "expect(shownChord()).toBe('F7 · F A C Eb');",
+   "expect(calls('padPlay')).toHaveLength(2);"
+  ],
+  "Improv > pad_36 stop disabled": [
+   "expect(stop.disabled).toBe(true);",
+   "expect(stop.disabled).toBe(false);",
+   "expect(stop.disabled).toBe(true);",
+   "expect(stop.disabled).toBe(true);"
+  ],
+  "Improv > pad_40 link dot": [
+   "expect(dotLit()).toBe(false);",
+   "expect(dotLit()).toBe(false);",
+   "expect(dotLit()).toBe(true);",
+   "expect(dotLit(), screen).toBe(true);",
+   "expect(dotLit()).toBe(false);"
+  ],
+  "Improv > pad_40 no dot when the engine fails": [
+   "expect(dotLit()).toBe(false);"
+  ],
+  "Improv > pad_42 volume control": [
+   "expect(document.querySelectorAll('#improv-view input[type=\"range\"]')).toHaveLength(1);",
+   "expect([...document.querySelectorAll('#improv-view button')].filter(button => button.textContent === 'Stop')).toHaveLength(1);",
+   "expect(document.querySelector<HTMLLabelElement>('label[for=\"pad-volume\"]')?.textContent).toBe('Volume');",
+   "expect(volumeSlider().min).toBe('0');",
+   "expect(volumeSlider().max).toBe('100');",
+   "expect(audioCalls).toEqual([ { method: 'padVolume', args: [0.3] }, { method: 'padVolume', args: [0] }, { method: 'padVolume', args: [1] }, ]);",
+   "expect(byId('pad-volume-value').textContent).toBe('100');",
+   "expect(shownChord()).toBe('C · C E G');"
+  ],
+  "Improv > pad_43 a volume moved while the engine starts reaches it": [
+   "expect(lastCall('padVolume')).toEqual([0.3]);"
+  ],
+  "Improv > pad_43 an invalid stored volume falls back to 70": [
+   "expect(volumeSlider().value, stored).toBe('70');",
+   "expect(calls('padVolume'), stored).toEqual([[0.7]]);"
+  ],
+  "Improv > pad_43 remembers the volume": [
+   "expect(volumeSlider().value).toBe('70');",
+   "expect(localStorage.getItem('metrorig_pad_volume')).toBe('30');",
+   "expect(volumeSlider().value).toBe('30');",
+   "expect(byId('pad-volume-value').textContent).toBe('30');",
+   "expect(calls('padVolume')).toEqual([[0.3]]);",
+   "expect(calls('padPlay')).toEqual([]);",
+   "expect(padCommands().map(call => call.method)).toEqual(['padVolume', 'padPlay']);"
+  ],
+  "Improv > pad_43 sends the stored volume when Play starts the engine": [
+   "expect(calls('padVolume')).toEqual([]);",
+   "expect(calls('padVolume')).toEqual([[0.3]]);"
+  ],
+  "Improv > pad_45 opens silent": [
+   "expect(localStorage.getItem('metrorig_view_mode')).toBe('improv');",
+   "expect(calls('padPlay')).toEqual([]);",
+   "expect(calls('padStop')).toEqual([]);",
+   "expect(shownChord()).toBe('No chord playing');",
+   "expect(pressedChords()).toEqual([]);",
+   "expect(dotLit()).toBe(false);",
+   "expect(mockNode.resumeContext).not.toHaveBeenCalled();",
+   "expect(calls('padPlay')).toEqual([]);",
+   "expect(dotLit()).toBe(false);"
+  ],
+  "Improv > pad_46 each file awaits the last, and a chord does not wait for them": [
+   "expect(mockPadLoad).toHaveBeenCalledTimes(1);",
+   "expect(shownChord()).toBe('C · C E G');",
+   "expect(mockPadLoad).toHaveBeenCalledTimes(2);",
+   "expect(mockPadLoad).toHaveBeenCalledTimes(2);",
+   "expect(loadedUrls()).toEqual(BANK_URLS);"
+  ],
+  "Improv > pad_46 loads after the engine, and a failed engine loads on the next visit": [
+   "expect(mockPadLoad).not.toHaveBeenCalled();",
+   "expect(notice()).toBe('Audio unavailable');",
+   "expect(notice()).toBeNull();",
+   "expect(loadedUrls()).toEqual(BANK_URLS);"
+  ],
+  "Improv > pad_46 loads on first open": [
+   "expect(loadedUrls()).toEqual(BANK_URLS);",
+   "expect(mockPadLoad.mock.calls[0]).toEqual([0, 48, '/pads/choir/C3.flac', 119520, 299519]);",
+   "expect(mockPadLoad.mock.calls[4]).toEqual([0, 72, '/pads/choir/C5.flac', 119520, 299519]);",
+   "expect(notice()).toBeNull();",
+   "expect(calls('padPlay')).toEqual([]);",
+   "expect(mockLoadTake).not.toHaveBeenCalled();",
+   "expect(mockPadLoad).toHaveBeenCalledTimes(5);"
+  ],
+  "Improv > pad_47 loads nothing before": [
+   "expect(mockLoadTake).toHaveBeenCalled();",
+   "expect(mockPadLoad).not.toHaveBeenCalled();"
+  ],
+  "Improv > pad_50 logs a failed file": [
+   "expect(logged).toHaveBeenCalledWith('Failed to load /pads/choir/C3.flac:', failure);",
+   "expect(logged.mock.calls.filter(([message]) => String(message).startsWith('Failed to load'))).toHaveLength(1);",
+   "expect(loadedUrls()).toEqual(BANK_URLS);"
+  ],
+  "Improv > pad_51 failure notices": [
+   "expect(notice()).toBe('Some samples unavailable');",
+   "expect(notice()).toBe('Some samples unavailable');",
+   "expect(notice()).toBeNull();",
+   "expect(notice()).toBe('Samples unavailable · synth only');",
+   "expect(shownChord()).toBe('C · C E G');",
+   "expect(notice()).toBe('Samples unavailable · synth only');"
+  ],
+  "Improv > pad_53 retries failed files": [
+   "expect(notice()).toBe('Samples unavailable · synth only');",
+   "expect(loadedUrls()).toEqual(BANK_URLS);",
+   "expect(notice()).toBe('Some samples unavailable');",
+   "expect(loadedUrls()).toEqual(BANK_URLS.slice(2, 4));",
+   "expect(notice()).toBeNull();",
+   "expect(mockPadLoad).not.toHaveBeenCalled();"
+  ],
+  "Improv > pad_56 resumes audio": [
+   "expect(mockNode.resumeContext).not.toHaveBeenCalled();",
+   "expect(mockNode.resumeContext).toHaveBeenCalledTimes(1);",
+   "expect(mockNode.resumeContext).toHaveBeenCalledTimes(2);"
+  ],
+  "Improv > pad_57 saved screen": [
+   "expect(byId('improv-view').classList.contains('hidden')).toBe(false);",
+   "expect(mockInit).toHaveBeenCalledTimes(1);",
+   "expect(loadedUrls()).toEqual(BANK_URLS);",
+   "expect(calls('padPlay')).toEqual([]);",
+   "expect(calls('padStop')).toEqual([]);",
+   "expect(shownChord()).toBe('No chord playing');",
+   "expect(mockNode.resumeContext).not.toHaveBeenCalled();",
+   "expect(mockLoadTake).not.toHaveBeenCalled();",
+   "expect(mockLoadSample).not.toHaveBeenCalled();"
+  ],
+  "Improv > pad_57 saved screen opens Improv": [
+   "expect(localStorage.getItem('metrorig_view_mode')).toBe('improv');",
+   "expect(shownScreens()).toEqual(['improv-view']);",
+   "expect(byId('nav-improv').getAttribute('aria-current')).toBe('page');"
+  ],
+  "Improv > tim_30 brackets each load, so its files reach the notes once all have come or failed": [
+   "expect(loadCalls()).toEqual(['padLoadBegin 0', ...BANK_URLS, 'padLoadEnd 0']);",
+   "expect(loadCalls()).toEqual(['padLoadBegin 0', ...BANK_URLS, 'padLoadEnd 0', 'padLoadBegin 0', BANK_URLS[1], 'padLoadEnd 0']);"
+  ],
+  "Integration Test > should handle click sound variation selector changes, race conditions and fetch rejections": [
+   "expect(mockSetClickMode).toHaveBeenCalledWith(0);",
+   "expect(mockLoadSample).toHaveBeenCalledWith(0, '/woodblock.wav');",
+   "expect(resolveLoadPromise.length).toBe(1);",
+   "expect(mockSetClickMode).toHaveBeenCalledWith(1);",
+   "expect(mockLoadSample).toHaveBeenCalledWith(0, '/cowbell.wav');",
+   "expect(rejectLoadPromise.length).toBe(1);",
+   "expect(mockSetClickMode).toHaveBeenCalledWith(0);",
+   "expect(mockSetClickMode).not.toHaveBeenCalled();",
+   "expect(mockSetClickMode).toHaveBeenCalledWith(1);",
+   "expect(mockSetClickMode).toHaveBeenCalledWith(0);",
+   "expect(mockSetClickMode).not.toHaveBeenCalled();"
+  ],
+  "Integration Test > should load main.ts without throwing and sanitize/validate time signature": [
+   "expect(timeSigNum.value).toBe('16');",
+   "expect(timeSigNum.value).toBe('1');",
+   "expect(timeSigNum.value).toBe('1');",
+   "expect(alertSpy).toHaveBeenCalledWith('Time signature exceeds the maximum limit of 32 steps!');",
+   "expect(timeSigNum.value).toBe('4');",
+   "expect(timeSigDen.value).toBe('4');"
+  ],
+  "Interface V2 > edge_01 stepper limit": [
+   "expect(alertSpy).toHaveBeenCalledWith('Time signature exceeds the maximum limit of 32 steps!');",
+   "expect(byId('time-sig-num').value).toBe('8');",
+   "expect(document.querySelectorAll('.step-cell[data-track=\"0\"]')).toHaveLength(32);"
+  ],
+  "Interface V2 > edge_02 steps follow": [
+   "expect(byId('pattern-steps').textContent).toBe('STEPS: 12/128');"
+  ],
+  "Interface V2 > edge_03 stop resets position": [
+   "expect(position()).toBe('POS: BAR 01 · STEP 01');",
+   "expect(position()).toBe('POS: BAR 01 · STEP 01');"
+  ],
+  "Interface V2 > edge_04 stadium placeholder": [
+   "expect(selector.options[selector.selectedIndex].text).toBe('Choose a speed trainer');"
+  ],
+  "Interface V2 > edge_05 all muted continues": [
+   "expect(document.querySelector('.pattern-pos')?.textContent).toBe('POS: BAR 01 · STEP 04');",
+   "expect(mockGsap.fromTo.mock.calls.some(call => call[0] === byId('clock-hand'))).toBe(true);",
+   "expect(byId('editor-timer').innerText).toBe('00:00:01');",
+   "expect(lastCall('stop')).toBeUndefined();"
+  ],
+  "Interface V2 > edge_06 groove stays silent": [
+   "expect(sentTo(1)).toEqual(silence);",
+   "expect(sentTo(1)).toEqual(realKick);"
+  ],
+  "Interface V2 > edit_02 opening header": [
+   "expect(byId('panel-header-text').textContent).toBe('4/4 Metronome · 4/4 · 120 BPM');"
+  ],
+  "Interface V2 > edit_03 dot lit playing": [
+   "expect(byId('sequencer-dot').classList.contains('lit')).toBe(true);"
+  ],
+  "Interface V2 > edit_04 dot unlit stopped": [
+   "expect(byId('sequencer-dot').classList.contains('lit')).toBe(false);",
+   "expect(byId('sequencer-dot').classList.contains('lit')).toBe(false);"
+  ],
+  "Interface V2 > edit_05 beat sub label": [
+   "expect(first.innerText).toBe('BEAT/SUB');",
+   "expect(first.style.gridColumn).toBe('1');",
+   "expect(first.style.gridRow).toBe('1');"
+  ],
+  "Interface V2 > edit_06 hit mark": [
+   "expect(cell(1, 0).classList.contains('active')).toBe(true);",
+   "expect(cell(1, 0).innerText).toBe('●');",
+   "expect(cell(1, 1).innerText).toBe('');"
+  ],
+  "Interface V2 > edit_07 accent mark": [
+   "expect(cell(0, 0).classList.contains('accent')).toBe(true);",
+   "expect(cell(0, 0).innerText).toBe('▲');",
+   "expect(cell(0, 4).innerText).toBe('●');",
+   "expect(cell(0, 1).innerText).toBe('▲');"
+  ],
+  "Interface V2 > edit_08 beat spacer": [
+   "expect(columns.filter(column => column === '0.5rem')).toHaveLength(3);",
+   "expect(columns.filter(column => column === '1fr')).toHaveLength(16);",
+   "expect(columns.slice(0, 7)).toEqual(['auto', '1fr', '1fr', '1fr', '1fr', '0.5rem', '1fr']);"
+  ],
+  "Interface V2 > edit_09 sustain kept": [
+   "expect(cell(1, 1).classList.contains('sustain')).toBe(true);",
+   "expect(cell(1, 1).innerText).toBe('');",
+   "expect(cell(1, 2).classList.contains('sustain')).toBe(false);"
+  ],
+  "Interface V2 > edit_10 pattern name": [
+   "expect(byId('pattern-name').textContent).toBe('PAT: Rock Groove');",
+   "expect(byId('pattern-name').textContent).toBe('PAT: My take');"
+  ],
+  "Interface V2 > edit_11 steps label": [
+   "expect(byId('pattern-steps').textContent).toBe('STEPS: 16/128');",
+   "expect(byId('pattern-steps').textContent).toBe('STEPS: 24/128');"
+  ],
+  "Interface V2 > edit_12 resolution label": [
+   "expect(document.querySelector('.pattern-bar')?.textContent).toContain('RESOLUTION: 1/16th');"
+  ],
+  "Interface V2 > edit_13 stopped position": [
+   "expect(position()).toBe('POS: BAR 01 · STEP 01');"
+  ],
+  "Interface V2 > edit_14 tick position": [
+   "expect(position()).toBe('POS: BAR 01 · STEP 06');"
+  ],
+  "Interface V2 > edit_15 bar count": [
+   "expect(position()).toBe('POS: BAR 01 · STEP 01');",
+   "expect(position()).toBe('POS: BAR 02 · STEP 01');",
+   "expect(position()).toBe('POS: BAR 03 · STEP 01');"
+  ],
+  "Interface V2 > edit_16 tempo bus title": [
+   "expect(card.querySelector('.card-section-title')?.textContent).toBe('TEMPO BUS');",
+   "expect(document.body.textContent).not.toContain('MASTER');"
+  ],
+  "Interface V2 > edit_17 slider scale": [
+   "expect(labels).toEqual(['40', '140', '240']);"
+  ],
+  "Interface V2 > edit_18 slider label follows": [
+   "expect(byId('bpm-slider-value').innerText).toBe('150');"
+  ],
+  "Interface V2 > edit_19 no measure code": [
+   "expect(byId('time-sig-num').closest('.card')?.textContent).not.toContain('MTR-04');"
+  ],
+  "Interface V2 > edit_20 numerator stepper": [
+   "expect(byId('time-sig-num').value).toBe('5');",
+   "expect(byId('pattern-steps').textContent).toBe('STEPS: 20/128');",
+   "expect(byId('panel-header-text').textContent).toContain('5/4');",
+   "expect(byId('time-sig-num').value).toBe('4');",
+   "['3', '2', '1', '1'].forEach(value => { stepper('time-sig-num-down'); expect(byId('time-sig-num').value).toBe(value); });",
+   "expect(byId('time-sig-num').value).toBe('16');"
+  ],
+  "Interface V2 > edit_21 denominator stepper": [
+   "expect(den()).toBe('8');",
+   "expect(byId('pattern-steps').textContent).toBe('STEPS: 8/128');",
+   "expect(den()).toBe('16');",
+   "expect(den()).toBe('16');",
+   "expect(den()).toBe('4');",
+   "expect(den()).toBe('4');"
+  ],
+  "Interface V2 > edit_22 groove label": [
+   "expect(text('label[for=\"groove-selector\"]')).toBe('Groove Library');"
+  ],
+  "Interface V2 > edit_24 metalcore applied": [
+   "expect([...grooves.options].map(option => option.text)).toContain('Metalcore Breakdown');",
+   "expect(hits(1)).toEqual([0, 3, 5, 8, 11, 13]);",
+   "expect(hits(2)).toEqual([8]);",
+   "expect(hits(3)).toEqual([0, 2, 4, 6, 8, 10, 12, 14]);",
+   "expect(byId('bpm-number').innerText).toBe('120');",
+   "expect(byId('bpm-slider').value).toBe('120');"
+  ],
+  "Interface V2 > edit_25 trainer starts open": [
+   "expect(mockGsap.set).toHaveBeenCalledWith(byId('trainer-chevron'), { rotation: 180 });",
+   "expect(mockGsap.to.mock.calls.find(call => call[0] === byId('trainer-body'))?.[1]).toMatchObject({ height: 0 });"
+  ],
+  "Interface V2 > edit_26 trainer switch": [
+   "expect(lastCall('setTrainer')[0].enabled).toBe(true);",
+   "expect(lastCall('setTrainer')[0].enabled).toBe(false);"
+  ],
+  "Interface V2 > edit_27 steady dot": [
+   "expect(byId('trainer-dot').classList.contains('visible')).toBe(true);",
+   "expect(css).not.toMatch(/@keyframes|animation\\s*:/);",
+   "expect(mockGsap.fromTo.mock.calls.some(call => call[0] === byId('trainer-dot'))).toBe(false);",
+   "expect(mockGsap.to.mock.calls.some(call => call[0] === byId('trainer-dot'))).toBe(false);"
+  ],
+  "Interface V2 > edit_28 toast after edit": [
+   "expect(toastShown()).toBe(true);",
+   "expect(byId('preset-name').value).toBe('Rock Groove');"
+  ],
+  "Interface V2 > edit_29 toast hidden": [
+   "expect(toastShown()).toBe(false);",
+   "expect(toastShown()).toBe(false);",
+   "expect(grooves.value).toBe('factory:rock');",
+   "expect(toastShown()).toBe(false);",
+   "expect(toastShown()).toBe(true);",
+   "expect(mockGsap.to.mock.calls.find(call => call[0] === byId('save-toast'))?.[1]).toMatchObject({ opacity: 0 });"
+  ],
+  "Interface V2 > edit_30 header follows save": [
+   "expect(byId('panel-header-text').textContent).toBe('Take · 4/4 · 120 BPM');"
+  ],
+  "Interface V2 > edit_31 first click after save": [
+   "expect(document.querySelectorAll('.step-cell[data-track=\"1\"]')[2].classList.contains('active')).toBe(true);",
+   "expect(sentTo(1).slice(0, 3)).toEqual([1, 0, 1]);"
+  ],
+  "Interface V2 > mute_01 controls": [
+   "[0, 1, 2, 3].forEach(trackId => { expect(byId(`mute-${trackId}`).textContent).toBe('M'); expect(byId(`solo-${trackId}`).textContent).toBe('S'); expect(byId(`mute-${trackId}`).closest('[data-track]')?.getAttribute('data-track')).toBe(String(trackId)); });"
+  ],
+  "Interface V2 > mute_02 mute silences": [
+   "expect(sentTo(1)).toEqual(silence);",
+   "expect(sentTo(3)).not.toEqual(silence);",
+   "expect(byId('mute-1').getAttribute('aria-pressed')).toBe('true');"
+  ],
+  "Interface V2 > mute_03 unmute restores": [
+   "expect(sentTo(1)).toEqual(realKick);",
+   "expect(byId('mute-1').getAttribute('aria-pressed')).toBe('false');"
+  ],
+  "Interface V2 > mute_07 row dimmed": [
+   "expect(new Set(silencedTracks('.step-cell'))).toEqual(new Set(['1']));",
+   "expect(silencedTracks('.track-label')).toEqual(['1']);",
+   "expect(document.querySelectorAll('.step-cell.silenced')).toHaveLength(16);",
+   "expect(new Set(silencedTracks('.step-cell'))).toEqual(new Set(['0', '1', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12']));"
+  ],
+  "Interface V2 > mute_08 orb still": [
+   "expect(orbTweened(1)).toBe(false);",
+   "expect(orbTweened(2)).toBe(true);"
+  ],
+  "Interface V2 > mute_09 edit kept silent": [
+   "expect(sentTo(1)).toEqual(silence);",
+   "expect(sentTo(1)).toEqual([1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0]);"
+  ],
+  "Interface V2 > mute_10 saves real grid": [
+   "expect(saved.gridData[1]).toEqual(realKick);",
+   "expect(groove.gridData[1]).toEqual(realKick);"
+  ],
+  "Interface V2 > mute_11 survives load": [
+   "expect(byId('mute-1').getAttribute('aria-pressed')).toBe('true');",
+   "expect(sentTo(1)).toEqual(silence);",
+   "expect(document.querySelector('.track-label[data-track=\"1\"]')?.classList.contains('silenced')).toBe(true);",
+   "expect(byId('solo-2').getAttribute('aria-pressed')).toBe('true');",
+   "expect(sentTo(3)).toEqual(silence);",
+   "expect(byId('solo-2').getAttribute('aria-pressed')).toBe('true');",
+   "expect(byId('mute-1').getAttribute('aria-pressed')).toBe('true');",
+   "expect(sentTo(3)).toEqual(silence);"
+  ],
+  "Interface V2 > mute_12 play sends empty": [
+   "expect(sentTo(1)).toEqual(silence);",
+   "expect(sentTo(3)).toEqual([1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0]);"
+  ],
+  "Interface V2 > mute_13 reload clears": [
+   "expect(byId('mute-1').getAttribute('aria-pressed')).toBe('false');",
+   "expect(byId('solo-2').getAttribute('aria-pressed')).toBe('false');",
+   "expect(sentTo(1)).toEqual(realKick);"
+  ],
+  "Interface V2 > shell_01 header controls": [
+   "expect(header.closest('main')).toBeNull();",
+   "expect(header.querySelector('.logo')?.firstChild?.textContent).toBe('METRORIG');",
+   "expect(header.querySelector('.badge')?.textContent).toBe('PRO');",
+   "['click-sound-selector', 'preset-selector', 'nav-editor', 'nav-stadium', 'nav-grooves'].forEach(id => { expect(header.contains(byId(id))).toBe(true); });"
+  ],
+  "Interface V2 > shell_02 no dead controls": [
+   "expect(header.querySelectorAll('a')).toHaveLength(0);",
+   "expect(header.querySelectorAll('button')).toHaveLength(4);",
+   "['Presets', 'tune', 'settings'].forEach(word => { const visible = [...header.childNodes].map(node => node.nodeName === 'DIV' ? '' : node.textContent).join(' '); expect(visible).not.toContain(word); });"
+  ],
+  "Interface V2 > shell_03 preset groups": [
+   "expect(groups.map(group => group.label)).toEqual(['Time Signatures', 'Drum Grooves', 'Songs', 'Speed Trainer', 'User Presets']);",
+   "groups.forEach(group => expect(group.children.length).toBeGreaterThan(0));"
+  ],
+  "Interface V2 > shell_06 footer clock": [
+   "expect(byId('footer-clock').textContent).toBe('AUDIO CLOCK: 44.1 kHz 128 SPLS (2.9ms)');"
+  ],
+  "Interface V2 > shell_07 footer latency": [
+   "expect(byId('footer-latency').textContent).toBe('LATENCY: 12.3ms');"
+  ],
+  "Interface V2 > shell_08 latency placeholder": [
+   "expect(byId('footer-latency').textContent).toBe('LATENCY: --');"
+  ],
+  "Interface V2 > shell_09 no invented telemetry": [
+   "expect(footer).not.toMatch(/V2\\.4\\.8|CPU|Hardware Parity|ENGINE/i);"
+  ],
+  "Interface V2 > stad_02 ring order": [
+   "arcs.forEach(([outer, inner]) => expect(inner).toBeLessThan(outer));",
+   "expect(arcs[ring][0]).toBeLessThan(arcs[ring - 1][1]);"
+  ],
+  "Interface V2 > stad_03 legend": [
+   "expect(entries.map(entry => [entry.dataset.track, entry.textContent])).toEqual([ ['0', 'CLICK'], ['1', 'KICK'], ['2', 'SNARE/TOMS'], ['3', 'CYMBALS'], ]);"
+  ],
+  "Interface V2 > stad_04 selector label": [
+   "expect(text('label[for=\"stadium-preset-selector\"]')).toBe('SPEED TRAINER ROUTINE');"
+  ],
+  "Interface V2 > stad_05 timer label": [
+   "expect(block.textContent).toContain('ELAPSED REHEARSAL');"
+  ],
+  "Interface V2 > stad_06 tempo format": [
+   "expect(byId('stadium-bpm').innerText).toBe('120.0');",
+   "expect(byId('stadium-bpm').parentElement?.textContent).toContain('BPM');",
+   "expect(byId('stadium-bpm').innerText).toBe('133.3');"
+  ],
+  "Interface V2 > stad_07 trainer status": [
+   "expect(byId('stadium-status').innerText).toBe('Trainer 148 → 190 BPM · +2 every 3 bars');",
+   "expect(byId('stadium-status-dot').classList.contains('lit')).toBe(true);",
+   "expect(byId('stadium-status').innerText).toBe('Trainer 120 → 160 BPM · +5 every 4 bars');"
+  ],
+  "Interface V2 > stad_08 trainer off": [
+   "expect(byId('stadium-status').innerText).toBe('Trainer Off');",
+   "expect(byId('stadium-status-dot').classList.contains('lit')).toBe(false);"
+  ],
+  "Interface V2 > stad_09 orb markup": [
+   "names.forEach((name, trackId) => { const orb = byId(`orb-${trackId}`); expect(orb.dataset.track).toBe(String(trackId)); expect(orb.querySelector('svg')).not.toBeNull(); expect(orb.parentElement?.querySelector('.orb-name')?.textContent).toBe(name); });"
+  ],
+  "Interface V2 > stad_10 orb pulse": [
+   "expect(tween[1]).toEqual({ scale: 1.15 });",
+   "expect(tween[2]).toMatchObject({ scale: 1.0, duration: 0.2 });",
+   "expect(tween[1]).not.toHaveProperty('backgroundColor');",
+   "expect(tween[2]).not.toHaveProperty('backgroundColor');"
+  ],
+  "Interface V2 > stad_11 orb inert": [
+   "expect(audioCalls).toHaveLength(0);",
+   "expect(mockGsap.fromTo).not.toHaveBeenCalled();",
+   "[0, 1, 2, 3].forEach(trackId => expect(byId(`mute-${trackId}`).getAttribute('aria-pressed')).toBe('false'));"
+  ],
+  "Interface V2 > stad_12 clock behaviours": [
+   "expect(slices).toHaveLength(16);",
+   "expect(slices[0].classList.contains('on')).toBe(true);",
+   "expect(slices[1].classList.contains('sustain')).toBe(true);",
+   "expect(document.querySelector('.clock-label.active')?.textContent).toBe('2');",
+   "expect(hand[1]).toMatchObject({ rotation: 90 });",
+   "expect(hand[2]).toMatchObject({ rotation: 112.5 });"
+  ],
+  "Interface V2 > stad_13 tempo follows slider and stop": [
+   "expect(byId('stadium-bpm').innerText).toBe('150.0');",
+   "expect(byId('stadium-bpm').innerText).toBe('170.0');",
+   "expect(byId('stadium-bpm').innerText).toBe('150.0');",
+   "expect(byId('bpm-number').innerText).toBe('150');"
+  ],
+  "Interface V2 > time_02 timer in both modes": [
+   "expect(byId('editor-view').contains(byId('editor-timer'))).toBe(true);",
+   "expect(byId('stadium-view').contains(byId('stadium-timer'))).toBe(true);",
+   "expect(byId('editor-timer').textContent).toBe('00:00:00');",
+   "expect(byId('stadium-timer').textContent).toBe('00:00:00');"
+  ],
+  "Interface V2 > time_03 play restarts": [
+   "expect(byId('editor-timer').innerText).toBe('00:00:03');",
+   "expect(byId('editor-timer').innerText).toBe('00:00:00');",
+   "expect(byId('stadium-timer').innerText).toBe('00:00:00');"
+  ],
+  "Interface V2 > time_04 stop keeps value": [
+   "expect(byId('editor-timer').innerText).toBe('00:00:05');",
+   "expect(byId('stadium-timer').innerText).toBe('00:00:05');"
+  ],
+  "Interface V2 > time_06 same time": [
+   "expect(byId('stadium-timer').innerText).toBe('00:00:03');",
+   "expect(byId('editor-timer').innerText).toBe('00:00:03');"
+  ],
+  "Kit > cycles a click step without a ghost": [
+   "expect(seen).toEqual([0, 1, 2, 0]);"
+  ],
+  "Kit > cycles a drum step through every dynamic": [
+   "expect(seen).toEqual([0, 1, 2, 3, 0]);"
+  ],
+  "Kit > holds every track in exactly one group": [
+   "expect(STADIUM_GROUPS.map(g => g.label)).toEqual(['CLICK', 'KICK', 'SNARE/TOMS', 'CYMBALS']);",
+   "expect(STADIUM_GROUPS.flatMap(g => g.trackIds).sort((a, b) => a - b)).toEqual(TRACKS.map(track => track.id).sort((a, b) => a - b));"
+  ],
+  "Kit > kit_01 thirteen tracks in order": [
+   "expect(TRACKS.map(track => track.name)).toEqual([ 'Click', 'Kick', 'Snare', 'Hi-hat', 'Open Hat', 'Ride', 'Ride Bell', 'Crash', 'China', 'High Tom', 'Mid Tom', 'Low Tom', 'Floor Tom', ]);",
+   "expect(TRACKS.map(track => track.id)).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 10]);",
+   "expect(TRACKS.map(track => track.sample)).toEqual([ null, null, null, '/hihat.wav', '/kit/open-hat.wav', '/kit/ride.wav', '/kit/ride-bell.wav', '/kit/crash.wav', '/kit/china.wav', null, null, null, null, ]);"
+  ],
+  "Kit > kit_03 samples exist with a license": [
+   "expect(samples).toHaveLength(6);",
+   "const bytes = samples.map(sample => { expect(license).toContain(path.basename(sample)); return fs.statSync(path.join(publicDir, sample)).size; });",
+   "expect(license).toContain('The Open Source Drum Kit');",
+   "expect(license).toContain('SM Drums');",
+   "expect(license).toContain('CC0');",
+   "expect(bytes.reduce((total, size) => total + size)).toBeLessThanOrEqual(20 * 1024 * 1024);"
+  ],
+  "Kit > std_02 snare and toms group": [
+   "expect(namesOf(group('SNARE/TOMS').trackIds)).toEqual(['Snare', 'High Tom', 'Mid Tom', 'Low Tom', 'Floor Tom']);"
+  ],
+  "Kit > std_03 cymbals group": [
+   "expect(namesOf(group('CYMBALS').trackIds)).toEqual(['Hi-hat', 'Open Hat', 'Ride', 'Ride Bell', 'Crash', 'China']);"
+  ],
+  "Kit > std_04 group hit": [
+   "expect(groupHit(trackIds, gridData, 1)).toBe(true);",
+   "expect(groupHit(trackIds, gridData, 0)).toBe(false);",
+   "expect(groupHit(trackIds, gridData, 2)).toBe(false);",
+   "trackIds.forEach(trackId => { expect(groupHit(trackIds, { [trackId]: [1] }, 0)).toBe(true); });"
+  ],
+  "Meter rules > bpm_02 steps per note value": [
+   "expect(measureLengthFor(4, 4)).toBe(16);",
+   "expect(measureLengthFor(3, 4)).toBe(12);",
+   "expect(measureLengthFor(6, 8)).toBe(12);",
+   "expect(measureLengthFor(12, 8)).toBe(24);",
+   "expect(measureLengthFor(7, 8)).toBe(14);",
+   "expect(measureLengthFor(16, 16)).toBe(16);",
+   "expect(measureLengthFor(5, 16)).toBe(5);"
+  ],
+  "Meter rules > bpm_03 blues shuffle preset": [
+   "expect(blues.timeSignature).toBe('12/8');",
+   "expect(blues.measureLength).toBe(24);",
+   "expect(blues.bpm).toBe(135);",
+   "[0, 1, 2, 3].forEach(track => expect(blues.gridData[track]).toHaveLength(24));",
+   "expect(hitsOf(blues.gridData[0])).toEqual([0, 6, 12, 18]);",
+   "expect(blues.gridData[0][0]).toBe(2);",
+   "expect(hitsOf(blues.gridData[1])).toEqual([0, 12]);",
+   "expect(hitsOf(blues.gridData[2])).toEqual([6, 18]);",
+   "expect(hitsOf(blues.gridData[3])).toEqual([0, 4, 6, 10, 12, 16, 18, 22]);",
+   "expect((blues.bpm * 4) / 6).toBe(90);"
+  ],
+  "Meter rules > bpm_04 jazz swing preset": [
+   "expect(jazz.timeSignature).toBe('12/8');",
+   "expect(jazz.measureLength).toBe(24);",
+   "expect(jazz.bpm).toBe(195);",
+   "[0, 1, 2, 3].forEach(track => expect(jazz.gridData[track]).toHaveLength(24));",
+   "expect(hitsOf(jazz.gridData[0])).toEqual([0, 6, 12, 18]);",
+   "expect(jazz.gridData[0][0]).toBe(2);",
+   "expect(hitsOf(jazz.gridData[1])).toEqual([0, 12]);",
+   "expect(hitsOf(jazz.gridData[2])).toEqual([10]);",
+   "expect(hitsOf(jazz.gridData[3])).toEqual([0, 4, 6, 10, 12, 16, 18, 22]);",
+   "expect((jazz.bpm * 4) / 6).toBe(130);"
+  ],
+  "Meter rules > bpm_05 factory grooves hold 24 steps": [
+   "[blues, jazz].forEach(groove => { expect(groove.length).toBe(24); [1, 2, 3].forEach(track => expect(groove.tracks[track]).toHaveLength(24)); expect(hitsOf(groove.tracks[1])).toEqual([0, 12]); expect(hitsOf(groove.tracks[3])).toEqual([0, 4, 6, 10, 12, 16, 18, 22]); });",
+   "expect(hitsOf(blues.tracks[2])).toEqual([6, 18]);",
+   "expect(hitsOf(jazz.tracks[2])).toEqual([10]);"
+  ],
+  "MetronomeNode > loads a mono take on both channels at its trim": [
+   "expect(Array.from(message.leftChannel)).toEqual([0.5, 0.25]);",
+   "expect(Array.from(message.rightChannel)).toEqual([0.5, 0.25]);"
+  ],
+  "MetronomeNode > loads a take as its channels times the trim": [
+   "expect(fetch).toHaveBeenCalledWith('/kit/house/tom-14/hard-2.wav');",
+   "expect(message.type).toBe('LOAD_TAKE');",
+   "expect([message.trackId, message.dynamic, message.take]).toEqual([12, 2, 1]);",
+   "expect(Array.from(message.leftChannel)).toEqual([0.5, -0.25, 0.125]);",
+   "expect(Array.from(message.rightChannel)).toEqual([0.25, 0.25, -0.5]);",
+   "expect(Array.from(left)).toEqual([1, -0.5, 0.25]);"
+  ],
+  "MetronomeNode > pad_09 posts a stop to the worklet": [
+   "expect(port.postMessage).toHaveBeenCalledOnce();",
+   "expect(port.postMessage).toHaveBeenCalledWith({ type: 'PAD_STOP' });"
+  ],
+  "MetronomeNode > pad_23 posts the notes of a chord to the worklet": [
+   "expect(port.postMessage).toHaveBeenCalledOnce();",
+   "expect(port.postMessage).toHaveBeenCalledWith({ type: 'PAD_PLAY', notes: [48, 52, 55, 59, 62], timbre: 1 });"
+  ],
+  "MetronomeNode > pad_29 leaves the drums reading a response that is not ok": [
+   "expect(port.postMessage.mock.calls[0][0].type).toBe('LOAD_SAMPLE');"
+  ],
+  "MetronomeNode > pad_42 posts the volume to the worklet": [
+   "expect(port.postMessage).toHaveBeenCalledOnce();",
+   "expect(port.postMessage).toHaveBeenCalledWith({ type: 'PAD_VOLUME', volume: 0.3 });"
+  ],
+  "MetronomeNode > pad_50 rejects a file that does not decode": [
+   "await expect(node.padLoad(1, 48, '/pads/new-age/C3.flac', 0, 100)).rejects.toThrow('bad audio');",
+   "expect(port.postMessage).not.toHaveBeenCalled();"
+  ],
+  "MetronomeNode > pad_50 rejects a response that is not ok, naming its path": [
+   "await expect(node.padLoad(1, 48, '/pads/new-age/C3.flac', 0, 100)).rejects.toThrow('/pads/new-age/C3.flac');",
+   "expect(decodeAudioData).not.toHaveBeenCalled();",
+   "expect(port.postMessage).not.toHaveBeenCalled();"
+  ],
+  "MetronomeNode > pad_50 rejects when the fetch fails, and sends nothing": [
+   "await expect(node.padLoad(1, 48, '/pads/new-age/C3.flac', 0, 100)).rejects.toThrow('offline');",
+   "expect(port.postMessage).not.toHaveBeenCalled();"
+  ],
+  "MetronomeNode > pad_58 keeps the loop points at 44.1 kHz": [
+   "expect([message.loopStart, message.loopEnd]).toEqual([1234, 56789]);",
+   "expect(Array.from(message.leftChannel)).toEqual([1, 0.5]);",
+   "expect(Array.from(message.rightChannel)).toEqual([1, 0.5]);"
+  ],
+  "MetronomeNode > pad_58 scales the loop points to the rate of the context": [
+   "expect(fetch).toHaveBeenCalledWith('/pads/new-age/Gs3.flac');",
+   "expect(port.postMessage).toHaveBeenCalledOnce();",
+   "expect(message.type).toBe('PAD_LOAD');",
+   "expect(message.timbre).toBe(1);",
+   "expect(message.key).toBe(56);",
+   "expect(message.loopStart).toBe(48000);",
+   "expect(message.loopEnd).toBe(108845);",
+   "expect(Array.from(message.leftChannel)).toEqual([0.5, -0.5]);",
+   "expect(Array.from(message.rightChannel)).toEqual([0.25, -0.25]);"
+  ],
+  "MetronomeNode > reports the sample rate the context really runs at": [
+   "expect(new MetronomeNode().sampleRate()).toBe(48000);"
+  ],
+  "MetronomeNode > sends replacing and deferred Trainer settings as separate messages": [
+   "expect(mockWorkletNode.port.postMessage).toHaveBeenLastCalledWith({ type: 'REPLACE_TRAINER', ...settings });",
+   "expect(mockWorkletNode.port.postMessage).toHaveBeenLastCalledWith({ type: 'SET_TRAINER', ...settings });"
+  ],
+  "MetronomeNode > should derive the visual delay from the context latencies": [
+   "expect(node.visualDelayMs()).toBeCloseTo(200);",
+   "expect(node.visualDelayMs()).toBeCloseTo(50);",
+   "expect(node.visualDelayMs()).toBe(0);"
+  ],
+  "MetronomeNode > should have no swing setting to send": [
+   "expect(types).toEqual(['START', 'SET_BPM', 'SET_MEASURE_LENGTH', 'STOP']);",
+   "expect('setSwing' in node).toBe(false);"
+  ],
+  "MetronomeNode > should post message to worklet when restartPattern is called": [
+   "expect(mockWorkletNode.port.postMessage).toHaveBeenCalledWith({ type: 'RESTART_PATTERN' });"
+  ],
+  "MetronomeNode > should post message to worklet when setBars is called": [
+   "expect(mockWorkletNode.port.postMessage).toHaveBeenCalledWith({ type: 'SET_BARS', bars: 4 });"
+  ],
+  "MetronomeNode > should post message to worklet when setClickMode is called": [
+   "expect(mockWorkletNode.port.postMessage).toHaveBeenCalledWith({ type: 'SET_CLICK_MODE', mode: 1, });"
+  ],
+  "MetronomeNode > should post message to worklet when setMeasureLength is called": [
+   "expect(mockWorkletNode.port.postMessage).toHaveBeenCalledWith({ type: 'SET_MEASURE_LENGTH', length: 8, });"
+  ],
+  "MetronomeNode > should write no log when messages arrive from the worklet": [
+   "await vi.waitFor(() => expect((node as any).workletNode?.port.onmessage).toBeTruthy());",
+   "expect(ticks).toEqual([tick]);",
+   "expect(log).not.toHaveBeenCalled();"
+  ],
+  "MetronomeNode > tim_15 posts a chord of 7 notes in its timbre to the worklet": [
+   "expect(port.postMessage).toHaveBeenCalledOnce();",
+   "expect(port.postMessage).toHaveBeenCalledWith({ type: 'PAD_PLAY', notes: [21, 33, 45, 49, 52, 56, 59], timbre: 2 });"
+  ],
+  "MetronomeNode > tim_15 posts the timbre of a file to the worklet": [
+   "expect(fetch).toHaveBeenCalledWith('/pads/orchestra/B3.flac');",
+   "expect(port.postMessage).toHaveBeenCalledOnce();",
+   "expect(port.postMessage).toHaveBeenCalledWith({ type: 'PAD_LOAD', timbre: 2, key: 59, loopStart: 0, loopEnd: 176400, leftChannel: left, rightChannel: right, });"
+  ],
+  "MetronomeNode > tim_30 posts the bracket of a load to the worklet": [
+   "expect(port.postMessage.mock.calls).toEqual([[{ type: 'PAD_LOAD_BEGIN', timbre: 1 }], [{ type: 'PAD_LOAD_END', timbre: 1 }]]);"
+  ],
+  "MetronomeNode > tries again after the worklet reports a WASM error": [
+   "const settle = async (type: string) => { const init = node.init('/engine.wasm', '/worklet.js'); await vi.waitFor(() => expect((node as any).workletNode?.port.onmessage).toBeTruthy()); (node as any).workletNode.port.onmessage({ data: { type, error: 'bad module' } }); return init; };",
+   "await expect(settle('WASM_ERROR')).rejects.toThrow('bad module');",
+   "await expect(settle('WASM_READY')).resolves.toBeUndefined();",
+   "expect(fetch).toHaveBeenCalledTimes(2);"
+  ],
+  "Pad bank > pad_21 files and license": [
+   "expect(newAgeFiles()).toEqual(NEW_AGE.map(([key, name, , loopStart, loopEnd]) => ({ key, url: `/pads/new-age/${name}.flac`, loopStart, loopEnd })));",
+   "expect(fs.readdirSync(path.join(padsDir, 'new-age')).sort()) .toEqual(NEW_AGE.map(([, name]) => `${name}.flac`).sort());",
+   "expect(createHash('sha256').update(bytes).digest('hex')).toBe(sha256);",
+   "expect(info).toMatchObject({ sampleRate: 44100, channels: 1, bits: 16 });",
+   "expect(info.frames).toBeGreaterThan(loopEnd);",
+   "expect(license).toContain('https://github.com/freepats/new-age');",
+   "expect(license).toContain('Creative Commons CC0');",
+   "expect(Math.min(...keys.map(key => Math.abs(key - note)))).toBeLessThanOrEqual(2);"
+  ],
+  "Pad bank > pad_22 size limit": [
+   "expect(sizeOf(padsDir)).toBeGreaterThan(0);",
+   "expect(sizeOf(padsDir)).toBeLessThanOrEqual(12 * 1000 * 1000);"
+  ],
+  "Pad bank > pad_54 README": [
+   "expect(readme).toMatch(/\\*\\*Improv\\*\\*:/);",
+   "expect(readme).toContain('New Age by FreePats');",
+   "expect(readme).toContain('https://github.com/freepats/new-age');"
+  ],
+  "Pad bank > pad_55 license lists each file": [
+   "expect(license).toContain(`\\`pads/new-age/${name}.flac\\` | \\`samples/${name.replace('Gs', 'G#')}.flac\\``);"
+  ],
+  "Precise page > legacy 12/8 preset loads expanded": [
+   "expect(byId('bpm-slider').value).toBe('150');",
+   "expect(byId('bpm-number').innerText).toBe('150');",
+   "expect(byId('panel-header-text').textContent).toContain('12/8 · 150 BPM');",
+   "expect(byId('stadium-bpm').innerText).toBe('150.0');",
+   "expect(byId('time-sig-num').value).toBe('12');",
+   "expect(byId('time-sig-den').value).toBe('8');",
+   "expect(clickCells).toHaveLength(24);",
+   "expect(hitSteps).toEqual([0, 6, 12, 18]);",
+   "expect(lastCall('setBpm')).toEqual([150]);",
+   "expect(lastCall('setMeasureLength')).toEqual([24]);",
+   "expect(stores.presets.get('stored')).toEqual(legacy);"
+  ],
+  "Precise page > preset start bpm applies on load and play": [
+   "expect(lastCall('setBpm')).toEqual([80]);",
+   "expect(lastCall('setBpm')).toEqual([140]);",
+   "expect(order.indexOf('setBpm')).toBeLessThan(order.indexOf('start'));",
+   "expect(lastCall('setBpm')).toEqual([80]);",
+   "expect(byId('bpm-number').innerText).toBe('100');"
+  ],
+  "Precise page > swing_01 no swing control": [
+   "expect(document.querySelector('#swing-slider')).toBeNull();",
+   "expect(document.querySelector('#swing-display')).toBeNull();",
+   "expect(document.querySelector('label[for=\"swing-slider\"]')).toBeNull();",
+   "expect(labels.length).toBeGreaterThan(0);",
+   "labels.forEach(label => expect(label.textContent).not.toMatch(/swing/i));"
+  ],
+  "Precise page > swing_02 card title is Measure": [
+   "expect(card?.querySelector('.card-section-title')?.textContent).toBe('Measure');"
+  ],
+  "Precise page > swing_03 stored swing sends nothing": [
+   "expect(lastCall('setBpm')).toEqual([100]);",
+   "expect(lastCall('setMeasureLength')).toEqual([16]);",
+   "expect(JSON.stringify(audioCalls)).not.toMatch(/swing/i);"
+  ],
+  "Precise page > swing_04 save omits swing": [
+   "expect(saved).toMatchObject(expected);",
+   "expect(saved).not.toHaveProperty('swing');",
+   "expect(stores.presets.get('stored')).toEqual(storedPreset());"
+  ],
+  "Precise page > train_10 slider sends bpm immediately": [
+   "expect(calls('setBpm')).toEqual([[150]]);",
+   "expect(byId('bpm-number').innerText).toBe('150');"
+  ],
+  "Precise page > train_12 settings keep live bpm": [
+   "expect(lastCall('setMeasureLength')).toEqual([12]);",
+   "expect(lastCall('updateGrid')[0]).toBe(1);",
+   "expect([...lastCall('updateGrid')[1]].slice(0, 2)).toEqual([1, 0]);",
+   "expect([...hiHatSent[1]]).toEqual(new Array(12).fill(1));",
+   "trainerEdits.forEach(([id, value, sent]) => { byId(id).value = value; byId(id).dispatchEvent(new Event('change')); expect(lastCall('setTrainer')[0]).toMatchObject(sent); });",
+   "expect(lastCall('setTrainer')[0]).toMatchObject({ enabled: true });",
+   "expect(calls('setBpm')).toEqual([]);"
+  ],
+  "Precise page > train_13 editor shows live bpm": [
+   "expect(byId('bpm-number').innerText).toBe('125');",
+   "expect(byId('bpm-number').innerText).toBe('127.3');",
+   "expect(byId('bpm-number').innerText).toBe('130');"
+  ],
+  "Precise page > train_14 stop shows preset bpm": [
+   "expect(byId('bpm-number').innerText).toBe('135');",
+   "expect(byId('bpm-number').innerText).toBe('100');",
+   "expect(byId('bpm-number').innerText).toBe('100');"
+  ],
+  "Precise page > train_17 preset load replaces trainer immediately": [
+   "expect(lastCall('replaceTrainer')[0]).toMatchObject({ enabled: true });",
+   "expect(audioCalls.some(call => call.method === 'setTrainer')).toBe(false);",
+   "expect(lastCall('setTrainer')[0]).toMatchObject({ increment: 9 });",
+   "expect(audioCalls.some(call => call.method === 'replaceTrainer')).toBe(false);"
+  ],
+  "Precise page > train_22 preset load shows its start bpm during playback": [
+   "expect(document.getElementById('bpm-number')!.innerText).toBe('80');",
+   "expect(document.getElementById('stadium-bpm')!.innerText).toBe('80.0');",
+   "expect((document.getElementById('bpm-slider') as HTMLInputElement).value).toBe('100');"
+  ],
+  "Precise page > vis_01 render waits for latency": [
+   "expectNoBeatRendered();",
+   "expect(byId('bpm-number').innerText).toBe('125');",
+   "expect(byId('stadium-bpm').innerText).toBe('125.0');",
+   "expect(byId('stadium-status').innerText).toContain('Trainer 120');",
+   "expect(document.querySelector('.clock-label.active')?.textContent).toBe('2');",
+   "expect(from).toMatchObject({ rotation: 90 });",
+   "expect(to).toMatchObject({ rotation: 112.5, duration: 0.12 });",
+   "expect(tweenFor(byId('orb-1'))).toBeDefined();"
+  ],
+  "Precise page > vis_03 stop cancels pending render": [
+   "expectNoBeatRendered();",
+   "expectNoBeatRendered();"
+  ],
+  "Preset normalization > bars_08 no bar count is one bar": [
+   "expect(preset.bars ?? 1).toBe(1);",
+   "expect(preset.gridData[1]).toEqual(stored(undefined, 16).gridData[1]);"
+  ],
+  "Preset normalization > bpm_06 expands legacy steps": [
+   "expect(preset.measureLength).toBe(24);",
+   "expect(preset.gridData[0]).toEqual([2, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]);",
+   "expect(preset.gridData[1]).toEqual([1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0]);",
+   "expect(preset.gridData[2]).toEqual([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);",
+   "expect(preset.gridData[3]).toEqual([0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);",
+   "expect(stored).toEqual(original);"
+  ],
+  "Preset normalization > bpm_07 rounds expanded bpm": [
+   "expect(normalizePreset({ ...legacy12_8(), bpm: 90 }).bpm).toBe(135);",
+   "expect(normalizePreset({ ...legacy12_8(), bpm: 101 }).bpm).toBe(152);",
+   "expect(normalizePreset({ ...legacy12_8(), bpm: 100 }).bpm).toBe(150);",
+   "expect(normalizePreset({ ...legacy12_8(), bpm: 90 }).trainerSettings).toEqual(trainerSettings);"
+  ],
+  "Preset normalization > bpm_08 caps expanded bpm": [
+   "expect(normalizePreset({ ...legacy12_8(), bpm: 160 }).bpm).toBe(240);",
+   "expect(normalizePreset({ ...legacy12_8(), bpm: 200 }).bpm).toBe(240);"
+  ],
+  "Preset normalization > drops a stored swing value without changing the record": [
+   "expect(preset).not.toHaveProperty('swing');",
+   "expect(preset).toEqual(FACTORY_PRESETS[0]);",
+   "expect(stored.swing).toBe(50);",
+   "expect(preset.gridData[0]).not.toBe(stored.gridData[0]);"
+  ],
+  "Preset normalization > edge_03 bars that do not fit": [
+   "expect(preset.bars).toBe(1);",
+   "expect(preset.gridData[1]).toEqual(stored(bars, length).gridData[1].slice(0, 16));"
+  ],
+  "Preset normalization > expands every bar of a legacy 12/8 pattern": [
+   "expect(preset.bars).toBe(4);",
+   "expect(preset.measureLength).toBe(24);",
+   "expect(preset.gridData[1]).toHaveLength(96);",
+   "expect(preset.gridData[1][94]).toBe(2);"
+  ],
+  "Preset normalization > hk_20 eleven track preset": [
+   "expect(preset.gridData[track], `track ${track}`).toEqual(hits(track));",
+   "expect(preset.gridData[11]).toEqual(new Array(64).fill(0));",
+   "expect(preset.gridData[12]).toEqual(new Array(64).fill(0));",
+   "expect(Object.keys(preset.gridData)).toHaveLength(13);"
+  ],
+  "Preset normalization > keeps 4 bars that fit their steps": [
+   "expect(preset.bars).toBe(4);",
+   "expect(preset.gridData[1]).toHaveLength(64);"
+  ],
+  "Preset normalization > leaves presets outside legacy 12/8 unchanged": [
+   "expect(normalizePreset(sixEight)).toEqual(sixEight);",
+   "expect(normalizePreset(corrected)).toEqual(corrected);"
+  ],
+  "Preset normalization > starts at Start BPM when the Trainer is enabled": [
+   "expect(startBpmFor(preset)).toBe(80);"
+  ],
+  "Preset normalization > starts at the preset BPM when the Trainer is disabled": [
+   "expect(startBpmFor(preset)).toBe(120);"
+  ],
+  "Rhythmic figures > should clip a figure at the end of the measure": [
+   "expect(steps.length).toBe(14);",
+   "expect(steps.slice(12)).toEqual([1, 0]);"
+  ],
+  "Rhythmic figures > should stamp a figure over the quarter note containing the step": [
+   "expect(steps).toEqual([0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0]);"
+  ],
+  "Rhythmic figures > should sustain the eighth of a gallop but not a lone quarter": [
+   "expect(isSustainedStep(steps, 1, 16, 4)).toBe(true);",
+   "expect(isSustainedStep(steps, 5, 16, 4)).toBe(false);",
+   "expect(isSustainedStep(steps, 2, 16, 4)).toBe(false);"
+  ],
+  "Shipped WASM > Timbres > Analog takes no file": [
+   "expect(heldPeak(withFile(ANALOG, 0.5), ANALOG)).toBe(heldPeak(padRenderer(), ANALOG));"
+  ],
+  "Shipped WASM > Timbres > Orchestra sounds its files with no synth, and a synth with none": [
+   "expect(heldPeak(withFile(ORCHESTRA, 0, orchestraKeys), ORCHESTRA)).toBe(0);",
+   "expect(heldPeak(padRenderer(), ORCHESTRA)).toBeGreaterThan(0.003);"
+  ],
+  "Shipped WASM > Timbres > a file sounds only in its own timbre": [
+   "expect(elsewhere).toBe(synthAlone);",
+   "expect(heldPeak(withFile(SWEEP, 0.5), SWEEP)).toBeGreaterThan(synthAlone * 1.5);"
+  ],
+  "Shipped WASM > kit_02 plays the last track of the kit": [
+   "expect(new Float32Array(engine.memory.buffer, left, 4)[0]).toBeCloseTo(0.9);"
+  ],
+  "Shipped WASM > pad_17 layers a sample through the shipped load": [
+   "expect(render(1)[0]).toBeGreaterThan(synthPeak * 1.5);"
+  ],
+  "Shipped WASM > pad_23 renders while stopped": [
+   "expect(render(0.1)).toEqual([0, 0]);",
+   "expect(left).toBeGreaterThan(0.003);",
+   "expect(right).toBeGreaterThan(0.003);",
+   "expect(left).toBeLessThanOrEqual(1);",
+   "expect(right).toBeLessThanOrEqual(1);"
+  ],
+  "Shipped WASM > pad_42 follows the shipped volume, and stop fades to silence": [
+   "expect(render(0.1)).toEqual([0, 0]);",
+   "expect(render(0.5)[0]).toBeGreaterThan(0.003);",
+   "expect(render(0.1)).toEqual([0, 0]);"
+  ],
+  "Shipped WASM > plays a step of the fourth bar": [
+   "expect(lastTick).toBe(63);"
+  ],
+  "Shipped WASM > plays a take on track 12": [
+   "expect(new Float32Array(engine.memory.buffer, left, 4)[0]).toBe(0.25);"
+  ],
+  "Shipped WASM > swing_05 exports no swing function": [
+   "expect(exports).toContain('engine_set_trainer');",
+   "expect(exports).toContain('engine_restart_pattern');",
+   "expect(exports).toContain('engine_load_take');",
+   "expect(exports).not.toContain('engine_set_swing');"
+  ],
+  "Song Bars > a tick of the old pattern draws nothing after a load": [
+   "expect(shown(0)).toEqual(click);",
+   "expect(click.filter(Boolean)).toHaveLength(4);"
+  ],
+  "Song Bars > a tick waiting when the time signature changes draws nothing": [
+   "expect(shown(1)).toEqual(barOf(1, 1).slice(0, 12));"
+  ],
+  "Song Bars > bars_07 saved song keeps four bars": [
+   "expect(saved.bars).toBe(4);",
+   "expect(saved.gridData[trackId], `track ${trackId}`).toEqual(battery.gridData[trackId] ?? new Array(64).fill(0));",
+   "expect(byId('pattern-steps').textContent).toBe('STEPS: 64/128');",
+   "expect(byId('pattern-name').textContent).toBe('PAT: My Battery');",
+   "expect(shown(trackId), `track ${trackId} bar ${bar}`).toEqual(barOf(trackId, bar));"
+  ],
+  "Song Bars > clock_01 sixteen slices": [
+   "STADIUM_GROUPS.forEach((_, ring) => expect(ringHits(ring)).toHaveLength(16));",
+   "expect([...document.querySelectorAll('.clock-label')].map(label => label.textContent)).toEqual(['1', '2', '3', '4']);"
+  ],
+  "Song Bars > clock_02 bar in play": [
+   "expectClockShows(bar);"
+  ],
+  "Song Bars > clock_03 changes on the first step": [
+   "expect(barOf(1, 3, backInBlack)).not.toEqual(barOf(1, 4, backInBlack));",
+   "expectClockShows(3, backInBlack);",
+   "expectClockShows(4, backInBlack);"
+  ],
+  "Song Bars > clock_03 waits for the sound": [
+   "expectClockShows(3);",
+   "expectClockShows(4);"
+  ],
+  "Song Bars > clock_04 a press during playback leaves the clock": [
+   "expectClockShows(2);"
+  ],
+  "Song Bars > clock_04 stopped shows bar one": [
+   "expectClockShows(1);",
+   "expectClockShows(3);",
+   "expectClockShows(1);"
+  ],
+  "Song Bars > clock_05 orb pulses": [
+   "expect(mockGsap.fromTo.mock.calls.some(call => call[0] === byId('orb-2'))).toBe(true);",
+   "expect(mockGsap.fromTo.mock.calls.some(call => call[0] === byId('orb-1'))).toBe(false);"
+  ],
+  "Song Bars > count_03 position by bar": [
+   "expect(byId('pattern-pos-value').textContent).toBe('BAR 01 · STEP 01');",
+   "expect(byId('pattern-pos-value').textContent).toBe('BAR 01 · STEP 16');",
+   "expect(byId('pattern-pos-value').textContent).toBe('BAR 02 · STEP 01');",
+   "expect(byId('pattern-pos-value').textContent).toBe('BAR 02 · STEP 06');",
+   "expect(byId('pattern-pos-value').textContent).toBe('BAR 04 · STEP 01');"
+  ],
+  "Song Bars > count_04 steps over the limit": [
+   "expect(byId('pattern-steps').textContent).toBe('STEPS: 16/128');",
+   "expect(byId('pattern-steps').textContent).toBe('STEPS: 64/128');"
+  ],
+  "Song Bars > count_06 limit of one bar": [
+   "expect(alertSpy).toHaveBeenCalledWith('Time signature exceeds the maximum limit of 32 steps!');",
+   "expect(confirmSpy).not.toHaveBeenCalled();",
+   "expect(byId('time-sig-num').value).toBe('4');",
+   "expect(byId('pattern-steps').textContent).toBe('STEPS: 64/128');"
+  ],
+  "Song Bars > edge_01 load during bar three": [
+   "expect(lastCall('setBars')).toEqual([1]);",
+   "expect(byId('bar-selector').hidden).toBe(true);",
+   "expect(byId('pattern-pos-value').textContent).toBe('BAR 04 · STEP 01');"
+  ],
+  "Song Bars > edge_02 edits in any bar ask": [
+   "expect(confirmSpy).toHaveBeenCalledTimes(1);",
+   "expect(byId('pattern-name').textContent).toBe('PAT: Battery');"
+  ],
+  "Song Bars > edit_01 selector on four bars": [
+   "expect(byId('bar-selector').hidden).toBe(false);",
+   "expect(barButtons().map(button => button.textContent)).toEqual(['1', '2', '3', '4']);"
+  ],
+  "Song Bars > edit_02 no selector on one bar": [
+   "expect(byId('bar-selector').hidden).toBe(true);"
+  ],
+  "Song Bars > edit_03 press shows the bar": [
+   "expect(pressedBars()).toEqual([String(bar)]);",
+   "expect(shown(1)).toHaveLength(16);",
+   "expect(shown(trackId), `track ${trackId} bar ${bar}`).toEqual(barOf(trackId, bar));"
+  ],
+  "Song Bars > edit_04 a song loaded during playback starts on bar one": [
+   "expect(pressedBars()).toEqual(['3']);",
+   "expect(pressedBars()).toEqual(['1']);",
+   "expect(calls('restartPattern')).toHaveLength(1);",
+   "expect(calls('start')).toHaveLength(1);",
+   "expect(calls('stop')).toHaveLength(0);",
+   "expect(methods.lastIndexOf('restartPattern')).toBeGreaterThan(methods.lastIndexOf('updateGrid'));"
+  ],
+  "Song Bars > edit_04 a stopped load and a 1-bar load leave the engine alone": [
+   "expect(calls('restartPattern')).toHaveLength(0);",
+   "expect(calls('restartPattern')).toHaveLength(0);"
+  ],
+  "Song Bars > edit_04 song loads on bar one": [
+   "expect(pressedBars()).toEqual(['1']);",
+   "expect(shown(1)).toEqual(barOf(1, 1));"
+  ],
+  "Song Bars > edit_05 a bar pressed while stopped gives way to Play": [
+   "expect(pressedBars()).toEqual(['1']);",
+   "expect(pressedBars()).toEqual(['1']);",
+   "expect(shown(1)).toEqual(barOf(1, 1));"
+  ],
+  "Song Bars > edit_05 follows the bar in play": [
+   "expect(pressedBars(), `step ${beatIndex}`).toEqual([String(bar)]);",
+   "expect(shown(1), `step ${beatIndex}`).toEqual(barOf(1, bar));"
+  ],
+  "Song Bars > edit_06 press during playback": [
+   "expect(audioCalls.length).toBe(sent);",
+   "expect(shown(1)).toEqual(barOf(1, 3));",
+   "expect(pressedBars()).toEqual(['3']);",
+   "expect(pressedBars()).toEqual(['2']);",
+   "expect(shown(1)).toEqual(barOf(1, 2));"
+  ],
+  "Song Bars > edit_07 cell changes one bar": [
+   "expect(shown(10)).toEqual(before.map((value, step) => (step === 5 ? 1 : value)));",
+   "expect(shown(10), `bar ${bar}`).toEqual(barOf(10, bar));",
+   "expect(sent).toEqual((battery.gridData[10] ?? new Array(64).fill(0)).map((value, step) => (step === 37 ? 1 : value)));"
+  ],
+  "Song Bars > edit_08 figure stays in the bar": [
+   "expect(shown(10)).toEqual(barOf(10, 2).map((value, step) => (step >= 4 && step < 8 ? 1 : value)));",
+   "expect(shown(10), `bar ${bar}`).toEqual(barOf(10, bar));"
+  ],
+  "Song Bars > edit_09 groove stays in the bar": [
+   "expect(rock).not.toEqual(barOf(1, 2));",
+   "expect(rock.filter(Boolean).length).toBeGreaterThan(0);",
+   "expect(shown(0)).toEqual(click);",
+   "expect(shown(1), `bar ${bar}`).toEqual(barOf(1, bar));",
+   "expect(shown(7), `bar ${bar}`).toEqual(barOf(7, bar));",
+   "expect(shown(1)).toEqual(rock);",
+   "expect(shown(7)).toEqual(new Array(16).fill(0));"
+  ],
+  "Song Bars > edit_10 save groove takes the bar": [
+   "expect(saved.measureLength).toBe(16);",
+   "expect(saved.gridData[1]).toEqual(barOf(1, 4));",
+   "expect(saved.gridData[2]).toEqual(barOf(2, 4));",
+   "expect(saved.gridData[0]).toBeUndefined();"
+  ],
+  "Song Bars > edit_11 stop returns to bar one": [
+   "expect(pressedBars()).toEqual(['3']);",
+   "expect(pressedBars()).toEqual(['1']);",
+   "expect(shown(1)).toEqual(barOf(1, 1));"
+  ],
+  "Song Bars > meter_01 asks first": [
+   "const confirmSpy = vi.fn(() => { // Nothing has changed when the question appears expect(byId('pattern-steps').textContent).toBe('STEPS: 64/128'); return false; });",
+   "expect(confirmSpy).toHaveBeenCalledTimes(1);",
+   "expect(confirmSpy).toHaveBeenCalledTimes(2);",
+   "expect(confirmSpy).toHaveBeenCalledTimes(3);"
+  ],
+  "Song Bars > meter_01 the same time signature changes nothing": [
+   "expect(confirmSpy).not.toHaveBeenCalled();",
+   "expect(byId('pattern-steps').textContent).toBe('STEPS: 64/128');",
+   "expect(byId('bar-selector').hidden).toBe(false);"
+  ],
+  "Song Bars > meter_02 a longer bar still starts from bar one": [
+   "expect(byId('pattern-steps').textContent).toBe('STEPS: 20/128');",
+   "expect(shown(1)).toEqual([...barOf(1, 1), 0, 0, 0, 0]);"
+  ],
+  "Song Bars > meter_02 accept keeps bar one": [
+   "expect(byId('pattern-steps').textContent).toBe('STEPS: 12/128');",
+   "expect(shown(1)).toEqual(barOf(1, 1).slice(0, 12));",
+   "expect(lastCall('setBars')).toEqual([1]);",
+   "expect(lastCall('setMeasureLength')).toEqual([12]);",
+   "expect([...calls('updateGrid').filter(([trackId]) => trackId === 1).at(-1)![1]]).toEqual(barOf(1, 1).slice(0, 12));"
+  ],
+  "Song Bars > meter_02 keeps bar one whatever bar is on screen": [
+   "expect(barOf(1, 4, backInBlack).slice(0, 12)).not.toEqual(barOf(1, 1, backInBlack).slice(0, 12));",
+   "expect(shown(trackId), `track ${trackId}`).toEqual(barOf(trackId, 1, backInBlack).slice(0, 12));"
+  ],
+  "Song Bars > meter_03 decline changes nothing": [
+   "expect(byId('time-sig-num').value).toBe('4');",
+   "expect(byId('time-sig-den').value).toBe('4');",
+   "expect(byId('pattern-steps').textContent).toBe('STEPS: 64/128');",
+   "expect(byId('bar-selector').hidden).toBe(false);",
+   "expect(shown(1)).toEqual(barOf(1, 4));"
+  ],
+  "Song Bars > meter_04 selector hides": [
+   "expect(byId('bar-selector').hidden).toBe(true);"
+  ],
+  "Song Bars > sends the bar count with every pattern": [
+   "expect(lastCall('setMeasureLength')).toEqual([16]);",
+   "expect(lastCall('setBars')).toEqual([4]);",
+   "expect(calls('updateGrid').find(([trackId]) => trackId === 1)![1]).toHaveLength(64);",
+   "expect(lastCall('setBars')).toEqual([1]);"
+  ],
+  "Song Bars > the clock leaves the old bar when a preset loads during playback": [
+   "expectClockShows(1, backInBlack);"
+  ],
+  "Song Bars > the clock leaves the old bar when the time signature changes during playback": [
+   "expect(ringHits(1)).toEqual(kick);"
+  ],
+  "Song Bars > the page holds a hidden selector of 4 bars": [
+   "expect(barButtons().map(button => button.textContent)).toEqual(['1', '2', '3', '4']);",
+   "expect(byId('bar-selector').hidden).toBe(true);"
+  ],
+  "Songs > bars_01 four bars of sixteen": [
+   "expect(SONGS).toHaveLength(14);",
+   "SONGS.forEach(song => { expect([song.timeSignature, song.measureLength, song.bars], song.id).toEqual(['4/4', 16, 4]); const preset = songToPreset(song); TRACKS.forEach(track => expect(preset.gridData[track.id], `${song.id} ${track.name}`).toHaveLength(64)); });"
+  ],
+  "Songs > bars_02 consecutive measures": [
+   "SONGS.forEach(song => { const tab = tabOf(song.id); const { tracks } = barsToGrid({ measures: tab.measures }, 0); TRACKS.slice(1).forEach(track => { expect(song.gridData[track.id] ?? new Array(64).fill(0), `${song.id} ${track.name}`).toEqual(tracks[track.id]); }); });"
+  ],
+  "Songs > bars_03 two different bars": [
+   "SONGS.forEach(song => { const bar = (index: number) => JSON.stringify(TRACKS.slice(1).map(track => song.gridData[track.id]?.slice(index * 16, (index + 1) * 16))); expect(new Set([0, 1, 2, 3].map(bar)).size, song.id).toBeGreaterThanOrEqual(2); });"
+  ],
+  "Songs > bars_04 first measure and tempo": [
+   "SONGS.forEach(song => { const tab = tabOf(song.id); expect(song.source.measure, song.id).toBe(tab.first); expect(song.bpm, song.id).toBe(tab.tempo); });"
+  ],
+  "Songs > bars_05 click marks every beat": [
+   "SONGS.forEach(song => { const click = songToPreset(song).gridData[0]; const expected = new Array(64).fill(0).map((_, step) => (step % 4 === 0 ? 1 : 0)); expected[0] = 2; expect(click, song.id).toEqual(expected); });"
+  ],
+  "Songs > copies steps so editing a preset leaves the catalog alone": [
+   "expect(song.gridData[1][0]).not.toBe(3);"
+  ],
+  "Songs > filters by genre": [
+   "expect(songsForGenre('All')).toEqual(SONGS);",
+   "expect(songsForGenre('Rock').map(song => song.artist)).toEqual(['AC/DC', 'AC/DC']);"
+  ],
+  "Songs > hk_23 toms on four tracks": [
+   "expect(tomHits('song_battery')).toEqual({ 9: [], 10: [], 11: [], 12: [58, 62] });",
+   "SONGS.filter(song => song.id !== 'song_battery').forEach(song => { expect(tomHits(song.id)[11], song.id).toEqual([]); expect(tomHits(song.id)[12], song.id).toEqual([]); });",
+   "expect(tomHits('song_highway_to_hell')[10]).not.toEqual([]);",
+   "expect(others.map(song => song.id).sort()).toEqual(Object.keys(gridsBefore).sort());",
+   "others.forEach(song => { const grid = createHash('sha1').update(JSON.stringify(song.gridData)).digest('hex').slice(0, 12); expect(grid, song.id).toBe(gridsBefore[song.id]); });"
+  ],
+  "Songs > song_01 fourteen songs with sources": [
+   "expect(SONGS.map(song => [song.title, song.artist, song.genre, song.bpm])).toEqual(expected);",
+   "SONGS.forEach(song => { expect(song.section, song.id).not.toBe(''); expect(song.timeSignature, song.id).toMatch(/^\\d+\\/\\d+$/); expect(song.source.url, song.id).toMatch(/^https:\\/\\/www\\.songsterr\\.com\\/a\\/wsa\\/.+-drum-tab-s\\d+$/); expect(song.source.revisionId, song.id).toBeGreaterThan(0); });",
+   "expect(new Set(SONGS.map(song => song.id)).size).toBe(14);"
+  ],
+  "Songs > song_02 named versions": [
+   "expect(song('Crossroads').artist).toBe('Cream (Eric Clapton)');",
+   "expect(song('Crossroads').source.url).toContain('live');",
+   "expect(song('Every Day I Have the Blues').source.url).toContain('cook-county');",
+   "expect(song('Every Day I Have the Blues').source.url).toMatch(/s3882248$/);"
+  ],
+  "Songs > song_03 bounds": [
+   "SONGS.forEach(song => { expect(song.measureLength, song.id).toBeLessThanOrEqual(32); const [numerator, denominator] = song.timeSignature.split('/').map(Number); expect(song.measureLength, song.id).toBe(measureLengthFor(numerator, denominator)); // Exactly 1 bar expect(song.bpm, song.id).toBeGreaterThanOrEqual(40); expect(song.bpm, song.id).toBeLessThanOrEqual(240); const tracks = Object.values(song.gridData); tracks.forEach(steps => expect(steps, song.id).toHaveLength(song.measureLength * song.bars)); tracks.forEach(steps => expect(steps.every(value => [0, 1, 2, 3].includes(value)), song.id).toBe(true)); expect(tracks.flat().some(value => value > 0), song.id).toBe(true); expect(song.gridData[0], song.id).toBeUndefined(); // Click comes from the time signature });"
+  ],
+  "Songs > song_04 click marks the beats": [
+   "expect(songToPreset({ ...song, bars: 1 }).gridData[0]).toEqual([2, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0]);",
+   "expect(songToPreset({ ...song, bars: 1, timeSignature: '3/4', measureLength: 12 }).gridData[0]).toEqual([2, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0]);",
+   "expect(songToPreset({ ...song, bars: 1, timeSignature: '12/8', measureLength: 24 }).gridData[0].filter(Boolean)).toHaveLength(12);"
+  ],
+  "Songs > turns a song into a preset with every track and no Trainer": [
+   "expect(preset).toMatchObject({ id: song.id, name: song.title, bpm: song.bpm, timeSignature: song.timeSignature, measureLength: song.measureLength, bars: 4 });",
+   "expect(preset.trainerSettings.enabled).toBe(false);",
+   "expect(Object.keys(preset.gridData)).toHaveLength(TRACKS.length);",
+   "expect(preset.gridData[1]).toEqual(song.gridData[1]);",
+   "expect(preset.gridData[10]).toEqual(new Array(64).fill(0));"
+  ],
+  "Speed Trainer Presets > should gallop on every beat in the Gallop preset": [
+   "expect(gallop?.bpm).toBe(140);",
+   "expect(gallop?.trainerSettings.targetBpm).toBe(180);",
+   "expect(gallop?.gridData[1].slice(0, 4)).toEqual([1, 0, 1, 1]);",
+   "expect(gallop?.gridData[1].slice(12, 16)).toEqual([1, 0, 1, 1]);"
+  ],
+  "Speed Trainer Presets > should have unique ids and rising trainer ranges": [
+   "expect(SPEED_TRAINER_PRESETS.length).toBe(11);",
+   "expect(new Set(SPEED_TRAINER_PRESETS.map(p => p.id)).size).toBe(11);",
+   "SPEED_TRAINER_PRESETS.forEach(p => { expect(p.trainerSettings.enabled).toBe(true); expect(p.bpm).toBe(p.trainerSettings.startBpm); expect(p.trainerSettings.targetBpm).toBeGreaterThan(p.bpm); });"
+  ],
+  "Speed Trainer Presets > should not share ids with factory presets": [
+   "SPEED_TRAINER_PRESETS.forEach(p => expect(factoryIds).not.toContain(p.id));"
+  ],
+  "StateManager > nav_07 grooves mode persists": [
+   "expect(new StateManager().activeViewMode).toBe('grooves');"
+  ],
+  "StateManager > opens the Editor for an unknown stored mode": [
+   "expect(new StateManager().activeViewMode).toBe('editor');"
+  ],
+  "StateManager IndexedDB Upgrade > should initialize StateManager and allow saving custom grooves": [
+   "expect(manager).toBeDefined();",
+   "await expect(manager.saveGroove(testGroove)).resolves.not.toThrow();",
+   "expect(Array.isArray(grooves)).toBe(true);"
+  ],
+  "StateManager Tests > should initialize with default state settings": [
+   "expect(stateManager.activeViewMode).toBe('editor');",
+   "expect(stateManager.isPlaying).toBe(false);",
+   "expect(stateManager.activePreset.bpm).toBe(120);"
+  ],
+  "StateManager Tests > should switch view mode and execute subscribers": [
+   "expect(stateManager.activeViewMode).toBe('stadium');",
+   "expect(callCount).toBe(2);"
+  ],
+  "Timbre banks > pad_54 README states the chords and timbres the app offers": [
+   "expect(readme).toContain(`any of ${ROOTS.length * CHORD_TYPES.length} chords`);",
+   "expect(readme).toContain(`chosen in a select: ${names.slice(0, -1).join(', ')} and ${names.at(-1)}.`);"
+  ],
+  "Timbre banks > tim_13 orchestra sections": [
+   "expect(orchestra.map(file => file.key)).toEqual(keys);",
+   "expect([...sections.keys()]).toEqual(keys);",
+   "expect(sections.get(key)).toEqual(['CONTRABASS']);",
+   "expect(sections.get(key)).toEqual(['CELLO', 'CONTRABASS']);",
+   "expect(sections.get(47)).toEqual(['CELLO']);",
+   "expect(sections.get(key)).toEqual(['VIOLA']);",
+   "expect(sections.get(key)).toEqual(['VIOLIN']);",
+   "expect(notes[0]).toBe(21);",
+   "expect(notes[notes.length - 1]).toBe(77);",
+   "notes.slice(1).forEach((note, index) => { expect(highestOf(note)).toBeGreaterThanOrEqual(highestOf(notes[index])); expect(Math.abs(nearestKey(note) - note)).toBeLessThanOrEqual(2); });",
+   "expect(sections.get(nearestKey(45))).toEqual(['CELLO']);",
+   "expect(sections.get(nearestKey(52))).toEqual(['VIOLA']);",
+   "expect(sections.get(nearestKey(70))).toEqual(['VIOLIN']);",
+   "expect(sections.get(nearestKey(36))).toEqual(['CELLO', 'CONTRABASS']);",
+   "expect(sections.get(nearestKey(24))).toEqual(['CONTRABASS']);"
+  ],
+  "Timbre banks > tim_24 orchestra format": [
+   "expect(orchestra).toHaveLength(14);",
+   "expect(info).toEqual({ sampleRate: 44100, channels: 2, bits: 16, frames: 176401 });",
+   "expect(file.loopStart).toBe(0);",
+   "expect(file.loopEnd).toBe(4 * 44100);",
+   "expect(file.loopEnd).toBe(info.frames - 1);"
+  ],
+  "Timbre banks > tim_36 size limit": [
+   "expect(fs.statSync(path.join(padsDir, '..', url)).size).toBeGreaterThan(0);",
+   "expect(sizeOf(padsDir)).toBeGreaterThan(0);",
+   "expect(sizeOf(padsDir)).toBeLessThanOrEqual(12 * 1000 * 1000);"
+  ],
+  "Timbre banks > tim_40 license lists each file": [
+   "expect(files.length).toBeGreaterThan(0);",
+   "expect(row(file.url)).toContain(`\\`samples/${note}.flac\\``);",
+   "expect(orchestra.length).toBe(14);",
+   "expect(sources.length).toBeGreaterThan(0);",
+   "expect(row(file.url)).toContain(`\\`${source}\\``);",
+   "expect(license).toContain(heading);",
+   "expect(section).toContain('CC0');",
+   "expect(section).toContain('https://creativecommons.org/publicdomain/zero/1.0/');",
+   "expect(license).toContain('https://github.com/freepats/synth-pad-choir');",
+   "expect(license).toContain('https://github.com/freepats/sweep-pad');",
+   "expect(license).toContain('https://github.com/sgossner/VSCO-2-CE');"
+  ],
+  "Timbre banks > tim_41 README": [
+   "expect(readme).toContain(credit);"
+  ],
+  "Timbres > tim_01 select lists the timbres": [
+   "expect(document.querySelectorAll('#improv-view select')).toHaveLength(1);",
+   "expect(document.querySelector<HTMLLabelElement>('label[for=\"pad-timbre\"]')?.textContent).toBe('Timbre');",
+   "expect([...timbreSelect().options].map(option => option.textContent)).toEqual(['Choir', 'New Age', 'Orchestra', 'Sweep', 'Analog']);"
+  ],
+  "Timbres > tim_02 starts on Choir": [
+   "expect(shownTimbre()).toBe('Choir');",
+   "expect(shownTimbre(), stored).toBe('Choir');"
+  ],
+  "Timbres > tim_03 replays the chord in the new timbre": [
+   "expect(calls('padPlay')).toEqual([[[45, 48, 52, 55], 0]]);",
+   "expect(chordCommands()).toEqual([{ method: 'padPlay', args: [[45, 48, 52, 55], 3] }]);",
+   "expect(lastCall('padPlay')).toEqual([[21, 33, 45, 48, 52, 55], 2]);",
+   "expect(lastCall('padPlay')).toEqual([[45, 48, 52, 55], 1]);",
+   "expect(calls('padStop')).toEqual([]);",
+   "expect(shownChord()).toBe('Am7 · A C E G');",
+   "expect(pressedChords()).toEqual(['Am7']);"
+  ],
+  "Timbres > tim_04 a chord waiting for the engine takes the timbre picked meanwhile": [
+   "expect(chordCommands()).toEqual([]);",
+   "expect(chordCommands()).toEqual([{ method: 'padPlay', args: [[48, 51, 55, 58], 3] }]);",
+   "expect(shownChord()).toBe('Cm7 · C Eb G Bb');"
+  ],
+  "Timbres > tim_04 silent until the next chord": [
+   "expect(chordCommands()).toEqual([]);",
+   "expect(shownChord()).toBe('No chord playing');",
+   "expect(pressedChords()).toEqual([]);",
+   "expect(chordCommands()).toEqual([{ method: 'padPlay', args: [[48, 52, 55, 59, 62], 3] }]);"
+  ],
+  "Timbres > tim_06 remembers the timbre": [
+   "expect(localStorage.getItem('metrorig_pad_timbre')).toBe('Sweep');",
+   "expect(shownTimbre()).toBe('Sweep');",
+   "expect(calls('padPlay')).toEqual([[[48, 52, 55], 3]]);"
+  ],
+  "Timbres > tim_07 parses the stored timbre": [
+   "expect(PAD_TIMBRES.map(timbre => timbre.name)).toEqual(TIMBRE_NAMES);",
+   "expect(PAD_TIMBRES[DEFAULT_TIMBRE].name).toBe('Choir');",
+   "TIMBRE_NAMES.forEach((name, index) => expect(parseTimbre(name)).toBe(index));",
+   "expect(parseTimbre(bad)).toBe(DEFAULT_TIMBRE);"
+  ],
+  "Timbres > tim_08 opens silent": [
+   "expect(shownTimbre()).toBe('Orchestra');",
+   "expect(chordCommands()).toEqual([]);",
+   "expect(shownChord()).toBe('No chord playing');",
+   "expect(pressedChords()).toEqual([]);",
+   "expect(mockNode.resumeContext).not.toHaveBeenCalled();"
+  ],
+  "Timbres > tim_14 orchestra bass": [
+   "ROOTS.forEach((_, root) => CHORD_TYPES.forEach((_, type) => { const bass = chordMidi(root, type)[0]; TIMBRE_NAMES.forEach((_, timbre) => { const notes = timbreNotes(root, type, timbre); const added = timbre === ORCHESTRA ? [bass - 24, bass - 12] : []; expect(notes).toEqual([...added, ...chordMidi(root, type)]); expect(notes.length).toBeLessThanOrEqual(7); }); }));",
+   "expect(timbreNotes(ROOTS.indexOf('A'), 0, ORCHESTRA)).toEqual([21, 33, 45, 49, 52]);",
+   "expect(timbreNotes(ROOTS.indexOf('Ab'), CHORD_TYPES.findIndex(type => type.suffix === '9'), ORCHESTRA)) .toEqual([32, 44, 56, 60, 63, 66, 70]);"
+  ],
+  "Timbres > tim_26 loads the selected timbre": [
+   "expect(loadedUrls()).toEqual(CHOIR_URLS);",
+   "expect(mockPadLoad).not.toHaveBeenCalled();",
+   "expect(loadedUrls()).toEqual(SWEEP_URLS);",
+   "expect(mockPadLoad.mock.calls[0]).toEqual([3, 44, '/pads/sweep/Gs2.flac', 27903, 329471]);",
+   "expect(calls('padPlay')).toEqual([]);"
+  ],
+  "Timbres > tim_27 a pick after the engine failed starts it and loads": [
+   "expect(notice()).toBe('Audio unavailable');",
+   "expect(notice()).toBeNull();",
+   "expect(loadedUrls()).toEqual(SWEEP_URLS);"
+  ],
+  "Timbres > tim_27 a pick waits for the file in flight, so one file loads at a time": [
+   "expect(mockPadLoad).toHaveBeenCalledTimes(1);",
+   "expect(mockPadLoad).toHaveBeenCalledTimes(index + 1);",
+   "expect(loadedUrls()).toEqual([...CHOIR_URLS, ...SWEEP_URLS]);"
+  ],
+  "Timbres > tim_27 loads on first pick": [
+   "expect(loadedUrls()).toEqual(ORCHESTRA_URLS);",
+   "expect(mockPadLoad.mock.calls[0]).toEqual([2, 23, '/pads/orchestra/B0.flac', 0, 176400]);",
+   "expect(mockPadLoad.mock.calls.every(([timbre]) => timbre === 2)).toBe(true);",
+   "expect(chordCommands()).toEqual([]);"
+  ],
+  "Timbres > tim_28 a pick during its own load starts no second one": [
+   "expect(loadedUrls()).toEqual([...CHOIR_URLS, ...SWEEP_URLS]);"
+  ],
+  "Timbres > tim_28 fetches nothing again": [
+   "expect(mockPadLoad).not.toHaveBeenCalled();"
+  ],
+  "Timbres > tim_29 Analog fetches nothing": [
+   "expect(mockPadLoad).not.toHaveBeenCalled();",
+   "expect(calls('padPlay')).toEqual([[[48, 52, 55], 4]]);",
+   "expect(notice()).toBeNull();",
+   "expect(mockPadLoad).not.toHaveBeenCalled();",
+   "expect(notice()).toBeNull();"
+  ],
+  "Timbres > tim_34 a failure of another timbre waits until it is selected": [
+   "expect(logged).toHaveBeenCalledWith(`Failed to load ${SWEEP_URLS[8]}:`, expect.any(Error));",
+   "expect(notice()).toBeNull();",
+   "expect(notice()).toBe('Some samples unavailable');"
+  ],
+  "Timbres > tim_34 failure notices": [
+   "expect(notice()).toBeNull();",
+   "expect(logged).toHaveBeenCalledWith(`Failed to load ${ORCHESTRA_URLS[6]}:`, expect.any(Error));",
+   "expect(notice()).toBe('Some samples unavailable');",
+   "expect(logged).toHaveBeenCalledWith(`Failed to load ${SWEEP_URLS[0]}:`, expect.any(Error));",
+   "expect(notice()).toBe('Samples unavailable · synth only');",
+   "expect(notice()).toBeNull();",
+   "expect(notice()).toBeNull();",
+   "expect(notice()).toBe('Samples unavailable · synth only');",
+   "expect(shownChord()).toBe('C · C E G');"
+  ],
+  "Timbres > tim_35 retries failed files": [
+   "expect(notice()).toBe('Some samples unavailable');",
+   "expect(loadedUrls()).toEqual(CHOIR_URLS.slice(0, 2));",
+   "expect(notice()).toBe('Some samples unavailable');",
+   "expect(loadedUrls()).toEqual([CHOIR_URLS[0]]);",
+   "expect(mockPadLoad.mock.calls[0][0]).toBe(0);",
+   "expect(notice()).toBeNull();",
+   "expect(mockPadLoad).not.toHaveBeenCalled();"
+  ],
+  "Timbres > tim_42 pick during a fade": [
+   "expect(chordCommands()).toEqual([]);",
+   "expect(shownChord()).toBe('No chord playing');",
+   "expect(chordCommands()).toEqual([{ method: 'padPlay', args: [[21, 33, 45, 48, 52, 55], 2] }]);"
+  ],
+  "Timbres > tim_43 load after stop stays silent": [
+   "expect(loadedUrls()).toEqual(ORCHESTRA_URLS);",
+   "expect(chordCommands()).toEqual([]);",
+   "expect(shownChord()).toBe('No chord playing');",
+   "expect(pressedChords()).toEqual([]);"
+  ],
+  "Track mix > audible steps keep their length and leave the input untouched": [
+   "expect([...audibleSteps(mix, 1, steps)]).toEqual([1, 0, 2, 0]);",
+   "expect([...audibleSteps(mix, 1, steps)]).toEqual([0, 0, 0, 0]);",
+   "expect(steps).toEqual([1, 0, 2, 0]);"
+  ],
+  "Track mix > mute_04 solo isolates": [
+   "expect(audible(mix)).toEqual([0, 1, 2, 3]);",
+   "expect(audible(mix)).toEqual([2]);",
+   "expect(audible(mix)).toEqual([0, 1, 2, 3]);"
+  ],
+  "Track mix > mute_05 solos add": [
+   "expect(audible(mix)).toEqual([1, 3]);"
+  ],
+  "Track mix > mute_06 solo beats mute": [
+   "expect(isAudible(mix, 1)).toBe(false);",
+   "expect(isAudible(mix, 1)).toBe(true);"
+  ],
+  "Visual sync > cancels every pending render": [
+   "expect(first).not.toHaveBeenCalled();",
+   "expect(second).not.toHaveBeenCalled();",
+   "expect(afterCancel).toHaveBeenCalledOnce();"
+  ],
+  "Visual sync > runs a render only after its delay": [
+   "expect(render).not.toHaveBeenCalled();",
+   "expect(render).toHaveBeenCalledOnce();"
+  ],
+  "Visual sync > runs a render synchronously with no delay": [
+   "expect(render).toHaveBeenCalledOnce();"
+  ],
+  "Visual sync > sums the valid reported latencies in milliseconds": [
+   "expect(visualDelayMs(0.05, 0.15)).toBeCloseTo(200);",
+   "expect(visualDelayMs(undefined, 0.15)).toBeCloseTo(150);",
+   "expect(visualDelayMs(0.05, NaN)).toBeCloseTo(50);"
+  ],
+  "Visual sync > vis_02 invalid latency gives zero": [
+   "[undefined, null, NaN, Infinity, -Infinity, -0.1, 0, '0.2'].forEach(invalid => { expect(visualDelayMs(invalid, invalid)).toBe(0); });"
+  ],
+  "Worklet > pad_09 sends PAD_STOP to the engine": [
+   "expect(pad.engine_pad_stop).toHaveBeenCalledOnce();",
+   "expect(pad.engine_pad_stop).toHaveBeenCalledWith(1);"
+  ],
+  "Worklet > pad_17 keeps rendering when a PAD_LOAD grows the WASM memory": [
+   "expect(heard.left).toEqual(Array.from(left));",
+   "expect(heard.right).toEqual(Array.from(right));",
+   "expect(output[0]).toEqual(new RealFloat32Array(BLOCK).fill(2));",
+   "expect(output[1]).toEqual(new RealFloat32Array(BLOCK).fill(-2));"
+  ],
+  "Worklet > pad_17 sends PAD_LOAD to the engine with its samples in the heap": [
+   "expect(pad.engine_pad_load).toHaveBeenCalledWith(1, 1, 56, 1, 2, expect.any(Number), expect.any(Number), 3);",
+   "expect(heard.left).toEqual([0.5, 0.25, -0.25]);",
+   "expect(heard.right).toEqual([-0.5, -0.25, 0.25]);",
+   "expect(engine.exports.engine_free_buf).toHaveBeenCalledTimes(2);"
+  ],
+  "Worklet > pad_23 sends PAD_PLAY to the engine, filling the unused notes": [
+   "expect(pad.engine_pad_play).toHaveBeenLastCalledWith(1, 48, 52, 55, 0, 0, 0, 0, 3, 1);",
+   "expect(pad.engine_pad_play).toHaveBeenLastCalledWith(1, 48, 52, 55, 58, 0, 0, 0, 4, 1);",
+   "expect(pad.engine_pad_play).toHaveBeenLastCalledWith(1, 48, 52, 55, 59, 62, 0, 0, 5, 1);",
+   "expect(pad.engine_pad_play).toHaveBeenCalledTimes(3);",
+   "expect(engine.exports.engine_start).not.toHaveBeenCalled();"
+  ],
+  "Worklet > pad_42 sends PAD_VOLUME to the engine": [
+   "expect(pad.engine_pad_set_volume).toHaveBeenCalledOnce();",
+   "expect(pad.engine_pad_set_volume).toHaveBeenCalledWith(1, 0.3);"
+  ],
+  "Worklet > passes the bar count to the engine": [
+   "expect(engine.exports.engine_set_bars).toHaveBeenCalledWith(1, 4);"
+  ],
+  "Worklet > rebuilds heap views when WASM memory grows": [
+   "expect(output[0]).toEqual(new RealFloat32Array(BLOCK).fill(2));",
+   "expect(output[1]).toEqual(new RealFloat32Array(BLOCK).fill(-2));",
+   "expect(output[0]).toEqual(new RealFloat32Array(BLOCK).fill(3));",
+   "expect(output[1]).toEqual(new RealFloat32Array(BLOCK).fill(-3));",
+   "expect(ticks.map(([msg]) => msg.currentBpm)).toEqual([120, 120]);"
+  ],
+  "Worklet > reports every track of the kit on a tick": [
+   "expect(tick[0].activeTrackIds).toEqual([1, 8, 10]);",
+   "expect(engine.exports.engine_update_grid).toHaveBeenCalledWith(1, 10, expect.any(Number), 128);"
+  ],
+  "Worklet > reports the tracks of a step past 32": [
+   "expect(tick[0].beatIndex).toBe(63);",
+   "expect(tick[0].activeTrackIds).toEqual([2]);"
+  ],
+  "Worklet > reports tracks 11 and 12 on a tick": [
+   "expect(tick[0].activeTrackIds).toEqual([11, 12]);",
+   "expect(engine.exports.engine_update_grid).toHaveBeenCalledWith(1, 12, expect.any(Number), 128);"
+  ],
+  "Worklet > restarts the pattern in the engine": [
+   "expect(engine.exports.engine_restart_pattern).toHaveBeenCalledWith(1);"
+  ],
+  "Worklet > rt_01 no logs on messages or ticks": [
+   "expect(engine.exports.engine_start).toHaveBeenCalledOnce();",
+   "expect(engine.exports.engine_set_bpm).toHaveBeenCalledWith(1, 97);",
+   "expect(ticks).toHaveLength(3);",
+   "expect(ticks[0][0]).toEqual({ type: 'TICK', beatIndex: 0, currentBpm: 120, activeTrackIds: [] });",
+   "logs.forEach(log => expect(log).not.toHaveBeenCalled());"
+  ],
+  "Worklet > rt_02 reuses heap views": [
+   "expect(counter.views).toBe(viewsAfterFirstBlocks);",
+   "expect(output[0]).toEqual(new RealFloat32Array(BLOCK).fill(100));",
+   "expect(output[1]).toEqual(new RealFloat32Array(BLOCK).fill(-100));"
+  ],
+  "Worklet > sends a LOAD_TAKE message to engine_load_take with its samples in the heap": [
+   "expect(engine.exports.engine_load_take).toHaveBeenCalledWith(1, 12, 2, 1, expect.any(Number), expect.any(Number), 2);",
+   "expect(heardLeft).toEqual([0.5, 0.25]);",
+   "expect(heardRight).toEqual([-0.5, -0.25]);",
+   "expect(engine.exports.engine_free_buf).toHaveBeenCalledTimes(2);"
+  ],
+  "Worklet > sends each Trainer message to its engine export": [
+   "expect(engine.exports.engine_replace_trainer).toHaveBeenCalledWith(1, 1, 100, 160, 5, 0, 1, 0);",
+   "expect(engine.exports.engine_set_trainer).not.toHaveBeenCalled();",
+   "expect(engine.exports.engine_set_trainer).toHaveBeenCalledWith(1, 1, 100, 160, 5, 0, 1, 0);",
+   "expect(engine.exports.engine_replace_trainer).toHaveBeenCalledOnce();"
+  ],
+  "Worklet > tim_15 calls the shipped engine with the arguments it takes": [
+   "expect(pad.engine_pad_play.mock.calls[0]).toHaveLength(shipped.engine_pad_play.length);",
+   "expect(pad.engine_pad_load.mock.calls[0]).toHaveLength(shipped.engine_pad_load.length);"
+  ],
+  "Worklet > tim_15 sends a chord of 7 notes in its timbre to the engine": [
+   "expect(pad.engine_pad_play).toHaveBeenCalledOnce();",
+   "expect(pad.engine_pad_play).toHaveBeenCalledWith(1, 21, 33, 45, 49, 52, 56, 59, 7, 2);"
+  ],
+  "Worklet > tim_15 sends the timbre of a file to the engine": [
+   "expect(pad.engine_pad_load).toHaveBeenCalledOnce();",
+   "expect(pad.engine_pad_load).toHaveBeenCalledWith(1, 3, 60, 4, 9, expect.any(Number), expect.any(Number), 1);",
+   "expect(heard.left).toEqual([0.5]);",
+   "expect(heard.right).toEqual([-0.5]);"
+  ],
+  "Worklet > tim_30 sends the bracket of a load to the engine, with the arguments the shipped one takes": [
+   "expect(pad.engine_pad_load_begin.mock.calls).toEqual([[1, 2]]);",
+   "expect(pad.engine_pad_load_end.mock.calls).toEqual([[1, 3]]);",
+   "expect(shipped.engine_pad_load_begin.length).toBe(2);",
+   "expect(shipped.engine_pad_load_end.length).toBe(2);"
+  ],
+  "barToGrid > counts dots in the position": [
+   "expect(tracks[1].slice(0, 8)).toEqual([1, 0, 0, 0, 0, 0, 1, 0]);"
+  ],
+  "barToGrid > keeps the stronger of two notes on a step": [
+   "expect(barToGrid(measure, [4, 4]).tracks[2][0]).toBe(2);"
+  ],
+  "barToGrid > maps every piece of the kit": [
+   "pieces.forEach(([note, track]) => { expect(barToGrid(bar(beat([note], 1)), [4, 4]).tracks[track][0]).toBe(1); });"
+  ],
+  "barToGrid > places eighths and quarters on sixteenth steps": [
+   "expect(measureLength).toBe(16);",
+   "expect(tracks[1].slice(0, 5)).toEqual([1, 0, 0, 0, 0]);",
+   "expect(tracks[3].slice(0, 5)).toEqual([1, 0, 1, 0, 0]);",
+   "expect(tracks[2].slice(0, 5)).toEqual([0, 0, 0, 0, 1]);"
+  ],
+  "barToGrid > places triplets on a 12/8 grid only when they land on steps": [
+   "expect(() => barToGrid(bar(beat([36], 8, triplet), beat([36], 8, triplet), rest(4), rest(2)), [4, 4])).toThrow('between steps');",
+   "expect(measureLength).toBe(24);",
+   "expect(tracks[3].slice(0, 6)).toEqual([0, 0, 1, 0, 1, 0]);"
+  ],
+  "barToGrid > reads the dynamics of a note": [
+   "expect([tracks[2][0], tracks[2][4], tracks[2][8]]).toEqual([1, 2, 3]);"
+  ],
+  "barToGrid > refuses a bar longer than the grid": [
+   "expect(() => barToGrid(bar(rest(1)), [9, 4])).toThrow('does not fit 32 steps');"
+  ],
+  "barToGrid > refuses a note on no piece": [
+   "expect(() => barToGrid(bar(beat([31], 1)), [4, 4])).toThrow('No piece for note 31');"
+  ],
+  "barToGrid > skips grace and tied notes": [
+   "expect(tracks[2]).toEqual(new Array(16).fill(0));",
+   "expect(tracks[1].filter(Boolean)).toHaveLength(1);"
+  ],
+  "completeKit > edge_03 cleans step values": [
+   "expect(preset.gridData[1]).toEqual([0, 1, 2, 3, 1, 1, 1, 1]);"
+  ],
+  "completeKit > edt_06 fills missing tracks": [
+   "expect(Object.keys(preset.gridData)).toHaveLength(13);",
+   "expect(preset.gridData[1]).toEqual(kick);",
+   "expect(preset.gridData[trackId]).toEqual(new Array(12).fill(0));"
+  ],
+  "completeKit > fills a missing track to the whole pattern": [
+   "expect(completeKit(preset).gridData[10]).toEqual(new Array(64).fill(0));"
+  ],
+  "completeKit > fills the tracks of every factory preset": [
+   "[...FACTORY_PRESETS, ...SPEED_TRAINER_PRESETS].forEach(factory => { expect(completeKit(factory).gridData[10]).toHaveLength(factory.measureLength); });"
+  ],
+  "tab_to_grid > bars_doc four bars from one measure": [
+   "expect(measureLength).toBe(16);",
+   "expect(bars).toBe(4);",
+   "expect(bpm).toBe(120);",
+   "expect(tracks[1]).toHaveLength(64);",
+   "expect(tracks[1].flatMap((value: number, step: number) => (value ? [step] : []))).toEqual([0, 20, 40, 60]);",
+   "expect(tracks[2]).toEqual(new Array(64).fill(0));"
+  ],
+  "tab_to_grid > hk_22 four toms": [
+   "toms.forEach(([note, track]) => { const { tracks } = barsToGrid(part([bar(beat([note], 1)), ...fourBars()], [{ measure: 0, bpm: 120 }]), 0); expect(tracks[track].slice(0, 2), `note ${note}`).toEqual([1, 0]); for (const other of [9, 10, 11, 12].filter(id => id !== track)) { expect(tracks[other].every((value: number) => value === 0), `note ${note} on ${other}`).toBe(true); } });"
+  ],
+  "tab_to_grid > refuses a stretch past the end of the tab": [
+   "expect(() => barsToGrid(part(fourBars()), 1)).toThrow('ends before measure');"
+  ],
+  "tab_to_grid > refuses a stretch where the tempo changes": [
+   "expect(() => barsToGrid(part(fourBars(), [{ measure: 0, bpm: 120 }, { measure: 2, bpm: 130 }]), 0)).toThrow('tempo changes');"
+  ],
+  "tab_to_grid > refuses a stretch with a note off the grid": [
+   "expect(() => barsToGrid(part(measures), 0)).toThrow('falls between steps');"
+  ],
+  "tab_to_grid > refuses a stretch with another time signature": [
+   "expect(() => barsToGrid(part(measures), 0)).toThrow('changes the time signature');"
+  ]
+ }
+}
