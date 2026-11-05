@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 45,
+  "next_id": 52,
   "lessons": [
     {
       "id": "L-001",
@@ -796,6 +796,133 @@
       ],
       "created": "2026-11-02T21:30:40Z",
       "last_seen": "2026-11-02T21:30:40Z"
+    },
+    {
+      "id": "L-045",
+      "key": "ac_gap::when a refactor changes where a screen reads a value test the shown text against the old code with input typed oddly not only with clean numbers",
+      "text": "When a refactor changes where a screen reads a value, test the shown text against the old code with input typed oddly, not only with clean numbers",
+      "signal": "ac_gap",
+      "scope": "ui",
+      "status": "candidate",
+      "features": [
+        "layered-architecture"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "verification.md F1; src/ui/stadium.ts:134-141 (ui)"
+      ],
+      "created": "2026-11-05T00:56:28Z",
+      "last_seen": "2026-11-05T00:56:28Z"
+    },
+    {
+      "id": "L-046",
+      "key": "weak_test::parse import trees with brace matching in a layer check never with a regex that stops at the first closing brace",
+      "text": "Parse import trees with brace matching in a layer check, never with a regex that stops at the first closing brace",
+      "signal": "weak_test",
+      "scope": "layers",
+      "status": "candidate",
+      "features": [
+        "layered-architecture"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "verification.md F2; tests/layers.test.ts:99 (layers)"
+      ],
+      "created": "2026-11-05T00:56:28Z",
+      "last_seen": "2026-11-05T00:56:28Z"
+    },
+    {
+      "id": "L-047",
+      "key": "weak_test::a rule that covers two stacks needs a failing example in each stack",
+      "text": "A rule that covers two stacks needs a failing example in each stack",
+      "signal": "weak_test",
+      "scope": "layers",
+      "status": "candidate",
+      "features": [
+        "layered-architecture"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "verification.md F3; tests/layers.test.ts:319-339 (layers)"
+      ],
+      "created": "2026-11-05T00:56:28Z",
+      "last_seen": "2026-11-05T00:56:28Z"
+    },
+    {
+      "id": "L-048",
+      "key": "weak_test::a proof that tests are kept unchanged compares their assertions not only their names and pass status",
+      "text": "A proof that tests are kept unchanged compares their assertions, not only their names and pass status",
+      "signal": "weak_test",
+      "scope": "fixtures",
+      "status": "candidate",
+      "features": [
+        "layered-architecture"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "verification.md F4; tests/fixtures/tests_kept.py:52-84 (fixtures)"
+      ],
+      "created": "2026-11-05T00:56:28Z",
+      "last_seen": "2026-11-05T00:56:28Z"
+    },
+    {
+      "id": "L-049",
+      "key": "weak_test::a proof that a baseline test came first runs it on the baseline code not only checks commit order",
+      "text": "A proof that a baseline test came first runs it on the baseline code, not only checks commit order",
+      "signal": "weak_test",
+      "scope": "fixtures",
+      "status": "candidate",
+      "features": [
+        "layered-architecture"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "verification.md F5; tests/fixtures/golden_first.py:21-30 (fixtures)"
+      ],
+      "created": "2026-11-05T00:56:28Z",
+      "last_seen": "2026-11-05T00:56:28Z"
+    },
+    {
+      "id": "L-050",
+      "key": "weak_test::assert every field a command sends to the engine not a sample of them",
+      "text": "Assert every field a command sends to the engine, not a sample of them",
+      "signal": "weak_test",
+      "scope": "app",
+      "status": "candidate",
+      "features": [
+        "layered-architecture"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "verification.md F6; tests/app/session.test.ts:176-190 (app)",
+        "verification.md F7; tests/app/session.test.ts:146-149 (app)"
+      ],
+      "created": "2026-11-05T00:56:28Z",
+      "last_seen": "2026-11-05T00:56:28Z"
+    },
+    {
+      "id": "L-051",
+      "key": "weak_test::prove a range mapping at both ends as well as one middle value",
+      "text": "Prove a range mapping at both ends as well as one middle value",
+      "signal": "weak_test",
+      "scope": "app",
+      "status": "candidate",
+      "features": [
+        "layered-architecture"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "verification.md F8; tests/app/session.test.ts:275-277 (app)"
+      ],
+      "created": "2026-11-05T00:56:28Z",
+      "last_seen": "2026-11-05T00:56:28Z"
     }
   ]
 }

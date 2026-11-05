@@ -278,6 +278,48 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: verification.md CHD-07 (specs)
 - last seen: 2026-11-02T21:30:40Z
 
+### L-045 - When a refactor changes where a screen reads a value, test the shown text against the old code with input typed oddly, not only with clean numbers
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `ui` · harmful: 0
+- features: layered-architecture
+- evidence: verification.md F1; src/ui/stadium.ts:134-141 (ui)
+- last seen: 2026-11-05T00:56:28Z
+
+### L-046 - Parse import trees with brace matching in a layer check, never with a regex that stops at the first closing brace
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `layers` · harmful: 0
+- features: layered-architecture
+- evidence: verification.md F2; tests/layers.test.ts:99 (layers)
+- last seen: 2026-11-05T00:56:28Z
+
+### L-047 - A rule that covers two stacks needs a failing example in each stack
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `layers` · harmful: 0
+- features: layered-architecture
+- evidence: verification.md F3; tests/layers.test.ts:319-339 (layers)
+- last seen: 2026-11-05T00:56:28Z
+
+### L-048 - A proof that tests are kept unchanged compares their assertions, not only their names and pass status
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `fixtures` · harmful: 0
+- features: layered-architecture
+- evidence: verification.md F4; tests/fixtures/tests_kept.py:52-84 (fixtures)
+- last seen: 2026-11-05T00:56:28Z
+
+### L-049 - A proof that a baseline test came first runs it on the baseline code, not only checks commit order
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `fixtures` · harmful: 0
+- features: layered-architecture
+- evidence: verification.md F5; tests/fixtures/golden_first.py:21-30 (fixtures)
+- last seen: 2026-11-05T00:56:28Z
+
+### L-050 - Assert every field a command sends to the engine, not a sample of them
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `app` · harmful: 0
+- features: layered-architecture
+- evidence: verification.md F6; tests/app/session.test.ts:176-190 (app) (+1 more)
+- last seen: 2026-11-05T00:56:28Z
+
+### L-051 - Prove a range mapping at both ends as well as one middle value
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `app` · harmful: 0
+- features: layered-architecture
+- evidence: verification.md F8; tests/app/session.test.ts:275-277 (app)
+- last seen: 2026-11-05T00:56:28Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
