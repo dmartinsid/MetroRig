@@ -11,7 +11,7 @@ function formatLiveBpm(bpm: number): string {
   return Number.isInteger(bpm) ? String(bpm) : bpm.toFixed(1);
 }
 
-// The view links, the tempo, the preset selectors, the play buttons, the footer and the save toast
+// The view links, the tempo, the preset selector, the play button, the footer and the save toast
 export function mount(session: Session): void {
   const viewLinks = [...document.querySelectorAll<HTMLButtonElement>('.view-link')];
   const views: Record<ViewMode, HTMLElement> = {
@@ -25,7 +25,6 @@ export function mount(session: Session): void {
   const bpmNumber = byId('bpm-number');
   const bpmSliderValue = byId('bpm-slider-value');
   const btnPlay = byId<HTMLButtonElement>('btn-play');
-  const btnStadiumPlay = byId<HTMLButtonElement>('btn-stadium-play');
   const footerClock = byId('footer-clock');
   const footerLatency = byId('footer-latency');
   const saveToast = byId('save-toast');
@@ -36,7 +35,6 @@ export function mount(session: Session): void {
   const groupSongs = byId<HTMLOptGroupElement>('group-songs');
   const groupTrainers = byId<HTMLOptGroupElement>('group-trainers');
   const groupUser = byId<HTMLOptGroupElement>('group-user');
-  const stadiumPresetSelector = byId<HTMLSelectElement>('stadium-preset-selector');
   const presetNameInput = byId<HTMLInputElement>('preset-name');
   const btnSave = byId<HTMLButtonElement>('btn-save');
   const clickSoundSelector = byId<HTMLSelectElement>('click-sound-selector');
@@ -72,7 +70,6 @@ export function mount(session: Session): void {
     groupGenres.innerHTML = '';
     groupSongs.innerHTML = '';
     groupTrainers.innerHTML = '';
-    stadiumPresetSelector.innerHTML = '<option value="">Choose a speed trainer</option>';
 
     // Add Factory Time Signatures (indices 0 to 3)
     session.factoryPresets.slice(0, 4).forEach(p => groupSignatures.appendChild(option(`factory:${p.id}`, p.name)));
@@ -82,12 +79,7 @@ export function mount(session: Session): void {
 
     SONGS.forEach(song => groupSongs.appendChild(option(`song:${song.id}`, song.title)));
 
-    // Add Speed Trainers to both the header and Stadium dropdowns
-    session.trainerPresets.forEach(p => {
-      const opt = option(`factory:${p.id}`, p.name);
-      groupTrainers.appendChild(opt);
-      stadiumPresetSelector.appendChild(opt.cloneNode(true));
-    });
+    session.trainerPresets.forEach(p => groupTrainers.appendChild(option(`factory:${p.id}`, p.name)));
 
     // Load User Presets from database
     session.userPresets().then(userPresets => {
@@ -105,14 +97,7 @@ export function mount(session: Session): void {
       } else {
         presetSelector.value = `factory:${session.preset.id}`;
       }
-      syncStadiumPresetSelector();
     });
-  }
-
-  // Shows the placeholder when the active preset is not a speed trainer
-  function syncStadiumPresetSelector() {
-    stadiumPresetSelector.value = presetSelector.value;
-    if (stadiumPresetSelector.selectedIndex < 0) stadiumPresetSelector.value = '';
   }
 
   function renderView() {
@@ -128,11 +113,9 @@ export function mount(session: Session): void {
   function renderPlayback() {
     if (!session.isPlaying) {
       btnPlay.classList.remove('playing');
-      btnStadiumPlay.classList.remove('playing');
       bpmNumber.innerText = String(session.preset.bpm);
     } else {
       btnPlay.classList.add('playing');
-      btnStadiumPlay.classList.add('playing');
     }
   }
 
@@ -146,7 +129,6 @@ export function mount(session: Session): void {
   function renderPreset() {
     const preset = session.preset;
     presetSelector.value = session.selectedPresetValue;
-    syncStadiumPresetSelector();
 
     bpmSlider.value = String(preset.bpm);
     bpmSliderValue.innerText = String(preset.bpm);
@@ -188,21 +170,10 @@ export function mount(session: Session): void {
   };
 
   btnPlay.onclick = () => session.togglePlay();
-  btnStadiumPlay.onclick = () => session.togglePlay();
 
   // Handle Preset Dropdown Selection Change
   presetSelector.onchange = () => {
-    syncStadiumPresetSelector();
-    if (!session.loadPreset(presetSelector.value)) {
-      presetSelector.value = session.selectedPresetValue;
-      syncStadiumPresetSelector();
-    }
-  };
-
-  stadiumPresetSelector.onchange = () => {
-    if (!stadiumPresetSelector.value) return;
-    presetSelector.value = stadiumPresetSelector.value;
-    presetSelector.dispatchEvent(new Event('change'));
+    if (!session.loadPreset(presetSelector.value)) presetSelector.value = session.selectedPresetValue;
   };
 
   btnSave.onclick = () => session.savePreset(presetNameInput.value);

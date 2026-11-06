@@ -1441,6 +1441,39 @@ describe('Interface V2', () => {
     expect(selector.options[selector.selectedIndex].text).toBe('Choose a speed trainer');
   });
 
+  it('the Stadium routine selector loads a speed trainer and follows the header', async () => {
+    await openPage();
+    const routine = byId<HTMLSelectElement>('stadium-preset-selector');
+    expect(routine.value).toBe('');
+
+    routine.value = 'factory:trainer_110_135';
+    routine.dispatchEvent(new Event('change'));
+    await flush();
+    expect(byId<HTMLSelectElement>('preset-selector').value).toBe('factory:trainer_110_135');
+    expect(byId('stadium-bpm').innerText).toBe('110.0');
+
+    await selectPreset('factory:trainer_69_110');
+    expect(routine.value).toBe('factory:trainer_69_110');
+
+    routine.value = '';
+    routine.dispatchEvent(new Event('change'));
+    await flush();
+    expect(byId<HTMLSelectElement>('preset-selector').value).toBe('factory:trainer_69_110');
+  });
+
+  it('the Stadium play button plays, stops and lights while playing', async () => {
+    await openPage();
+    const play = byId<HTMLButtonElement>('btn-stadium-play');
+    play.click();
+    await flush();
+    expect(play.classList.contains('playing')).toBe(true);
+    expect(byId('btn-play').classList.contains('playing')).toBe(true);
+    play.click();
+    await flush();
+    expect(play.classList.contains('playing')).toBe(false);
+    expect(byId('btn-play').classList.contains('playing')).toBe(false);
+  });
+
   it('stad_13 tempo follows slider and stop', async () => {
     await openPage();
     byId('bpm-slider').value = '150';

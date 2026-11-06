@@ -4,7 +4,7 @@ import { startBpmFor } from '../domain/preset';
 import { STADIUM_GROUPS, groupHit } from '../domain/kit';
 import { isAudible } from '../domain/mix';
 import { formatTimer } from './format';
-import { byId } from './dom';
+import { byId, option } from './dom';
 
 declare const gsap: any;
 
@@ -20,9 +20,11 @@ function clockPoint(fraction: number, radius: number): [number, number] {
   return [radius * Math.cos(angle), radius * Math.sin(angle)];
 }
 
-// The beat clock, the orbs, the Trainer status, the practice timers and the live tempo
+// The beat clock, the orbs, the Trainer status, the practice timer, the live tempo, the routine selector and the play button
 export function mount(session: Session): void {
   const stadiumBpm = byId('stadium-bpm');
+  const btnStadiumPlay = byId<HTMLButtonElement>('btn-stadium-play');
+  const routineSelector = byId<HTMLSelectElement>('stadium-preset-selector');
   const stadiumTimer = byId('stadium-timer');
   const stadiumStatus = byId('stadium-status');
   const stadiumStatusDot = byId('stadium-status-dot');
@@ -102,6 +104,7 @@ export function mount(session: Session): void {
 
   // Handle Play/Stop state
   function renderPlayback() {
+    btnStadiumPlay.classList.toggle('playing', session.isPlaying);
     drawBeatClock();
     if (!session.isPlaying) {
       resetBeatClock();
@@ -160,13 +163,31 @@ export function mount(session: Session): void {
     const shownBpm = session.isPlaying ? startBpmFor(preset) : preset.bpm;
 
     drawBeatClock();
+    showRoutine();
 
     stadiumBpm.innerText = shownBpm.toFixed(1);
     updateStadiumStatus();
   }
 
+  // The routines are the speed trainers; any other preset shows the placeholder
+  routineSelector.innerHTML = '<option value="">Choose a speed trainer</option>';
+  session.trainerPresets.forEach(p => routineSelector.appendChild(option(`factory:${p.id}`, p.name)));
+
+  function showRoutine() {
+    routineSelector.value = session.selectedPresetValue;
+    if (routineSelector.selectedIndex < 0) routineSelector.value = '';
+  }
+
+  routineSelector.onchange = () => {
+    if (routineSelector.value) session.loadPreset(routineSelector.value);
+  };
+  btnStadiumPlay.onclick = () => session.togglePlay();
+
   session.subscribe(change => {
-    if (change === 'grid' || change === 'mix' || change === 'library') drawBeatClock();
+    if (change === 'library') {
+      drawBeatClock();
+      showRoutine();
+    } else if (change === 'grid' || change === 'mix') drawBeatClock();
     else if (change === 'playback') renderPlayback();
     else if (change === 'tick') renderTick();
     else if (change === 'timer') stadiumTimer.innerText = formatTimer(session.practiceSeconds);
@@ -176,5 +197,6 @@ export function mount(session: Session): void {
   });
   if (session.view === 'stadium') updateStadiumStatus();
 
+  showRoutine();
   drawBeatClock();
 }
