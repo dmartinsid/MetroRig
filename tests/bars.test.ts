@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { barCount, barOfStep, barSteps, patternLength, stepInBar, writeBar } from '../src/domain/pattern';
+import { barCount, barOfStep, barSteps, fitBar, patternLength, stepInBar, writeBar } from '../src/domain/pattern';
 
 describe('Bars', () => {
   it('a pattern with no bar count holds 1 bar', () => {
@@ -24,6 +24,17 @@ describe('Bars', () => {
     const steps = Array.from({ length: 16 }, (_, step) => step);
     expect(barSteps(steps, 0, 4)).toEqual([0, 1, 2, 3]);
     expect(barSteps(steps, 3, 4)).toEqual([12, 13, 14, 15]);
+  });
+
+  it('copies one bar, cut or padded with rests to a length', () => {
+    const steps = Array.from({ length: 8 }, (_, step) => step + 1);
+    expect(fitBar(steps, 1, 4, 4)).toEqual([5, 6, 7, 8]);
+    expect(fitBar(steps, 0, 4, 2)).toEqual([1, 2]);
+    expect(fitBar(steps, 1, 4, 6)).toEqual([5, 6, 7, 8, 0, 0]);
+    expect(fitBar([], 0, 4, 3)).toEqual([0, 0, 0]);
+    const copy = fitBar(steps, 0, 4, 4);
+    copy[0] = 9;
+    expect(steps[0]).toBe(1);
   });
 
   it('writes one bar and leaves the others', () => {

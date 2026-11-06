@@ -20,6 +20,12 @@ export function barSteps(steps: number[], bar: number, measureLength: number): n
   return steps.slice(bar * measureLength, (bar + 1) * measureLength);
 }
 
+// A copy of one bar, cut or padded with rests to length steps
+export function fitBar(steps: number[], bar: number, measureLength: number, length: number): number[] {
+  const source = barSteps(steps, bar, measureLength);
+  return Array.from({ length }, (_, step) => source[step] ?? 0);
+}
+
 export function writeBar(steps: number[], bar: number, measureLength: number, values: number[]): void {
   for (let step = 0; step < measureLength; step++) steps[bar * measureLength + step] = values[step] ?? 0;
 }

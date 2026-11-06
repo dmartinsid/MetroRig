@@ -2,7 +2,7 @@ import type { ChordId } from '../domain/chords';
 import { TRACKS, nextStepValue } from '../domain/kit';
 import { measureLengthFor, timeSignatureOf } from '../domain/meter';
 import { createTrackMix, toggleMute, toggleSolo, type TrackMix } from '../domain/mix';
-import { FIGURES, applyFigure, barCount, barOfStep, barSteps, patternLength, stepInBar, writeBar } from '../domain/pattern';
+import { FIGURES, applyFigure, barCount, barOfStep, barSteps, fitBar, patternLength, stepInBar, writeBar } from '../domain/pattern';
 import { completeKit, normalizePreset, type CustomGroove, type Preset, type StoredPreset, type TrainerSettings, type ViewMode } from '../domain/preset';
 import { songToPreset, type Song } from '../domain/songs';
 import { FACTORY_GROOVES, FACTORY_PRESETS, SPEED_TRAINER_PRESETS } from '../data/factory';
@@ -288,12 +288,7 @@ export class Session {
 
     // Resize gridData tracks to match the new length
     for (const { id: trackId } of TRACKS) {
-      const oldSteps = barSteps(preset.gridData[trackId] || [], 0, oldLength);
-      const newSteps = new Array(measureLength).fill(0);
-      for (let i = 0; i < Math.min(oldSteps.length, measureLength); i++) {
-        newSteps[i] = oldSteps[i];
-      }
-      preset.gridData[trackId] = newSteps;
+      preset.gridData[trackId] = fitBar(preset.gridData[trackId] || [], 0, oldLength, measureLength);
     }
 
     this.emit('grid');
@@ -485,12 +480,7 @@ export class Session {
     const activeLen = this.preset.measureLength || 16;
     const gridData: Record<number, number[]> = {};
     for (const { id: trackId } of TRACKS.slice(1)) {
-      const srcTrack = barSteps(this.preset.gridData[trackId] || [], this.viewBar, activeLen);
-      const paddedTrack = new Array(activeLen).fill(0);
-      for (let i = 0; i < Math.min(srcTrack.length, activeLen); i++) {
-        paddedTrack[i] = srcTrack[i];
-      }
-      gridData[trackId] = paddedTrack;
+      gridData[trackId] = fitBar(this.preset.gridData[trackId] || [], this.viewBar, activeLen, activeLen);
     }
 
     const id = 'groove_' + Date.now();
