@@ -712,6 +712,13 @@ describe('Interface V2', () => {
     groups.forEach(group => expect(group.children.length).toBeGreaterThan(0));
   });
 
+  it('the signature and genre groups list the factory presets in order', async () => {
+    await openPage();
+    const values = (id: string) => [...byId(id).children].map(opt => (opt as HTMLOptionElement).value);
+    expect(values('group-signatures')).toEqual(['factory:default', 'factory:3_4', 'factory:6_8', 'factory:7_8']);
+    expect(values('group-genres')).toEqual(['factory:rock', 'factory:metal', 'factory:blues', 'factory:jazz', 'factory:metalcore']);
+  });
+
   it('shell_09 no invented telemetry', async () => {
     await openPage();
 

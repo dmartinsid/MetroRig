@@ -1,6 +1,7 @@
 import type { Preset } from '../domain/preset';
 
-export const FACTORY_PRESETS: Preset[] = [
+// The plain metronomes, one per time signature
+export const SIGNATURE_PRESETS: Preset[] = [
   {
     id: 'default',
     name: '4/4 Metronome',
@@ -57,6 +58,10 @@ export const FACTORY_PRESETS: Preset[] = [
     },
     trainerSettings: { enabled: false, startBpm: 120, targetBpm: 160, increment: 5, stepType: 'measures', stepValue: 4, curve: 'stepped' }
   },
+];
+
+// The genre grooves, listed after the signatures
+export const GENRE_PRESETS: Preset[] = [
   {
     id: 'rock',
     name: 'Rock Groove',
@@ -128,6 +133,8 @@ export const FACTORY_PRESETS: Preset[] = [
     trainerSettings: { enabled: false, startBpm: 120, targetBpm: 160, increment: 5, stepType: 'measures', stepValue: 4, curve: 'stepped' }
   }
 ];
+
+export const FACTORY_PRESETS: Preset[] = [...SIGNATURE_PRESETS, ...GENRE_PRESETS];
 
 // Each factory groove is the drum part of the preset with the same id
 export const FACTORY_GROOVES: { id: string; name: string; length: number; tracks: Record<number, number[]> }[] =
