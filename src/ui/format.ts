@@ -2,7 +2,6 @@ import type { TrainerFields } from '../app/session';
 
 const RENDER_QUANTUM = 128; // Frames in every AudioWorklet block
 const MAX_STEPS = 128; // STEPS_COUNT in engine/src/sequencer/pattern.rs
-const DENOMINATORS = [4, 8, 16];
 
 const pad = (value: number): string => String(value).padStart(2, '0');
 
@@ -42,10 +41,4 @@ export function formatBarStep(bar: number, step: number): string {
 
 export function formatSteps(measureLength: number): string {
   return `STEPS: ${measureLength}/${MAX_STEPS}`;
-}
-
-// Stops at /4 and /16 instead of wrapping
-export function nextDenominator(current: number, direction: 1 | -1): number {
-  const index = DENOMINATORS.indexOf(current) + direction;
-  return DENOMINATORS[Math.min(DENOMINATORS.length - 1, Math.max(0, index))];
 }

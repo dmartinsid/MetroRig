@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { formatClock, formatBarStep, formatLatency, formatLiveBpm, formatSteps, formatTimer, formatTrainerStatus, nextDenominator } from '../src/ui/format';
+import { formatClock, formatBarStep, formatLatency, formatLiveBpm, formatSteps, formatTimer, formatTrainerStatus } from '../src/ui/format';
+import { nextDenominator } from '../src/domain/meter';
 
 describe('Display rules', () => {
   it('prints the Trainer fields as typed', () => {

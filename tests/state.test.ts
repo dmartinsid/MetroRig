@@ -2,7 +2,7 @@ import { afterEach, describe, it, expect, beforeEach } from 'vitest';
 import { StateManager } from '../src/app/stateManager';
 import { FACTORY_PRESETS, FACTORY_GROOVES, SPEED_TRAINER_PRESETS } from '../src/data/factory';
 import { FIGURES, applyFigure } from '../src/domain/pattern';
-import { getBeatsPerMeasure, getBeatForStep, isSustainedStep, measureLengthFor, timeSignatureFor, timeSignatureOf } from '../src/domain/meter';
+import { clampNumerator, getBeatsPerMeasure, getBeatForStep, isSustainedStep, measureLengthFor, timeSignatureFor, timeSignatureOf } from '../src/domain/meter';
 import { normalizePreset, completeKit, startBpmFor } from '../src/domain/preset';
 import type { Preset } from '../src/domain/preset';
 
@@ -126,6 +126,16 @@ describe('Meter rules', () => {
     expect(measureLengthFor(7, 8)).toBe(14);
     expect(measureLengthFor(16, 16)).toBe(16);
     expect(measureLengthFor(5, 16)).toBe(5);
+  });
+
+  it('a numerator holds 1 to 16 beats', () => {
+    expect(clampNumerator(7)).toBe(7);
+    expect(clampNumerator(1)).toBe(1);
+    expect(clampNumerator(16)).toBe(16);
+    expect(clampNumerator(0)).toBe(1);
+    expect(clampNumerator(-3)).toBe(1);
+    expect(clampNumerator(17)).toBe(16);
+    expect(clampNumerator(NaN)).toBe(1);
   });
 
   it('a preset stored without a signature takes the one its bar length implies', () => {
