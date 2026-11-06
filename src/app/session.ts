@@ -5,7 +5,7 @@ import { createTrackMix, toggleMute, toggleSolo, type TrackMix } from '../domain
 import { FIGURES, applyFigure, barCount, barOfStep, barSteps, fitBar, patternLength, stepInBar, writeBar } from '../domain/pattern';
 import { completeKit, normalizePreset, type CustomGroove, type Preset, type StoredPreset, type TrainerSettings, type ViewMode } from '../domain/preset';
 import { songToPreset, type Song } from '../domain/songs';
-import { FACTORY_GROOVES, FACTORY_PRESETS, SPEED_TRAINER_PRESETS } from '../data/factory';
+import { FACTORY_GROOVES, GENRE_PRESETS, SIGNATURE_PRESETS, SPEED_TRAINER_PRESETS } from '../data/factory';
 import type { TickDetail } from '../audio/MetronomeNode';
 import { VisualScheduler } from '../audio/visualSync';
 import { Improv } from './improv';
@@ -79,7 +79,8 @@ export class Session {
   private typedTrainer: TrainerFields | null = null; // Null while the form shows the preset's settings
   clickSound: string;
   // What the selectors list
-  readonly factoryPresets = FACTORY_PRESETS;
+  readonly signaturePresets = SIGNATURE_PRESETS;
+  readonly genrePresets = GENRE_PRESETS;
   readonly trainerPresets = SPEED_TRAINER_PRESETS;
   readonly factoryGrooves = FACTORY_GROOVES;
 

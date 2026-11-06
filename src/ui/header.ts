@@ -66,11 +66,8 @@ export function mount(session: Session): void {
     groupSongs.innerHTML = '';
     groupTrainers.innerHTML = '';
 
-    // Add Factory Time Signatures (indices 0 to 3)
-    session.factoryPresets.slice(0, 4).forEach(p => groupSignatures.appendChild(option(`factory:${p.id}`, p.name)));
-
-    // Add Factory Genres (indices 4 onwards)
-    session.factoryPresets.slice(4).forEach(p => groupGenres.appendChild(option(`factory:${p.id}`, p.name)));
+    session.signaturePresets.forEach(p => groupSignatures.appendChild(option(`factory:${p.id}`, p.name)));
+    session.genrePresets.forEach(p => groupGenres.appendChild(option(`factory:${p.id}`, p.name)));
 
     SONGS.forEach(song => groupSongs.appendChild(option(`song:${song.id}`, song.title)));
 
