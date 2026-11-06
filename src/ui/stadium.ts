@@ -24,7 +24,6 @@ function clockPoint(fraction: number, radius: number): [number, number] {
 export function mount(session: Session): void {
   const stadiumBpm = byId('stadium-bpm');
   const stadiumTimer = byId('stadium-timer');
-  const editorTimer = byId('editor-timer');
   const stadiumStatus = byId('stadium-status');
   const stadiumStatusDot = byId('stadium-status-dot');
   const clockFace = byId<SVGGElement>('clock-face');
@@ -102,32 +101,12 @@ export function mount(session: Session): void {
   }
 
   // Handle Play/Stop state
-  let timerInterval: any = null;
-  let startTime = 0;
-
   function renderPlayback() {
+    drawBeatClock();
     if (!session.isPlaying) {
-      clearInterval(timerInterval);
-      drawBeatClock();
       resetBeatClock();
       stadiumBpm.innerText = session.preset.bpm.toFixed(1);
-    } else {
-      drawBeatClock();
-
-      startTime = Date.now();
-      updateTimers(0);
-      timerInterval = setInterval(updatePracticeTimer, 1000);
     }
-  }
-
-  function updatePracticeTimer() {
-    updateTimers(Math.floor((Date.now() - startTime) / 1000));
-  }
-
-  function updateTimers(seconds: number) {
-    const time = formatTimer(seconds);
-    editorTimer.innerText = time;
-    stadiumTimer.innerText = time;
   }
 
   // The Trainer fields as the Editor form shows them
@@ -190,6 +169,7 @@ export function mount(session: Session): void {
     if (change === 'grid' || change === 'mix' || change === 'library') drawBeatClock();
     else if (change === 'playback') renderPlayback();
     else if (change === 'tick') renderTick();
+    else if (change === 'timer') stadiumTimer.innerText = formatTimer(session.practiceSeconds);
     else if (change === 'preset') renderPreset();
     else if (change === 'view' && session.view === 'stadium') updateStadiumStatus();
     else if (change === 'tempo') stadiumBpm.innerText = session.preset.bpm.toFixed(1);

@@ -4,7 +4,7 @@ import { FIGURES, barCount, barSteps, patternLength } from '../domain/pattern';
 import type { TrainerSettings } from '../domain/preset';
 import { STEP_ACCENT, STEP_GHOST, STEP_NORMAL, TRACKS } from '../domain/kit';
 import { isAudible } from '../domain/mix';
-import { formatBarStep, formatSteps, nextDenominator } from './format';
+import { formatBarStep, formatSteps, formatTimer, nextDenominator } from './format';
 import { byId, option } from './dom';
 
 declare const gsap: any;
@@ -14,6 +14,7 @@ const SUBDIVISION_LABELS: Record<number, string[]> = { 2: ['', '&'], 4: ['', 'e'
 // The grid, the figure palette, the bar selector, the time signature, the Trainer form, the mix cards and the grooves dropdown
 export function mount(session: Session): void {
   const sequencerDot = byId('sequencer-dot');
+  const editorTimer = byId('editor-timer');
   const panelHeaderText = byId('panel-header-text');
   const patternName = byId('pattern-name');
   const patternSteps = byId('pattern-steps');
@@ -263,6 +264,7 @@ export function mount(session: Session): void {
     else if (change === 'mix') applyTrackMix();
     else if (change === 'playback') renderPlayback();
     else if (change === 'tick') renderTick();
+    else if (change === 'timer') editorTimer.innerText = formatTimer(session.practiceSeconds);
     else if (change === 'preset') renderPreset();
     else if (change === 'tempo') updatePanelHeader();
     else if (change === 'library') renderSaved();

@@ -79,6 +79,10 @@ export class Session {
   selectedPresetValue = 'factory:default'; // Where the selector returns when a load is declined
   private selectorValue = 'factory:default'; // What the preset selector asks for last
   lastTick: TickDetail | null = null;
+  // Whole seconds since the last Play; a stop holds the count until the next Play
+  practiceSeconds = 0;
+  private practiceStart = 0;
+  private practiceInterval: ReturnType<typeof setInterval> | null = null;
   private typedTrainer: TrainerFields | null = null; // Null while the form shows the preset's settings
   clickSound: string;
   // What the selectors list
@@ -163,6 +167,7 @@ export class Session {
         this.viewBar = 0;
         this.playBar = 0;
         this.position = { bar: 1, step: -1 };
+        this.stopPracticeTimer();
       } else {
         this.viewBar = 0; // A bar pressed while stopped gives way to the first bar in play
         this.transport.syncAudioSettings();
@@ -170,9 +175,26 @@ export class Session {
         this.state.isPlaying = true;
       }
       this.emit('playback');
+      if (this.state.isPlaying) this.startPracticeTimer();
     }).finally(() => {
       this.isStarting = false;
     });
+  }
+
+  private startPracticeTimer() {
+    this.stopPracticeTimer();
+    this.practiceStart = Date.now();
+    this.practiceSeconds = 0;
+    this.emit('timer');
+    this.practiceInterval = setInterval(() => {
+      this.practiceSeconds = Math.floor((Date.now() - this.practiceStart) / 1000);
+      this.emit('timer');
+    }, 1000);
+  }
+
+  private stopPracticeTimer() {
+    if (this.practiceInterval !== null) clearInterval(this.practiceInterval);
+    this.practiceInterval = null;
   }
 
   // Draws one tick once its sound has left the device
