@@ -2,7 +2,7 @@ import { afterEach, describe, it, expect, beforeEach } from 'vitest';
 import { StateManager } from '../src/app/stateManager';
 import { FACTORY_PRESETS, FACTORY_GROOVES, SPEED_TRAINER_PRESETS } from '../src/data/factory';
 import { FIGURES, applyFigure } from '../src/domain/pattern';
-import { getBeatsPerMeasure, getBeatForStep, isSustainedStep, measureLengthFor } from '../src/domain/meter';
+import { getBeatsPerMeasure, getBeatForStep, isSustainedStep, measureLengthFor, timeSignatureFor, timeSignatureOf } from '../src/domain/meter';
 import { normalizePreset, completeKit, startBpmFor } from '../src/domain/preset';
 import type { Preset } from '../src/domain/preset';
 
@@ -119,6 +119,17 @@ describe('Meter rules', () => {
     expect(measureLengthFor(7, 8)).toBe(14);
     expect(measureLengthFor(16, 16)).toBe(16);
     expect(measureLengthFor(5, 16)).toBe(5);
+  });
+
+  it('a preset stored without a signature takes the one its bar length implies', () => {
+    expect(timeSignatureFor(12)).toBe('3/4');
+    expect(timeSignatureFor(14)).toBe('7/8');
+    expect(timeSignatureFor(16)).toBe('4/4');
+    expect(timeSignatureFor(5)).toBe('5/16');
+    expect(timeSignatureOf({ timeSignature: '6/8', measureLength: 12 })).toBe('6/8');
+    expect(timeSignatureOf({ measureLength: 14 })).toBe('7/8');
+    expect(timeSignatureOf({ timeSignature: '', measureLength: 16 })).toBe('4/4');
+    expect(timeSignatureOf({})).toBe('4/4');
   });
 
   it('bpm_03 blues shuffle preset', () => {

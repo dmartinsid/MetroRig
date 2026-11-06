@@ -11,6 +11,18 @@ export function measureLengthFor(numerator: number, denominator: number): number
   return numerator;
 }
 
+// The signature of a preset stored without one, from its bar length: 12, 14 and 16 steps are 3/4, 7/8 and 4/4, any other length counts sixteenths
+export function timeSignatureFor(measureLength: number): string {
+  const known: Record<number, string> = { 12: '3/4', 14: '7/8', 16: '4/4' };
+  return known[measureLength] ?? `${measureLength}/16`;
+}
+
+// The preset's own signature, or the one its bar length implies
+export function timeSignatureOf(preset: { timeSignature?: string; measureLength?: number }): string {
+  if (preset.timeSignature?.includes('/')) return preset.timeSignature;
+  return timeSignatureFor(preset.measureLength || 16);
+}
+
 // Maps a sequencer step to its zero-based beat within the bar
 export function getBeatForStep(step: number, measureLength: number, beatsPerMeasure: number): number {
   return Math.floor((step * beatsPerMeasure) / measureLength);

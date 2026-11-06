@@ -1,6 +1,6 @@
 import type { ChordId } from '../domain/chords';
 import { TRACKS, nextStepValue } from '../domain/kit';
-import { measureLengthFor } from '../domain/meter';
+import { measureLengthFor, timeSignatureOf } from '../domain/meter';
 import { createTrackMix, toggleMute, toggleSolo, type TrackMix } from '../domain/mix';
 import { FIGURES, applyFigure, barCount, barOfStep, barSteps, patternLength, stepInBar, writeBar } from '../domain/pattern';
 import { completeKit, normalizePreset, type CustomGroove, type Preset, type StoredPreset, type TrainerSettings, type ViewMode } from '../domain/preset';
@@ -398,15 +398,7 @@ export class Session {
     this.viewBar = 0;
     this.playBar = 0;
 
-    if (!preset.timeSignature || !preset.timeSignature.includes('/')) {
-      const map: Record<number, { num: string, den: string }> = {
-        12: { num: '3', den: '4' },
-        14: { num: '7', den: '8' },
-        16: { num: '4', den: '4' }
-      };
-      const parsed = map[preset.measureLength] || { num: String(preset.measureLength), den: '16' };
-      preset.timeSignature = `${parsed.num}/${parsed.den}`;
-    }
+    preset.timeSignature = timeSignatureOf(preset);
 
     this.transport.syncAudioSettings();
     // A pattern of 4 bars starts from its first bar, without touching the pulse

@@ -1,5 +1,5 @@
 import type { Session, TrainerFields } from '../app/session';
-import { getBeatsPerMeasure, getBeatForStep, isSustainedStep } from '../domain/meter';
+import { getBeatsPerMeasure, getBeatForStep, isSustainedStep, timeSignatureOf } from '../domain/meter';
 import { FIGURES, barCount, barSteps, patternLength } from '../domain/pattern';
 import type { TrainerSettings } from '../domain/preset';
 import { STEP_ACCENT, STEP_GHOST, STEP_NORMAL, TRACKS } from '../domain/kit';
@@ -196,17 +196,8 @@ export function mount(session: Session): void {
   }
 
   function updatePanelHeader() {
-    const { name, bpm, measureLength } = session.preset;
-    panelHeaderText.textContent = `${name}  ·  ${measureLengthToTimeSig(measureLength || 16)}  ·  ${bpm} BPM`;
-  }
-
-  function measureLengthToTimeSig(len: number): string {
-    // Try to parse from the preset's timeSignature first
-    if (session.preset.timeSignature && session.preset.timeSignature.includes('/')) {
-      return session.preset.timeSignature;
-    }
-    const map: Record<number, string> = { 12: '3/4', 14: '7/8', 16: '4/4' };
-    return map[len] ?? `${len} steps`;
+    const { name, bpm } = session.preset;
+    panelHeaderText.textContent = `${name}  ·  ${timeSignatureOf(session.preset)}  ·  ${bpm} BPM`;
   }
 
   function renderPlayback() {
