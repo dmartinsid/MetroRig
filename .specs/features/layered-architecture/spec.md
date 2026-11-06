@@ -33,11 +33,11 @@ MetroRig's Rust engine sits in two files: `src/lib.rs` (3053 lines) holds the cl
 | Rust layout | One crate `metrorig_audio` in `engine/`, modules `ffi`, `engine`, `sequencer/{clock,pattern,trainer}`, `instruments/{click,drums,pad/}`, `dsp/` | Asked | y - user: "Um crate, pastas"; "engine/ na raiz" |
 | Proof of no regression | A golden test written on today's code before any move, plus every existing test with unchanged assertions | Asked | y - user: "Golden + testes" |
 | Layer enforcement | A vitest test that reads the imports of `src/` and the `use crate::` lines of `engine/src/` | Asked | y - user: "Teste de imports" |
-| `src/index.test.ts` | Moves to `tests/app.test.ts`; only import paths change | Asked | y - user: "Mover e ajustar imports" |
+| `src/index.test.ts` | Moves to `tests/app.test.ts`; only import paths change. The rule binds the tests moved: tests added later, for findings of the verification or the PR review, may join the file | Asked | y - user: "Mover e ajustar imports"; the addition, on the second PR #14 review: "Manter e registrar" |
 | Golden fingerprint | Each golden scenario stores a 64-bit FNV-1a hash of its output samples' bit patterns, taken at commit `591f031` | A hash keeps the reference small and still fails on a 1-bit change | n |
 | Size limit per Rust file | At most 400 lines of production code per `.rs` file, `#[cfg(test)]` blocks excluded | Gives "modular" a measurable bound; the largest piece today, `fill_buffers`, is about 100 lines | n |
 | Size limit for `main.ts` | At most 150 lines | `main.ts` only composes adapters, the Session and the screens | n |
-| Where Rust tests sit | Each test moves to the module whose behaviour it asserts; the black-box FFI harness tests stay with `ffi.rs` | Tests cross the same interface callers use | n |
+| Where Rust tests sit | Each test moves to the module whose behaviour it asserts; the black-box FFI harness tests stay with `ffi.rs`, also when one reads an engine field after driving the exports | Tests cross the same interface callers use; moved into a lower layer, a harness test would call `ffi` from below it | y - user, on the second PR #14 review: "Manter e registrar" |
 | `src/index.ts` | Deleted | `index.html` loads `src/main.ts`; `index.ts` only logs and nothing imports it | n |
 | Shipped WASM | `public/pkg/metrorig_audio_bg.wasm` is rebuilt from `engine/` and committed | The app and `tests/wasm.test.ts` load that file | n |
 | Paths in scripts and fixtures | `package.json` scripts, `scripts/copy_wasm.js` and the Python fixtures that read `src/chords.ts` follow the moved files | They break otherwise | n |
