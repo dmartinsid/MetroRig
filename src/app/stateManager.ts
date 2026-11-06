@@ -1,4 +1,4 @@
-import type { CustomGroove, PracticeLog, Preset, ViewMode } from '../domain/preset';
+import type { CustomGroove, Preset, ViewMode } from '../domain/preset';
 import { FACTORY_PRESETS } from '../data/factory';
 import { openDatabase, type Database } from '../storage/database';
 import { browserPreferences, type PreferenceStore } from '../storage/preferences';
@@ -11,7 +11,6 @@ export class StateManager {
 
   public activeViewMode: ViewMode = 'editor';
   public isPlaying: boolean = false;
-  public currentLiveBpm: number = 120;
 
   constructor(private database: Database = openDatabase(), private prefs: PreferenceStore = browserPreferences) {
     this.loadActiveViewMode();
@@ -48,14 +47,6 @@ export class StateManager {
 
   getAllPresets(): Promise<Preset[]> {
     return this.database.getAllPresets();
-  }
-
-  logPracticeSession(log: PracticeLog): Promise<void> {
-    return this.database.logPracticeSession(log);
-  }
-
-  getPracticeLogs(): Promise<PracticeLog[]> {
-    return this.database.getPracticeLogs();
   }
 
   saveGroove(groove: CustomGroove): Promise<void> {
