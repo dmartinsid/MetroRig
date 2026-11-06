@@ -37,13 +37,6 @@ export function trainerFieldsOf(ts: TrainerSettings): TrainerFields {
   };
 }
 
-export function trainerStatusText(fields: TrainerFields): string {
-  const bars = fields.stepValue === '1' ? 'bar' : 'bars';
-  const unit = fields.stepType === 'measures' ? bars : 's';
-  return fields.enabled
-    ? `Trainer ${fields.startBpm} → ${fields.targetBpm} BPM · +${fields.increment} every ${fields.stepValue} ${unit}`
-    : 'Trainer Off';
-}
 export type TimeSignatureResult = 'changed' | 'too-long' | 'declined' | 'unchanged';
 
 export interface SessionOptions {

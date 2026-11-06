@@ -1,15 +1,10 @@
 import type { Session } from '../app/session';
 import { startBpmFor, type ViewMode } from '../domain/preset';
 import { SONGS } from '../domain/songs';
-import { formatClock, formatLatency } from './format';
+import { formatClock, formatLatency, formatLiveBpm } from './format';
 import { byId, option } from './dom';
 
 declare const gsap: any;
-
-// Stepped runs read as integers; Smooth runs show their real value
-function formatLiveBpm(bpm: number): string {
-  return Number.isInteger(bpm) ? String(bpm) : bpm.toFixed(1);
-}
 
 // The view links, the tempo, the preset selector, the play button, the footer and the save toast
 export function mount(session: Session): void {

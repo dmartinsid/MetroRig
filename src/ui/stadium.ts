@@ -1,9 +1,9 @@
-import { trainerStatusText, type Session } from '../app/session';
+import type { Session } from '../app/session';
 import { getBeatsPerMeasure, getBeatForStep, isSustainedStep } from '../domain/meter';
 import { startBpmFor } from '../domain/preset';
 import { STADIUM_GROUPS, groupHit } from '../domain/kit';
 import { isAudible } from '../domain/mix';
-import { formatTimer } from './format';
+import { formatTimer, formatTrainerStatus } from './format';
 import { byId, option } from './dom';
 
 declare const gsap: any;
@@ -115,7 +115,7 @@ export function mount(session: Session): void {
   // The Trainer fields as the Editor form shows them
   function updateStadiumStatus() {
     const fields = session.trainerFields;
-    stadiumStatus.innerText = trainerStatusText(fields);
+    stadiumStatus.innerText = formatTrainerStatus(fields);
     stadiumStatusDot.classList.toggle('lit', fields.enabled);
   }
 

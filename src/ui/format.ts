@@ -1,3 +1,5 @@
+import type { TrainerFields } from '../app/session';
+
 const RENDER_QUANTUM = 128; // Frames in every AudioWorklet block
 const MAX_STEPS = 128; // STEPS_COUNT in engine/src/sequencer/pattern.rs
 const DENOMINATORS = [4, 8, 16];
@@ -8,6 +10,20 @@ export function formatTimer(seconds: number): string {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
   return `${pad(hours)}:${pad(minutes)}:${pad(seconds % 60)}`;
+}
+
+// Stepped runs read as integers; Smooth runs show their real value
+export function formatLiveBpm(bpm: number): string {
+  return Number.isInteger(bpm) ? String(bpm) : bpm.toFixed(1);
+}
+
+// The Trainer as the form shows it, typed text included
+export function formatTrainerStatus(fields: TrainerFields): string {
+  const bars = fields.stepValue === '1' ? 'bar' : 'bars';
+  const unit = fields.stepType === 'measures' ? bars : 's';
+  return fields.enabled
+    ? `Trainer ${fields.startBpm} → ${fields.targetBpm} BPM · +${fields.increment} every ${fields.stepValue} ${unit}`
+    : 'Trainer Off';
 }
 
 export function formatClock(sampleRate: number): string {
