@@ -209,3 +209,264 @@ impl Engine {
         }
     }
 }
+
+// White-box tests of the mix: each builds an Engine and reads its fields. The tests through the exports sit in ffi_tests.rs
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::dsp::sample::Sample;
+    use crate::instruments::drums::GAIN_NORMAL;
+
+    #[test]
+    fn test_engine_init() {
+        let engine = Engine::new(44100.0);
+        assert_eq!(engine.clock.bpm, 120.0);
+        assert_eq!(engine.is_playing, false);
+
+        // Verify recalc_tempo correctly computes step size
+        // At 120 BPM: 2 beats/sec -> 8 steps/sec. At 44100Hz, samples per step = 44100 / 8 = 5512.5
+        assert_eq!(engine.clock.samples_per_step, 5512.5);
+    }
+
+    #[test]
+    fn test_click_synthesis() {
+        let mut engine = Engine::new(44100.0);
+        engine.start();
+        engine.pattern.tracks[0].steps[0] = 2; // Accent click on step 0
+
+        let mut buf_l = vec![0.0f32; 100];
+        let mut buf_r = vec![0.0f32; 100];
+
+        engine.fill_buffers(&mut buf_l, &mut buf_r);
+        // Left buffer should contain non-zero synthesized sine samples (sin(0.0) is 0.0, so buf_l[0] is 0.0, but buf_l[1] is non-zero)
+        assert!(buf_l[1] != 0.0);
+        assert_eq!(buf_l[1], buf_r[1]); // mono click is centered (* 0.5 to both)
+    }
+
+    #[test]
+    fn test_drum_sample_trigger() {
+        let mut engine = Engine::new(44100.0);
+        engine.start();
+        engine.pattern.tracks[1].steps[0] = 1; // Trigger kick drum on step 0
+
+        let left_sample = vec![0.5f32, 1.0f32, 0.5f32];
+        let right_sample = vec![-0.5f32, -1.0f32, -0.5f32];
+
+        engine.drums.samples[1] = Some(Sample {
+            left_channel: left_sample,
+            right_channel: right_sample,
+        });
+
+        let mut buf_l = vec![0.0f32; 3];
+        let mut buf_r = vec![0.0f32; 3];
+
+        engine.fill_buffers(&mut buf_l, &mut buf_r);
+
+        // At 44100Hz and 120BPM, the step duration is 5512.5 samples.
+        // It triggers step 0 immediately since current step starts at 0.0 and triggers.
+        // Let's verify that the output contains the sample multiplied by the playback volume (1.0 for kick)
+        // and by the normal dynamic
+        assert_eq!(buf_l[0], 0.5 * GAIN_NORMAL);
+        assert_eq!(buf_r[0], -0.5 * GAIN_NORMAL);
+        assert_eq!(buf_l[1], 1.0 * GAIN_NORMAL);
+        assert_eq!(buf_r[1], -1.0 * GAIN_NORMAL);
+    }
+
+    #[test]
+    fn test_trainer_stepped_measures() {
+        let mut engine = Engine::new(44100.0);
+        engine.start();
+
+        // 120 BPM, target 130 BPM, increment 5.0, stepped curve, measures mode (step_value = 2.0 measures)
+        engine.trainer.settings.enabled = true;
+        engine.trainer.settings.start_bpm = 120.0;
+        engine.trainer.settings.target_bpm = 130.0;
+        engine.trainer.settings.increment = 5.0;
+        engine.trainer.settings.step_type = StepType::Bars;
+        engine.trainer.settings.step_value = 2.0;
+        engine.trainer.settings.curve = Curve::Stepped;
+
+        // 1 measure has 16 steps, so 2 measures have 32 steps.
+        // The first hit of a run finishes no measure. The next step 0 is trigger 17, and the
+        // one after it, trigger 33, is the beat 1 that ends the second measure.
+        for _ in 0..32 {
+            engine.trigger_step();
+            assert_eq!(engine.clock.bpm, 120.0); // Not incremented yet
+        }
+
+        // Trigger 33 fires beat 1 at the new BPM
+        engine.trigger_step();
+        assert_eq!(engine.clock.bpm, 125.0); // Incremented by 5.0
+        assert_eq!(engine.last_tick_bpm, 125.0);
+
+        // Complete another 2 measures (32 more triggers)
+        for _ in 0..31 {
+            engine.trigger_step();
+            assert_eq!(engine.clock.bpm, 125.0);
+        }
+        engine.trigger_step();
+        assert_eq!(engine.clock.bpm, 130.0); // Incremented to target
+
+        // Complete another 2 measures: should clamp at target (130)
+        for _ in 0..32 {
+            engine.trigger_step();
+        }
+        assert_eq!(engine.clock.bpm, 130.0); // Clamped at target
+    }
+
+    #[test]
+    fn test_trainer_stepped_seconds() {
+        let mut engine = Engine::new(44100.0);
+        engine.start();
+
+        // 120 BPM, target 130 BPM, increment 5.0, stepped curve, seconds mode (step_value = 0.01 seconds -> 441 samples)
+        engine.trainer.settings.enabled = true;
+        engine.trainer.settings.start_bpm = 120.0;
+        engine.trainer.settings.target_bpm = 130.0;
+        engine.trainer.settings.increment = 5.0;
+        engine.trainer.settings.step_type = StepType::Seconds;
+        engine.trainer.settings.step_value = 0.01;
+        engine.trainer.settings.curve = Curve::Stepped;
+
+        // The first hit starts the run, so the 441 samples pass with BPM unchanged.
+        let mut buf_l = vec![0.0f32; 441];
+        let mut buf_r = vec![0.0f32; 441];
+        engine.fill_buffers(&mut buf_l, &mut buf_r);
+        assert_eq!(engine.clock.bpm, 120.0);
+
+        // The increment still waits for beat 1, 88200 samples in (2 s at 120 BPM).
+        let mut rest_l = vec![0.0f32; 88200 - 441];
+        let mut rest_r = vec![0.0f32; 88200 - 441];
+        engine.fill_buffers(&mut rest_l, &mut rest_r);
+        assert_eq!(engine.clock.bpm, 120.0);
+
+        // Process 1 more sample to reach beat 1
+        let mut single_l = vec![0.0f32; 1];
+        let mut single_r = vec![0.0f32; 1];
+        engine.fill_buffers(&mut single_l, &mut single_r);
+        assert_eq!(engine.clock.bpm, 125.0); // Incremented by 5.0
+        assert_eq!(engine.last_tick_index, 0);
+    }
+
+    #[test]
+    fn test_trainer_smooth_seconds() {
+        let mut engine = Engine::new(44100.0);
+        engine.start();
+
+        // 120 BPM, target 130 BPM, increment 5.0, smooth curve, seconds mode (step_value = 1.0 second -> 44100 samples)
+        engine.trainer.settings.enabled = true;
+        engine.trainer.settings.start_bpm = 120.0;
+        engine.trainer.settings.target_bpm = 130.0;
+        engine.trainer.settings.increment = 5.0;
+        engine.trainer.settings.step_type = StepType::Seconds;
+        engine.trainer.settings.step_value = 1.0;
+        engine.trainer.settings.curve = Curve::Smooth;
+
+        let mut buf_l = vec![0.0f32; 44100];
+        let mut buf_r = vec![0.0f32; 44100];
+
+        engine.fill_buffers(&mut buf_l, &mut buf_r);
+        // After 1 second (44100 samples), BPM should have increased by approximately 5.0
+        // (Since it recalculates samples per step dynamically, the linear increment is very close)
+        assert!((engine.clock.bpm - 125.0).abs() < 0.1);
+    }
+
+    #[test]
+    fn test_measure_length_looping() {
+        let mut engine = Engine::new(44100.0);
+        engine.start();
+
+        // Update measure length to 12 steps (3/4 time signature)
+        engine.set_measure_length(12);
+
+        // Manually trigger steps. Triggering 12 times should loop the step_index from 0 to 11 and back to 0.
+        for _ in 0..11 {
+            engine.trigger_step();
+        }
+        assert_eq!(engine.pattern.step_index, 11);
+
+        // The 12th trigger should wrap step_index back to 0
+        engine.trigger_step();
+        assert_eq!(engine.pattern.step_index, 0);
+    }
+
+    #[test]
+    fn test_measure_total_duration_no_drift() {
+        // Test both even and odd lengths
+        for length in [12, 15, 16, 20] {
+            let mut engine = Engine::new(44100.0);
+            engine.pattern.measure_length = length;
+            engine.start();
+
+            let mut total_limit = 0.0;
+            for _ in 0..length {
+                total_limit += engine.clock.samples_per_step;
+                engine.trigger_step();
+            }
+
+            let expected_total = engine.clock.samples_per_step * (length as f64);
+            assert!((total_limit - expected_total).abs() < 1e-5, "Drift detected on length {}: total_limit={}, expected={}", length, total_limit, expected_total);
+        }
+    }
+
+    #[test]
+    fn test_click_mode_switching() {
+        let mut engine = Engine::new(44100.0);
+        engine.start();
+
+        // Default mode is synth (0)
+        assert_eq!(engine.click.mode, 0);
+
+        // Switch to sample mode (1)
+        engine.set_click_mode(1);
+        assert_eq!(engine.click.mode, 1);
+    }
+
+    #[test]
+    fn test_click_sample_playback() {
+        let mut engine = Engine::new(44100.0);
+        engine.start();
+
+        // Load dummy click sample (slot 0)
+        let sample_l = vec![0.2f32, 0.4f32, 0.6f32];
+        let sample_r = vec![-0.2f32, -0.4f32, -0.6f32];
+        engine.click.sample = Some(Sample {
+            left_channel: sample_l.clone(),
+            right_channel: sample_r.clone(),
+        });
+
+        // Switch to click mode 1 (sample mode)
+        engine.set_click_mode(1);
+
+        // Set accent click on step 0
+        engine.pattern.tracks[0].steps[0] = 2; // Accent
+
+        let mut buf_l = vec![0.0f32; 3];
+        let mut buf_r = vec![0.0f32; 3];
+
+        engine.fill_buffers(&mut buf_l, &mut buf_r);
+
+        // Accent volume is 1.0, so the output is simply the dry click sample.
+        assert_eq!(buf_l[0], 0.2);
+        assert_eq!(buf_r[0], -0.2);
+        assert_eq!(buf_l[1], 0.4);
+        assert_eq!(buf_r[1], -0.4);
+        assert_eq!(buf_l[2], 0.6);
+        assert_eq!(buf_r[2], -0.6);
+
+        // Now test non-accented click (volume is 0.5)
+        engine.pattern.tracks[0].steps[1] = 1; // Normal click
+
+        engine.trigger_step(); // Triggers step 1 manually, increments to step 2
+
+        let mut buf_l2 = vec![0.0f32; 3];
+        let mut buf_r2 = vec![0.0f32; 3];
+
+        engine.fill_buffers(&mut buf_l2, &mut buf_r2);
+
+        assert_eq!(buf_l2[0], 0.2 * 0.5);
+        assert_eq!(buf_r2[0], -0.2 * 0.5);
+        assert_eq!(buf_l2[1], 0.4 * 0.5);
+        assert_eq!(buf_r2[1], -0.4 * 0.5);
+    }
+}
