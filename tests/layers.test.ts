@@ -94,8 +94,9 @@ function modulePath(name: string): string[] {
 }
 
 // Every path of a `use` tree, braces matched at any depth: `dsp::{sample::{trim_onset}, Engine}` is
-// dsp::sample::trim_onset and dsp::Engine. `start` is just past `crate::` or `super::`
-function useTreePaths(source: string, start: number): string[] {
+// dsp::sample::trim_onset and dsp::Engine. `start` is just past `crate::` or `super::`. A path renamed
+// with `as` also lands in `aliases`, under its new name
+function useTreePaths(source: string, start: number, aliases: Map<string, string> = new Map()): string[] {
   let i = start;
   const skipSpace = () => { while (/\s/.test(source[i] ?? '')) i++; };
   function item(): string[] {
@@ -108,8 +109,11 @@ function useTreePaths(source: string, start: number): string[] {
       i += 2;
       return item().map(rest => `${segment}::${rest}`);
     }
-    const alias = source.slice(i).match(/^as\s+\w+/)?.[0];
-    if (alias) i += alias.length;
+    const alias = source.slice(i).match(/^as\s+(\w+)/);
+    if (alias) {
+      i += alias[0].length;
+      return [`${segment} as ${alias[1]}`];
+    }
     return [segment];
   }
   function group(): string[] {
@@ -125,34 +129,54 @@ function useTreePaths(source: string, start: number): string[] {
     }
     return paths.filter(Boolean);
   }
-  return item().filter(Boolean);
+  return item().filter(Boolean).map(path => {
+    const renamed = path.match(/^(.*) as (\w+)$/);
+    if (!renamed) return path;
+    aliases.set(renamed[2], renamed[1]);
+    return renamed[1];
+  });
+}
+
+// The crate path a path names from `base`: `super` climbs one module and `self` stays
+function resolve(base: string[], path: string): string[] {
+  const target = [...base];
+  for (const segment of path.split('::').filter(Boolean)) {
+    if (segment === 'super') target.pop();
+    else if (segment !== 'self') target.push(segment);
+  }
+  return target;
 }
 
 // Every crate module a file names: `crate::x`, `crate::{x, y::{z}}`, the crate's own name `metrorig_audio::x`,
-// and `self::` and `super::` resolved from where the file sits
+// `self::` and `super::` resolved from where the file sits, and any name a `use ... as` gave a module, such as
+// `use super::super as root;` read through `root::engine`. A path that reaches only the crate root names no layer
 function rustImports(file: RustFile): { layer: string; text: string }[] {
   const found: { layer: string; text: string }[] = [];
+  const here = modulePath(file.name);
+  const renamed = new Map<string, string[]>(); // alias -> the crate path it stands for
+  const add = (target: string[], text: string) => {
+    if (target.length > 0) found.push({ layer: target[0], text });
+  };
   for (const match of file.production.matchAll(/\b(?:crate|metrorig_audio)::|\bself::|\b(?:super::)+/g)) {
     const start = match.index! + match[0].length;
-    if (match[0] === 'crate::' || match[0] === 'metrorig_audio::') {
-      for (const path of useTreePaths(file.production, start)) {
-        found.push({ layer: path.split('::')[0], text: `${match[0]}${path}` });
+    const base = match[0] === 'self::' ? here
+      : match[0].startsWith('super::') ? here.slice(0, -(match[0].split('super::').length - 1))
+      : [];
+    const aliases = new Map<string, string>();
+    const paths = useTreePaths(file.production, start, aliases);
+    for (const path of paths.length > 0 ? paths : ['']) add(resolve(base, path), `${match[0]}${path}`);
+    for (const [alias, path] of aliases) renamed.set(alias, resolve(base, path));
+  }
+  for (const [alias, target] of renamed) {
+    for (const match of file.production.matchAll(new RegExp(`(?<![\\w:])${alias}::`, 'g'))) {
+      for (const path of useTreePaths(file.production, match.index! + match[0].length)) {
+        add([...target, ...resolve([], path)], `${alias}::${path}`);
       }
-      continue;
     }
-    if (match[0] === 'self::') {
-      for (const path of useTreePaths(file.production, start)) {
-        const target = [...modulePath(file.name), ...path.split('::')].filter(Boolean);
-        found.push({ layer: target[0] ?? '', text: `self::${path}` });
-      }
-      continue;
-    }
-    const levels = match[0].split('super::').length - 1;
-    const paths = useTreePaths(file.production, start);
-    for (const path of paths.length > 0 ? paths : ['']) {
-      const target = [...modulePath(file.name).slice(0, -levels), ...path.split('::')].filter(Boolean);
-      found.push({ layer: target[0] ?? '', text: `${match[0]}${path}` });
-    }
+  }
+  // A `#[path]` module may sit in any folder, so production code may not use one
+  for (const match of file.production.matchAll(/#\[path\s*=\s*"([^"]*)"\]/g)) {
+    found.push({ layer: '#[path]', text: match[0] });
   }
   return found;
 }
@@ -391,12 +415,16 @@ describe('Layers', () => {
       { name: 'instruments/pad/voice.rs', production: 'use super::super::super::{dsp::gain, ffi::{tick}};' },
       { name: 'dsp/filter.rs', production: 'use metrorig_audio::{dsp::chorus, sequencer::clock::Clock};' },
       { name: 'lib.rs', production: 'use self::engine::Engine;' },
+      { name: 'instruments/click.rs', production: 'use super::super as root;\nfn f() { root::engine::Engine::new(1.0); }' },
+      { name: 'sequencer/clock.rs', production: 'use crate::{self as top};\nfn f() { let _ = top::{dsp::chorus}; }' },
+      { name: 'dsp/reverb.rs', production: '#[path = "../engine.rs"]\nmod engine;' },
       // Allowed: downward, grouped and nested, and super:: staying in the layer
       { name: 'engine/mod.rs', production: 'use crate::{sequencer::{clock::Clock, trainer::Trainer}, instruments::drums::Drums};' },
       { name: 'instruments/pad/voice.rs', production: 'use super::super::click::Click;' },
       { name: 'dsp/mod.rs', production: 'use self::{sample::Sample, reverb::Reverb};' },
       { name: 'instruments/pad/mod.rs', production: 'use self::voice::Voice;' },
       { name: 'ffi.rs', production: 'use metrorig_audio::engine::Engine;' },
+      { name: 'instruments/drums.rs', production: 'use crate::dsp as d;\nfn f() { d::sample::trim_onset(); }' },
     ];
     expect(rustCrossings(rustCrossing)).toEqual([
       'instruments/click.rs (instruments) uses crate::engine::Engine',
@@ -408,6 +436,9 @@ describe('Layers', () => {
       'instruments/pad/voice.rs (instruments) uses super::super::super::ffi::tick',
       'dsp/filter.rs (dsp) uses metrorig_audio::sequencer::clock::Clock',
       'lib.rs (lib) uses self::engine::Engine',
+      'instruments/click.rs (instruments) uses root::engine::Engine::new',
+      'sequencer/clock.rs (sequencer) uses top::dsp::chorus',
+      'dsp/reverb.rs (dsp) uses #[path = "../engine.rs"]',
     ]);
   });
 
