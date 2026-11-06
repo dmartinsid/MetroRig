@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { Session, trainerStatusText } from '../../src/app/session';
 import { StateManager } from '../../src/app/stateManager';
 import type { EnginePort } from '../../src/app/ports';
@@ -109,6 +109,8 @@ const trainer: TrainerSettings = {
 };
 
 describe('Session', () => {
+  afterEach(() => { vi.useRealTimers(); });
+
   it('plays and stops', async () => {
     const { session, engine } = setup();
 
@@ -130,6 +132,31 @@ describe('Session', () => {
     expect(engine.methods().at(-1)).toBe('stop');
     expect(engine.sent('start')).toHaveLength(1);
     expect(engine.sent('init')).toHaveLength(1); // The engine starts once
+  });
+
+  it('counts the practice time from Play, holds it at Stop and restarts it at the next Play', async () => {
+    vi.useFakeTimers();
+    const { session } = setup();
+    const timers: number[] = [];
+    session.subscribe(change => { if (change === 'timer') timers.push(session.practiceSeconds); });
+
+    session.togglePlay();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(timers).toEqual([0]);
+    await vi.advanceTimersByTimeAsync(3000);
+    expect(timers).toEqual([0, 1, 2, 3]);
+
+    session.togglePlay(); // Stop
+    await vi.advanceTimersByTimeAsync(5000);
+    expect(session.practiceSeconds).toBe(3);
+    expect(timers).toEqual([0, 1, 2, 3]);
+
+    session.togglePlay(); // Play again
+    await vi.advanceTimersByTimeAsync(0);
+    expect(session.practiceSeconds).toBe(0);
+    expect(timers.at(-1)).toBe(0);
+    session.togglePlay();
+    await vi.advanceTimersByTimeAsync(0);
   });
 
   it('loads a preset', async () => {
