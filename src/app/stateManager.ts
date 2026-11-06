@@ -1,32 +1,13 @@
 import type { CustomGroove, PracticeLog, Preset, ViewMode } from '../domain/preset';
+import { FACTORY_PRESETS } from '../data/factory';
 import { openDatabase, type Database } from '../storage/database';
 import { browserPreferences, type PreferenceStore } from '../storage/preferences';
 
 export class StateManager {
   private subscribers: Set<(state: any) => void> = new Set();
   
-  public activePreset: Preset = {
-    id: 'default',
-    name: '4/4 Metronome',
-    bpm: 120,
-    timeSignature: '4/4',
-    measureLength: 16,
-    gridData: {
-      0: [2, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0], // Clicks
-      1: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // Kick
-      2: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // Snare
-      3: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], // Hihat
-    },
-    trainerSettings: {
-      enabled: false,
-      startBpm: 120,
-      targetBpm: 160,
-      increment: 5,
-      stepType: 'measures',
-      stepValue: 4,
-      curve: 'stepped',
-    }
-  };
+  // A copy of the factory 4/4 Metronome, so edits never reach the factory list
+  public activePreset: Preset = structuredClone(FACTORY_PRESETS[0]);
 
   public activeViewMode: ViewMode = 'editor';
   public isPlaying: boolean = false;

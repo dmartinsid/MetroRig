@@ -19,6 +19,13 @@ describe('StateManager Tests', () => {
     expect(stateManager.activePreset.bpm).toBe(120);
   });
 
+  it('starts on a copy of the factory 4/4 Metronome', () => {
+    const factory = FACTORY_PRESETS.find(p => p.id === 'default')!;
+    expect(stateManager.activePreset).toEqual(factory);
+    stateManager.activePreset.gridData[0][0] = 0;
+    expect(factory.gridData[0][0]).toBe(2);
+  });
+
   it('should switch view mode and execute subscribers', () => {
     let callCount = 0;
     stateManager.subscribe(() => {
