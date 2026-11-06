@@ -95,3 +95,20 @@ Answered without a change:
 
 - `pressChord`, `stopChord`, `setTimbre`, `setPadVolume` and `loadSelectedTimbre` forward to `Session.improv`. They stay: the Session is the one door for commands, and C28 holds every engine call to the adapters it receives. `improv` stays readable for the Improv screen's state.
 - The ARCH-05 counter skips comments and blank lines. Every file also stays under 400 physical lines before `#[cfg(test)]`, as C5 records, so the rule holds under both readings.
+
+## PR #14 review, round 2
+
+The second code review, at 51f813d ([comment](https://github.com/dmartinsid/MetroRig/pull/14#issuecomment-6675519085)).
+
+| Finding | Evidence | Fix | Closed |
+| --- | --- | --- | --- |
+| R9 - `nextDenominator` and the numerator's 1-16 clamp, meter rules, sat in `ui/` | `src/ui/format.ts:48-51`, `src/ui/editor.ts:268-272, 299-313` | `nextDenominator` and `clampNumerator` in `domain/meter.ts`; `state.test.ts` covers the clamp | 4068533 |
+| R10 - The header split the factory presets into its groups by slicing at index 4 | `src/ui/header.ts:69-75` | `SIGNATURE_PRESETS` and `GENRE_PRESETS` in `data/factory.ts`, exposed by the Session; an app test, passing before and after, pins each group | 58c52e1 |
+| R11 - `StateManager.currentLiveBpm`, `logPracticeSession` and `getPracticeLogs` had no caller | `src/app/stateManager.ts:14, 53-59` | Removed. `subscribe`/`notify` stay: the kept test `should switch view mode and execute subscribers` asserts them (ARCH-22) | 39401ad |
+| R12 - The Rust layer check missed a module renamed with `use ... as` and a `#[path]` module | `tests/layers.test.ts:133-158` at 51f813d | Aliases and `super`/`self` segments resolve to crate paths, uses read through the alias, and `#[path]` outside test code fails. C27 gains each case | 0a1253d |
+
+Answered without a change:
+
+- The 74 tests left in `ffi_tests.rs` drive the engine through the `Run` harness and the `engine_*` exports; about 10 also read a field after. `spec.md`'s "Where Rust tests sit" keeps the FFI harness tests with `ffi.rs`, and moved into `dsp/`, `drums.rs` or `pattern.rs` they would call `ffi` from a lower layer. The user chose to keep them and record the reading ("Manter e registrar"); `spec.md` now states it.
+- `tests/app.test.ts` gained `stad_07b` and three tests for review findings. The move changed only import paths, and `tests_kept.py js` holds every moved test to its assertions. The user chose to keep the additions and record the reading ("Manter e registrar"); `spec.md` now states it.
+- `StateManager` still forwards `savePreset`, `getAllPresets`, `saveGroove` and `getAllGrooves` to the Database, and the Session forwards `userPresets` and `userGrooves`. Folding the StateManager into the Session is a change of its own, beyond this move.
