@@ -128,14 +128,22 @@ function useTreePaths(source: string, start: number): string[] {
   return item().filter(Boolean);
 }
 
-// Every crate module a file names: `crate::x`, `crate::{x, y::{z}}` and `super::` resolved from where the file sits
+// Every crate module a file names: `crate::x`, `crate::{x, y::{z}}`, the crate's own name `metrorig_audio::x`,
+// and `self::` and `super::` resolved from where the file sits
 function rustImports(file: RustFile): { layer: string; text: string }[] {
   const found: { layer: string; text: string }[] = [];
-  for (const match of file.production.matchAll(/\bcrate::|\b(?:super::)+/g)) {
+  for (const match of file.production.matchAll(/\b(?:crate|metrorig_audio)::|\bself::|\b(?:super::)+/g)) {
     const start = match.index! + match[0].length;
-    if (match[0] === 'crate::') {
+    if (match[0] === 'crate::' || match[0] === 'metrorig_audio::') {
       for (const path of useTreePaths(file.production, start)) {
-        found.push({ layer: path.split('::')[0], text: `crate::${path}` });
+        found.push({ layer: path.split('::')[0], text: `${match[0]}${path}` });
+      }
+      continue;
+    }
+    if (match[0] === 'self::') {
+      for (const path of useTreePaths(file.production, start)) {
+        const target = [...modulePath(file.name), ...path.split('::')].filter(Boolean);
+        found.push({ layer: target[0] ?? '', text: `self::${path}` });
       }
       continue;
     }
@@ -156,7 +164,7 @@ function rustCrossings(files: RustFile[]): string[] {
   return files.flatMap(file => {
     const layer = layerOf(file.name);
     return rustImports(file)
-      .filter(use => use.layer !== layer && !RUST_LAYERS[layer].includes(use.layer))
+      .filter(use => use.layer !== layer && !(RUST_LAYERS[layer] ?? []).includes(use.layer))
       .map(use => `${file.name} (${layer}) uses ${use.text}`);
   });
 }
@@ -381,9 +389,14 @@ describe('Layers', () => {
       { name: 'sequencer/clock.rs', production: 'use crate::{dsp::{sample::trim_onset}, engine::{Engine, Event as E}};' },
       { name: 'instruments/click.rs', production: 'use super::super::engine::Engine;' },
       { name: 'instruments/pad/voice.rs', production: 'use super::super::super::{dsp::gain, ffi::{tick}};' },
+      { name: 'dsp/filter.rs', production: 'use metrorig_audio::{dsp::chorus, sequencer::clock::Clock};' },
+      { name: 'lib.rs', production: 'use self::engine::Engine;' },
       // Allowed: downward, grouped and nested, and super:: staying in the layer
       { name: 'engine/mod.rs', production: 'use crate::{sequencer::{clock::Clock, trainer::Trainer}, instruments::drums::Drums};' },
       { name: 'instruments/pad/voice.rs', production: 'use super::super::click::Click;' },
+      { name: 'dsp/mod.rs', production: 'use self::{sample::Sample, reverb::Reverb};' },
+      { name: 'instruments/pad/mod.rs', production: 'use self::voice::Voice;' },
+      { name: 'ffi.rs', production: 'use metrorig_audio::engine::Engine;' },
     ];
     expect(rustCrossings(rustCrossing)).toEqual([
       'instruments/click.rs (instruments) uses crate::engine::Engine',
@@ -393,6 +406,8 @@ describe('Layers', () => {
       'sequencer/clock.rs (sequencer) uses crate::engine::Event',
       'instruments/click.rs (instruments) uses super::super::engine::Engine',
       'instruments/pad/voice.rs (instruments) uses super::super::super::ffi::tick',
+      'dsp/filter.rs (dsp) uses metrorig_audio::sequencer::clock::Clock',
+      'lib.rs (lib) uses self::engine::Engine',
     ]);
   });
 
