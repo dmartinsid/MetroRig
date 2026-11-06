@@ -1,10 +1,10 @@
 import type { Session, TrainerFields } from '../app/session';
-import { getBeatsPerMeasure, getBeatForStep, isSustainedStep, timeSignatureOf } from '../domain/meter';
+import { clampNumerator, getBeatsPerMeasure, getBeatForStep, isSustainedStep, nextDenominator, timeSignatureOf } from '../domain/meter';
 import { FIGURES, barCount, barSteps, patternLength } from '../domain/pattern';
 import type { TrainerSettings } from '../domain/preset';
 import { STEP_ACCENT, STEP_GHOST, STEP_NORMAL, TRACKS } from '../domain/kit';
 import { isAudible } from '../domain/mix';
-import { formatBarStep, formatSteps, formatTimer, nextDenominator } from './format';
+import { formatBarStep, formatSteps, formatTimer } from './format';
 import { byId, option } from './dom';
 
 declare const gsap: any;
@@ -266,9 +266,7 @@ export function mount(session: Session): void {
   });
 
   function updateTimeSignature() {
-    let num = parseInt(timeSigNum.value, 10);
-    if (isNaN(num) || num < 1) num = 1;
-    if (num > 16) num = 16;
+    const num = clampNumerator(parseInt(timeSigNum.value, 10));
     timeSigNum.value = String(num);
 
     const den = Number(timeSigDen.value);
@@ -298,7 +296,7 @@ export function mount(session: Session): void {
   // A stepper at its stop changes nothing, so it must not count as an edit
   function stepNumerator(delta: number) {
     const numerator = Number(timeSigNum.value);
-    const next = Math.min(16, Math.max(1, numerator + delta));
+    const next = clampNumerator(numerator + delta);
     if (next === numerator) return;
     timeSigNum.value = String(next);
     updateTimeSignature();

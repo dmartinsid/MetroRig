@@ -4,6 +4,21 @@ export function getBeatsPerMeasure(timeSignature: string | undefined, measureLen
   return beats > 0 ? beats : Math.max(1, Math.round(measureLength / 4));
 }
 
+const DENOMINATORS = [4, 8, 16];
+const MAX_NUMERATOR = 16;
+
+// Stops at /4 and /16 instead of wrapping
+export function nextDenominator(current: number, direction: 1 | -1): number {
+  const index = DENOMINATORS.indexOf(current) + direction;
+  return DENOMINATORS[Math.min(DENOMINATORS.length - 1, Math.max(0, index))];
+}
+
+// A numerator holds 1 to 16 beats; anything else, a blank field included, takes the nearest bound
+export function clampNumerator(value: number): number {
+  if (Number.isNaN(value) || value < 1) return 1;
+  return Math.min(MAX_NUMERATOR, value);
+}
+
 // A step is a sixteenth: 4 per quarter, 2 per eighth and 1 per sixteenth
 export function measureLengthFor(numerator: number, denominator: number): number {
   if (denominator === 4) return numerator * 4;
