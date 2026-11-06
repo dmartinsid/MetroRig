@@ -75,3 +75,23 @@
 - `'tempo'` SessionChange and the read-only `factoryPresets`/`trainerPresets`/`factoryGrooves` - required by ARCH-15 (`ui` may not import `data`). `setBpm` keeps the old order of effects (`src/app/session.ts:173-178` vs 591f031 `main.ts:604-613`). Accepted.
 - Save redraws on `'library'` - emitted only inside the save's `.then` (`src/app/session.ts:374-380`), and the header and editor redraw what the old `.then` did. Accepted.
 - `syncAudioSettings` sends `preset.trainerSettings` - every form `change` writes `Number(...)` of each field into the preset, and every preset load writes the preset into the form, so the two never differ at Play on a reachable path. Accepted.
+
+## PR #14 review
+
+The code review posted on PR #14 at cc0f016 ([comment](https://github.com/dmartinsid/MetroRig/pull/14#issuecomment-6647988329)), each point checked against the code and closed or answered. After the fixes: `vitest` 472 pass, `tests_kept.py rust` 136 of 136 and `js` 433 of 433 pass and keep their assertions, `golden_first.py` 7 of 7, `npm run build` leaves the tree clean.
+
+| Finding | Evidence | Fix | Closed |
+| --- | --- | --- | --- |
+| R1 - The Stadium held the practice timer and wrote the Editor's `#editor-timer`, against AD-028 | `src/ui/stadium.ts:117-131` at cc0f016 | The Session counts `practiceSeconds` and emits `'timer'`; each screen draws its own. `session.test.ts` `counts the practice time from Play, holds it at Stop and restarts it at the next Play`; `time_02` to `time_06` unchanged | a9e482c |
+| R2 - The Editor's panel header held the 12/14/16-step signature rule, repeated in the Session's preset load | `src/ui/editor.ts:202-209`, `src/app/session.ts:379-387` | `timeSignatureOf` in `domain/meter.ts` for both. The Editor's fallback for other lengths read `N steps` where the Session wrote `N/16`; every load writes the signature, so it was unreachable | 12056c3 |
+| R3 - `header.ts` bound the Stadium's play button and routine selector, and the selector dispatched a change on the header's | `src/ui/header.ts:28, 39, 191, 202-206` | `stadium.ts` fills its selector, loads through the Session and follows `selectedPresetValue`. Two `app.test.ts` tests, passing before and after, cover the selector and the button | 63ac3b6 |
+| R4 - `trainerStatusText` and `formatLiveBpm` sat outside `src/ui/format.ts` | `src/app/session.ts:40-46`, `src/ui/header.ts:10-12` | `formatTrainerStatus` and `formatLiveBpm` in `ui/format.ts`; `display.test.ts` asserts the text, `session.test.ts` the fields | 0c54b48 |
+| R5 - `stateManager.ts` repeated the factory 4/4 Metronome | `src/app/stateManager.ts:8-29` | `structuredClone(FACTORY_PRESETS[0])`; `state.test.ts` pins the two equal and apart | 63b0c96 |
+| R6 - `setTimeSignature` and `saveGroove` repeated the bar slice-and-pad loop | `src/app/session.ts:275-282, 480-487` | `fitBar` in `domain/pattern.ts`; `bars.test.ts` covers cut, pad and copy | 5bbe8af |
+| R7 - The Rust layer check missed `self::` and the crate's own name | `tests/layers.test.ts:134` | Both resolved; C27 gains a crossing and an allowed case of each. `lib.rs`, in no layer, may import nothing | 3ea2333 |
+| R8 - Ten white-box tests that build an `Engine` stayed in `ffi_tests.rs`, against `spec.md:40` | `engine/src/ffi_tests.rs:979-1033, 1575-1920` at cc0f016 | Moved to `engine.rs`'s test module; the two that went through `engine_set_measure_length` and `engine_set_click_mode` call the Engine methods those wrap. `ffi_tests.rs` keeps the 74 tests through the exports | 1e2fcd3 |
+
+Answered without a change:
+
+- `pressChord`, `stopChord`, `setTimbre`, `setPadVolume` and `loadSelectedTimbre` forward to `Session.improv`. They stay: the Session is the one door for commands, and C28 holds every engine call to the adapters it receives. `improv` stays readable for the Improv screen's state.
+- The ARCH-05 counter skips comments and blank lines. Every file also stays under 400 physical lines before `#[cfg(test)]`, as C5 records, so the rule holds under both readings.
