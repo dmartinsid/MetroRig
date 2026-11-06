@@ -1,7 +1,21 @@
 import { describe, it, expect } from 'vitest';
-import { formatClock, formatBarStep, formatLatency, formatSteps, formatTimer, nextDenominator } from '../src/ui/format';
+import { formatClock, formatBarStep, formatLatency, formatLiveBpm, formatSteps, formatTimer, formatTrainerStatus, nextDenominator } from '../src/ui/format';
 
 describe('Display rules', () => {
+  it('prints the Trainer fields as typed', () => {
+    const typed = { enabled: true, startBpm: '080', targetBpm: '160', increment: '', stepType: 'measures', stepValue: '1.0' };
+    expect(formatTrainerStatus(typed)).toBe('Trainer 080 → 160 BPM · + every 1.0 bars');
+    expect(formatTrainerStatus({ ...typed, startBpm: '148', targetBpm: '190', increment: '2', stepValue: '3' })).toBe('Trainer 148 → 190 BPM · +2 every 3 bars');
+    expect(formatTrainerStatus({ ...typed, stepValue: '1' })).toBe('Trainer 080 → 160 BPM · + every 1 bar');
+    expect(formatTrainerStatus({ ...typed, stepType: 'seconds' })).toBe('Trainer 080 → 160 BPM · + every 1.0 s');
+    expect(formatTrainerStatus({ ...typed, enabled: false })).toBe('Trainer Off');
+  });
+
+  it('prints a stepped tempo as an integer and a smooth one with a decimal', () => {
+    expect(formatLiveBpm(120)).toBe('120');
+    expect(formatLiveBpm(121.37)).toBe('121.4');
+  });
+
   it('time_01 timer format', () => {
     expect(formatTimer(0)).toBe('00:00:00');
     expect(formatTimer(59)).toBe('00:00:59');
