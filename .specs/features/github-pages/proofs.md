@@ -1,9 +1,9 @@
 # github-pages proofs
 
-**HEAD**: 3a76502
+**HEAD**: f919b6a
 **Tree**: clean
 **Shell**: /bin/sh
-**Result**: 18 pass, 0 fail
+**Result**: 19 pass, 0 fail
 
 | Check | Proof | Result |
 | --- | --- | --- |
@@ -14,7 +14,7 @@
 | C5 | `run unit / ✓ tests/app/session.test.ts > Session > asset base > fetches every asset under /MetroRig/` | pass |
 | C6 | `run unit / ✓ tests/app/session.test.ts > Session > asset base > fetches every asset under / by default` | pass |
 | C7 | `run unit / ✓ tests/assets.test.ts > asset paths > only the Session resolves asset paths` | pass |
-| C8 | `for p in '' pkg/metrorig_audio_bg.wasm kit/ride.wav; do curl -sfo /dev/null "https://dmartinsid.github.io/Metr` | pass |
+| C8 | `for p in '' pkg/metrorig_audio_bg.wasm kit/ride.wav; do test "$(curl -s -o /dev/null -w '%{http_code}' "https:` | pass |
 | C9 | `run unit / ✓ tests/deploy.test.ts > deploy workflow > deploys on every push to main` | pass |
 | C10 | `run unit / ✓ tests/deploy.test.ts > deploy workflow > deploys when started by hand` | pass |
 | C11 | `run unit / ✓ tests/deploy.test.ts > deploy workflow > compiles the engine before it builds the site` | pass |
@@ -23,6 +23,7 @@
 | C14 | `run unit / ✓ tests/docs.test.ts > Docs > README links the live site above its features` | pass |
 | C15 | `test "$(gh repo view dmartinsid/MetroRig --json homepageUrl -q .homepageUrl)" = https://dmartinsid.github.io/M` | pass |
 | C16 | `npx vite build --logLevel error && grep -q registerProcessor dist/assets/metronome-processor-*.js && ! ls dist` | pass |
+| C17 | `run unit / ✓ tests/assets.test.ts > asset paths > the composition root hands the Session the base Vite serves ` | pass |
 | Build | `npm run build` | pass |
 | Build | `npm run test:rust` | pass |
 
@@ -44,8 +45,8 @@
 
  Test Files  5 passed (5)
       Tests  29 passed (29)
-   Start at  23:13:58
-   Duration  479ms (transform 254ms, setup 0ms, collect 548ms, tests 48ms, environment 1ms, prepare 374ms)
+   Start at  23:20:54
+   Duration  511ms (transform 344ms, setup 1ms, collect 570ms, tests 56ms, environment 1ms, prepare 369ms)
 ```
 
 `npx vite build --logLevel error && grep -q '"/MetroRig/assets/' dist/index.html && ! grep -qE '(src/href)="/(a` - exit 0
@@ -60,7 +61,7 @@
 (no output)
 ```
 
-`for p in '' pkg/metrorig_audio_bg.wasm kit/ride.wav; do curl -sfo /dev/null "https://dmartinsid.github.io/Metr` - exit 0
+`for p in '' pkg/metrorig_audio_bg.wasm kit/ride.wav; do test "$(curl -s -o /dev/null -w '%{http_code}' "https:` - exit 0
 
 ```
 (no output)

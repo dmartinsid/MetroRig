@@ -111,18 +111,18 @@ Found during T4: `?url` copied `metronome-processor.ts` into `dist/assets/` untr
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| GHP-01 | P1: Open from a link | Execute | Pending |
-| GHP-02 | P1: Open from a link | Execute | Pending |
-| GHP-03 | P1: Open from a link | Execute | Pending |
-| GHP-04 | P1: Open from a link | Execute | Pending |
-| GHP-05 | P1: Publish on push | Execute | Pending |
-| GHP-06 | P1: Publish on push | Execute | Pending |
-| GHP-07 | P1: Publish on push | Execute | Pending |
-| GHP-08 | P1: Publish on push | Execute | Pending |
-| GHP-09 | P1: Publish on push | Execute | Pending |
-| GHP-10 | P2: Find the site | Execute | Pending |
-| GHP-11 | P2: Find the site | Execute | Pending |
-| GHP-12 | P1: Open from a link | Execute | Pending |
+| GHP-01 | P1: Open from a link | Execute | Verified |
+| GHP-02 | P1: Open from a link | Execute | Verified |
+| GHP-03 | P1: Open from a link | Execute | Verified |
+| GHP-04 | P1: Open from a link | Execute | Verified |
+| GHP-05 | P1: Publish on push | Execute | Verified |
+| GHP-06 | P1: Publish on push | Execute | Verified |
+| GHP-07 | P1: Publish on push | Execute | Verified |
+| GHP-08 | P1: Publish on push | Execute | Verified |
+| GHP-09 | P1: Publish on push | Execute | Verified |
+| GHP-10 | P2: Find the site | Execute | Verified |
+| GHP-11 | P2: Find the site | Execute | Verified |
+| GHP-12 | P1: Open from a link | Execute | Verified |
 
 **Coverage:** 12 total, 0 mapped to tasks, 11 unmapped ⚠️ (Tasks phase follows approval)
 

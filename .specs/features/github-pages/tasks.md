@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: inline below - Medium scope, no `design.md`
-**Status**: Approved
+**Status**: Done
 **Approved**: 2026-11-08 - user: "Aprovado"
 **Build**: `npm run build; npm run test:rust`
 **Run unit**: `npx vitest run tests/assets.test.ts tests/app/session.test.ts tests/viteConfig.test.ts tests/deploy.test.ts tests/docs.test.ts --reporter=verbose`
@@ -272,5 +272,5 @@ Proof: run unit | ✓ tests/assets.test.ts > asset paths > the composition root 
 ## Handoff
 
 **Settled mid-build:** none from the user. T4 found the worklet shipped as raw `.ts`; added GHP-12 and T7 under the walk rule
-**Dispatched:** Verifier at 3a76502 (proofs 18 pass), diff 4895166..3a76502
+**Dispatched:** Verifier at 3a76502 (proofs 18 pass), diff 4895166..3a76502 - returned: 6 findings, closed in 687bc6b; round 2 proofs 19 pass at f919b6a
 **Walked:** 2026-11-08. Build: `npm run build`, `npx vite preview --port 4173`, opened `http://localhost:4173/MetroRig/`, pressed `▶ PLAY` in the Editor: the timer ran, the console logged the WASM at `/MetroRig/pkg/` and the worklet at `/MetroRig/assets/metronome-processor-*.js`, and 60 kit files loaded with 200. Opened `Improv`: the 5 Choir files loaded with 200. The only 404 was `/favicon.ico`, which the project never had. Dev: `npx vite --port 3000`, opened `http://localhost:3000/`, `Editor` → `▶ PLAY`: the engine started with the WASM at `/pkg/` and the worklet at `/src/audio/metronome-processor.ts?worker_file&type=module`. The walk found that `vite preview` took base `/` and answered every `/MetroRig/` path with `index.html`; fixed in 763e7cb
