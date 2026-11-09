@@ -62,7 +62,7 @@ T1 → T2 → T3
 ### Phase 2: Build and publish
 
 ```
-T3 → T4 → T5 → T6
+T3 → T4 → T7 → T5 → T6
 ```
 
 ---
@@ -148,11 +148,30 @@ T3 → T4 → T5 → T6
 
 ---
 
+### T7: Compile the worklet in the build
+
+**What**: `src/main.ts` imports the worklet with `?worker&url`, so `vite build` bundles it to JavaScript
+**Where**: `src/main.ts`
+**Depends on**: T4
+**Reuses**: Vite's worker bundling
+**Requirement**: GHP-12
+
+**Done when**:
+
+- [x] `dist/assets/` holds `metronome-processor-*.js` with `registerProcessor`, and no `.ts` file
+- [x] Gate check passes: `npx vitest run && npm run build`
+
+**Tests**: none - a build proof (C16) settles it; the scan in `tests/assets.test.ts` still runs
+**Gate**: full
+**Commit**: `fix: bundle the AudioWorklet as JavaScript in the build`
+
+---
+
 ### T5: Deploy workflow
 
 **What**: `.github/workflows/deploy.yml` tests, builds with the Rust engine and deploys `dist` to Pages
 **Where**: `.github/workflows/deploy.yml`
-**Depends on**: T4
+**Depends on**: T7
 **Reuses**: GitHub's Pages actions (`configure-pages`, `upload-pages-artifact`, `deploy-pages`)
 **Requirement**: GHP-05, GHP-06, GHP-07, GHP-08, GHP-09
 
@@ -201,7 +220,7 @@ T3 → T4 → T5 → T6
 Proof: `npx vite build --logLevel error && grep -q '"/MetroRig/assets/' dist/index.html && ! grep -qE '(src|href)="/(assets|src)/' dist/index.html`
 
 **C2** - The emitted bundle loads the worklet from `/MetroRig/assets/` (GHP-01, AC 1)
-Proof: `npx vite build --logLevel error && grep -lq '/MetroRig/assets/metronome-processor' dist/assets/*.js`
+Proof: `npx vite build --logLevel error && grep -lq '/MetroRig/assets/metronome-processor-[A-Za-z0-9_-]*\.js' dist/assets/*.js`
 
 **C3** - `vite.config.ts` gives `build` the base `/MetroRig/` and `serve` the base `/` (GHP-01, AC 1; GHP-03, AC 3)
 Proof: run unit | ✓ tests/viteConfig.test.ts > vite config > builds under /MetroRig/ and serves under /
@@ -242,10 +261,13 @@ Proof: run unit | ✓ tests/docs.test.ts > Docs > README links the live site abo
 **C15** - The repo's Website field is `https://dmartinsid.github.io/MetroRig/` (GHP-11, AC 2)
 Proof: `test "$(gh repo view dmartinsid/MetroRig --json homepageUrl -q .homepageUrl)" = https://dmartinsid.github.io/MetroRig/`
 
+**C16** - The build emits the worklet as JavaScript holding `registerProcessor`, and no `.ts` file (GHP-12, AC 5)
+Proof: `npx vite build --logLevel error && grep -q registerProcessor dist/assets/metronome-processor-*.js && ! ls dist/assets/*.ts 2>/dev/null`
+
 ---
 
 ## Handoff
 
-**Settled mid-build:** none
+**Settled mid-build:** none from the user. T4 found the worklet shipped as raw `.ts`; added GHP-12 and T7 under the walk rule
 **Dispatched:** none
 **Walked:** none

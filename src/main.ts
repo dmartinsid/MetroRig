@@ -8,7 +8,7 @@ import { mount as mountEditor } from './ui/editor';
 import { mount as mountStadium } from './ui/stadium';
 import { mount as mountGrooves } from './ui/grooves';
 import { mount as mountImprov } from './ui/improv';
-import workletUrl from './audio/metronome-processor?url';
+import workletUrl from './audio/metronome-processor?worker&url';
 import { ENGINE_WASM } from './domain/assets';
 
 const audioNode = new MetronomeNode();

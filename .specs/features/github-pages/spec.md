@@ -59,6 +59,9 @@ MetroRig only runs on a machine that clones the repo and starts the dev server. 
 2. WHEN the app runs from a build with base `/MetroRig/` THEN the system SHALL fetch the engine WASM, every drum sample and every pad sample under `/MetroRig/`  <!-- GHP-02 -->
 3. WHILE the app runs on the dev server the system SHALL fetch the same assets under `/`  <!-- GHP-03 -->
 4. WHEN `https://dmartinsid.github.io/MetroRig/` is opened after a deploy THEN the page, the WASM and a drum sample SHALL each answer HTTP 200  <!-- GHP-04 -->
+5. The production build SHALL emit the AudioWorklet as compiled JavaScript, never as a `.ts` file  <!-- GHP-12 -->
+
+Found during T4: `?url` copied `metronome-processor.ts` into `dist/assets/` untranspiled, which no browser runs, so no production build has ever played. Added under the walk rule: a broken behaviour no criterion covered.
 
 **Independent Test**: Run `npm run build` and `npx vite preview`, open `http://localhost:4173/MetroRig/`, press play: click, kit and a pad sound, and the network log shows no 404.
 
@@ -119,8 +122,9 @@ MetroRig only runs on a machine that clones the repo and starts the dev server. 
 | GHP-09 | P1: Publish on push | Execute | Pending |
 | GHP-10 | P2: Find the site | Execute | Pending |
 | GHP-11 | P2: Find the site | Execute | Pending |
+| GHP-12 | P1: Open from a link | Execute | Pending |
 
-**Coverage:** 11 total, 0 mapped to tasks, 11 unmapped ⚠️ (Tasks phase follows approval)
+**Coverage:** 12 total, 0 mapped to tasks, 11 unmapped ⚠️ (Tasks phase follows approval)
 
 ## Sources
 
