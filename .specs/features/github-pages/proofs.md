@@ -1,6 +1,6 @@
 # github-pages proofs
 
-**HEAD**: f919b6a
+**HEAD**: 2af1450
 **Tree**: clean
 **Shell**: /bin/sh
 **Result**: 19 pass, 0 fail
@@ -45,8 +45,8 @@
 
  Test Files  5 passed (5)
       Tests  29 passed (29)
-   Start at  23:20:54
-   Duration  511ms (transform 344ms, setup 1ms, collect 570ms, tests 56ms, environment 1ms, prepare 369ms)
+   Start at  23:28:35
+   Duration  473ms (transform 346ms, setup 1ms, collect 545ms, tests 54ms, environment 1ms, prepare 358ms)
 ```
 
 `npx vite build --logLevel error && grep -q '"/MetroRig/assets/' dist/index.html && ! grep -qE '(src/href)="/(a` - exit 0

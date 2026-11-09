@@ -320,6 +320,42 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: verification.md F8; tests/app/session.test.ts:275-277 (app)
 - last seen: 2026-11-05T00:56:28Z
 
+### L-052 - A test that reads a CI workflow as text must also refuse what lets a step through: continue-on-error, if: guards and path filters.
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `ci` · harmful: 0
+- features: github-pages
+- evidence: C12 (ci)
+- last seen: 2026-11-09T02:32:16Z
+
+### L-053 - A manual workflow_dispatch builds the branch it was started from; pin the checkout ref when the spec names a branch.
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `ci` · harmful: 0
+- features: github-pages
+- evidence: C10 (ci)
+- last seen: 2026-11-09T02:32:16Z
+
+### L-054 - An HTTP proof that fixes a status code compares %{http_code}; curl -f also passes on a redirect.
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `ci` · harmful: 0
+- features: github-pages
+- evidence: C8 (ci)
+- last seen: 2026-11-09T02:32:16Z
+
+### L-055 - When tests inject a value by hand, add a check that the composition root really passes it.
+- signal: `ac_gap` · recurrence: 1 feature(s) · harmful: 0
+- features: github-pages
+- evidence: C17
+- last seen: 2026-11-09T02:32:16Z
+
+### L-056 - A criterion that says every X needs a test that walks every X, not just the default one.
+- signal: `weak_test` · recurrence: 1 feature(s) · harmful: 0
+- features: github-pages
+- evidence: C5
+- last seen: 2026-11-09T02:32:16Z
+
+### L-057 - Run every test suite once in the CI image before relying on it: ubuntu-latest lacks tools the dev machine has, such as ffmpeg.
+- signal: `gate_fail` · recurrence: 1 feature(s) · scope: `ci` · harmful: 0
+- features: github-pages
+- evidence: GHP-08 (ci)
+- last seen: 2026-11-09T02:32:16Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

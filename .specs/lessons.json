@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 52,
+  "next_id": 58,
   "lessons": [
     {
       "id": "L-001",
@@ -923,6 +923,114 @@
       ],
       "created": "2026-11-05T00:56:28Z",
       "last_seen": "2026-11-05T00:56:28Z"
+    },
+    {
+      "id": "L-052",
+      "key": "weak_test::a test that reads a ci workflow as text must also refuse what lets a step through continue on error if guards and path filters",
+      "text": "A test that reads a CI workflow as text must also refuse what lets a step through: continue-on-error, if: guards and path filters.",
+      "signal": "weak_test",
+      "scope": "ci",
+      "status": "candidate",
+      "features": [
+        "github-pages"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "C12 (ci)"
+      ],
+      "created": "2026-11-09T02:32:16Z",
+      "last_seen": "2026-11-09T02:32:16Z"
+    },
+    {
+      "id": "L-053",
+      "key": "weak_test::a manual workflow dispatch builds the branch it was started from pin the checkout ref when the spec names a branch",
+      "text": "A manual workflow_dispatch builds the branch it was started from; pin the checkout ref when the spec names a branch.",
+      "signal": "weak_test",
+      "scope": "ci",
+      "status": "candidate",
+      "features": [
+        "github-pages"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "C10 (ci)"
+      ],
+      "created": "2026-11-09T02:32:16Z",
+      "last_seen": "2026-11-09T02:32:16Z"
+    },
+    {
+      "id": "L-054",
+      "key": "weak_test::an http proof that fixes a status code compares http code curl f also passes on a redirect",
+      "text": "An HTTP proof that fixes a status code compares %{http_code}; curl -f also passes on a redirect.",
+      "signal": "weak_test",
+      "scope": "ci",
+      "status": "candidate",
+      "features": [
+        "github-pages"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "C8 (ci)"
+      ],
+      "created": "2026-11-09T02:32:16Z",
+      "last_seen": "2026-11-09T02:32:16Z"
+    },
+    {
+      "id": "L-055",
+      "key": "ac_gap::when tests inject a value by hand add a check that the composition root really passes it",
+      "text": "When tests inject a value by hand, add a check that the composition root really passes it.",
+      "signal": "ac_gap",
+      "scope": "",
+      "status": "candidate",
+      "features": [
+        "github-pages"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "C17"
+      ],
+      "created": "2026-11-09T02:32:16Z",
+      "last_seen": "2026-11-09T02:32:16Z"
+    },
+    {
+      "id": "L-056",
+      "key": "weak_test::a criterion that says every x needs a test that walks every x not just the default one",
+      "text": "A criterion that says every X needs a test that walks every X, not just the default one.",
+      "signal": "weak_test",
+      "scope": "",
+      "status": "candidate",
+      "features": [
+        "github-pages"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "C5"
+      ],
+      "created": "2026-11-09T02:32:16Z",
+      "last_seen": "2026-11-09T02:32:16Z"
+    },
+    {
+      "id": "L-057",
+      "key": "gate_fail::run every test suite once in the ci image before relying on it ubuntu latest lacks tools the dev machine has such as ffmpeg",
+      "text": "Run every test suite once in the CI image before relying on it: ubuntu-latest lacks tools the dev machine has, such as ffmpeg.",
+      "signal": "gate_fail",
+      "scope": "ci",
+      "status": "candidate",
+      "features": [
+        "github-pages"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "GHP-08 (ci)"
+      ],
+      "created": "2026-11-09T02:32:16Z",
+      "last_seen": "2026-11-09T02:32:16Z"
     }
   ]
 }
