@@ -1,6 +1,6 @@
 # GitHub Pages verification
 
-**Verdict**: FAIL
+**Verdict**: PASS - 6 findings closed in 687bc6b
 **Proofs**: `proofs.md` at 3a76502
 **Verifier**: independent sub-agent (author != verifier)
 
@@ -30,12 +30,12 @@
 
 | Finding | Evidence | Fix | Closed |
 | --- | --- | --- | --- |
-| A dispatch from another branch builds that branch; "the head of `main`" (GHP-06) is held only by the `github-pages` environment's branch policy, outside the repo, and no check names it | `deploy.yml` checks out `github.ref` with no `ref: main` and no `if:` on `deploy`; `gh api .../environments/github-pages` shows `custom_branch_policies: true` with one policy `main`; C10's test asserts only `/^  workflow_dispatch:/m` | pin the build to `main` in the workflow (`ref: main` on both checkouts, or `if: github.ref == 'refs/heads/main'` on the jobs) and assert it in C10's test, or add a check on the environment's branch policy via `gh api` || 687bc6b C10 |
-| C12 passes on a workflow that deploys after a failing test | `deploy.test.ts` `runs()`/`block()` read only `run:` lines and `needs:`; `continue-on-error: true` on `npm run test:js`, or `if: always()` on `build`, keeps it green | assert that no job or step in `test`, `build`, `deploy` carries `continue-on-error` or an `if:` || 687bc6b C12 |
-| C9 passes with a path filter on `push` | `block(on, 'push')` is matched only against `/branches: \[main\]/` | assert the `push` block is exactly `branches: [main]` (no `paths`, `paths-ignore`, `tags`) || 687bc6b C9 |
-| C8 accepts a redirect where GHP-04 fixes 200 | `curl -sfo /dev/null` exits 0 on 3xx; `curl` on `https://dmartinsid.github.io/MetroRig` answers 301 | compare `curl -so /dev/null -w '%{http_code}'` to `200` for each path || 687bc6b C8 |
-| No check proves the app hands the Session `import.meta.env.BASE_URL`; C5/C6 inject the base by hand, C8 curls static files, so dropping `assetBase` in `src/main.ts` would keep every check green while the live app fetches `/kit/...` | `src/main.ts` `assetBase: import.meta.env.BASE_URL`; the test `asset paths > the composition root hands the Session the base Vite serves from` exists in `tests/assets.test.ts` but no check selects it | name that test in a check for GHP-02 || 687bc6b C17 |
-| C5 proves "every pad sample" on the default timbre only | `padFiles = PAD_TIMBRES[DEFAULT_TIMBRE].files`; Choir, of Choir, New Age, Orchestra, Sweep | switch through every sampled timbre in the test and assert each one's `padLoad` URLs under `/MetroRig/` || 687bc6b C5 |
+| A dispatch from another branch builds that branch; "the head of `main`" (GHP-06) is held only by the `github-pages` environment's branch policy, outside the repo, and no check names it | `deploy.yml` checks out `github.ref` with no `ref: main` and no `if:` on `deploy`; `gh api .../environments/github-pages` shows `custom_branch_policies: true` with one policy `main`; C10's test asserts only `/^  workflow_dispatch:/m` | pin the build to `main` in the workflow (`ref: main` on both checkouts, or `if: github.ref == 'refs/heads/main'` on the jobs) and assert it in C10's test, or add a check on the environment's branch policy via `gh api` | 687bc6b C10 |
+| C12 passes on a workflow that deploys after a failing test | `deploy.test.ts` `runs()`/`block()` read only `run:` lines and `needs:`; `continue-on-error: true` on `npm run test:js`, or `if: always()` on `build`, keeps it green | assert that no job or step in `test`, `build`, `deploy` carries `continue-on-error` or an `if:` | 687bc6b C12 |
+| C9 passes with a path filter on `push` | `block(on, 'push')` is matched only against `/branches: \[main\]/` | assert the `push` block is exactly `branches: [main]` (no `paths`, `paths-ignore`, `tags`) | 687bc6b C9 |
+| C8 accepts a redirect where GHP-04 fixes 200 | `curl -sfo /dev/null` exits 0 on 3xx; `curl` on `https://dmartinsid.github.io/MetroRig` answers 301 | compare `curl -so /dev/null -w '%{http_code}'` to `200` for each path | 687bc6b C8 |
+| No check proves the app hands the Session `import.meta.env.BASE_URL`; C5/C6 inject the base by hand, C8 curls static files, so dropping `assetBase` in `src/main.ts` would keep every check green while the live app fetches `/kit/...` | `src/main.ts` `assetBase: import.meta.env.BASE_URL`; the test `asset paths > the composition root hands the Session the base Vite serves from` exists in `tests/assets.test.ts` but no check selects it | name that test in a check for GHP-02 | 687bc6b C17 |
+| C5 proves "every pad sample" on the default timbre only | `padFiles = PAD_TIMBRES[DEFAULT_TIMBRE].files`; Choir, of Choir, New Age, Orchestra, Sweep | switch through every sampled timbre in the test and assert each one's `padLoad` URLs under `/MetroRig/` | 687bc6b C5 |
 
 Own examples, run at 3a76502 as a throwaway vitest file, then deleted. All held:
 - `withBase('', '/kit/ride.wav')` gives `/kit/ride.wav`; `withBase('/a/b/', …)` gives `/a/b/kit/ride.wav`; `withBase('/MetroRig/', 'kit/ride.wav')` (no leading slash) gives `/MetroRig/kit/ride.wav`; `withBase('/MetroRig//', '//kit/ride.wav')` gives `/MetroRig/kit/ride.wav`; `./` and an absolute `https://` base join correctly.
