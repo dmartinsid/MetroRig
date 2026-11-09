@@ -3,3 +3,6 @@
 export function withBase(base: string, path: string): string {
   return `${base.replace(/\/+$/, '')}/${path.replace(/^\/+/, '')}`;
 }
+
+// The engine, which `npm run build:wasm` copies to public/pkg/
+export const ENGINE_WASM = '/pkg/metrorig_audio_bg.wasm';

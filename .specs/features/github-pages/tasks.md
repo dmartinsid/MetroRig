@@ -119,8 +119,8 @@ T3 → T4 → T5 → T6
 
 **Done when**:
 
-- [ ] `tests/assets.test.ts` passes, and fails naming the file when a literal `'/pkg/...wasm'` is put back in `src/main.ts`
-- [ ] Gate check passes: `npx vitest run`
+- [x] `tests/assets.test.ts` passes, and fails naming the file when a literal `'/pkg/...wasm'` is put back in `src/main.ts`
+- [x] Gate check passes: `npx vitest run`
 
 **Tests**: unit
 **Gate**: quick

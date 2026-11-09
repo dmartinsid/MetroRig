@@ -9,6 +9,7 @@ import { mount as mountStadium } from './ui/stadium';
 import { mount as mountGrooves } from './ui/grooves';
 import { mount as mountImprov } from './ui/improv';
 import workletUrl from './audio/metronome-processor?url';
+import { ENGINE_WASM } from './domain/assets';
 
 const audioNode = new MetronomeNode();
 const session = new Session({
@@ -16,8 +17,9 @@ const session = new Session({
   state: new StateManager(),
   prefs: browserPreferences,
   dialogs: { confirm: message => confirm(message) },
-  wasmUrl: '/pkg/metrorig_audio_bg.wasm', // Compiled through Vite's public folder
+  wasmUrl: ENGINE_WASM,
   workletUrl,
+  assetBase: import.meta.env.BASE_URL, // `/` on the dev server, `/MetroRig/` in the build
 });
 
 mountHeader(session);
