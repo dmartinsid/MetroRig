@@ -196,8 +196,8 @@ T3 → T4 → T7 → T5 → T6
 
 **Done when**:
 
-- [ ] `tests/docs.test.ts` checks the link sits above `## Features`
-- [ ] Gate check passes: `npm run build && npx vitest run && npm run test:rust`
+- [x] `tests/docs.test.ts` checks the link sits above `## Features`
+- [x] Gate check passes: `npm run build && npx vitest run && npm run test:rust`
 
 **Tests**: unit
 **Gate**: build

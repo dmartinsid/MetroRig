@@ -54,4 +54,11 @@ describe('Docs', () => {
     expect(entry).toContain('tests/layers.test.ts');
     expect(entry).toMatch(/^- \*\*Status\*\*: active \(AD-028\)$/m);
   });
+
+  it('README links the live site above its features', () => {
+    const text = read('README.md');
+    const link = text.indexOf('(https://dmartinsid.github.io/MetroRig/)');
+    expect(link).toBeGreaterThan(-1);
+    expect(link).toBeLessThan(text.indexOf('## Features'));
+  });
 });

@@ -2,6 +2,8 @@
 
 MetroRig is a modern, high-fidelity Web-based 16-step sequencer, metronome, and practice tool. It uses a low-latency Rust DSP audio engine compiled to WebAssembly (WASM) running inside an AudioWorklet thread to guarantee rock-solid timing accuracy.
 
+**Try it live: [dmartinsid.github.io/MetroRig](https://dmartinsid.github.io/MetroRig/)**
+
 ## Features
 
 - **High-Accuracy Audio**: WebAssembly-powered DSP core rendering samples directly inside Web Audio's process loop.
@@ -62,7 +64,9 @@ To build the app for production (pre-compiling the WebAssembly and bundling reso
 ```bash
 npm run build
 ```
-The production assets will be output to the `dist/` directory.
+The production assets will be output to the `dist/` directory, built to be served from `/MetroRig/`.
+
+Every push to `main` runs `.github/workflows/deploy.yml`: it runs both test suites, builds the engine and the site, and publishes `dist/` to GitHub Pages.
 
 ## Troubleshooting & Browser Security
 
