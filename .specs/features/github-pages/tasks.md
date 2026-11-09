@@ -238,7 +238,7 @@ Proof: run unit | ✓ tests/app/session.test.ts > Session > asset base > fetches
 Proof: run unit | ✓ tests/assets.test.ts > asset paths > only the Session resolves asset paths
 
 **C8** - After the deploy, the page, `pkg/metrorig_audio_bg.wasm` and `kit/ride.wav` each answer 200 at `https://dmartinsid.github.io/MetroRig/` (GHP-04, AC 4)
-Proof: `for p in '' pkg/metrorig_audio_bg.wasm kit/ride.wav; do curl -sfo /dev/null "https://dmartinsid.github.io/MetroRig/$p" || exit 1; done`
+Proof: `for p in '' pkg/metrorig_audio_bg.wasm kit/ride.wav; do test "$(curl -s -o /dev/null -w '%{http_code}' "https://dmartinsid.github.io/MetroRig/$p")" = 200 || exit 1; done`
 
 **C9** - The workflow runs on a push to `main` (GHP-05, AC 1)
 Proof: run unit | ✓ tests/deploy.test.ts > deploy workflow > deploys on every push to main
@@ -263,6 +263,9 @@ Proof: `test "$(gh repo view dmartinsid/MetroRig --json homepageUrl -q .homepage
 
 **C16** - The build emits the worklet as JavaScript holding `registerProcessor`, and no `.ts` file (GHP-12, AC 5)
 Proof: `npx vite build --logLevel error && grep -q registerProcessor dist/assets/metronome-processor-*.js && ! ls dist/assets/*.ts 2>/dev/null`
+
+**C17** - `src/main.ts` hands the Session `import.meta.env.BASE_URL` as its asset base (GHP-02, AC 2)
+Proof: run unit | ✓ tests/assets.test.ts > asset paths > the composition root hands the Session the base Vite serves from
 
 ---
 

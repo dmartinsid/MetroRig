@@ -10,6 +10,7 @@ permissions:
   pages: write
   id-token: write
 
+# A run started by hand, from any branch, deploys the head of main
 # One deploy at a time; a newer push waits for the running one instead of cancelling it
 concurrency:
   group: pages
@@ -20,6 +21,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && 'refs/heads/main' || github.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -35,6 +38,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && 'refs/heads/main' || github.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22

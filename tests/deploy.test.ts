@@ -22,7 +22,10 @@ const uses = (jobText: string) => [...jobText.matchAll(/^\s+(?:- )?uses: ([^@\s]
 describe('deploy workflow', () => {
   it('deploys on every push to main', () => {
     const on = block(text, 'on');
-    expect(block(on, 'push', '  ')).toMatch(/branches: \[main\]/);
+    const push = block(on, 'push', '  ');
+    expect(push).toMatch(/branches: \[main\]/);
+    // No filter leaves a push to main undeployed
+    expect(push).not.toMatch(/paths|paths-ignore|tags|branches-ignore/);
     expect(uses(job('deploy'))).toEqual(['actions/deploy-pages']);
     expect(job('deploy')).toMatch(/name: github-pages/);
     expect(block(text, 'permissions')).toMatch(/pages: write/);
@@ -31,6 +34,12 @@ describe('deploy workflow', () => {
 
   it('deploys when started by hand', () => {
     expect(block(text, 'on')).toMatch(/^  workflow_dispatch:/m);
+    // A run started from any branch tests and builds the head of main; a push builds the commit pushed
+    for (const name of ['test', 'build']) {
+      const checkout = job(name).split('\n').findIndex(line => /uses: actions\/checkout@/.test(line));
+      expect(job(name).split('\n').slice(checkout + 1, checkout + 3).join('\n'))
+        .toMatch(/with:\n\s+ref: \$\{\{ github\.event_name == 'workflow_dispatch' && 'refs\/heads\/main' \|\| github\.sha \}\}$/);
+    }
   });
 
   it('compiles the engine before it builds the site', () => {
@@ -55,6 +64,8 @@ describe('deploy workflow', () => {
     expect(job('build')).toMatch(/^    needs: test$/m);
     expect(job('deploy')).toMatch(/^    needs: build$/m);
     expect(runs(job('deploy'))).toEqual([]);
+    // Nothing lets a failed step or job through to the deploy
+    expect(text).not.toMatch(/continue-on-error|^\s+if:/m);
   });
 
   it('queues a newer deploy behind a running one', () => {

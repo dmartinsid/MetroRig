@@ -364,7 +364,8 @@ describe('Session', () => {
     });
   });
   describe('asset base', () => {
-    // Play loads the kit, a sampled click loads its file, and the Improv screen loads the default timbre
+    // Play loads the kit, a sampled click loads its file, the Improv screen loads the default timbre,
+    // and choosing each other timbre loads its files
     async function loadEverything(assetBase?: string) {
       const fixture = setup({ assetBase });
       fixture.session.togglePlay();
@@ -372,6 +373,10 @@ describe('Session', () => {
       await fixture.session.setClickSound('woodblock');
       fixture.session.setView('improv');
       await flush();
+      for (const { name } of PAD_TIMBRES.filter((_, timbre) => timbre !== DEFAULT_TIMBRE)) {
+        fixture.session.setTimbre(name);
+        await flush();
+      }
       return fixture.engine;
     }
     const urlsOf = (engine: FakeEngine) => ({
@@ -383,7 +388,9 @@ describe('Session', () => {
     });
     const kitSamples = TRACKS.flatMap(track => (track.sample ? [track.sample] : []));
     const kitTakes = TRACKS.flatMap(track => takesOf(track).map(({ url }) => url));
-    const padFiles = PAD_TIMBRES[DEFAULT_TIMBRE].files.map(({ url }) => url);
+    // In load order: the default timbre first, then the others as they are chosen
+    const padFiles = [DEFAULT_TIMBRE, ...PAD_TIMBRES.keys()].filter((timbre, i, all) => all.indexOf(timbre) === i)
+      .flatMap(timbre => PAD_TIMBRES[timbre].files.map(({ url }) => url));
 
     it('fetches every asset under /MetroRig/', async () => {
       const urls = urlsOf(await loadEverything('/MetroRig/'));
@@ -394,7 +401,11 @@ describe('Session', () => {
       expect(urls.takes).toEqual(kitTakes.map(url => '/MetroRig' + url));
       expect(urls.pads).toEqual(padFiles.map(url => '/MetroRig' + url));
       expect(kitTakes.length).toBeGreaterThan(0);
-      expect(padFiles.length).toBeGreaterThan(0);
+      // Every sampled timbre is among them
+      for (const { name, files } of PAD_TIMBRES) {
+        expect(files.every(({ url }) => urls.pads.includes('/MetroRig' + url)), name).toBe(true);
+      }
+      expect(new Set(padFiles.map(url => url.split('/')[2])).size).toBe(4);
     });
 
     it('fetches every asset under / by default', async () => {
