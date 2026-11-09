@@ -177,8 +177,8 @@ T3 → T4 → T7 → T5 → T6
 
 **Done when**:
 
-- [ ] `tests/deploy.test.ts` holds one test per GHP-05..09
-- [ ] Gate check passes: `npx vitest run && npm run build`
+- [x] `tests/deploy.test.ts` holds one test per GHP-05..09
+- [x] Gate check passes: `npx vitest run && npm run build`
 
 **Tests**: unit
 **Gate**: full
