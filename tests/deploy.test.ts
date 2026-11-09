@@ -46,7 +46,12 @@ describe('deploy workflow', () => {
   });
 
   it('deploys only after both test suites pass', () => {
-    expect(runs(job('test'))).toEqual(expect.arrayContaining(['npm run test:js', 'npm run test:rust']));
+    const tests = runs(job('test'));
+    expect(tests).toEqual(expect.arrayContaining(['npm run test:js', 'npm run test:rust']));
+    // The pad tests decode the banks with ffmpeg and ffprobe, which the runner image does not ship
+    const ffmpeg = tests.findIndex(command => /apt-get install .*\bffmpeg\b/.test(command));
+    expect(ffmpeg).toBeGreaterThan(-1);
+    expect(ffmpeg).toBeLessThan(tests.indexOf('npm run test:rust'));
     expect(job('build')).toMatch(/^    needs: test$/m);
     expect(job('deploy')).toMatch(/^    needs: build$/m);
     expect(runs(job('deploy'))).toEqual([]);
