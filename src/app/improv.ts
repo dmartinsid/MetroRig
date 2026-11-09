@@ -3,6 +3,7 @@ import type { EnginePort, Preferences } from './ports';
 
 // What Improv asks of the Session it serves
 export interface ImprovHost {
+  asset(path: string): string; // A path from the site root, as the engine must fetch it
   startEngine(): Promise<void>;
   sendPadVolume(): void;
   changed(): void;
@@ -79,10 +80,11 @@ export class Improv {
       const failed: PadFile[] = [];
       this.engine.padLoadBegin(timbre);
       for (const file of load.toLoad) {
+        const url = this.host.asset(file.url);
         try {
-          await this.engine.padLoad(timbre, file.key, file.url, file.loopStart, file.loopEnd);
+          await this.engine.padLoad(timbre, file.key, url, file.loopStart, file.loopEnd);
         } catch (err) {
-          console.error(`Failed to load ${file.url}:`, err);
+          console.error(`Failed to load ${url}:`, err);
           failed.push(file);
         }
       }

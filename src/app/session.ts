@@ -1,3 +1,4 @@
+import { withBase } from '../domain/assets';
 import type { ChordId } from '../domain/chords';
 import { TRACKS, nextStepValue } from '../domain/kit';
 import { measureLengthFor, timeSignatureOf } from '../domain/meter';
@@ -44,8 +45,9 @@ export interface SessionOptions {
   state: StateManager;
   prefs: Preferences;
   dialogs: Dialogs;
-  wasmUrl: string;
-  workletUrl: string;
+  wasmUrl: string; // From the site root, placed under assetBase
+  workletUrl: string; // Used as given: Vite's ?url import already carries the base
+  assetBase?: string; // Where the site is served from, `/` by default
 }
 
 // Every rule the page runs, behind the commands the screens call. The engine and the storage come in as arguments
@@ -84,19 +86,22 @@ export class Session {
   readonly trainerPresets = SPEED_TRAINER_PRESETS;
   readonly factoryGrooves = FACTORY_GROOVES;
 
-  constructor({ engine, state, prefs, dialogs, wasmUrl, workletUrl }: SessionOptions) {
+  constructor({ engine, state, prefs, dialogs, wasmUrl, workletUrl, assetBase = '/' }: SessionOptions) {
     this.engine = engine;
     this.state = state;
     this.prefs = prefs;
     this.dialogs = dialogs;
     this.clickSound = prefs.get('clickSound') || 'digital';
-    this.transport = new Transport(engine, { wasmUrl, workletUrl }, {
+    const asset = (path: string) => withBase(assetBase, path);
+    this.transport = new Transport(engine, { wasmUrl: asset(wasmUrl), workletUrl }, {
+      asset,
       preset: () => this.state.activePreset,
       mix: this.mix,
       clickSound: () => this.clickSound,
       padVolume: () => this.improv.padVolume,
     });
     this.improv = new Improv(engine, prefs, {
+      asset,
       startEngine: () => this.transport.startEngine(),
       sendPadVolume: () => this.transport.sendPadVolume(),
       changed: () => this.emit('improv'),

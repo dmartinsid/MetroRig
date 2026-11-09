@@ -6,6 +6,7 @@ import type { EnginePort } from './ports';
 
 // What the transport reads from the Session it serves
 export interface TransportHost {
+  asset(path: string): string; // A path from the site root, as the engine must fetch it
   preset(): Preset;
   mix: TrackMix;
   clickSound(): string;
@@ -47,9 +48,13 @@ export class Transport {
   private async loadKit() {
     const loads: { url: string; load: Promise<void> }[] = [];
     for (const track of TRACKS) {
-      if (track.sample) loads.push({ url: track.sample, load: this.engine.loadSample(track.id, track.sample) });
+      if (track.sample) {
+        const url = this.host.asset(track.sample);
+        loads.push({ url, load: this.engine.loadSample(track.id, url) });
+      }
       if (track.bank) {
-        for (const { dynamic, take, url } of takesOf(track)) {
+        for (const { dynamic, take, url: path } of takesOf(track)) {
+          const url = this.host.asset(path);
           loads.push({ url, load: this.engine.loadTake(track.id, dynamic, take, url, track.bank.trim) });
         }
       }
@@ -117,7 +122,7 @@ export class Transport {
     } else {
       const loadId = ++this.activeClickLoadId;
       try {
-        await this.engine.loadSample(0, `/${sound}.wav`);
+        await this.engine.loadSample(0, this.host.asset(`/${sound}.wav`));
         if (loadId === this.activeClickLoadId) {
           this.engine.setClickMode(1);
         }

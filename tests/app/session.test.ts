@@ -8,7 +8,7 @@ import type { PreferenceKey, PreferenceStore } from '../../src/storage/preferenc
 import type { CustomGroove, PracticeLog, Preset, TrainerSettings } from '../../src/domain/preset';
 import { FACTORY_PRESETS } from '../../src/data/factory';
 import { SONGS, songToPreset } from '../../src/domain/songs';
-import { TRACKS } from '../../src/domain/kit';
+import { TRACKS, takesOf } from '../../src/domain/kit';
 import { DEFAULT_TIMBRE, PAD_TIMBRES, timbreNotes } from '../../src/domain/chords';
 
 // --- Fakes: the engine records every call, the storage lives in memory ---
@@ -73,7 +73,7 @@ class MemoryPreferences implements PreferenceStore {
   set(key: PreferenceKey, value: string) { this.values.set(key, value); }
 }
 
-function setup({ confirm = true }: { confirm?: boolean } = {}) {
+function setup({ confirm = true, assetBase }: { confirm?: boolean; assetBase?: string } = {}) {
   const engine = new FakeEngine();
   const database = new MemoryDatabase();
   const prefs = new MemoryPreferences();
@@ -85,6 +85,7 @@ function setup({ confirm = true }: { confirm?: boolean } = {}) {
     dialogs: { confirm: message => { questions.push(message); return confirm; } },
     wasmUrl: '/engine.wasm',
     workletUrl: '/worklet.js',
+    ...(assetBase === undefined ? {} : { assetBase }),
   });
   return { session, engine, database, prefs, questions };
 }
@@ -360,6 +361,51 @@ describe('Session', () => {
     expect([...database.grooves.values()].map(groove => groove.name)).toEqual(['Beat']);
     expect(Object.fromEntries(prefs.values)).toEqual({
       clickSound: 'woodblock', viewMode: 'improv', padVolume: '30',
+    });
+  });
+  describe('asset base', () => {
+    // Play loads the kit, a sampled click loads its file, and the Improv screen loads the default timbre
+    async function loadEverything(assetBase?: string) {
+      const fixture = setup({ assetBase });
+      fixture.session.togglePlay();
+      await flush();
+      await fixture.session.setClickSound('woodblock');
+      fixture.session.setView('improv');
+      await flush();
+      return fixture.engine;
+    }
+    const urlsOf = (engine: FakeEngine) => ({
+      wasm: engine.sent('init').map(([wasmUrl]) => wasmUrl),
+      worklet: engine.sent('init').map(([, workletUrl]) => workletUrl),
+      samples: engine.sent('loadSample').map(([, url]) => url),
+      takes: engine.sent('loadTake').map(([, , , url]) => url),
+      pads: engine.sent('padLoad').map(([, , url]) => url),
+    });
+    const kitSamples = TRACKS.flatMap(track => (track.sample ? [track.sample] : []));
+    const kitTakes = TRACKS.flatMap(track => takesOf(track).map(({ url }) => url));
+    const padFiles = PAD_TIMBRES[DEFAULT_TIMBRE].files.map(({ url }) => url);
+
+    it('fetches every asset under /MetroRig/', async () => {
+      const urls = urlsOf(await loadEverything('/MetroRig/'));
+
+      expect(urls.wasm).toEqual(['/MetroRig/engine.wasm']);
+      expect(urls.worklet).toEqual(['/worklet.js']); // Vite's ?url import already carries the base
+      expect(urls.samples).toEqual([...kitSamples.map(url => '/MetroRig' + url), '/MetroRig/woodblock.wav']);
+      expect(urls.takes).toEqual(kitTakes.map(url => '/MetroRig' + url));
+      expect(urls.pads).toEqual(padFiles.map(url => '/MetroRig' + url));
+      expect(kitTakes.length).toBeGreaterThan(0);
+      expect(padFiles.length).toBeGreaterThan(0);
+    });
+
+    it('fetches every asset under / by default', async () => {
+      const urls = urlsOf(await loadEverything());
+
+      expect(urls.wasm).toEqual(['/engine.wasm']);
+      expect(urls.samples).toEqual([...kitSamples, '/woodblock.wav']);
+      expect(urls.takes).toEqual(kitTakes);
+      expect(urls.pads).toEqual(padFiles);
+      const all = [...urls.wasm, ...urls.samples, ...urls.takes, ...urls.pads];
+      expect(all.every(url => url.startsWith('/') && !url.startsWith('//') && !url.startsWith('/MetroRig/'))).toBe(true);
     });
   });
 });

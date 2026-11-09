@@ -99,9 +99,9 @@ T3 → T4 → T5 → T6
 
 **Done when**:
 
-- [ ] With `assetBase: '/MetroRig/'`, every URL in `init`, `loadSample`, `loadTake` and `padLoad` starts with `/MetroRig/`
-- [ ] With no `assetBase`, the same URLs start with `/` and never with `//` or `/MetroRig/`
-- [ ] Gate check passes: `npx vitest run`
+- [x] With `assetBase: '/MetroRig/'`, every URL in `init`, `loadSample`, `loadTake` and `padLoad` starts with `/MetroRig/`
+- [x] With no `assetBase`, the same URLs start with `/` and never with `//` or `/MetroRig/`
+- [x] Gate check passes: `npx vitest run`
 
 **Tests**: unit
 **Gate**: quick
