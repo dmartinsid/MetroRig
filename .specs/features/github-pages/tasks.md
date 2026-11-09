@@ -138,9 +138,9 @@ T3 → T4 → T5 → T6
 
 **Done when**:
 
-- [ ] `tests/viteConfig.test.ts` asserts both bases
-- [ ] `dist/index.html` and the emitted worklet reference `/MetroRig/assets/`
-- [ ] Gate check passes: `npx vitest run && npm run build`
+- [x] `tests/viteConfig.test.ts` asserts both bases
+- [x] `dist/index.html` and the emitted worklet reference `/MetroRig/assets/`
+- [x] Gate check passes: `npx vitest run && npm run build`
 
 **Tests**: unit
 **Gate**: full

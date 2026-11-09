@@ -1,6 +1,8 @@
 import { defineConfig } from 'vite';
 
-export default defineConfig({
+// GitHub Pages serves the build from https://dmartinsid.github.io/MetroRig/; the dev server stays at the root
+export default defineConfig(({ command }) => ({
+  base: command === 'build' ? '/MetroRig/' : '/',
   server: {
     port: 3000,
     headers: {
@@ -11,4 +13,4 @@ export default defineConfig({
   build: {
     assetsInlineLimit: 0
   }
-});
+}));
