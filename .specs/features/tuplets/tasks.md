@@ -173,12 +173,13 @@ T19 → T20 → T21 → T22
 
 **Done when**:
 
-- [ ] Tests for a tuplet preset surviving normalize and `completeKit`, an old preset unchanged, and a malformed layout falling back
-- [ ] Gate check passes: `npx vitest run`
+- [x] Tests for a tuplet preset surviving normalize and `completeKit`, an old preset unchanged, and a malformed layout falling back
+- [x] Gate check passes: `npx vitest run`
 
 **Tests**: unit
 **Gate**: quick
 **Commit**: `feat(domain): keep a preset's tuplet beats`
+**Status**: Done
 
 ---
 

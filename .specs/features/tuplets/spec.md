@@ -194,8 +194,8 @@ MetroRig's grid knows one subdivision: every step is a sixteenth, in the app and
 | TUP-24 | P1: Read tuplets | Design | Pending |
 | TUP-25 | P2: Keep tuplets | Design | Pending |
 | TUP-26 | P2: Keep tuplets | Design | Pending |
-| TUP-27 | P2: Keep tuplets | Design | Pending |
-| TUP-28 | P2: Keep tuplets | Design | Pending |
+| TUP-27 | P2: Keep tuplets | Design | Implementing |
+| TUP-28 | P2: Keep tuplets | Design | Implementing |
 | TUP-29 | P2: Keep tuplets | Design | Pending |
 | TUP-30 | P2: Keep tuplets | Design | Pending |
 | TUP-31 | P2: Keep tuplets | Design | Pending |
