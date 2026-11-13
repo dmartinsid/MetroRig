@@ -108,6 +108,11 @@ impl Engine {
         self.pattern.set_bars(bars);
     }
 
+    // Each cell's length in twelfths of a sixteenth; a layout that does not fit the bars is refused
+    pub fn set_step_units(&mut self, units: &[u8]) {
+        self.pattern.set_step_units(units);
+    }
+
     pub fn set_click_mode(&mut self, mode: u32) {
         self.click.set_mode(mode);
     }
@@ -148,7 +153,8 @@ impl Engine {
             }
         }
 
-        // Update step index
+        // The cell that sounded sets the wait for the next one
+        self.clock.set_step_units(self.pattern.units());
         self.pattern.advance();
     }
 
@@ -468,5 +474,142 @@ mod tests {
         assert_eq!(buf_r2[0], -0.2 * 0.5);
         assert_eq!(buf_l2[1], 0.4 * 0.5);
         assert_eq!(buf_r2[1], -0.4 * 0.5);
+    }
+
+    // --- Tuplets: each cell waits its own length (AD-029) ---
+
+    // A 4/4 bar's units with the given beats as cells: 4 straight (12), 3 triplet (16), 6 sextuplet (8)
+    fn units_of(beats: &[usize]) -> Vec<u8> {
+        beats.iter().flat_map(|&cells| std::iter::repeat((48 / cells) as u8).take(cells)).collect()
+    }
+
+    // An engine with a one-sample click on the given cells of a 4/4 bar laid out by `beats`
+    fn click_engine(bpm: f64, beats: &[usize], clicks: &[usize]) -> Engine {
+        let mut engine = Engine::new(44100.0);
+        engine.set_bpm(bpm);
+        engine.load_sample(0, &[1.0], &[1.0]);
+        engine.set_click_mode(1);
+        click_layout(&mut engine, beats, clicks);
+        engine
+    }
+
+    fn click_layout(engine: &mut Engine, beats: &[usize], clicks: &[usize]) {
+        let units = units_of(beats);
+        engine.set_step_units(&units);
+        let mut grid = vec![0u8; units.len()];
+        for &cell in clicks {
+            grid[cell] = 2;
+        }
+        engine.update_grid(0, &grid);
+    }
+
+    // The frames that sound, counted from `offset`
+    fn onsets(engine: &mut Engine, frames: usize, offset: usize) -> Vec<usize> {
+        let mut left = vec![0.0f32; frames];
+        let mut right = vec![0.0f32; frames];
+        engine.fill_buffers(&mut left, &mut right);
+        (0..frames).filter(|&i| left[i] != 0.0).map(|i| i + offset).collect()
+    }
+
+    fn assert_onsets(actual: &[usize], ideal: &[f64]) {
+        assert_eq!(actual.len(), ideal.len(), "onsets {:?}, ideal {:?}", actual, ideal);
+        for (&got, &want) in actual.iter().zip(ideal) {
+            assert!((got as f64 - want).abs() <= 1.0, "onset {} is more than 1 sample from {}", got, want);
+        }
+    }
+
+    fn beat_samples(bpm: f64) -> f64 {
+        44100.0 * 60.0 / bpm
+    }
+
+    #[test]
+    fn tup_12_triplet_cells_start_at_thirds() {
+        for bpm in [120.0, 137.0] {
+            let beat = beat_samples(bpm);
+            let mut engine = click_engine(bpm, &[4, 3, 4, 4], &[4, 5, 6]);
+            engine.start();
+            let heard = onsets(&mut engine, (8.0 * beat) as usize + 10, 0);
+            // Beat 2 of two bars: at 120 BPM, 0.5 s, 0.6667 s and 0.8333 s into each bar
+            let ideal: Vec<f64> = (0..2).flat_map(|bar| (0..3).map(move |k| bar as f64 * 4.0 * beat + beat + k as f64 * beat / 3.0)).collect();
+            assert_onsets(&heard, &ideal);
+        }
+    }
+
+    #[test]
+    fn tup_13_sextuplet_cells_start_at_sixths() {
+        for bpm in [120.0, 137.0] {
+            let beat = beat_samples(bpm);
+            let mut engine = click_engine(bpm, &[4, 6, 4, 4], &[4, 5, 6, 7, 8, 9, 10]);
+            engine.start();
+            let heard = onsets(&mut engine, (8.0 * beat) as usize + 10, 0);
+            // Beat 2's six cells, then beat 3's first, which starts on the beat again
+            let ideal: Vec<f64> = (0..2)
+                .flat_map(|bar| (0..7).map(move |k| bar as f64 * 4.0 * beat + beat + k as f64 * beat / 6.0))
+                .collect();
+            assert_onsets(&heard, &ideal);
+        }
+    }
+
+    #[test]
+    fn tup_16_trainer_counts_a_tuplet_bar_once() {
+        let mut engine = Engine::new(44100.0);
+        engine.set_bars(2);
+        // Each bar holds a triplet and a sextuplet: 17 cells, so bars start at cells 0 and 17
+        engine.set_step_units(&[units_of(&[3, 6, 4, 4]), units_of(&[3, 6, 4, 4])].concat());
+        engine.start();
+        engine.trainer.settings.enabled = true;
+        engine.trainer.settings.start_bpm = 120.0;
+        engine.trainer.settings.target_bpm = 130.0;
+        engine.trainer.settings.increment = 5.0;
+        engine.trainer.settings.step_type = StepType::Bars;
+        engine.trainer.settings.step_value = 2.0;
+        engine.trainer.settings.curve = Curve::Stepped;
+
+        // Trigger 1 opens the run; triggers 18 and 35 end bars 1 and 2, so 35 plays at the new tempo
+        for trigger in 1..=34 {
+            engine.trigger_step();
+            assert_eq!(engine.clock.bpm, 120.0, "trigger {}", trigger);
+        }
+        engine.trigger_step();
+        assert_eq!(engine.clock.bpm, 125.0);
+        for trigger in 36..=68 {
+            engine.trigger_step();
+            assert_eq!(engine.clock.bpm, 125.0, "trigger {}", trigger);
+        }
+        engine.trigger_step();
+        assert_eq!(engine.clock.bpm, 130.0);
+    }
+
+    #[test]
+    fn tup_40_new_units_play_from_the_next_pass() {
+        let beat = beat_samples(120.0);
+        let sixteenth = beat / 4.0;
+        let mut engine = click_engine(120.0, &[4, 4, 4, 4], &[0, 4, 5, 6, 7]);
+        engine.start();
+
+        // Pass 1 plays beat 2 as sixteenths; beat 2 is re-laid as a triplet during beat 3
+        let first = onsets(&mut engine, 60000, 0);
+        assert_onsets(&first, &[0.0, beat, beat + sixteenth, beat + 2.0 * sixteenth, beat + 3.0 * sixteenth]);
+        click_layout(&mut engine, &[4, 3, 4, 4], &[0, 4, 5, 6]);
+
+        // The next pass plays beat 2 at thirds of the beat, counted from that pass's first cell
+        let next = onsets(&mut engine, 90000, 60000);
+        assert_eq!(next.len(), 4, "onsets {:?}", next);
+        let bar = next[0] as f64;
+        assert_onsets(&next[1..], &[bar + beat, bar + beat + beat / 3.0, bar + beat + 2.0 * beat / 3.0]);
+    }
+
+    #[test]
+    fn straight_cells_wait_exactly_one_step() {
+        let mut engine = Engine::new(44100.0);
+        engine.set_bpm(137.0);
+        let step = engine.clock.samples_per_step;
+        engine.set_step_units(&units_of(&[4, 4, 4, 4]));
+        engine.clock.set_step_units(12);
+        assert_eq!(engine.clock.step_length, step);
+        engine.clock.set_step_units(16);
+        assert_eq!(engine.clock.step_length, step * (16.0 / 12.0));
+        engine.set_bpm(90.0); // A tempo change keeps the cell's factor
+        assert_eq!(engine.clock.step_length, engine.clock.samples_per_step * (16.0 / 12.0));
     }
 }
