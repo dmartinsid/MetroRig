@@ -168,17 +168,17 @@ MetroRig's grid knows one subdivision: every step is a sixteenth, in the app and
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| TUP-01 | P1: Write tuplets | Design | Pending |
-| TUP-02 | P1: Write tuplets | Design | Pending |
-| TUP-03 | P1: Write tuplets | Design | Pending |
-| TUP-04 | P1: Write tuplets | Design | Pending |
-| TUP-05 | P1: Write tuplets | Design | Pending |
+| TUP-01 | P1: Write tuplets | Design | Implementing |
+| TUP-02 | P1: Write tuplets | Design | Implementing |
+| TUP-03 | P1: Write tuplets | Design | Implementing |
+| TUP-04 | P1: Write tuplets | Design | Implementing |
+| TUP-05 | P1: Write tuplets | Design | Implementing |
 | TUP-06 | P1: Write tuplets | Design | Implementing |
 | TUP-07 | P1: Write tuplets | Design | Implementing |
 | TUP-08 | P1: Write tuplets | Design | Implementing |
 | TUP-09 | P1: Write tuplets | Design | Pending |
 | TUP-10 | P1: Write tuplets | Design | Pending |
-| TUP-11 | P1: Write tuplets | Design | Pending |
+| TUP-11 | P1: Write tuplets | Design | Implementing |
 | TUP-12 | P1: Hear tuplets | Design | Implementing |
 | TUP-13 | P1: Hear tuplets | Design | Implementing |
 | TUP-14 | P1: Hear tuplets | Design | Pending |
@@ -206,7 +206,7 @@ MetroRig's grid knows one subdivision: every step is a sixteenth, in the app and
 | TUP-36 | P1: Train songs | Design | Pending |
 | TUP-37 | P1: Train songs | Design | Pending |
 | TUP-38 | P1: Train songs | Design | Pending |
-| TUP-39 | Edge cases | Design | Pending |
+| TUP-39 | Edge cases | Design | Implementing |
 | TUP-40 | Edge cases | Design | Pending |
 
 **Coverage:** 40 total, 0 mapped to tasks, 40 unmapped ⚠️ (tasks not yet written)
