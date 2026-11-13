@@ -362,6 +362,24 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: tests/app/session.test.ts TMP-14 (C14) (domain)
 - last seen: 2026-11-13T00:54:24Z
 
+### L-059 - Test each event that clears a stored state without another call that clears it too
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `app` · harmful: 0
+- features: stadium-tempo
+- evidence: tests/app/session.test.ts TMP-15 (C15) (app)
+- last seen: 2026-11-13T02:07:07Z
+
+### L-060 - Clear cached engine readings at Stop and on a preset load
+- signal: `ac_gap` · recurrence: 1 feature(s) · scope: `app` · harmful: 0
+- features: stadium-tempo
+- evidence: src/app/session.ts lastTick (C15) (app)
+- last seen: 2026-11-13T02:07:07Z
+
+### L-061 - Prove a rule fed by the page through a page test, not only on hand-built inputs
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `ui` · harmful: 0
+- features: stadium-tempo
+- evidence: src/ui/stadium.ts key target (C7) (ui)
+- last seen: 2026-11-13T02:07:07Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

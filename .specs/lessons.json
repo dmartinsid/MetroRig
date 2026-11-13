@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 59,
+  "next_id": 62,
   "lessons": [
     {
       "id": "L-001",
@@ -1049,6 +1049,60 @@
       ],
       "created": "2026-11-13T00:54:24Z",
       "last_seen": "2026-11-13T00:54:24Z"
+    },
+    {
+      "id": "L-059",
+      "key": "weak_test::test each event that clears a stored state without another call that clears it too",
+      "text": "Test each event that clears a stored state without another call that clears it too",
+      "signal": "weak_test",
+      "scope": "app",
+      "status": "candidate",
+      "features": [
+        "stadium-tempo"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "tests/app/session.test.ts TMP-15 (C15) (app)"
+      ],
+      "created": "2026-11-13T02:07:07Z",
+      "last_seen": "2026-11-13T02:07:07Z"
+    },
+    {
+      "id": "L-060",
+      "key": "ac_gap::clear cached engine readings at stop and on a preset load",
+      "text": "Clear cached engine readings at Stop and on a preset load",
+      "signal": "ac_gap",
+      "scope": "app",
+      "status": "candidate",
+      "features": [
+        "stadium-tempo"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "src/app/session.ts lastTick (C15) (app)"
+      ],
+      "created": "2026-11-13T02:07:07Z",
+      "last_seen": "2026-11-13T02:07:07Z"
+    },
+    {
+      "id": "L-061",
+      "key": "weak_test::prove a rule fed by the page through a page test not only on hand built inputs",
+      "text": "Prove a rule fed by the page through a page test, not only on hand-built inputs",
+      "signal": "weak_test",
+      "scope": "ui",
+      "status": "candidate",
+      "features": [
+        "stadium-tempo"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "src/ui/stadium.ts key target (C7) (ui)"
+      ],
+      "created": "2026-11-13T02:07:07Z",
+      "last_seen": "2026-11-13T02:07:07Z"
     }
   ]
 }
