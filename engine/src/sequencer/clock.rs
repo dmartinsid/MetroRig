@@ -3,6 +3,8 @@ pub struct Clock {
     sample_rate: f32,
     pub(crate) bpm: f64,
     pub(crate) samples_per_step: f64,
+    step_scale: f64, // The cell that sounded, in sixteenths: 1.0 straight, 4/3 triplet, 2/3 sextuplet
+    pub(crate) step_length: f64, // samples_per_step scaled to that cell
     samples_in_current_step: f64,
     first_hit: bool, // The next hit opens a run, so no measure has finished
 }
@@ -13,6 +15,8 @@ impl Clock {
             sample_rate,
             bpm: 120.0,
             samples_per_step: 0.0,
+            step_scale: 1.0,
+            step_length: 0.0,
             samples_in_current_step: 0.0,
             first_hit: false,
         };
@@ -31,6 +35,13 @@ impl Clock {
     pub fn set_bpm(&mut self, bpm: f64) {
         self.bpm = bpm;
         self.recalc_tempo();
+    }
+
+    // The length of the cell that just sounded, in twelfths of a sixteenth. A straight cell's factor is
+    // exactly 1.0, so a pattern with no tuplet keeps its timing sample for sample
+    pub fn set_step_units(&mut self, units: u8) {
+        self.step_scale = units as f64 / 12.0;
+        self.step_length = self.samples_per_step * self.step_scale;
     }
 
     pub fn start(&mut self) {
@@ -53,8 +64,8 @@ impl Clock {
             return true;
         }
         self.samples_in_current_step += 1.0;
-        if self.samples_in_current_step >= self.samples_per_step {
-            self.samples_in_current_step -= self.samples_per_step;
+        if self.samples_in_current_step >= self.step_length {
+            self.samples_in_current_step -= self.step_length;
             return true;
         }
         false
@@ -67,5 +78,6 @@ impl Clock {
         // Samples per step = sample_rate / steps_per_second
         let steps_per_second = (self.bpm / 60.0) * 4.0;
         self.samples_per_step = self.sample_rate as f64 / steps_per_second;
+        self.step_length = self.samples_per_step * self.step_scale;
     }
 }

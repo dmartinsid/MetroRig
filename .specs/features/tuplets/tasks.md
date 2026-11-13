@@ -213,12 +213,13 @@ T19 → T20 → T21 → T22
 
 **Done when**:
 
-- [ ] Rust tests for triplet onsets at k/3 and sextuplet at k/6 within 1 sample, the Trainer counting a tuplet bar once, a change of units taking effect on the next pass, and every golden test unchanged
-- [ ] Gate check passes: `cargo test --manifest-path engine/Cargo.toml`
+- [x] Rust tests for triplet onsets at k/3 and sextuplet at k/6 within 1 sample, the Trainer counting a tuplet bar once, a change of units taking effect on the next pass, and every golden test unchanged
+- [x] Gate check passes: `cargo test --manifest-path engine/Cargo.toml`
 
 **Tests**: unit
 **Gate**: rust
 **Commit**: `feat(engine): play triplet and sextuplet cells in time`
+**Status**: Done
 
 ---
 

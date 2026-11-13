@@ -181,7 +181,7 @@ MetroRig's grid knows one subdivision: every step is a sixteenth, in the app and
 | TUP-11 | P1: Write tuplets | Design | Implementing |
 | TUP-12 | P1: Hear tuplets | Design | Implementing |
 | TUP-13 | P1: Hear tuplets | Design | Implementing |
-| TUP-14 | P1: Hear tuplets | Design | Pending |
+| TUP-14 | P1: Hear tuplets | Design | Implementing |
 | TUP-15 | P1: Hear tuplets | Design | Implementing |
 | TUP-16 | P1: Hear tuplets | Design | Implementing |
 | TUP-17 | P1: Room for sextuplets | Design | Implementing |
@@ -207,7 +207,7 @@ MetroRig's grid knows one subdivision: every step is a sixteenth, in the app and
 | TUP-37 | P1: Train songs | Design | Pending |
 | TUP-38 | P1: Train songs | Design | Pending |
 | TUP-39 | Edge cases | Design | Implementing |
-| TUP-40 | Edge cases | Design | Pending |
+| TUP-40 | Edge cases | Design | Implementing |
 
 **Coverage:** 40 total, 0 mapped to tasks, 40 unmapped ⚠️ (tasks not yet written)
 
