@@ -37,6 +37,15 @@ NORMALIZE = [
     (r'\}\.(bank|fading)\b', r'}.drums.\1'),
 ]
 
+# The kept assertions a later decision rewrote, each named: (suite, test, assertion at 591f031 after NORMALIZE, assertion now).
+# AD-029 / TUP-17 (tuplets, Q21): a pattern holds 192 cells, not 128, so the grid refused past it is 193 steps long.
+# Only these lines of these tests may differ; every other kept assertion still matches 591f031's.
+REWRITES = [
+    ('rust', 'tests::holds_128_steps',
+     'assert_eq!(unsafe { &*run.ptr }.pattern.tracks[1].steps[127], 2)',
+     'assert_eq!(unsafe { &*run.ptr }.pattern.tracks[1].steps[191], 2)'),
+]
+
 
 def rust_results():
     """Each Rust test's full path and whether it passed."""
@@ -239,6 +248,14 @@ def normalized(lines):
     return out
 
 
+def rewritten(suite, name, lines):
+    """The assertions with the REWRITES named for that test applied."""
+    for rewrite_suite, test, old, new in REWRITES:
+        if rewrite_suite == suite and test == name:
+            lines = [new if line == old else line for line in lines]
+    return lines
+
+
 def changed_assertions(suite):
     """Kept tests whose assertions differ from 591f031's, or that hold none to compare."""
     recorded = json.loads(ASSERTIONS.read_text())[suite]
@@ -246,7 +263,7 @@ def changed_assertions(suite):
     changed = []
     for name, lines in recorded.items():
         match = matching_name(name, head)
-        if match is None or head[match] != normalized(lines):
+        if match is None or head[match] != rewritten(suite, name, normalized(lines)):
             changed.append(name)
     return changed
 

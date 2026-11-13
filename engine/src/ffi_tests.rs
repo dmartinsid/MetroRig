@@ -1618,10 +1618,10 @@ fn fewer_bars_return_a_late_step_to_the_start() {
 #[test]
 fn holds_128_steps() {
     let run = Run::new(120.0, &[0; 16]);
-    let mut grid = [0u8; 128];
-    grid[127] = 2;
+    let mut grid = [0u8; 192];
+    grid[191] = 2;
     engine_update_grid(run.ptr, 1, grid.as_ptr(), grid.len());
-    assert_eq!(unsafe { &*run.ptr }.pattern.tracks[1].steps[127], 2);
+    assert_eq!(unsafe { &*run.ptr }.pattern.tracks[1].steps[191], 2);
 
     // One bar stops at 32 steps, however long the pattern may grow
     engine_set_measure_length(run.ptr, 32);
@@ -1629,9 +1629,9 @@ fn holds_128_steps() {
     engine_set_measure_length(run.ptr, 33);
     assert_eq!(unsafe { &*run.ptr }.pattern.measure_length, 32);
 
-    let too_long = [0u8; 129];
+    let too_long = [0u8; 193];
     engine_update_grid(run.ptr, 1, too_long.as_ptr(), too_long.len());
-    assert_eq!(unsafe { &*run.ptr }.pattern.tracks[1].steps[127], 2);
+    assert_eq!(unsafe { &*run.ptr }.pattern.tracks[1].steps[191], 2);
 }
 
 #[test]
