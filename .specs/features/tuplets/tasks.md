@@ -113,12 +113,13 @@ T19 → T20 → T21 → T22
 
 **Done when**:
 
-- [ ] Tests for straight→triplet, triplet→straight, triplet→sextuplet, sextuplet→triplet, a clash of accent and ghost, the Click hit on the beat start, and other bars untouched
-- [ ] Gate check passes: `npx vitest run`
+- [x] Tests for straight→triplet, triplet→straight, triplet→sextuplet, sextuplet→triplet, a clash of accent and ghost, the Click hit on the beat start, and other bars untouched
+- [x] Gate check passes: `npx vitest run`
 
 **Tests**: unit
 **Gate**: quick
 **Commit**: `feat(domain): move hits to the nearest cell when a beat changes kind`
+**Status**: Done
 
 ---
 
