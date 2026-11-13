@@ -1,6 +1,6 @@
 # stadium-tempo proofs
 
-**HEAD**: 321c015
+**HEAD**: fa71c7e
 **Tree**: clean
 **Shell**: /bin/sh
 **Result**: 16 pass, 0 fail
