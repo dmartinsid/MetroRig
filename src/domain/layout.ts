@@ -86,3 +86,38 @@ export function cellSpan(p: Layout, bar: number, inBar: number): [number, number
 export function stepUnits(p: Layout): Uint8Array {
   return Uint8Array.from(Array.from({ length: barsOf(p) }, (_, bar) => barUnits(p, bar)).flat());
 }
+
+const STRENGTH: Record<number, number> = { 0: 0, 3: 1, 1: 2, 2: 3 }; // Empty < ghost < normal < accent
+
+// The new cell whose start lies nearest old cell k's, the earlier on a tie: of n cells, cell k starts at k/n of the beat
+function nearestCell(k: number, from: number, to: number): number {
+  let best = 0;
+  for (let j = 1; j < to; j++) {
+    if (Math.abs(j * from - k * to) < Math.abs(best * from - k * to)) best = j;
+  }
+  return best;
+}
+
+// Re-lays one beat of one bar as cells on every track: each hit moves to the nearest new cell,
+// and on a clash the stronger stays. beatCells is dropped once every beat is straight again
+export function setBeatCells(p: Layout & { gridData: Record<number, number[]> }, bar: number, beat: number, cells: number): void {
+  if (!isTupletSignature(p.timeSignature)) return;
+  const beats = barBeatCells(p, bar);
+  const from = beats[beat];
+  if (from === undefined || from === cells) return;
+
+  const start = barOffset(p, bar) + beats.slice(0, beat).reduce((sum, n) => sum + n, 0);
+  for (const [trackId, steps] of Object.entries(p.gridData)) {
+    const moved = new Array(cells).fill(0);
+    steps.slice(start, start + from).forEach((value, k) => {
+      const j = nearestCell(k, from, cells);
+      if ((STRENGTH[value] ?? 0) > STRENGTH[moved[j]]) moved[j] = value;
+    });
+    p.gridData[Number(trackId)] = [...steps.slice(0, start), ...moved, ...steps.slice(start + from)];
+  }
+
+  const layout = Array.from({ length: barsOf(p) }, (_, b) => barBeatCells(p, b));
+  layout[bar][beat] = cells;
+  if (layout.every(barBeats => barBeats.every(n => n === 4))) delete p.beatCells;
+  else p.beatCells = layout;
+}
