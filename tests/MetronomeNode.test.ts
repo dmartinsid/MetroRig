@@ -110,6 +110,17 @@ describe('MetronomeNode', () => {
     expect(mockWorkletNode.port.postMessage).toHaveBeenCalledWith({ type: 'SET_BARS', bars: 4 });
   });
 
+  it('tup_12 posts the cell lengths to the worklet', () => {
+    const node = new MetronomeNode();
+    const mockWorkletNode = new MockAudioWorkletNode();
+    (node as any).workletNode = mockWorkletNode;
+    const units = new Uint8Array([16, 16, 16, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12]);
+
+    node.setStepUnits(units);
+
+    expect(mockWorkletNode.port.postMessage).toHaveBeenCalledWith({ type: 'SET_STEP_UNITS', units });
+  });
+
   it('should post message to worklet when setMeasureLength is called', () => {
     const node = new MetronomeNode();
     const mockWorkletNode = new MockAudioWorkletNode();

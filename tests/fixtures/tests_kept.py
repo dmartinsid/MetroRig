@@ -45,6 +45,13 @@ REWRITES = [
     ('rust', 'tests::holds_128_steps',
      'assert_eq!(unsafe { &*run.ptr }.pattern.tracks[1].steps[127], 2)',
      'assert_eq!(unsafe { &*run.ptr }.pattern.tracks[1].steps[191], 2)'),
+    # The worklet mirrors the engine's 192 cells (T9), so it sends grids of 192 steps
+    ('js', 'Worklet > reports every track of the kit on a tick',
+     'expect(engine.exports.engine_update_grid).toHaveBeenCalledWith(1, 10, expect.any(Number), 128);',
+     'expect(engine.exports.engine_update_grid).toHaveBeenCalledWith(1, 10, expect.any(Number), 192);'),
+    ('js', 'Worklet > reports tracks 11 and 12 on a tick',
+     'expect(engine.exports.engine_update_grid).toHaveBeenCalledWith(1, 12, expect.any(Number), 128);',
+     'expect(engine.exports.engine_update_grid).toHaveBeenCalledWith(1, 12, expect.any(Number), 192);'),
 ]
 
 

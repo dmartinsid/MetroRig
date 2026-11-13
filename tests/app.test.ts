@@ -30,6 +30,7 @@ vi.mock('../src/audio/MetronomeNode', () => {
       setBpm = recorded('setBpm');
       setMeasureLength = recorded('setMeasureLength');
       setBars = recorded('setBars');
+      setStepUnits = recorded('setStepUnits');
       restartPattern = recorded('restartPattern');
       updateGrid = recorded('updateGrid');
       setTrainer = recorded('setTrainer');

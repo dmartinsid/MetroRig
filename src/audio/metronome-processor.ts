@@ -8,6 +8,7 @@ interface WasmEngineExports {
   engine_set_bpm(ptr: number, bpm: number): void;
   engine_set_measure_length(ptr: number, length: number): void;
   engine_set_bars(ptr: number, bars: number): void;
+  engine_set_step_units(ptr: number, unitsPtr: number, length: number): void;
   engine_restart_pattern(ptr: number): void;
   engine_load_sample(ptr: number, sampleId: number, leftPtr: number, rightPtr: number, length: number): void;
   engine_load_take(
@@ -66,7 +67,7 @@ interface WasmEngineExports {
 
 // The worklet is served on its own, so it cannot import src/kit.ts
 const TRACK_COUNT = 13;
-const PATTERN_STEPS = 128; // STEPS_COUNT in src/lib.rs
+const PATTERN_STEPS = 192; // STEPS_COUNT in engine/src/sequencer/pattern.rs
 
 class MetronomeProcessor extends AudioWorkletProcessor {
   private enginePtr: number = 0;
@@ -153,6 +154,15 @@ class MetronomeProcessor extends AudioWorkletProcessor {
       case 'SET_BARS':
         exports.engine_set_bars(this.enginePtr, msg.bars);
         break;
+      case 'SET_STEP_UNITS': {
+        // Each cell's length in twelfths of a sixteenth: 12 straight, 16 triplet, 8 sextuplet
+        const units: Uint8Array = msg.units;
+        const ptr = exports.engine_alloc(units.length);
+        new Uint8Array(exports.memory.buffer).set(units, ptr);
+        exports.engine_set_step_units(this.enginePtr, ptr, units.length);
+        exports.engine_free_buf(ptr, units.length);
+        break;
+      }
       case 'UPDATE_GRID': {
         const { trackId, steps } = msg;
         const length = PATTERN_STEPS;

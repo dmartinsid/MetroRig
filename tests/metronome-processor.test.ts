@@ -35,6 +35,7 @@ function fakeEngine() {
       engine_start: vi.fn(),
       engine_set_bpm: vi.fn(),
       engine_set_bars: vi.fn(),
+      engine_set_step_units: vi.fn(),
       engine_restart_pattern: vi.fn(),
       engine_set_trainer: vi.fn(),
       engine_replace_trainer: vi.fn(),
@@ -160,7 +161,7 @@ describe('Worklet', () => {
 
     const tick = processor.port.postMessage.mock.calls.find(([msg]) => msg.type === 'TICK')!;
     expect(tick[0].activeTrackIds).toEqual([1, 8, 10]);
-    expect(engine.exports.engine_update_grid).toHaveBeenCalledWith(1, 10, expect.any(Number), 128);
+    expect(engine.exports.engine_update_grid).toHaveBeenCalledWith(1, 10, expect.any(Number), 192);
   });
 
   it('reports tracks 11 and 12 on a tick', async () => {
@@ -175,7 +176,7 @@ describe('Worklet', () => {
 
     const tick = processor.port.postMessage.mock.calls.find(([msg]) => msg.type === 'TICK')!;
     expect(tick[0].activeTrackIds).toEqual([11, 12]);
-    expect(engine.exports.engine_update_grid).toHaveBeenCalledWith(1, 12, expect.any(Number), 128);
+    expect(engine.exports.engine_update_grid).toHaveBeenCalledWith(1, 12, expect.any(Number), 192);
   });
 
   it('sends a LOAD_TAKE message to engine_load_take with its samples in the heap', async () => {
@@ -225,6 +226,53 @@ describe('Worklet', () => {
     const { send } = await startProcessor(engine);
     send({ type: 'SET_BARS', bars: 4 });
     expect(engine.exports.engine_set_bars).toHaveBeenCalledWith(1, 4);
+  });
+
+  it('tup_12 sends SET_STEP_UNITS to the engine with the units in the heap', async () => {
+    const engine = fakeEngine();
+    let heard: number[] = [];
+    engine.exports.engine_set_step_units.mockImplementation((_ptr: number, unitsPtr: number, length: number) => {
+      heard = Array.from(new Uint8Array(engine.exports.memory.buffer, unitsPtr, length));
+    });
+    const { send } = await startProcessor(engine);
+    const units = new Uint8Array([12, 12, 12, 12, 16, 16, 16, 8, 8, 8, 8, 8, 8, 12, 12, 12, 12]);
+
+    send({ type: 'SET_STEP_UNITS', units });
+
+    expect(engine.exports.engine_set_step_units).toHaveBeenCalledWith(1, expect.any(Number), 17);
+    expect(heard).toEqual([...units]);
+    expect(engine.exports.engine_free_buf).toHaveBeenCalledWith(expect.any(Number), 17);
+  });
+
+  it('tup_12 calls the shipped engine_set_step_units with the arguments it takes', async () => {
+    const wasm = fs.readFileSync(path.resolve(__dirname, '../public/pkg/metrorig_audio_bg.wasm'));
+    const shipped = new WebAssembly.Instance(new WebAssembly.Module(wasm)).exports as Record<string, Function>;
+    const engine = fakeEngine();
+    const { send } = await startProcessor(engine);
+    send({ type: 'SET_STEP_UNITS', units: new Uint8Array([16, 16, 16]) });
+    expect(engine.exports.engine_set_step_units.mock.calls[0]).toHaveLength(shipped.engine_set_step_units.length);
+  });
+
+  it('tup_17 mirrors a grid of 192 cells and reports a tick on the last', async () => {
+    const engine = fakeEngine();
+    engine.tickOnBlocks = new Set([1]);
+    engine.tickStep = 191;
+    let sent: number[] = [];
+    engine.exports.engine_update_grid.mockImplementation((_ptr: number, _track: number, stepsPtr: number, length: number) => {
+      sent = Array.from(new Uint8Array(engine.exports.memory.buffer, stepsPtr, length));
+    });
+    const { processor, send, runBlock } = await startProcessor(engine);
+
+    const steps = new Uint8Array(192);
+    steps[191] = 2;
+    send({ type: 'UPDATE_GRID', trackId: 4, steps });
+    runBlock();
+
+    expect(engine.exports.engine_update_grid).toHaveBeenCalledWith(1, 4, expect.any(Number), 192);
+    expect(sent[191]).toBe(2);
+    const tick = processor.port.postMessage.mock.calls.find(([msg]) => msg.type === 'TICK')!;
+    expect(tick[0].beatIndex).toBe(191);
+    expect(tick[0].activeTrackIds).toEqual([4]);
   });
 
   it('rt_02 reuses heap views', async () => {
