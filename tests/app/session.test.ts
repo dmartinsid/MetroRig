@@ -420,3 +420,123 @@ describe('Session', () => {
     });
   });
 });
+
+describe('Stadium tempo', () => {
+  const onStadium = () => {
+    const fixture = setup();
+    fixture.session.setView('stadium');
+    return fixture;
+  };
+  const press = (session: Session, key: string, options: { modifier?: boolean; inTextField?: boolean } = {}) =>
+    session.pressTempoKey(key, { modifier: options.modifier ?? false, inTextField: options.inTextField ?? false });
+
+  it('TMP-03 the raising keys step the tempo up 1 BPM each on the Stadium', () => {
+    const { session } = onStadium();
+    expect(press(session, '+')).toBe(true);
+    expect(session.preset.bpm).toBe(121);
+    expect(press(session, '=')).toBe(true);
+    expect(session.preset.bpm).toBe(122);
+  });
+
+  it('TMP-04 the lowering key steps the tempo down 1 BPM on the Stadium', () => {
+    const { session } = onStadium();
+    expect(press(session, '-')).toBe(true);
+    expect(session.preset.bpm).toBe(119);
+  });
+
+  it('TMP-05 a key with Ctrl or Cmd leaves the tempo', () => {
+    const { session } = onStadium();
+    ['+', '=', '-'].forEach(key => expect(press(session, key, { modifier: true })).toBe(false));
+    expect(session.preset.bpm).toBe(120);
+    expect(session.hasUnsavedEdits).toBe(false);
+  });
+
+  it('TMP-06 the keys leave the tempo on the other screens', () => {
+    const { session } = setup();
+    (['editor', 'grooves', 'improv'] as const).forEach(view => {
+      session.setView(view);
+      ['+', '=', '-'].forEach(key => expect(press(session, key)).toBe(false));
+    });
+    expect(session.preset.bpm).toBe(120);
+    expect(session.hasUnsavedEdits).toBe(false);
+  });
+
+  it('TMP-07 the keys leave the tempo while a text field has focus', () => {
+    const { session } = onStadium();
+    ['+', '=', '-'].forEach(key => expect(press(session, key, { inTextField: true })).toBe(false));
+    expect(session.preset.bpm).toBe(120);
+  });
+
+  it('TMP-08 the tempo stops at 240', () => {
+    const { session } = onStadium();
+    session.setBpm(239);
+    expect(session.canStepBpm(1)).toBe(true);
+    session.stepBpm(1);
+    expect(session.preset.bpm).toBe(240);
+    expect(session.canStepBpm(1)).toBe(false);
+    session.stepBpm(1);
+    press(session, '+');
+    expect(session.preset.bpm).toBe(240);
+    expect(session.canStepBpm(-1)).toBe(true);
+  });
+
+  it('TMP-09 the tempo stops at 40', () => {
+    const { session } = onStadium();
+    session.setBpm(41);
+    session.stepBpm(-1);
+    expect(session.preset.bpm).toBe(40);
+    expect(session.canStepBpm(-1)).toBe(false);
+    session.stepBpm(-1);
+    press(session, '-');
+    expect(session.preset.bpm).toBe(40);
+    expect(session.canStepBpm(1)).toBe(true);
+  });
+
+  it('TMP-10 an enabled Trainer locks the tempo steps', () => {
+    const { session } = onStadium();
+    const changes: string[] = [];
+    session.subscribe(change => changes.push(change));
+    session.setTrainer(trainer);
+    expect(changes).toContain('trainer');
+    expect(session.canStepBpm(1)).toBe(false);
+    expect(session.canStepBpm(-1)).toBe(false);
+    session.stepBpm(1);
+    press(session, '+');
+    press(session, '-');
+    expect(session.preset.bpm).toBe(120);
+
+    session.setTrainer({ ...trainer, enabled: false });
+    expect(session.canStepBpm(1)).toBe(true);
+    session.stepBpm(1);
+    expect(session.preset.bpm).toBe(121);
+  });
+
+  it('TMP-11 a step during playback reaches the engine at once', async () => {
+    const { session, engine } = setup();
+    session.setView('stadium');
+    session.togglePlay();
+    await flush();
+    engine.calls.length = 0;
+    session.stepBpm(1);
+    expect(engine.sent('setBpm')).toEqual([[121]]);
+    press(session, '-');
+    expect(engine.sent('setBpm')).toEqual([[121], [120]]);
+  });
+
+  it('TMP-12 a step marks the preset edited', () => {
+    const { session } = onStadium();
+    expect(session.hasUnsavedEdits).toBe(false);
+    session.stepBpm(-1);
+    expect(session.hasUnsavedEdits).toBe(true);
+  });
+
+  it('TMP-14 a step from a fractional tempo rounds in its direction', () => {
+    const { session } = onStadium();
+    session.setBpm(120.4);
+    session.stepBpm(1);
+    expect(session.preset.bpm).toBe(121);
+    session.setBpm(120.4);
+    session.stepBpm(-1);
+    expect(session.preset.bpm).toBe(120);
+  });
+});
