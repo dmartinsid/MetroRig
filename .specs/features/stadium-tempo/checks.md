@@ -63,4 +63,4 @@ Proof: run unit | ✓ tests/app/session.test.ts > Stadium tempo > TMP-14 a step 
 
 **Settled mid-build:** none
 **Dispatched:** none
-**Walked:** not yet
+**Walked:** P1 at http://localhost:5317/ (`npx vite`), no sign-in or data: header link `Stadium`, two clicks on `+` and the `-` key read 121.0 on the Stadium and 121 on the header number, slider and slider label. The first walk found the buttons overflowing the panel at 1853 px, fixed by `fix(stadium): keep the tempo buttons inside the panel`; after it, at 390, 768, 1024 and 1853 px both buttons sit inside the panel with no sideways scroll, and the number shrinks to fit (62 px at 390, 141 px at 1853)
