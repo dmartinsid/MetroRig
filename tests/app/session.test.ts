@@ -546,45 +546,74 @@ describe('Stadium tempo', () => {
   });
 
   it('TMP-15 a step after the Trainer is turned off during playback starts from the ramp\'s tempo', async () => {
+    const { session, engine } = setup();
     const live = (bpm: number) =>
       engine.dispatchEvent(new CustomEvent('tick', { detail: { beatIndex: 0, currentBpm: bpm, activeTrackIds: [] } }));
-    const { session, engine } = setup();
+    const play = async () => { session.togglePlay(); await flush(); };
+    const rampTo = (bpm: number, settings: TrainerSettings = trainer) => {
+      session.setTrainer(settings);
+      live(bpm);
+      session.setTrainer({ ...settings, enabled: false });
+    };
     session.setView('stadium');
-    session.setTrainer(trainer); // Starts at 90
-    expect(session.preset.bpm).toBe(120);
-    session.togglePlay();
-    await flush();
+    session.setTrainer(trainer); // Starts at 90, the preset holds 120
+    await play();
 
-    live(163.4); // The ramp has climbed
-    session.setTrainer({ ...trainer, enabled: false });
+    // Up and down from where the ramp got to
+    rampTo(163.4);
     engine.calls.length = 0;
-    press(session, '+');
+    expect(press(session, '+')).toBe(true);
     expect(session.preset.bpm).toBe(164);
     expect(engine.sent('setBpm')).toEqual([[164]]);
-
-    // The same moment again, stepping down
-    session.setTrainer(trainer);
-    live(163.4);
-    session.setTrainer({ ...trainer, enabled: false });
+    rampTo(163.4);
     session.stepBpm(-1);
     expect(session.preset.bpm).toBe(163);
 
-    // At a bound the ramp's tempo decides too
-    session.setTrainer(trainer);
-    live(239.6);
-    session.setTrainer({ ...trainer, enabled: false });
-    expect(session.canStepBpm(1)).toBe(true);
+    // The bound is judged on the ramp's tempo too
+    const toTheTop = { ...trainer, targetBpm: 240 };
+    rampTo(240, toTheTop);
+    expect(session.canStepBpm(1)).toBe(false);
+    expect(press(session, '+')).toBe(false);
+    expect(session.preset.bpm).toBe(163);
+    expect(session.canStepBpm(-1)).toBe(true);
+    session.stepBpm(-1);
+    expect(session.preset.bpm).toBe(239);
+
+    // Stop forgets the ramp: the next Play runs the preset's own tempo
+    rampTo(163.4);
+    await play(); // Stop
     session.stepBpm(1);
     expect(session.preset.bpm).toBe(240);
-    expect(session.canStepBpm(1)).toBe(false);
-
-    // Stop hands the tempo back to the preset
-    session.setTrainer(trainer);
-    live(150.2);
-    session.setTrainer({ ...trainer, enabled: false });
-    session.togglePlay();
-    await flush();
     session.setBpm(120);
+    await play();
+    session.stepBpm(1);
+    expect(session.preset.bpm).toBe(121);
+
+    // Turned off while stopped, nothing was ramping
+    await play(); // Stop
+    session.setTrainer(trainer);
+    session.setTrainer({ ...trainer, enabled: false });
+    session.stepBpm(1);
+    expect(session.preset.bpm).toBe(122);
+
+    // A tick from an earlier run is not this run's tempo: the engine restarted at the Trainer's 90
+    session.setTrainer(trainer);
+    await play();
+    live(163.4);
+    await play(); // Stop
+    await play();
+    session.setTrainer({ ...trainer, enabled: false }); // Before this run's first tick
+    session.stepBpm(1);
+    expect(session.preset.bpm).toBe(91);
+
+    // A preset load moves the engine to its own start tempo, and forgets an earlier ramp
+    rampTo(163.4);
+    session.loadPreset('factory:trainer_calvagada_148_190');
+    session.setTrainer({ ...session.preset.trainerSettings, enabled: false }); // Before its first tick
+    session.stepBpm(1);
+    expect(session.preset.bpm).toBe(149);
+    rampTo(163.4);
+    session.loadPreset('factory:rock'); // No Trainer, 120 BPM
     session.stepBpm(1);
     expect(session.preset.bpm).toBe(121);
   });
