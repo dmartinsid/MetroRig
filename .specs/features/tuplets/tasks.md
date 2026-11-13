@@ -193,12 +193,13 @@ T19 → T20 → T21 → T22
 
 **Done when**:
 
-- [ ] Rust tests for bar starts over a tuplet bar, 48 cells in one bar, 192 in four, and each refusal
-- [ ] Gate check passes: `cargo test --manifest-path engine/Cargo.toml`
+- [x] Rust tests for bar starts over a tuplet bar, 48 cells in one bar, 192 in four, and each refusal
+- [x] Gate check passes: `cargo test --manifest-path engine/Cargo.toml`
 
 **Tests**: unit
 **Gate**: rust
 **Commit**: `feat(engine): give each cell its own length in the pattern`
+**Status**: Done
 
 ---
 
