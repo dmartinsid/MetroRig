@@ -88,7 +88,7 @@
 - **Trade-off**: Code that walks a whole pattern must use `patternLength`, not `measureLength`.
 - **Scope**: every pattern, engine included
 - **Date**: 2026-11-01
-- **Status**: active (AD-011)
+- **Status**: superseded by AD-029
 
 ### AD-012
 - **Decision**: MetroRig has 13 tracks. `Mid Tom` (id 11) and `Low Tom` (id 12) sit between `High Tom` and `Floor Tom` in the grid, and join `SNARE/TOMS` in the Stadium. Existing ids do not change.
@@ -228,3 +228,11 @@
 - **Scope**: layered-architecture; `src/`, `engine/src/`, `tests/layers.test.ts`
 - **Date**: 2026-11-04
 - **Status**: active (AD-028)
+
+### AD-029
+- **Decision**: A bar is a list of beats, and in /4 each beat holds 4, 3 or 6 cells: straight, triplet or sextuplet. `measureLength` stays the straight sixteenths of one bar, the signature's length. The optional `beatCells` holds each bar's cells per beat, and `gridData` holds every bar's cells in order. With no `beatCells` every beat is straight, and a pattern is `bars` × `measureLength` cells, as AD-011 had it. The engine plays each cell for its length in twelfths of a sixteenth: 12, 16 or 8.
+- **Reason**: Q20: "Layout por compasso e passos de duração variável no motor, com um AD-029 substituindo o AD-011". The user answered "Recomendacoes". Tuplets belong to one beat of one bar (Q1), so bars of one pattern differ in cells. A straight cell's factor of exactly 1.0 keeps every existing pattern's output sample for sample.
+- **Trade-off**: Code that walks a pattern asks `src/domain/layout.ts` for a bar's cells, never `bar × measureLength`.
+- **Scope**: tuplets; every pattern, engine included. Supersedes AD-011
+- **Date**: 2026-11-13
+- **Status**: active (AD-029)
