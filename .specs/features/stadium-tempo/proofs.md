@@ -1,9 +1,9 @@
 # stadium-tempo proofs
 
-**HEAD**: a456bbe
+**HEAD**: ca4dd14
 **Tree**: clean
 **Shell**: /bin/sh
-**Result**: 15 pass, 0 fail
+**Result**: 16 pass, 0 fail
 
 | Check | Proof | Result |
 | --- | --- | --- |
@@ -21,6 +21,7 @@
 | C12 | `run unit / ✓ tests/app/session.test.ts > Stadium tempo > TMP-12 a step marks the preset edited` | pass |
 | C13 | `run unit / ✓ tests/app.test.ts > Stadium tempo > TMP-13 a Stadium step moves the header number and slider` | pass |
 | C14 | `run unit / ✓ tests/app/session.test.ts > Stadium tempo > TMP-14 a step from a fractional tempo rounds in its d` | pass |
+| C15 | `run unit / ✓ tests/app/session.test.ts > Stadium tempo > TMP-15 a step after the Trainer is turned off during ` | pass |
 | Build | `npm run build` | pass |
 
 ## Output
