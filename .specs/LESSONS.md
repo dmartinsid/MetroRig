@@ -356,6 +356,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: GHP-08 (ci)
 - last seen: 2026-11-09T02:32:16Z
 
+### L-058 - Test a rounding rule on a fraction both below and above one half
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `domain` · harmful: 0
+- features: stadium-tempo
+- evidence: tests/app/session.test.ts TMP-14 (C14) (domain)
+- last seen: 2026-11-13T00:54:24Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
