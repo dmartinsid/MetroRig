@@ -133,12 +133,13 @@ T19 → T20 → T21 → T22
 
 **Done when**:
 
-- [ ] Tests for each of the four figures, a straight figure on a tuplet beat, one bar of four edited, and a tuplet figure in 6/8 changing nothing
-- [ ] Gate check passes: `npx vitest run`
+- [x] Tests for each of the four figures, a straight figure on a tuplet beat, one bar of four edited, and a tuplet figure in 6/8 changing nothing
+- [x] Gate check passes: `npx vitest run`
 
 **Tests**: unit
 **Gate**: quick
 **Commit**: `feat(domain): add triplet and sextuplet figures`
+**Status**: Done
 
 ---
 
