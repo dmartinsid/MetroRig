@@ -179,18 +179,18 @@ MetroRig's grid knows one subdivision: every step is a sixteenth, in the app and
 | TUP-09 | P1: Write tuplets | Design | Pending |
 | TUP-10 | P1: Write tuplets | Design | Pending |
 | TUP-11 | P1: Write tuplets | Design | Pending |
-| TUP-12 | P1: Hear tuplets | Design | Pending |
-| TUP-13 | P1: Hear tuplets | Design | Pending |
+| TUP-12 | P1: Hear tuplets | Design | Implementing |
+| TUP-13 | P1: Hear tuplets | Design | Implementing |
 | TUP-14 | P1: Hear tuplets | Design | Pending |
 | TUP-15 | P1: Hear tuplets | Design | Pending |
 | TUP-16 | P1: Hear tuplets | Design | Pending |
-| TUP-17 | P1: Room for sextuplets | Design | Pending |
+| TUP-17 | P1: Room for sextuplets | Design | Implementing |
 | TUP-18 | P1: Room for sextuplets | Design | Pending |
 | TUP-19 | P1: Room for sextuplets | Design | Pending |
 | TUP-20 | P1: Read tuplets | Design | Pending |
 | TUP-21 | P1: Read tuplets | Design | Pending |
 | TUP-22 | P1: Read tuplets | Design | Pending |
-| TUP-23 | P1: Read tuplets | Design | Pending |
+| TUP-23 | P1: Read tuplets | Design | Implementing |
 | TUP-24 | P1: Read tuplets | Design | Pending |
 | TUP-25 | P2: Keep tuplets | Design | Pending |
 | TUP-26 | P2: Keep tuplets | Design | Pending |
