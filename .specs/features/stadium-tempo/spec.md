@@ -36,7 +36,7 @@ The Stadium shows the tempo but cannot change it. To nudge the BPM during practi
 | Effect of a change | As the header slider: applies live during playback, marks the preset edited, and the header number and slider follow | Q7, user: "Recomendacoes" | y |
 | Which Trainer state disables the controls | The applied one, `preset.trainerSettings.enabled`, the one the engine runs; a Trainer typed in the Editor form but not applied does not disable them | The engine only overrides the tempo with the Trainer it runs; user: "Aprovado" | y |
 | A fractional tempo | A step from a fractional BPM rounds to the next whole BPM in the step's direction: 120.4 up gives 121, down gives 120 | Only the Trainer's smooth ramp leaves a fraction, and the slider holds whole BPM; user: "Aprovado" | y |
-| Where a step starts after a ramp | From the last tick's tempo at the moment the Trainer is turned off; it lags the engine by the output latency, so a stepped ramp that moved inside that window starts one increment early | PR #15 review: the step read `preset.bpm` while the engine kept the ramp's tempo (`syncPlaybackSettings` sends no BPM). TMP-01 already says "the current BPM" | n |
+| Where a step starts after a ramp | From the last tick's tempo at the moment the Trainer is turned off; it lags the engine by the output latency, so a stepped ramp that moved inside that window starts one increment early | PR #15 review: the step read `preset.bpm` while the engine kept the ramp's tempo (`syncPlaybackSettings` sends no BPM). TMP-01 already says "the current BPM". User, on the lag: "Sem problemas do incremento ser abaixo" | y |
 
 **Open questions:** none - all resolved or logged above.
 
