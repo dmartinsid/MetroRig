@@ -131,6 +131,14 @@ export function mount(session: Session): void {
     hideSaveToast();
   }
 
+  // The tempo changed here or on the Stadium: the number and the slider follow it
+  function renderTempo() {
+    const bpm = String(session.preset.bpm);
+    bpmSlider.value = bpm;
+    bpmSliderValue.innerText = bpm;
+    bpmNumber.innerText = bpm;
+  }
+
   // The pattern was saved as a user preset
   function renderSaved() {
     populatePresetsDropdown(session.selectedPresetValue);
@@ -143,6 +151,7 @@ export function mount(session: Session): void {
     else if (change === 'playback') renderPlayback();
     else if (change === 'tick') renderTick();
     else if (change === 'preset') renderPreset();
+    else if (change === 'tempo') renderTempo();
     else if (change === 'view') renderView();
     else if (change === 'library') renderSaved();
   });
@@ -154,12 +163,7 @@ export function mount(session: Session): void {
     };
   });
 
-  bpmSlider.oninput = () => {
-    const bpm = Number(bpmSlider.value);
-    bpmNumber.innerText = String(bpm);
-    bpmSliderValue.innerText = String(bpm);
-    session.setBpm(bpm);
-  };
+  bpmSlider.oninput = () => session.setBpm(Number(bpmSlider.value));
 
   btnPlay.onclick = () => session.togglePlay();
 
