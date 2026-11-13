@@ -538,5 +538,12 @@ describe('Stadium tempo', () => {
     session.setBpm(120.4);
     session.stepBpm(-1);
     expect(session.preset.bpm).toBe(120);
+    // Above the half too: the step goes to the next whole BPM, never the nearest one plus 1
+    session.setBpm(120.6);
+    session.stepBpm(1);
+    expect(session.preset.bpm).toBe(121);
+    session.setBpm(120.6);
+    session.stepBpm(-1);
+    expect(session.preset.bpm).toBe(120);
   });
 });
