@@ -4112,7 +4112,16 @@ describe('Stadium tempo', () => {
     await openStadium();
     const field = byId<HTMLInputElement>('preset-name');
     ['+', '=', '-'].forEach(k => expect(key(k, {}, field).defaultPrevented).toBe(false));
+    const editable = document.createElement('div');
+    editable.contentEditable = 'true';
+    byId('stadium-view').appendChild(editable);
+    ['+', '=', '-'].forEach(k => expect(key(k, {}, editable).defaultPrevented).toBe(false));
     expect(shownBpm()).toBe('120.0');
+
+    // Focus left on the header slider or the Trainer checkbox is not a text field
+    expect(key('+', {}, byId('bpm-slider')).defaultPrevented).toBe(true);
+    expect(key('+', {}, byId('trainer-enable')).defaultPrevented).toBe(true);
+    expect(shownBpm()).toBe('122.0');
   });
 
   it('TMP-08 at 240 BPM the + button is disabled and + leaves the tempo', async () => {

@@ -166,6 +166,7 @@ export class Session {
         this.engine.stop();
         this.state.isPlaying = false;
         this.rampedBpm = null; // The next Play starts from the preset
+        this.lastTick = null; // Nor is this run's last tempo the next run's
         this.visualScheduler.cancelAll();
         this.viewBar = 0;
         this.playBar = 0;
@@ -424,6 +425,7 @@ export class Session {
     const preset = completeKit(normalizePreset(storedPreset));
     this.state.activePreset = preset;
     this.rampedBpm = null;
+    this.lastTick = null; // The engine jumps to this preset's start tempo
     this.viewBar = 0;
     this.playBar = 0;
 
