@@ -4039,3 +4039,124 @@ describe('Chord selector', () => {
     expect(shown()).toBe('Dm · D F A');
   });
 });
+
+describe('Stadium tempo', () => {
+  const up = () => byId<HTMLButtonElement>('btn-stadium-bpm-up');
+  const down = () => byId<HTMLButtonElement>('btn-stadium-bpm-down');
+  const shownBpm = () => byId('stadium-bpm').innerText;
+  const key = (key: string, init: KeyboardEventInit = {}, target: EventTarget = document.body) => {
+    const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true, ...init });
+    target.dispatchEvent(event);
+    return event;
+  };
+
+  async function openStadium() {
+    await openPage();
+    byId<HTMLButtonElement>('nav-stadium').click();
+    await flush();
+  }
+
+  // Sets the tempo through the header slider, as the user would
+  function slideTo(bpm: number) {
+    const slider = byId<HTMLInputElement>('bpm-slider');
+    slider.value = String(bpm);
+    slider.dispatchEvent(new Event('input'));
+  }
+
+  afterEach(() => localStorage.removeItem('metrorig_view_mode'));
+
+  it('TMP-01 the + button raises the Stadium tempo 1 BPM', async () => {
+    await openStadium();
+    expect(shownBpm()).toBe('120.0');
+    up().click();
+    expect(shownBpm()).toBe('121.0');
+  });
+
+  it('TMP-02 the − button lowers the Stadium tempo 1 BPM', async () => {
+    await openStadium();
+    expect(down().textContent).toBe('−');
+    down().click();
+    expect(shownBpm()).toBe('119.0');
+  });
+
+  it('TMP-03 the raising keys on the Stadium raise the tempo 1 BPM each', async () => {
+    await openStadium();
+    key('+');
+    expect(shownBpm()).toBe('121.0');
+    key('=');
+    expect(shownBpm()).toBe('122.0');
+    key('+', { code: 'NumpadAdd' });
+    expect(shownBpm()).toBe('123.0');
+  });
+
+  it('TMP-04 the lowering keys on the Stadium lower the tempo 1 BPM each', async () => {
+    await openStadium();
+    key('-');
+    expect(shownBpm()).toBe('119.0');
+    key('-', { code: 'NumpadSubtract' });
+    expect(shownBpm()).toBe('118.0');
+  });
+
+  it("TMP-05 a key with Ctrl or Cmd leaves the tempo and the browser's action", async () => {
+    await openStadium();
+    ['+', '=', '-'].forEach(k => {
+      expect(key(k, { ctrlKey: true }).defaultPrevented).toBe(false);
+      expect(key(k, { metaKey: true }).defaultPrevented).toBe(false);
+    });
+    expect(shownBpm()).toBe('120.0');
+    expect(byId('bpm-slider').value).toBe('120');
+  });
+
+  it('TMP-07 a key typed in a text field leaves the tempo', async () => {
+    await openStadium();
+    const field = byId<HTMLInputElement>('preset-name');
+    ['+', '=', '-'].forEach(k => expect(key(k, {}, field).defaultPrevented).toBe(false));
+    expect(shownBpm()).toBe('120.0');
+  });
+
+  it('TMP-08 at 240 BPM the + button is disabled and + leaves the tempo', async () => {
+    await openStadium();
+    slideTo(239);
+    expect(up().disabled).toBe(false);
+    up().click();
+    expect(shownBpm()).toBe('240.0');
+    expect(up().disabled).toBe(true);
+    expect(down().disabled).toBe(false);
+    key('+');
+    expect(shownBpm()).toBe('240.0');
+  });
+
+  it('TMP-09 at 40 BPM the − button is disabled and - leaves the tempo', async () => {
+    await openStadium();
+    slideTo(41);
+    down().click();
+    expect(shownBpm()).toBe('40.0');
+    expect(down().disabled).toBe(true);
+    expect(up().disabled).toBe(false);
+    key('-');
+    expect(shownBpm()).toBe('40.0');
+  });
+
+  it('TMP-10 an enabled Trainer disables both buttons and the keys', async () => {
+    await openStadium();
+    const routine = byId<HTMLSelectElement>('stadium-preset-selector');
+    routine.value = 'factory:trainer_calvagada_148_190';
+    routine.dispatchEvent(new Event('change'));
+    await flush();
+    expect(up().disabled).toBe(true);
+    expect(down().disabled).toBe(true);
+    const before = shownBpm();
+    up().click();
+    key('+');
+    key('-');
+    expect(shownBpm()).toBe(before);
+
+    // Turned off in the Editor, the steps come back
+    byId('trainer-enable').checked = false;
+    byId('trainer-enable').dispatchEvent(new Event('change'));
+    expect(up().disabled).toBe(false);
+    expect(down().disabled).toBe(false);
+    up().click();
+    expect(shownBpm()).toBe((Number(before) + 1).toFixed(1));
+  });
+});
