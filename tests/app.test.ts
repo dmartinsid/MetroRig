@@ -4159,4 +4159,16 @@ describe('Stadium tempo', () => {
     up().click();
     expect(shownBpm()).toBe((Number(before) + 1).toFixed(1));
   });
+
+  it('TMP-13 a Stadium step moves the header number and slider', async () => {
+    await openStadium();
+    up().click();
+    expect(byId('bpm-number').innerText).toBe('121');
+    expect(byId('bpm-slider-value').innerText).toBe('121');
+    expect(byId('bpm-slider').value).toBe('121');
+    key('-');
+    key('-');
+    expect(byId('bpm-number').innerText).toBe('119');
+    expect(byId('bpm-slider').value).toBe('119');
+  });
 });
