@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 58,
+  "next_id": 59,
   "lessons": [
     {
       "id": "L-001",
@@ -1031,6 +1031,24 @@
       ],
       "created": "2026-11-09T02:32:16Z",
       "last_seen": "2026-11-09T02:32:16Z"
+    },
+    {
+      "id": "L-058",
+      "key": "weak_test::test a rounding rule on a fraction both below and above one half",
+      "text": "Test a rounding rule on a fraction both below and above one half",
+      "signal": "weak_test",
+      "scope": "domain",
+      "status": "candidate",
+      "features": [
+        "stadium-tempo"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "tests/app/session.test.ts TMP-14 (C14) (domain)"
+      ],
+      "created": "2026-11-13T00:54:24Z",
+      "last_seen": "2026-11-13T00:54:24Z"
     }
   ]
 }
