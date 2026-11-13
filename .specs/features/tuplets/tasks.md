@@ -93,12 +93,13 @@ T19 → T20 → T21 → T22
 
 **Done when**:
 
-- [ ] `tests/layout.test.ts` covers a straight bar, a bar with a triplet and a sextuplet, a 4-bar pattern with different bars, /8 and /16 (always straight), and the units 12/16/8
-- [ ] Gate check passes: `npx vitest run`
+- [x] `tests/layout.test.ts` covers a straight bar, a bar with a triplet and a sextuplet, a 4-bar pattern with different bars, /8 and /16 (always straight), and the units 12/16/8
+- [x] Gate check passes: `npx vitest run`
 
 **Tests**: unit
 **Gate**: quick
 **Commit**: `feat(domain): lay out a bar as beats of 4, 3 or 6 cells`
+**Status**: Done
 
 ---
 
@@ -624,5 +625,5 @@ Proof: run rust | tup_40_new_units_play_from_the_next_pass ... ok
 ## Handoff
 
 **Settled mid-build:** none
-**Dispatched:** none
+**Dispatched:** batch 1 (T1-T9, phases 1-2) at 22c3751
 **Walked:** none
