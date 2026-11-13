@@ -253,12 +253,13 @@ T19 → T20 → T21 → T22
 
 **Done when**:
 
-- [ ] Tests for the message reaching `engine_set_step_units` and a 192-cell grid mirrored
-- [ ] Gate check passes: `npx vitest run`
+- [x] Tests for the message reaching `engine_set_step_units` and a 192-cell grid mirrored
+- [x] Gate check passes: `npx vitest run`
 
 **Tests**: unit
 **Gate**: quick
 **Commit**: `feat(audio): send the cell lengths to the engine`
+**Status**: Done
 
 ---
 

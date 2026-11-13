@@ -127,6 +127,11 @@ export class MetronomeNode extends EventTarget {
     this.workletNode?.port.postMessage({ type: 'SET_BARS', bars });
   }
 
+  // Each cell's length in twelfths of a sixteenth; send it after the length and the bars, which reset it
+  setStepUnits(units: Uint8Array) {
+    this.workletNode?.port.postMessage({ type: 'SET_STEP_UNITS', units });
+  }
+
   updateGrid(trackId: number, steps: Uint8Array) {
     this.workletNode?.port.postMessage({ type: 'UPDATE_GRID', trackId, steps });
   }

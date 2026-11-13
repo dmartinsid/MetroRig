@@ -26,6 +26,7 @@ class FakeEngine extends EventTarget implements EnginePort {
   setBpm(bpm: number) { this.record('setBpm', [bpm]); }
   setMeasureLength(length: number) { this.record('setMeasureLength', [length]); }
   setBars(bars: number) { this.record('setBars', [bars]); }
+  setStepUnits(units: Uint8Array) { this.record('setStepUnits', [[...units]]); }
   restartPattern() { this.record('restartPattern', []); }
   updateGrid(trackId: number, steps: Uint8Array) { this.record('updateGrid', [trackId, [...steps]]); }
   setTrainer(settings: TrainerSettings) { this.record('setTrainer', [settings]); }

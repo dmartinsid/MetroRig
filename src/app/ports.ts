@@ -10,6 +10,7 @@ export interface EnginePort {
   setBpm(bpm: number): void;
   setMeasureLength(length: number): void;
   setBars(bars: number): void;
+  setStepUnits(units: Uint8Array): void;
   restartPattern(): void;
   updateGrid(trackId: number, steps: Uint8Array): void;
   setTrainer(settings: TrainerSettings): void;
