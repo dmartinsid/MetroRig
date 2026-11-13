@@ -6,6 +6,7 @@ import { createTrackMix, toggleMute, toggleSolo, type TrackMix } from '../domain
 import { FIGURES, applyFigure, barCount, barOfStep, barSteps, fitBar, patternLength, stepInBar, writeBar } from '../domain/pattern';
 import { completeKit, normalizePreset, type CustomGroove, type Preset, type StoredPreset, type TrainerSettings, type ViewMode } from '../domain/preset';
 import { songToPreset, type Song } from '../domain/songs';
+import { steppedBpm, tempoKeyStep, type TempoStep } from '../domain/tempo';
 import { FACTORY_GROOVES, GENRE_PRESETS, SIGNATURE_PRESETS, SPEED_TRAINER_PRESETS } from '../data/factory';
 import type { TickDetail } from '../audio/MetronomeNode';
 import { VisualScheduler } from '../audio/visualSync';
@@ -228,6 +229,24 @@ export class Session {
     this.markEdited();
   }
 
+  // A running Trainer owns the tempo, and a bound stops the step
+  canStepBpm(step: TempoStep): boolean {
+    return !this.preset.trainerSettings.enabled && steppedBpm(this.preset.bpm, step) !== this.preset.bpm;
+  }
+
+  stepBpm(step: TempoStep) {
+    if (this.canStepBpm(step)) this.setBpm(steppedBpm(this.preset.bpm, step));
+  }
+
+  // True when the key belongs to the Stadium's tempo, so the page keeps it from the browser
+  pressTempoKey(key: string, { modifier, inTextField }: { modifier: boolean; inTextField: boolean }): boolean {
+    if (this.view !== 'stadium' || inTextField) return false;
+    const step = tempoKeyStep(key, modifier);
+    if (step === null) return false;
+    this.stepBpm(step);
+    return true;
+  }
+
   async setClickSound(sound: string) {
     this.clickSound = sound;
     this.prefs.set('clickSound', sound);
@@ -359,6 +378,7 @@ export class Session {
     this.preset.trainerSettings = settings;
     this.transport.syncPlaybackSettings();
     this.markEdited();
+    this.emit('trainer');
   }
 
   // --- Library ---
