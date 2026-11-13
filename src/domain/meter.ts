@@ -43,13 +43,18 @@ export function getBeatForStep(step: number, measureLength: number, beatsPerMeas
   return Math.floor((step * beatsPerMeasure) / measureLength);
 }
 
-// True for an empty step that belongs to the previous hit: the eighth in a gallop, say
-export function isSustainedStep(steps: number[], step: number, measureLength: number, beatsPerMeasure: number): boolean {
+// True for an empty cell that belongs to the previous hit: the eighth in a gallop, say. The bar is given
+// by its beat cells (4, 3 or 6 per beat), or as a straight bar by its length and beats
+export function isSustainedStep(steps: number[], step: number, beatCells: number[]): boolean;
+export function isSustainedStep(steps: number[], step: number, measureLength: number, beatsPerMeasure: number): boolean;
+export function isSustainedStep(steps: number[], step: number, layout: number | number[], beatsPerMeasure = 1): boolean {
   if (steps[step] > 0) return false;
-  const beat = getBeatForStep(step, measureLength, beatsPerMeasure);
+  const beatOf = Array.isArray(layout)
+    ? layout.flatMap((cells, beat) => new Array<number>(cells).fill(beat))
+    : Array.from({ length: layout }, (_, i) => getBeatForStep(i, layout, beatsPerMeasure));
   const beatHits: number[] = [];
-  for (let i = 0; i < measureLength; i++) {
-    if (steps[i] > 0 && getBeatForStep(i, measureLength, beatsPerMeasure) === beat) beatHits.push(i);
+  for (let i = 0; i < beatOf.length; i++) {
+    if (steps[i] > 0 && beatOf[i] === beatOf[step]) beatHits.push(i);
   }
   return beatHits.length > 1 && beatHits[0] < step;
 }
