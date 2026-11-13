@@ -10,6 +10,7 @@ import { FACTORY_PRESETS } from '../../src/data/factory';
 import { SONGS, songToPreset } from '../../src/domain/songs';
 import { TRACKS, takesOf } from '../../src/domain/kit';
 import { DEFAULT_TIMBRE, PAD_TIMBRES, timbreNotes } from '../../src/domain/chords';
+import type { KeyTarget } from '../../src/domain/tempo';
 
 // --- Fakes: the engine records every call, the storage lives in memory ---
 
@@ -427,8 +428,8 @@ describe('Stadium tempo', () => {
     fixture.session.setView('stadium');
     return fixture;
   };
-  const press = (session: Session, key: string, options: { modifier?: boolean; inTextField?: boolean } = {}) =>
-    session.pressTempoKey(key, { modifier: options.modifier ?? false, inTextField: options.inTextField ?? false });
+  const press = (session: Session, key: string, options: { modifier?: boolean; target?: KeyTarget } = {}) =>
+    session.pressTempoKey(key, { modifier: options.modifier ?? false, target: options.target ?? { tagName: 'BODY' } });
 
   it('TMP-03 the raising keys step the tempo up 1 BPM each on the Stadium', () => {
     const { session } = onStadium();
@@ -463,8 +464,22 @@ describe('Stadium tempo', () => {
 
   it('TMP-07 the keys leave the tempo while a text field has focus', () => {
     const { session } = onStadium();
-    ['+', '=', '-'].forEach(key => expect(press(session, key, { inTextField: true })).toBe(false));
+    const textFields: KeyTarget[] = [
+      { tagName: 'INPUT', type: 'text' },
+      { tagName: 'INPUT', type: 'number' },
+      { tagName: 'INPUT', type: 'search' },
+      { tagName: 'TEXTAREA' },
+      { tagName: 'DIV', isContentEditable: true },
+    ];
+    textFields.forEach(target => {
+      ['+', '=', '-'].forEach(key => expect(press(session, key, { target })).toBe(false));
+    });
     expect(session.preset.bpm).toBe(120);
+
+    // A slider, a checkbox or a selector takes no text, so the keys still step
+    const controls: KeyTarget[] = [{ tagName: 'INPUT', type: 'range' }, { tagName: 'INPUT', type: 'checkbox' }, { tagName: 'SELECT' }];
+    controls.forEach(target => expect(press(session, '+', { target })).toBe(true));
+    expect(session.preset.bpm).toBe(123);
   });
 
   it('TMP-08 the tempo stops at 240', () => {
@@ -475,7 +490,7 @@ describe('Stadium tempo', () => {
     expect(session.preset.bpm).toBe(240);
     expect(session.canStepBpm(1)).toBe(false);
     session.stepBpm(1);
-    press(session, '+');
+    expect(press(session, '+')).toBe(false); // Refused, so the browser keeps the key
     expect(session.preset.bpm).toBe(240);
     expect(session.canStepBpm(-1)).toBe(true);
   });
@@ -487,7 +502,7 @@ describe('Stadium tempo', () => {
     expect(session.preset.bpm).toBe(40);
     expect(session.canStepBpm(-1)).toBe(false);
     session.stepBpm(-1);
-    press(session, '-');
+    expect(press(session, '-')).toBe(false);
     expect(session.preset.bpm).toBe(40);
     expect(session.canStepBpm(1)).toBe(true);
   });
@@ -501,8 +516,8 @@ describe('Stadium tempo', () => {
     expect(session.canStepBpm(1)).toBe(false);
     expect(session.canStepBpm(-1)).toBe(false);
     session.stepBpm(1);
-    press(session, '+');
-    press(session, '-');
+    expect(press(session, '+')).toBe(false);
+    expect(press(session, '-')).toBe(false);
     expect(session.preset.bpm).toBe(120);
 
     session.setTrainer({ ...trainer, enabled: false });
@@ -528,6 +543,50 @@ describe('Stadium tempo', () => {
     expect(session.hasUnsavedEdits).toBe(false);
     session.stepBpm(-1);
     expect(session.hasUnsavedEdits).toBe(true);
+  });
+
+  it('TMP-15 a step after the Trainer is turned off during playback starts from the ramp\'s tempo', async () => {
+    const live = (bpm: number) =>
+      engine.dispatchEvent(new CustomEvent('tick', { detail: { beatIndex: 0, currentBpm: bpm, activeTrackIds: [] } }));
+    const { session, engine } = setup();
+    session.setView('stadium');
+    session.setTrainer(trainer); // Starts at 90
+    expect(session.preset.bpm).toBe(120);
+    session.togglePlay();
+    await flush();
+
+    live(163.4); // The ramp has climbed
+    session.setTrainer({ ...trainer, enabled: false });
+    engine.calls.length = 0;
+    press(session, '+');
+    expect(session.preset.bpm).toBe(164);
+    expect(engine.sent('setBpm')).toEqual([[164]]);
+
+    // The same moment again, stepping down
+    session.setTrainer(trainer);
+    live(163.4);
+    session.setTrainer({ ...trainer, enabled: false });
+    session.stepBpm(-1);
+    expect(session.preset.bpm).toBe(163);
+
+    // At a bound the ramp's tempo decides too
+    session.setTrainer(trainer);
+    live(239.6);
+    session.setTrainer({ ...trainer, enabled: false });
+    expect(session.canStepBpm(1)).toBe(true);
+    session.stepBpm(1);
+    expect(session.preset.bpm).toBe(240);
+    expect(session.canStepBpm(1)).toBe(false);
+
+    // Stop hands the tempo back to the preset
+    session.setTrainer(trainer);
+    live(150.2);
+    session.setTrainer({ ...trainer, enabled: false });
+    session.togglePlay();
+    await flush();
+    session.setBpm(120);
+    session.stepBpm(1);
+    expect(session.preset.bpm).toBe(121);
   });
 
   it('TMP-14 a step from a fractional tempo rounds in its direction', () => {

@@ -4085,6 +4085,7 @@ describe('Stadium tempo', () => {
     expect(shownBpm()).toBe('121.0');
     key('=');
     expect(shownBpm()).toBe('122.0');
+    // The numpad's `+` sends the same `key`, which is all the page reads; this pins that it is not filtered by `code`
     key('+', { code: 'NumpadAdd' });
     expect(shownBpm()).toBe('123.0');
   });
@@ -4122,7 +4123,7 @@ describe('Stadium tempo', () => {
     expect(shownBpm()).toBe('240.0');
     expect(up().disabled).toBe(true);
     expect(down().disabled).toBe(false);
-    key('+');
+    expect(key('+').defaultPrevented).toBe(false); // Ignored: the browser keeps the key
     expect(shownBpm()).toBe('240.0');
   });
 
@@ -4133,7 +4134,7 @@ describe('Stadium tempo', () => {
     expect(shownBpm()).toBe('40.0');
     expect(down().disabled).toBe(true);
     expect(up().disabled).toBe(false);
-    key('-');
+    expect(key('-').defaultPrevented).toBe(false);
     expect(shownBpm()).toBe('40.0');
   });
 
@@ -4147,8 +4148,8 @@ describe('Stadium tempo', () => {
     expect(down().disabled).toBe(true);
     const before = shownBpm();
     up().click();
-    key('+');
-    key('-');
+    expect(key('+').defaultPrevented).toBe(false);
+    expect(key('-').defaultPrevented).toBe(false);
     expect(shownBpm()).toBe(before);
 
     // Turned off in the Editor, the steps come back

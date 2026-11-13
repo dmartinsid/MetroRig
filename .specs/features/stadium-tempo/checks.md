@@ -57,10 +57,13 @@ Proof: run unit | ✓ tests/app.test.ts > Stadium tempo > TMP-13 a Stadium step 
 **C14** - From 120.4 BPM, up gives 121 and down gives 120 (TMP-14, AC 14)
 Proof: run unit | ✓ tests/app/session.test.ts > Stadium tempo > TMP-14 a step from a fractional tempo rounds in its direction
 
+**C15** - Turned off at a live 163.4 BPM during playback, `+` gives 164 and `-` gives 163; after Stop, `+` starts from the preset's BPM again (TMP-15, AC 15)
+Proof: run unit | ✓ tests/app/session.test.ts > Stadium tempo > TMP-15 a step after the Trainer is turned off during playback starts from the ramp's tempo
+
 ---
 
 ## Handoff
 
-**Settled mid-build:** none
+**Settled mid-build:** PR #15 review findings, user: "Da uma olhada no review"
 **Dispatched:** Verifier round 1 at be1b8a2, returned
 **Walked:** P1 at http://localhost:5317/ (`npx vite`), no sign-in or data: header link `Stadium`, two clicks on `+` and the `-` key read 121.0 on the Stadium and 121 on the header number, slider and slider label. The first walk found the buttons overflowing the panel at 1853 px, fixed by `fix(stadium): keep the tempo buttons inside the panel`; after it, at 390, 768, 1024 and 1853 px both buttons sit inside the panel with no sideways scroll, and the number shrinks to fit (62 px at 390, 141 px at 1853)

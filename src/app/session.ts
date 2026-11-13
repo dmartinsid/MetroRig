@@ -4,9 +4,9 @@ import { TRACKS, nextStepValue } from '../domain/kit';
 import { measureLengthFor, timeSignatureOf } from '../domain/meter';
 import { createTrackMix, toggleMute, toggleSolo, type TrackMix } from '../domain/mix';
 import { FIGURES, applyFigure, barCount, barOfStep, barSteps, fitBar, patternLength, stepInBar, writeBar } from '../domain/pattern';
-import { completeKit, normalizePreset, type CustomGroove, type Preset, type StoredPreset, type TrainerSettings, type ViewMode } from '../domain/preset';
+import { completeKit, normalizePreset, startBpmFor, type CustomGroove, type Preset, type StoredPreset, type TrainerSettings, type ViewMode } from '../domain/preset';
 import { songToPreset, type Song } from '../domain/songs';
-import { steppedBpm, tempoKeyStep, type TempoStep } from '../domain/tempo';
+import { steppedBpm, tempoKeyStep, typesText, type KeyTarget, type TempoStep } from '../domain/tempo';
 import { FACTORY_GROOVES, GENRE_PRESETS, SIGNATURE_PRESETS, SPEED_TRAINER_PRESETS } from '../data/factory';
 import type { TickDetail } from '../audio/MetronomeNode';
 import { VisualScheduler } from '../audio/visualSync';
@@ -75,6 +75,8 @@ export class Session {
   selectedPresetValue = 'factory:default'; // Where the selector returns when a load is declined
   private selectorValue = 'factory:default'; // What the preset selector asks for last
   lastTick: TickDetail | null = null;
+  // The tempo a Trainer turned off during playback left in the engine, until Stop, a preset load or a step replaces it
+  private rampedBpm: number | null = null;
   // Whole seconds since the last Play; a stop holds the count until the next Play
   practiceSeconds = 0;
   private practiceStart = 0;
@@ -163,6 +165,7 @@ export class Session {
       if (this.state.isPlaying) {
         this.engine.stop();
         this.state.isPlaying = false;
+        this.rampedBpm = null; // The next Play starts from the preset
         this.visualScheduler.cancelAll();
         this.viewBar = 0;
         this.playBar = 0;
@@ -224,27 +227,34 @@ export class Session {
 
   setBpm(bpm: number) {
     this.preset.bpm = bpm;
+    this.rampedBpm = null; // The engine now plays this tempo
     if (this.transport.isAudioInit) this.engine.setBpm(bpm);
     this.emit('tempo');
     this.markEdited();
   }
 
+  // The tempo a step starts from: the one a ramp left in the engine, or the preset's
+  private get steppingBpm(): number {
+    return this.rampedBpm ?? this.preset.bpm;
+  }
+
   // A running Trainer owns the tempo, and a bound stops the step
   canStepBpm(step: TempoStep): boolean {
-    return !this.preset.trainerSettings.enabled && steppedBpm(this.preset.bpm, step) !== this.preset.bpm;
+    return !this.preset.trainerSettings.enabled && steppedBpm(this.steppingBpm, step) !== this.steppingBpm;
   }
 
-  stepBpm(step: TempoStep) {
-    if (this.canStepBpm(step)) this.setBpm(steppedBpm(this.preset.bpm, step));
-  }
-
-  // True when the key belongs to the Stadium's tempo, so the page keeps it from the browser
-  pressTempoKey(key: string, { modifier, inTextField }: { modifier: boolean; inTextField: boolean }): boolean {
-    if (this.view !== 'stadium' || inTextField) return false;
-    const step = tempoKeyStep(key, modifier);
-    if (step === null) return false;
-    this.stepBpm(step);
+  // True when the tempo moved
+  stepBpm(step: TempoStep): boolean {
+    if (!this.canStepBpm(step)) return false;
+    this.setBpm(steppedBpm(this.steppingBpm, step));
     return true;
+  }
+
+  // True when the key stepped the tempo, so the page keeps it from the browser. A refused key stays the browser's
+  pressTempoKey(key: string, { modifier, target }: { modifier: boolean; target: KeyTarget | null }): boolean {
+    if (this.view !== 'stadium' || (target && typesText(target))) return false;
+    const step = tempoKeyStep(key, modifier);
+    return step !== null && this.stepBpm(step);
   }
 
   async setClickSound(sound: string) {
@@ -375,6 +385,10 @@ export class Session {
 
   // During playback a running Trainer takes the change on beat 1
   setTrainer(settings: TrainerSettings) {
+    // A disable keeps the engine's live tempo (syncPlaybackSettings sends no BPM), so steps start from where the ramp got to
+    const ramping = this.state.isPlaying && this.preset.trainerSettings.enabled;
+    if (settings.enabled) this.rampedBpm = null;
+    else if (ramping) this.rampedBpm = this.lastTick ? Number(this.lastTick.currentBpm) : startBpmFor(this.preset);
     this.preset.trainerSettings = settings;
     this.transport.syncPlaybackSettings();
     this.markEdited();
@@ -409,6 +423,7 @@ export class Session {
     this.visualScheduler.cancelAll(); // Ticks of the previous preset must not overwrite this one
     const preset = completeKit(normalizePreset(storedPreset));
     this.state.activePreset = preset;
+    this.rampedBpm = null;
     this.viewBar = 0;
     this.playBar = 0;
 

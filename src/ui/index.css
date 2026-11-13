@@ -1572,7 +1572,7 @@ select:focus {
   letter-spacing: 0.15em;
 }
 
-/* Runs into the panel's padding so the buttons fit beside the number */
+/* Runs 1.75rem into the panel's 2.5rem padding so the buttons fit beside the number */
 .stadium-tempo {
   display: flex;
   justify-content: center;
@@ -1623,6 +1623,7 @@ select:focus {
 
 .stadium-bpm {
   font-family: var(--mono);
+  /* 11.5rem: both 2.75rem buttons, three 0.75rem gaps and the BPM unit. 2.6: the width of `120.0` per unit of font size */
   font-size: min(9.75rem, calc((100cqi - 11.5rem) / 2.6));
   font-weight: 900;
   color: var(--neon-green);
@@ -1827,6 +1828,7 @@ select:focus {
   }
 
   .stadium-bpm {
+    /* 10rem: the same room with 0.5rem gaps; the -0.75rem margin runs into the 1.25rem padding */
     font-size: min(5rem, calc((100cqi - 10rem) / 2.6));
   }
 

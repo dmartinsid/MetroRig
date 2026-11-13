@@ -195,10 +195,12 @@ export function mount(session: Session): void {
 
   // On the body, so replacing the page markup drops the listener with it
   document.body.addEventListener('keydown', event => {
-    const target = event.target as HTMLElement | null;
-    const inTextField = !!target?.closest?.('input, textarea, [contenteditable="true"]');
-    const handled = session.pressTempoKey(event.key, { modifier: event.ctrlKey || event.metaKey, inTextField });
-    if (handled) event.preventDefault();
+    const target = event.target as HTMLInputElement;
+    const stepped = session.pressTempoKey(event.key, {
+      modifier: event.ctrlKey || event.metaKey,
+      target: { tagName: target.tagName, type: target.type, isContentEditable: target.isContentEditable },
+    });
+    if (stepped) event.preventDefault();
   });
 
   session.subscribe(change => {
