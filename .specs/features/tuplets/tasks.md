@@ -233,12 +233,13 @@ T19 → T20 → T21 → T22
 
 **Done when**:
 
-- [ ] FFI test passes, `npm run build:wasm` runs, and `tests/wasm.test.ts` finds the export
-- [ ] Gate check passes: `cargo test --manifest-path engine/Cargo.toml && npx vitest run && npm run build`
+- [x] FFI test passes, `npm run build:wasm` runs, and `tests/wasm.test.ts` finds the export
+- [x] Gate check passes: `cargo test --manifest-path engine/Cargo.toml && npx vitest run && npm run build`
 
 **Tests**: unit
 **Gate**: build
 **Commit**: `feat(engine): export the cell lengths to the worklet`
+**Status**: Done
 
 ---
 

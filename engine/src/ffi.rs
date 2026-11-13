@@ -115,6 +115,16 @@ pub extern "C" fn engine_set_bars(ptr: *mut Engine, bars: u32) {
     engine.set_bars(bars as usize);
 }
 
+// Each cell's length in twelfths of a sixteenth: 12 straight, 16 triplet, 8 sextuplet. A layout that
+// does not fill the bars is refused and the last good one stays
+#[no_mangle]
+pub extern "C" fn engine_set_step_units(ptr: *mut Engine, units_ptr: *const u8, length: usize) {
+    if ptr.is_null() || units_ptr.is_null() || length > STEPS_COUNT { return; }
+    let engine = unsafe { &mut *ptr };
+    let units = unsafe { slice::from_raw_parts(units_ptr, length) };
+    engine.set_step_units(units);
+}
+
 fn trainer_settings(
     enabled: bool,
     start_bpm: f64,
