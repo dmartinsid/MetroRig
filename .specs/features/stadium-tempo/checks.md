@@ -7,7 +7,7 @@
 Tasks skipped: three steps, each one commit.
 
 1. [x] The tempo step rules: `src/domain/tempo.ts` (bounds, step, key map) and `Session.canStepBpm`, `stepBpm`, `pressTempoKey`; `setTrainer` emits `trainer` → files: `src/domain/tempo.ts`, `src/app/session.ts`, `src/app/ports.ts`, `tests/app/session.test.ts` → verify: run unit → commit: `feat(session): step the tempo 1 BPM from the Stadium rules`
-2. The Stadium's `−` and `+` buttons and the `+`/`-` keys → files: `index.html`, `src/ui/stadium.ts`, `src/ui/index.css`, `tests/app.test.ts` → verify: run unit → commit: `feat(stadium): add tempo buttons and keys`
+2. [x] The Stadium's `−` and `+` buttons and the `+`/`-` keys → files: `index.html`, `src/ui/stadium.ts`, `src/ui/index.css`, `tests/app.test.ts` → verify: run unit → commit: `feat(stadium): add tempo buttons and keys`
 3. The header follows a tempo set elsewhere → files: `src/ui/header.ts`, `tests/app.test.ts` → verify: run unit, then Build → commit: `feat(header): follow a tempo set from the Stadium`
 
 **Build**: `npm run build`

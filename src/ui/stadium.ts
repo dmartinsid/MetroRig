@@ -24,6 +24,8 @@ function clockPoint(fraction: number, radius: number): [number, number] {
 export function mount(session: Session): void {
   const stadiumBpm = byId('stadium-bpm');
   const btnStadiumPlay = byId<HTMLButtonElement>('btn-stadium-play');
+  const btnBpmUp = byId<HTMLButtonElement>('btn-stadium-bpm-up');
+  const btnBpmDown = byId<HTMLButtonElement>('btn-stadium-bpm-down');
   const routineSelector = byId<HTMLSelectElement>('stadium-preset-selector');
   const stadiumTimer = byId('stadium-timer');
   const stadiumStatus = byId('stadium-status');
@@ -169,6 +171,12 @@ export function mount(session: Session): void {
     updateStadiumStatus();
   }
 
+  // Each step button is off where the Session refuses its step: a bound, or a running Trainer
+  function renderTempoSteps() {
+    btnBpmUp.disabled = !session.canStepBpm(1);
+    btnBpmDown.disabled = !session.canStepBpm(-1);
+  }
+
   // The routines are the speed trainers; any other preset shows the placeholder
   routineSelector.innerHTML = '<option value="">Choose a speed trainer</option>';
   session.trainerPresets.forEach(p => routineSelector.appendChild(option(`factory:${p.id}`, p.name)));
@@ -182,6 +190,16 @@ export function mount(session: Session): void {
     if (routineSelector.value) session.loadPreset(routineSelector.value);
   };
   btnStadiumPlay.onclick = () => session.togglePlay();
+  btnBpmUp.onclick = () => session.stepBpm(1);
+  btnBpmDown.onclick = () => session.stepBpm(-1);
+
+  // On the body, so replacing the page markup drops the listener with it
+  document.body.addEventListener('keydown', event => {
+    const target = event.target as HTMLElement | null;
+    const inTextField = !!target?.closest?.('input, textarea, [contenteditable="true"]');
+    const handled = session.pressTempoKey(event.key, { modifier: event.ctrlKey || event.metaKey, inTextField });
+    if (handled) event.preventDefault();
+  });
 
   session.subscribe(change => {
     if (change === 'library') {
@@ -191,12 +209,18 @@ export function mount(session: Session): void {
     else if (change === 'playback') renderPlayback();
     else if (change === 'tick') renderTick();
     else if (change === 'timer') stadiumTimer.innerText = formatTimer(session.practiceSeconds);
-    else if (change === 'preset') renderPreset();
-    else if (change === 'view' && session.view === 'stadium') updateStadiumStatus();
-    else if (change === 'tempo') stadiumBpm.innerText = session.preset.bpm.toFixed(1);
+    else if (change === 'preset') {
+      renderPreset();
+      renderTempoSteps();
+    } else if (change === 'view' && session.view === 'stadium') updateStadiumStatus();
+    else if (change === 'tempo') {
+      stadiumBpm.innerText = session.preset.bpm.toFixed(1);
+      renderTempoSteps();
+    } else if (change === 'trainer') renderTempoSteps();
   });
   if (session.view === 'stadium') updateStadiumStatus();
 
   showRoutine();
   drawBeatClock();
+  renderTempoSteps();
 }
