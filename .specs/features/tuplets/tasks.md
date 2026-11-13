@@ -153,12 +153,13 @@ T19 → T20 → T21 → T22
 
 **Done when**:
 
-- [ ] Tests for a triplet beat with two hits, with one hit, and the existing straight cases unchanged
-- [ ] Gate check passes: `npx vitest run`
+- [x] Tests for a triplet beat with two hits, with one hit, and the existing straight cases unchanged
+- [x] Gate check passes: `npx vitest run`
 
 **Tests**: unit
 **Gate**: quick
 **Commit**: `feat(domain): mark sustain inside tuplet beats`
+**Status**: Done
 
 ---
 
