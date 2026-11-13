@@ -40,6 +40,7 @@ NORMALIZE = [
 # The kept assertions a later decision rewrote, each named: (suite, test, assertion at 591f031 after NORMALIZE, assertion now).
 # AD-029 / TUP-17 (tuplets, Q21): a pattern holds 192 cells, not 128, so the grid refused past it is 193 steps long.
 # Only these lines of these tests may differ; every other kept assertion still matches 591f031's.
+# For the same reason kept_591f031.json's wasm_exports gained one name, engine_set_step_units (T8).
 REWRITES = [
     ('rust', 'tests::holds_128_steps',
      'assert_eq!(unsafe { &*run.ptr }.pattern.tracks[1].steps[127], 2)',

@@ -17,7 +17,7 @@ pub struct Pattern {
     pub(crate) bars: usize,
     units: [u8; STEPS_COUNT], // Each cell's length
     bar_start: [bool; STEPS_COUNT],
-    cells: usize,
+    pub(crate) cells: usize,
 }
 
 impl Pattern {

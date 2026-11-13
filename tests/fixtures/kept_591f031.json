@@ -596,6 +596,7 @@
     "engine_set_bpm",
     "engine_set_click_mode",
     "engine_set_measure_length",
+    "engine_set_step_units",
     "engine_set_trainer",
     "engine_start",
     "engine_stop",

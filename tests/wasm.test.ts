@@ -44,6 +44,40 @@ describe('Shipped WASM', () => {
     expect(lastTick).toBe(63);
   });
 
+  it('tup_12 the shipped engine plays a triplet at thirds of a beat', () => {
+    const wasm = fs.readFileSync(path.resolve(__dirname, '../public/pkg/metrorig_audio_bg.wasm'));
+    const engine = new WebAssembly.Instance(new WebAssembly.Module(wasm)).exports as any;
+    expect(engine.engine_set_step_units).toBeTypeOf('function');
+    const ptr = engine.engine_new(44100);
+    engine.engine_set_click_mode(ptr, 1);
+    const samplePtr = engine.engine_alloc(4);
+    new Float32Array(engine.memory.buffer, samplePtr, 1)[0] = 1;
+    engine.engine_load_sample(ptr, 0, samplePtr, samplePtr, 1);
+
+    // 4/4 at 120 BPM, beat 2 a triplet: 15 cells, a click on each triplet cell
+    const units = [12, 12, 12, 12, 16, 16, 16, 12, 12, 12, 12, 12, 12, 12, 12];
+    const unitsPtr = engine.engine_alloc(units.length);
+    new Uint8Array(engine.memory.buffer, unitsPtr, units.length).set(units);
+    engine.engine_set_step_units(ptr, unitsPtr, units.length);
+    const gridPtr = engine.engine_alloc(units.length);
+    new Uint8Array(engine.memory.buffer, gridPtr, units.length).set([0, 0, 0, 0, 2, 2, 2]);
+    engine.engine_update_grid(ptr, 0, gridPtr, units.length);
+
+    const size = 128;
+    const left = engine.engine_alloc(size * 4);
+    const right = engine.engine_alloc(size * 4);
+    const onsets: number[] = [];
+    engine.engine_start(ptr);
+    for (let block = 0; block < 44100 / size; block++) {
+      engine.engine_process(ptr, left, right, size);
+      new Float32Array(engine.memory.buffer, left, size).forEach((sample, i) => { if (sample !== 0) onsets.push(block * size + i); });
+    }
+    // 0.5 s, 0.6667 s and 0.8333 s into the bar, within 1 sample
+    const ideal = [22050, 29400, 36750];
+    expect(onsets).toHaveLength(3);
+    onsets.forEach((onset, k) => expect(Math.abs(onset - ideal[k])).toBeLessThanOrEqual(1));
+  });
+
   it('kit_02 plays the last track of the kit', () => {
     const wasm = fs.readFileSync(path.resolve(__dirname, '../public/pkg/metrorig_audio_bg.wasm'));
     const engine = new WebAssembly.Instance(new WebAssembly.Module(wasm)).exports as any;

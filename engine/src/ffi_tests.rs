@@ -1957,3 +1957,38 @@ fn pad_shares_the_output_clamp() {
     assert_eq!(peak(&right), 1.0);
     engine_free(ptr);
 }
+
+#[test]
+fn set_step_units_plays_a_triplet_through_the_export() {
+    // 4/4 with beat 2 a triplet: 15 cells, a click on each triplet cell
+    let mut run = Run::new(120.0, &[0; 16]);
+    let units: Vec<u8> = [vec![12; 4], vec![16; 3], vec![12; 8]].concat();
+    engine_set_step_units(run.ptr, units.as_ptr(), units.len());
+    let mut grid = [0u8; 15];
+    grid[4..7].fill(1);
+    engine_update_grid(run.ptr, 0, grid.as_ptr(), grid.len());
+    run.play();
+    run.render_hits(3);
+
+    let beat = step_samples(SR, 120.0) * 4.0;
+    for (k, hit) in run.hits.iter().take(3).enumerate() {
+        assert_within_one_sample(hit.pos as f64, beat + k as f64 * beat / 3.0, "triplet cell");
+        assert_eq!(hit.step, 4 + k as i32);
+    }
+}
+
+#[test]
+fn set_step_units_refuses_bad_input_and_keeps_the_layout() {
+    let run = Run::new(120.0, &[0; 16]);
+    let triplet: Vec<u8> = [vec![16; 3], vec![12; 12]].concat();
+    engine_set_step_units(run.ptr, triplet.as_ptr(), triplet.len());
+    let length = |run: &Run| unsafe { &*run.ptr }.pattern.cells;
+
+    engine_set_step_units(std::ptr::null_mut(), triplet.as_ptr(), triplet.len()); // Must not crash
+    engine_set_step_units(run.ptr, std::ptr::null(), 4);
+    let too_long = [8u8; 193];
+    engine_set_step_units(run.ptr, too_long.as_ptr(), too_long.len());
+    let short = [12u8; 15];
+    engine_set_step_units(run.ptr, short.as_ptr(), short.len());
+    assert_eq!(length(&run), 15);
+}
