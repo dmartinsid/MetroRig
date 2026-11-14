@@ -68,6 +68,12 @@ describe('deploy workflow', () => {
     expect(text).not.toMatch(/continue-on-error|^\s+if:/m);
   });
 
+  it('runs the phone layout tests before it deploys', () => {
+    expect(runs(job('test'))).toContain('npm run test:mobile');
+    expect(JSON.parse(fs.readFileSync(path.resolve(__dirname, '../package.json'), 'utf8')).scripts['test:mobile'])
+      .toBe('vitest run --config vitest.mobile.config.ts');
+  });
+
   it('queues a newer deploy behind a running one', () => {
     const concurrency = block(text, 'concurrency');
     expect(concurrency).toMatch(/group: pages$/m);

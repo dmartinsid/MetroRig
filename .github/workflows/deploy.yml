@@ -29,6 +29,8 @@ jobs:
       # package-lock.json is not tracked, so npm ci has nothing to install from
       - run: npm install
       - run: npm run test:js
+      # The phone layout runs in the runner's own Google Chrome, driven by playwright-core
+      - run: npm run test:mobile
       # The pad tests decode the banks in public/pads/ with ffmpeg and ffprobe
       - run: sudo apt-get update && sudo apt-get install -y ffmpeg
       - run: npm run test:rust
