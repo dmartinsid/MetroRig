@@ -135,6 +135,47 @@ async function dragGrid(page: Page, distance: number) {
   await settle(page, '.grid-scroller');
 }
 
+// Whether a fade is drawn over the grid's left or right step edge: the edge's pixels brighten once every mask and overlay on the scroller is taken away
+async function fadeDrawn(page: Page, side: 'left' | 'right'): Promise<boolean> {
+  const strip = await page.evaluate(side => {
+    const scroller = document.querySelector<HTMLElement>('.grid-scroller')!.getBoundingClientRect();
+    const labels = [...document.querySelectorAll<HTMLElement>('.track-label')].map(label => label.getBoundingClientRect());
+    // The step area starts where beat 1 sits at rest: past the names column and its gap
+    const stepArea = labels[0].right + parseFloat(getComputedStyle(document.getElementById('grid-container')!).columnGap);
+    const left = side === 'left' ? stepArea : scroller.right - 16;
+    return { x: Math.round(left), y: Math.round(labels[0].top), width: 16, height: Math.round(labels[labels.length - 1].bottom - labels[0].top) };
+  }, side);
+  const shown = await page.screenshot({ clip: strip });
+  const bare = await page.addStyleTag({ content: `
+    .grid-scroller, .grid-scroller * { mask-image: none !important; -webkit-mask-image: none !important; }
+    .grid-scroller::before, .grid-scroller::after, .sequencer-grid::before, .sequencer-grid::after { display: none !important; }` });
+  const unfaded = await page.screenshot({ clip: strip });
+  await bare.evaluate(style => style.remove());
+  // A mask that changes nothing still shifts a few pixels by one level as it composites; a fade dims them by far more
+  const largest = await page.evaluate(async ([shown, unfaded]) => {
+    const pixels = (png: string) => new Promise<Uint8ClampedArray>(resolve => {
+      const image = new Image();
+      image.onload = () => {
+        const canvas = Object.assign(document.createElement('canvas'), { width: image.width, height: image.height });
+        const context = canvas.getContext('2d')!;
+        context.drawImage(image, 0, 0);
+        resolve(context.getImageData(0, 0, image.width, image.height).data);
+      };
+      image.src = `data:image/png;base64,${png}`;
+    });
+    const [a, b] = await Promise.all([pixels(shown), pixels(unfaded)]);
+    let largest = 0;
+    for (let i = 0; i < a.length; i++) largest = Math.max(largest, Math.abs(a[i] - b[i]));
+    return largest;
+  }, [shown.toString('base64'), unfaded.toString('base64')]);
+  return largest > 16;
+}
+
+async function scrollGridTo(page: Page, left: number) {
+  await page.evaluate(left => document.querySelector('.grid-scroller')!.scrollTo({ left, behavior: 'instant' as ScrollBehavior }), left);
+  await settle(page, '.grid-scroller');
+}
+
 describe('Mobile App', () => {
   it('harness opens the editor at 375', async () => {
     const page = await openScreen('editor', 375);
@@ -351,5 +392,35 @@ describe('Mobile App', () => {
     await page.evaluate(() => document.getElementById('figure-palette')!.scrollTo({ left: 1e6, behavior: 'instant' as ScrollBehavior }));
     expect(await page.evaluate(() => document.getElementById('figure-palette')!.scrollLeft)).toBeGreaterThan(0);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(375);
+  });
+
+  it('mob_25 right fade marks more steps', async () => {
+    const page = await openScreen('editor', 375, 1600);
+    const start = await grid(page);
+    expect(start.maxScroll).toBeGreaterThan(0);
+    expect(await fadeDrawn(page, 'right')).toBe(true);
+    await scrollGridTo(page, 1e6);
+    expect(await fadeDrawn(page, 'right')).toBe(false);
+    // Back with steps beyond the edge, the fade returns
+    await scrollGridTo(page, 0);
+    expect(await fadeDrawn(page, 'right')).toBe(true);
+    // A one-beat bar fits the grid: no fade on either edge
+    await page.fill('#time-sig-num', '1');
+    await page.locator('#time-sig-num').dispatchEvent('change');
+    await page.waitForFunction(() => document.querySelectorAll('.step-count').length === 4);
+    expect((await grid(page)).maxScroll).toBe(0);
+    expect(await fadeDrawn(page, 'right')).toBe(false);
+    expect(await fadeDrawn(page, 'left')).toBe(false);
+  });
+
+  it('mob_26 left fade marks hidden steps', async () => {
+    const page = await openScreen('editor', 375, 1600);
+    expect(await fadeDrawn(page, 'left')).toBe(false);
+    const start = await grid(page);
+    await scrollGridTo(page, start.beats[1] - start.beats[0]);
+    expect((await grid(page)).scrollLeft).toBeGreaterThan(0);
+    expect(await fadeDrawn(page, 'left')).toBe(true);
+    await scrollGridTo(page, 0);
+    expect(await fadeDrawn(page, 'left')).toBe(false);
   });
 });

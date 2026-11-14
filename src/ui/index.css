@@ -2138,3 +2138,35 @@ select:focus {
     border-radius: var(--radius-control);
   }
 }
+
+/* ─── Grid Edge Fades ────────────────────────────────────── */
+/* An edge with more steps beyond it fades out; the fade starts where the steps do, past any fixed names column */
+.grid-scroller {
+  --fade-start: 0px;
+  --fade-left: #000;
+  --fade-right: #000;
+}
+
+.grid-scroller[data-more-left] {
+  --fade-left: transparent;
+}
+
+.grid-scroller[data-more-right] {
+  --fade-right: transparent;
+}
+
+.grid-scroller[data-more-left],
+.grid-scroller[data-more-right] {
+  -webkit-mask-image: linear-gradient(to right,
+    #000 var(--fade-start), var(--fade-left) var(--fade-start),
+    #000 calc(var(--fade-start) + 2rem), #000 calc(100% - 2rem), var(--fade-right) 100%);
+  mask-image: linear-gradient(to right,
+    #000 var(--fade-start), var(--fade-left) var(--fade-start),
+    #000 calc(var(--fade-start) + 2rem), #000 calc(100% - 2rem), var(--fade-right) 100%);
+}
+
+@media (max-width: 767px) {
+  .grid-scroller {
+    --fade-start: calc(var(--names-w) + 0.4rem);
+  }
+}

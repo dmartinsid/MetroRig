@@ -37,6 +37,7 @@ export function mount(session: Session): void {
   const barSelector = byId('bar-selector');
   const barButtons = [...barSelector.querySelectorAll<HTMLButtonElement>('.bar-btn')];
   const gridContainer = byId('grid-container');
+  const gridScroller = gridContainer.parentElement!;
 
   const timeSigNum = byId<HTMLInputElement>('time-sig-num');
   const timeSigDen = byId<HTMLSelectElement>('time-sig-den');
@@ -176,6 +177,14 @@ export function mount(session: Session): void {
     }
 
     updatePatternBar();
+    updateGridEdges();
+  }
+
+  // Marks each edge of the grid with more steps beyond it, so the CSS fades that edge
+  function updateGridEdges() {
+    const { scrollLeft, clientWidth, scrollWidth } = gridScroller;
+    gridScroller.toggleAttribute('data-more-left', scrollLeft > 0.5);
+    gridScroller.toggleAttribute('data-more-right', scrollLeft + clientWidth < scrollWidth - 0.5);
   }
 
   function applyTrackMix() {
@@ -264,6 +273,11 @@ export function mount(session: Session): void {
   barButtons.forEach((button, bar) => {
     button.onclick = () => session.showBar(bar);
   });
+
+  gridScroller.addEventListener('scroll', updateGridEdges, { passive: true });
+  window.addEventListener('resize', updateGridEdges);
+  // A grid drawn while the Editor was hidden measures nothing: its edges are read again once it is shown
+  new ResizeObserver(updateGridEdges).observe(gridScroller);
 
   function updateTimeSignature() {
     const num = clampNumerator(parseInt(timeSigNum.value, 10));
