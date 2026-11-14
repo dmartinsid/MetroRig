@@ -228,6 +228,23 @@ export function mount(session: Session): void {
   });
   if (session.view === 'stadium') updateStadiumStatus();
 
+  // On phones the clock fills the room left above Play; when that room can't hold a usable clock, the clock keeps
+  // its floor below the controls and the screen scrolls (AD-031). The room is read with the page at its top
+  const stadiumView = byId('stadium-view');
+  const stadiumPanel = document.querySelector<HTMLElement>('.stadium-panel')!;
+  const clockColumn = document.querySelector<HTMLElement>('.clock-column')!;
+  const CLOCK_ROOM = 224; // a 200 px clock, the 4 px gap and its one-row legend
+  const PLAY_GAP = 20; // the 0.5 rem ring around Play and the display's bottom padding
+  function fitClock() {
+    if (stadiumView.classList.contains('hidden') || getComputedStyle(btnStadiumPlay).position !== 'fixed') return;
+    const room = btnStadiumPlay.getBoundingClientRect().top - PLAY_GAP - (clockColumn.getBoundingClientRect().top + window.scrollY);
+    stadiumView.dataset.clock = room >= CLOCK_ROOM ? 'fit' : 'scroll';
+  }
+  const watcher = new ResizeObserver(fitClock);
+  watcher.observe(stadiumPanel);
+  watcher.observe(document.querySelector('header')!, { box: 'border-box' });
+  window.addEventListener('resize', fitClock);
+
   showRoutine();
   drawBeatClock();
   renderTempoSteps();

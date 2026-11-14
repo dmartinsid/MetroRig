@@ -202,7 +202,8 @@ export function mount(session: Session): void {
 
   // The phone Stadium sizes its clock to the height the header leaves (AD-031)
   const header = document.querySelector('header')!;
-  new ResizeObserver(() => document.documentElement.style.setProperty('--header-h', `${header.offsetHeight}px`)).observe(header);
+  // The border box, so a safe-area inset that changes the padding is seen too
+  new ResizeObserver(() => document.documentElement.style.setProperty('--header-h', `${header.offsetHeight}px`)).observe(header, { box: 'border-box' });
 
   footerClock.textContent = formatClock(session.sampleRate());
   populatePresetsDropdown();

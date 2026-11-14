@@ -78,7 +78,7 @@ T12 → T13 → T14
 ### Phase 6: Stadium controls on top
 
 ```
-T15
+T15 → T16
 ```
 
 ---
@@ -389,6 +389,26 @@ T15
 
 ---
 
+### T16: Keep the Stadium clock usable at every phone height
+
+**What**: `stadium.ts` reads the room left above Play with the page at its top and marks `#stadium-view` `data-clock="fit"` or `"scroll"`; in `scroll` the clock keeps a 280 px column below the controls. The header's height is observed on its border box. Closes the C45-C47 Verifier findings.
+**Where**: `src/ui/stadium.ts`
+**Depends on**: T15
+**Reuses**: `btnStadiumPlay`, the `--header-h` observer in `src/ui/header.ts`
+**Requirement**: MOB-48
+
+**Done when**:
+
+- [x] `mob_48` passes in Chrome at 360 × 780, 412 × 800, an installed 390 × 844 (insets 47/34), 375 × 812 (44/34) and 390 × 844 with a Trainer routine on; `mob_45` to `mob_47` still pass
+- [x] Gate check passes: `npx vitest run && npm run test:mobile && npm run build`
+
+**Tests**: e2e
+**Gate**: build
+**Commit**: `fix(ui): keep the stadium clock usable at every phone height`
+**Status**: Done
+
+---
+
 ## Checks
 
 **C1** - At 360, 375, 390 and 430 px the Editor, Stadium, Grooves and Improv each have a page scroll width equal to the window width (MOB-01, AC 1)
@@ -532,6 +552,9 @@ Proof: run mobile | ✓ tests/mobile/phone.test.ts > Mobile App > mob_46 stadium
 **C47** - At 360 × 640 and 375 × 667, at scroll 0, the tempo with − and + lies above the Play button, and the clock is at least 240 px wide below the orbs (MOB-47, AC 3)
 Proof: run mobile | ✓ tests/mobile/phone.test.ts > Mobile App > mob_47 stadium tempo first on short phones
 
+**C48** - At 360 × 780, 412 × 800, 390 × 844 with insets 47/34, 375 × 812 with 44/34, and 390 × 844 with a Trainer routine on, the Stadium clock is at least 200 px wide, and scrolled to the end its legend ends above the Play button (MOB-48, AC 4)
+Proof: run mobile | ✓ tests/mobile/phone.test.ts > Mobile App > mob_48 stadium clock never shrinks under its floor
+
 ---
 
 ## Handoff
@@ -552,7 +575,7 @@ Phase 2:  T2 ------→ T3 ------→ T4 ------→ T5
 Phase 3:  T6 ------→ T7 ------→ T8
 Phase 4:  T9 ------→ T10 -----→ T11
 Phase 5:  T12 -----→ T13 -----→ T14
-Phase 6:  T15
+Phase 6:  T15 -----→ T16
 ```
 
 Execution is strictly sequential.
