@@ -646,6 +646,23 @@ const SEXTUPLET = 8;
 const units = (...beats: [number, number][]) => beats.flatMap(([count, unit]) => new Array(count).fill(unit));
 const figureOf = (id: string) => FIGURES.find(figure => figure.id === id)!;
 
+// Stores a preset and loads it, as the selector does
+async function loadStored(fixture: ReturnType<typeof setup>, preset: Omit<Preset, 'id' | 'name' | 'bpm' | 'trainerSettings'>) {
+  await fixture.database.savePreset({ id: 'user_stored', name: 'Stored', bpm: 120, trainerSettings: { ...trainer, enabled: false }, ...preset });
+  fixture.session.loadPreset('user:user_stored');
+  await flush();
+}
+
+// A 4/4 bar whose beat 2 is a snare triplet: 15 cells
+const TRIPLET_BAR = {
+  timeSignature: '4/4', measureLength: 16, bars: 1, beatCells: [[4, 3, 4, 4]],
+  gridData: {
+    0: [2, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
+    2: [0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0],
+    3: [1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+  },
+};
+
 // The calls since the engine last took the bar length, in order
 // Each cell-length list the engine got, in order
 const unitsSent = (engine: FakeEngine) => engine.sent('setStepUnits').map(([sent]) => sent);
@@ -836,5 +853,86 @@ describe('Session', () => {
     session.selectFigure(figureOf('sixteenths'));
     session.editStep(1, 0);
     expect(session.preset.gridData[1].slice(0, 4)).toEqual([1, 1, 1, 1]);
+  });
+
+  it('tup_25 surviving beats keep their kind', async () => {
+    const fixture = await startedEngine();
+    await loadStored(fixture, structuredClone(TRIPLET_BAR));
+    const { session, engine } = fixture;
+    engine.calls.length = 0;
+
+    expect(session.setTimeSignature(5, 4)).toBe('changed');
+
+    expect(session.preset.beatCells).toEqual([[4, 3, 4, 4, 4]]);
+    for (const [id, steps] of Object.entries(TRIPLET_BAR.gridData)) {
+      expect(session.preset.gridData[Number(id)], `track ${id}`).toEqual([...steps, 0, 0, 0, 0]);
+    }
+    TRACKS.forEach(({ id }) => expect(session.preset.gridData[id], `track ${id}`).toHaveLength(19));
+    expect(unitsSent(engine).at(-1)).toEqual(units([4, STRAIGHT], [3, TRIPLET], [12, STRAIGHT]));
+
+  });
+
+  it('keeps the triplet on beat 2 from 4/4 to 3/4', async () => {
+    const fixture = setup();
+    await loadStored(fixture, structuredClone(TRIPLET_BAR));
+    expect(fixture.session.setTimeSignature(3, 4)).toBe('changed');
+    expect(fixture.session.preset.measureLength).toBe(12);
+    expect(fixture.session.preset.beatCells).toEqual([[4, 3, 4]]);
+    for (const [id, steps] of Object.entries(TRIPLET_BAR.gridData)) {
+      expect(fixture.session.preset.gridData[Number(id)], `track ${id}`).toEqual(steps.slice(0, 11));
+    }
+    // A move that drops the only tuplet beat leaves a straight bar with no layout stored
+    expect(fixture.session.setTimeSignature(1, 4)).toBe('changed');
+    expect(fixture.session.preset.beatCells).toBeUndefined();
+    expect(fixture.session.preset.gridData[2]).toEqual([0, 0, 0, 0]);
+  });
+
+  it('tup_26 a /8 signature straightens every beat', async () => {
+    const fixture = await startedEngine();
+    // Beat 2 a snare triplet, beat 3 a kick sextuplet of mixed strengths: 1 normal, 2 accent, 3 ghost
+    await loadStored(fixture, {
+      timeSignature: '4/4', measureLength: 16, bars: 1, beatCells: [[4, 3, 6, 4]],
+      gridData: {
+        0: [2, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+        1: [1, 0, 0, 0, 0, 0, 0, 1, 3, 2, 1, 2, 3, 0, 0, 0, 0],
+        2: [0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      },
+    });
+    const { session, engine } = fixture;
+    engine.calls.length = 0;
+
+    expect(session.setTimeSignature(6, 8)).toBe('changed');
+
+    expect(session.preset.beatCells).toBeUndefined();
+    expect(session.preset.measureLength).toBe(12);
+    // Triplet cells at 0, 1/3, 2/3 of the beat land on sixteenths 0, 1 and 3
+    expect(session.preset.gridData[2]).toEqual([0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0]);
+    // Sextuplet cells 1 and 2 share sixteenth 1, as do 4 and 5 sixteenth 3: the accent beats the ghost
+    expect(session.preset.gridData[1]).toEqual([1, 0, 0, 0, 0, 0, 0, 0, 1, 2, 1, 2]);
+    expect(session.preset.gridData[0]).toEqual([2, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0]);
+    TRACKS.forEach(({ id }) => expect(session.preset.gridData[id], `track ${id}`).toHaveLength(12));
+    expect(unitsSent(engine).at(-1)).toEqual(units([12, STRAIGHT]));
+
+    // Back in /4 every beat is straight
+    expect(session.setTimeSignature(4, 4)).toBe('changed');
+    expect(session.preset.beatCells).toBeUndefined();
+    expect(session.preset.gridData[2]).toEqual([0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0]);
+  });
+
+  it('tup_19 the 32-step signature rule stands with tuplets', async () => {
+    const fixture = setup();
+    await loadStored(fixture, structuredClone(TRIPLET_BAR));
+    const { session } = fixture;
+    const before = structuredClone(session.preset);
+
+    // 9/4 holds 36 straight steps: refused, though the triplet bar holds fewer cells
+    expect(session.setTimeSignature(9, 4)).toBe('too-long');
+    expect(session.setTimeSignature(17, 8)).toBe('too-long');
+    expect(session.setTimeSignature(33, 16)).toBe('too-long');
+    expect(session.preset).toEqual(before);
+
+    // 8/4 holds 32: allowed, and the triplet stays
+    expect(session.setTimeSignature(8, 4)).toBe('changed');
+    expect(session.preset.beatCells).toEqual([[4, 3, 4, 4, 4, 4, 4, 4]]);
   });
 });

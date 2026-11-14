@@ -1,7 +1,7 @@
 import { withBase } from '../domain/assets';
 import type { ChordId } from '../domain/chords';
 import { TRACKS, nextStepValue } from '../domain/kit';
-import { barOffset, isTupletSignature, patternCells } from '../domain/layout';
+import { barBeatCells, barOffset, isTupletSignature, patternCells, setBeatCells } from '../domain/layout';
 import { measureLengthFor, timeSignatureOf } from '../domain/meter';
 import { createTrackMix, toggleMute, toggleSolo, type TrackMix } from '../domain/mix';
 import { FIGURES, applyFigureAt, barCount, barOfStep, fitBar, patternLength, stepInBar, writeBar } from '../domain/pattern';
@@ -316,6 +316,12 @@ export class Session {
     }
 
     this.visualScheduler.cancelAll(); // Ticks of the old bar length must not draw on the new one
+    const oldSignature = preset.timeSignature;
+    const oldBeats = barBeatCells(preset, 0);
+    if (isTupletSignature(oldSignature) && !isTupletSignature(sigStr)) {
+      oldBeats.forEach((cells, beat) => { if (cells !== 4) setBeatCells(preset, 0, beat, 4); });
+      delete preset.beatCells; // Only bar 1 is kept, and it is straight now
+    }
     const oldLength = preset.measureLength || 16;
     preset.timeSignature = sigStr;
     preset.measureLength = measureLength;
@@ -323,9 +329,23 @@ export class Session {
     this.viewBar = 0;
     this.playBar = 0;
 
-    // Resize gridData tracks to match the new length
-    for (const { id: trackId } of TRACKS) {
-      preset.gridData[trackId] = fitBar(preset.gridData[trackId] || [], 0, oldLength, measureLength);
+    // Between /4 signatures bar 1's surviving beats keep their kind and cells, and new beats come straight and empty.
+    // Elsewhere every beat goes straight first, then the bar is cut or padded with rests
+    if (isTupletSignature(oldSignature) && isTupletSignature(sigStr)) {
+      const kept = oldBeats.slice(0, num);
+      const beats = [...kept, ...new Array(num - kept.length).fill(4)];
+      const keptCells = kept.reduce((sum, cells) => sum + cells, 0);
+      const cells = beats.reduce((sum, n) => sum + n, 0);
+      for (const { id: trackId } of TRACKS) {
+        const steps = (preset.gridData[trackId] || []).slice(0, keptCells);
+        preset.gridData[trackId] = Array.from({ length: cells }, (_, cell) => steps[cell] ?? 0);
+      }
+      if (beats.every(n => n === 4)) delete preset.beatCells;
+      else preset.beatCells = [beats];
+    } else {
+      for (const { id: trackId } of TRACKS) {
+        preset.gridData[trackId] = fitBar(preset.gridData[trackId] || [], 0, oldLength, measureLength);
+      }
     }
 
     this.emit('grid');
