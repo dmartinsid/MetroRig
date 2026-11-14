@@ -384,23 +384,26 @@ describe('Mobile App', () => {
     expect((await box(page, '.logo'))!.top).toBeGreaterThanOrEqual(47);
   });
   it('mob_43 stadium play fixed above the tab bar', async () => {
-    const page = await openScreen('stadium', 375, 667);
-    for (const scrolled of [false, true]) {
-      if (scrolled) await scrollToEnd(page);
-      if (scrolled) expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(300);
-      const tabBar = (await box(page, '.view-nav'))!;
-      const play = (await box(page, '#btn-stadium-play'))!;
-      // Directly above: no more than the 0.5 rem gap between them, inside the window's width, the full 44 px tall at least
-      expect([scrolled, play.bottom <= tabBar.top, tabBar.top - play.bottom <= 8.5, play.left >= 0, play.right <= 375, play.height >= 44])
-        .toEqual([scrolled, true, true, true, true, true]);
-      // The button is the one on top at its centre, so a tap reaches it rather than what scrolls beneath
-      const hit = await page.evaluate(({ x, y }) => document.elementFromPoint(x, y)?.closest('#btn-stadium-play') !== null,
-        { x: (play.left + play.right) / 2, y: (play.top + play.bottom) / 2 });
-      expect([scrolled, hit]).toEqual([scrolled, true]);
+    // The narrowest phone, a common one, and the widest window the phone layout applies to
+    for (const [width, height] of [[360, 640], [375, 667], [767, 1024]] as const) {
+      const page = await openScreen('stadium', width, height);
+      for (const scrolled of [false, true]) {
+        if (scrolled) await scrollToEnd(page);
+        if (scrolled) expect([width, await page.evaluate(() => window.scrollY) > 0]).toEqual([width, true]);
+        const tabBar = (await box(page, '.view-nav'))!;
+        const play = (await box(page, '#btn-stadium-play'))!;
+        // Directly above: no more than the 0.5 rem gap between them, inside the window's width, the full 44 px tall at least
+        expect([width, scrolled, play.bottom <= tabBar.top, tabBar.top - play.bottom <= 8.5, play.left >= 0, play.right <= width, play.height >= 44])
+          .toEqual([width, scrolled, true, true, true, true, true]);
+        // The button is the one on top at its centre, so a tap reaches it rather than what scrolls beneath
+        const hit = await page.evaluate(({ x, y }) => document.elementFromPoint(x, y)?.closest('#btn-stadium-play') !== null,
+          { x: (play.left + play.right) / 2, y: (play.top + play.bottom) / 2 });
+        expect([width, scrolled, hit]).toEqual([width, scrolled, true]);
+      }
+      // It stays with Stadium: on another screen it draws nothing
+      await page.click('#nav-grooves');
+      expect([width, await box(page, '#btn-stadium-play')]).toEqual([width, null]);
     }
-    // It stays with Stadium: on another screen it draws nothing
-    await page.click('#nav-grooves');
-    expect(await box(page, '#btn-stadium-play')).toBeNull();
   });
 
   it('mob_44 desktop stadium play stays in the panel', async () => {
