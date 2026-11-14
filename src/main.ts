@@ -2,6 +2,7 @@
 import { MetronomeNode } from './audio/MetronomeNode';
 import { StateManager } from './app/stateManager';
 import { Session } from './app/session';
+import { keepAwake } from './app/keepAwake';
 import { browserPreferences } from './storage/preferences';
 import { mount as mountHeader } from './ui/header';
 import { mount as mountEditor } from './ui/editor';
@@ -20,6 +21,14 @@ const session = new Session({
   wasmUrl: ENGINE_WASM,
   workletUrl,
   assetBase: import.meta.env.BASE_URL, // `/` on the dev server, `/MetroRig/` in the build
+});
+
+// The screen stays on while MetroRig sounds, where the browser has a Wake Lock API
+keepAwake(session, 'wakeLock' in navigator ? { request: () => navigator.wakeLock.request('screen') } : null, {
+  visible: () => document.visibilityState === 'visible',
+  onVisible: listener => document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') listener();
+  }),
 });
 
 mountHeader(session);

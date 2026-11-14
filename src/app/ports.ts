@@ -37,3 +37,14 @@ export interface Dialogs {
 export type Preferences = PreferenceStore;
 
 export type SessionChange = 'preset' | 'tempo' | 'grid' | 'playback' | 'tick' | 'mix' | 'edits' | 'timer' | 'view' | 'improv' | 'library' | 'trainer';
+
+// A screen wake lock as the browser grants it: held until released, or until the browser drops it with the page hidden
+export interface ScreenLock {
+  request(): Promise<{ release(): Promise<void> }>;
+}
+
+// Whether the page is on screen, and word each time it comes back
+export interface PageVisibility {
+  visible(): boolean;
+  onVisible(listener: () => void): void;
+}

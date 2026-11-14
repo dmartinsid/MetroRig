@@ -245,13 +245,14 @@ T9 → T10 → T11
 
 **Done when**:
 
-- [ ] `mob_32` to `mob_35` pass in `tests/keepAwake.test.ts`, with a stub lock and stub page
-- [ ] `tests/layers.test.ts` still passes
-- [ ] Gate check passes: `npx vitest run`
+- [x] `mob_32` to `mob_35` pass in `tests/keepAwake.test.ts`, with a stub lock and stub page
+- [x] `tests/layers.test.ts` still passes
+- [x] Gate check passes: `npx vitest run`
 
 **Tests**: unit
 **Gate**: quick
 **Commit**: `feat(app): keep the screen awake while MetroRig sounds`
+**Status**: Done
 
 ---
 
