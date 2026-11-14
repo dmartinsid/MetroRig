@@ -330,8 +330,9 @@ describe('Mobile App', () => {
   });
 
   it('mob_11 desktop keeps header links', async () => {
-    for (const screen of ['editor', 'stadium', 'grooves', 'improv'] as Screen[]) {
-      const page = await openScreen(screen, 1280);
+    // 768 is the first desktop width, where the header is tightest
+    for (const [screen, width] of (['editor', 'stadium', 'grooves', 'improv'] as Screen[]).flatMap(screen => [768, 1280].map(width => [screen, width] as const))) {
+      const page = await openScreen(screen, width);
       const header = (await box(page, 'header'))!;
       const shown = await tabs(page);
       expect(shown.map(tab => tab.name)).toEqual(['Editor', 'Stadium', 'Grooves', 'Improv']);
@@ -541,8 +542,9 @@ describe('Mobile App', () => {
   });
 
   it('mob_04 touch targets 44 px and step cells 32 px', async () => {
-    for (const screen of ['editor', 'stadium', 'grooves', 'improv'] as Screen[]) {
-      const page = await openScreen(screen, 375);
+    // 360 is the narrowest phone, 767 the widest window the phone layout applies to
+    for (const [screen, width] of (['editor', 'stadium', 'grooves', 'improv'] as Screen[]).flatMap(screen => [360, 375, 767].map(width => [screen, width] as const))) {
+      const page = await openScreen(screen, width);
       // Open what a screen folds away, so its controls are measured too
       if (screen === 'editor') {
         await page.evaluate(() => {
