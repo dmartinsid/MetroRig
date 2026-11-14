@@ -111,4 +111,51 @@ describe('tab_to_grid', () => {
     measures[3] = bar(beat([36], 12, { tuplet: 3 }), beat([36], 12, { tuplet: 3 }), beat([36], 12, { tuplet: 3 }), rest(4), rest(2));
     expect(() => barsToGrid(part(measures), 0)).toThrow('falls between steps');
   });
+
+  // A 4/4 bar whose beat 2 holds one tuplet: its notes of one unit, 8 for eighths or 16 for sixteenths
+  const tupletOnBeat2 = (frets: number[], unit: number, tuplet: number) =>
+    bar(rest(4), ...frets.map(fret => beat([fret], unit, { tuplet })), rest(2));
+
+  it('lays a triplet beat as 3 cells', () => {
+    const measures = [tupletOnBeat2([38, 38, 38], 8, 3), ...fourBars().slice(1)];
+    const { measureLength, beatCells, tracks } = barsToGrid(part(measures), 0);
+
+    expect(measureLength).toBe(16);
+    expect(beatCells).toEqual([[4, 3, 4, 4], [4, 4, 4, 4], [4, 4, 4, 4], [4, 4, 4, 4]]);
+    expect(tracks[2]).toHaveLength(15 + 16 * 3);
+    expect(tracks[2].slice(0, 15)).toEqual([0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0]);
+    // The next bars start after the triplet bar's 15 cells
+    expect(tracks[1].flatMap((value: number, cell: number) => (value ? [cell] : []))).toEqual([15 + 4, 31 + 8, 47 + 12]);
+  });
+
+  it('lays a sextuplet beat as 6 cells', () => {
+    const measures = [tupletOnBeat2([42, 46, 42, 42, 46, 38], 16, 6), ...fourBars().slice(1)];
+    const { beatCells, tracks } = barsToGrid(part(measures), 0);
+
+    expect(beatCells[0]).toEqual([4, 6, 4, 4]);
+    expect(tracks[3].slice(4, 10)).toEqual([1, 0, 1, 1, 0, 0]);
+    expect(tracks[4].slice(4, 10)).toEqual([0, 1, 0, 0, 1, 0]);
+    expect(tracks[2].slice(4, 10)).toEqual([0, 0, 0, 0, 0, 1]);
+  });
+
+  it('writes no beat cells when every beat is straight', () => {
+    expect(barsToGrid(part(fourBars()), 0)).not.toHaveProperty('beatCells');
+  });
+
+  it('tup_36 a note between cells names its measure', () => {
+    // A quintuplet: 5 sixteenths in the space of 4 lands on no cell of 4, 3 or 6
+    const measures = fourBars();
+    measures[2] = bar(rest(4), ...Array.from({ length: 5 }, () => beat([38], 16, { tuplet: 5 })), rest(2));
+    expect(() => barsToGrid(part(measures), 0)).toThrow('A note in measure 2 falls between steps');
+    // Counted in the whole tab, from where the stretch begins in it
+    expect(() => barsToGrid({ ...part([kickOn(0), ...measures]) }, 1)).toThrow('A note in measure 3 falls between steps');
+    // And in the file a part was read from
+    expect(() => barsToGrid({ ...part(measures), first: 40 }, 0)).toThrow('A note in measure 42 falls between steps');
+    // A triplet on one voice and a sixteenth on another in one beat need 12 cells, which no beat holds
+    measures[2] = { voices: [
+      { beats: [beat([38], 8, { tuplet: 3 }), beat([38], 8, { tuplet: 3 }), beat([38], 8, { tuplet: 3 }), rest(4), rest(2)] },
+      { beats: [beat([42], 16), beat([42], 16), rest(8), rest(4), rest(2)] },
+    ] };
+    expect(() => barsToGrid(part(measures), 0)).toThrow('A note in measure 2 falls between steps');
+  });
 });

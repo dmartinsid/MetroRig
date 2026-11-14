@@ -204,8 +204,8 @@ MetroRig's grid knows one subdivision: every step is a sixteenth, in the app and
 | TUP-32 | P1: Train songs | Design | Pending |
 | TUP-33 | P1: Train songs | Design | Pending |
 | TUP-34 | P1: Train songs | Design | Pending |
-| TUP-35 | P1: Train songs | Design | Pending |
-| TUP-36 | P1: Train songs | Design | Pending |
+| TUP-35 | P1: Train songs | Design | Implementing |
+| TUP-36 | P1: Train songs | Design | Implementing |
 | TUP-37 | P1: Train songs | Design | Pending |
 | TUP-38 | P1: Train songs | Design | Pending |
 | TUP-39 | Edge cases | Design | Implementing |

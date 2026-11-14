@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import * as zlib from 'zlib';
+import { barsToGrid } from '../scripts/tab_to_grid.js';
 
 const SCRIPT = path.resolve(__dirname, '../scripts/gp_extract.py');
 const SECTOR = 0x1000;
@@ -195,6 +196,15 @@ describe('gp_extract', () => {
       expect(fromStart.measures.map((measure: { signature?: number[] }) => measure.signature ?? null), file)
         .toEqual([[4, 4], [7, 4], null, null]);
       expect(fromStart.tempo, file).toBe(120);
+
+      // The converter lays the triplet as a beat of 3 cells: measure 1 is 4 + 4 + 3 + 4 × 4 cells
+      const grid = barsToGrid(part, 0, 3);
+      expect([grid.measureLength, grid.bpm], file).toEqual([28, 144]);
+      expect(grid.beatCells, file).toEqual([[4, 4, 3, 4, 4, 4, 4], [4, 4, 4, 4, 4, 4, 4], [4, 4, 4, 4, 4, 4, 4]]);
+      const bar1 = (track: number) => grid.tracks[track].slice(0, 27);
+      expect(bar1(2).flatMap((value: number, cell: number) => (value ? [[cell, value]] : [])), file).toEqual([[0, 2], [4, 3]]);
+      expect(bar1(1).flatMap((value: number, cell: number) => (value ? [cell] : [])), file).toEqual([0]);
+      expect(bar1(3).flatMap((value: number, cell: number) => (value ? [cell] : [])), file).toEqual([8, 9, 10]);
     }
   });
 
