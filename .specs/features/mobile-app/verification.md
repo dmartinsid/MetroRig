@@ -1,10 +1,11 @@
 # Mobile App verification
 
 **Verdict**: FAIL
-**Proofs**: `proofs.md` at d41ac4c
+**After fixes**: all three findings closed (e02cdd6, f02cb50); `check_proofs.py` 45 pass, 0 fail at f02cb50; `validate_verification.py` exits 0
+**Proofs**: `proofs.md` at de03352
 **Verifier**: independent sub-agent (author != verifier)
 
-Diff range `1a2d9fa..901911e`. No product defect was found. The two findings are tests that leave the edge of their criterion's range unmeasured. The probes below show that both rules hold at HEAD today.
+Diff range `1a2d9fa..901911e`. No product defect was found. The two findings are tests that leave the edge of their criterion's range unmeasured. The probes below show that both rules hold at HEAD today. Mid-build checks C40-C44 (AD-030) were judged over `901911e..de03352`: no product defect; one more finding of the same kind (C43 measured only at 375).
 
 ## Checks
 
@@ -49,6 +50,11 @@ Diff range `1a2d9fa..901911e`. No product defect was found. The two findings are
 | C37 | `tests/mobile/phone.test.ts` `mob_37 double tap does not zoom` | yes |
 | C38 | `tests/mobile/phone.test.ts` `mob_38 long press selects no text` | yes |
 | C39 | `tests/mobile/phone.test.ts` `mob_39 pull past the top does not reload` | yes |
+| C40 | `tests/mobile/phone.test.ts` `mob_40 stadium is the first screen link` | yes - sorts the links by their on-screen left edge at 375 and 1280; the order comes from one markup list, and `mob_11` asserts it at 768 too |
+| C41 | `tests/app.test.ts` `mob_41 first visit opens on stadium` | yes - asserts Stadium is the only shown screen and `nav-stadium` the only `aria-current="page"` link with no stored view |
+| C42 | `tests/app.test.ts` `mob_42 a saved screen still opens first` | yes - each of `editor`, `grooves`, `improv` stored opens that screen and marks only its link |
+| C43 | `tests/mobile/phone.test.ts` `mob_43 stadium play fixed above the tab bar` | no - measured only at 375 x 667; MOB-43 holds for every width up to 767, and a Play rule moved into a narrower query (e.g. `max-width: 600px`) passes the test while 600-767 leaves Play in the panel |
+| C44 | `tests/mobile/phone.test.ts` `mob_44 desktop stadium play stays in the panel` | yes - at 768 and 1280 asserts the button inside the panel's box and `position: static`, so a breakpoint off by one fails at 768 |
 
 ## Own examples (all at HEAD, headless Chrome with touch, throwaway scripts in the session scratchpad)
 
@@ -59,10 +65,12 @@ Diff range `1a2d9fa..901911e`. No product defect was found. The two findings are
 - **Desktop unchanged:** HEAD compared with `1a2d9fa` in the same Chrome, pixel for pixel. Tried at 768, 1024 and 1280 on all four screens (zero differing pixels), and at 768 and 1280 with the default preset, `Battery`, `Crossroads` and 7/8, scrolled to 0, 600, 1200 and the end, on Editor, Grooves and Stadium (zero differing pixels). Stadium was also tried at heights 848, 1200 and 2200. Holds.
 - **MOB-08 in Chrome:** the dot on the Improv tab is hidden while no pad sounds, and drawn neon inside the tab while one sounds, also with the Editor shown.
 - **MOB-32/33/35 in Chrome:** the real `navigator.wakeLock` was granted on transport Play and released on Stop, with no page error or console error.
+- **MOB-40 to MOB-44 (mid-build checks, diff `901911e..de03352`):** at 360 x 640, 375 x 667, 430 x 932, 767 x 1024, 768 x 1024, 1024 x 768 and 1280 x 800, with no stored view. Every size opened on Stadium with only `nav-stadium` current, and read the links `Stadium`, `Editor`, `Grooves`, `Improv` sorted by on-screen position (tab bar up to 767, header from 768). Up to 767 the Play button was `position: fixed`, 8 px above the tab bar's top, inside the window's width and on top at its centre, at scroll 0, half way and the end; nothing in the Stadium sat under it at the end. At 768 and wider it was `static` inside the panel. A tap (touch) or click on it toggled `PLAY` / `STOP` and back at every size. On Editor, Grooves and Improv it drew nothing, and it came back on returning to Stadium. Stored views: `stadium`, `editor`, `grooves`, `improv` each opened that screen at 375 and 1280; `presets`, the empty string and `STADIUM` fell back to Stadium. A reload after choosing Grooves reopened Grooves, and after choosing Stadium reopened Stadium. No page errors. Holds; the one gap is that `mob_43` does not measure the widths these probes covered beyond 375.
 
 ## Findings
 
 | Finding | Evidence | Fix | Closed |
 | --- | --- | --- | --- |
-| C4's test measures the 44 px and 32 px targets only at 375, while MOB-04 holds every width up to 767, and the spec's narrowest width, 360, is where the two-column mix buttons, the transport row and the tab cells are smallest. A control that drops under 44 px at 360 passes the test. | `tests/mobile/phone.test.ts:543`, `openScreen(screen, 375)` only. A probe at 360, 430, 600 and 767 passes today. | Loop `mob_04` over 360 and 767 (and keep 375), with the same song and Trainer state. | |
-| C11's test checks the header links and no fixed bar only at 1280, while MOB-11 starts at 768, the width where `@media (max-width: 767px)` flips and the header is tightest. A breakpoint off by one (e.g. `max-width: 768px`) passes the test. | `tests/mobile/phone.test.ts:332`, `openScreen(screen, 1280)` only. At 768 HEAD is pixel-identical to `1a2d9fa` today. | Run `mob_11` at 768 as well as 1280. | |
+| C4's test measures the 44 px and 32 px targets only at 375, while MOB-04 holds every width up to 767, and the spec's narrowest width, 360, is where the two-column mix buttons, the transport row and the tab cells are smallest. A control that drops under 44 px at 360 passes the test. | `tests/mobile/phone.test.ts:543`, `openScreen(screen, 375)` only. A probe at 360, 430, 600 and 767 passes today. | Loop `mob_04` over 360 and 767 (and keep 375), with the same song and Trainer state. | e02cdd6 |
+| C11's test checks the header links and no fixed bar only at 1280, while MOB-11 starts at 768, the width where `@media (max-width: 767px)` flips and the header is tightest. A breakpoint off by one (e.g. `max-width: 768px`) passes the test. | `tests/mobile/phone.test.ts:332`, `openScreen(screen, 1280)` only. At 768 HEAD is pixel-identical to `1a2d9fa` today. | Run `mob_11` at 768 as well as 1280. | e02cdd6 |
+| C43's test measures the fixed Stadium Play only at 375 x 667, while MOB-43 holds for every width up to 767. Moving the Play rule into a narrower media query (or out of the phone block into one that stops short of 767) passes `mob_43` and `mob_44` while a 600-767 window keeps Play in the panel. | `tests/mobile/phone.test.ts` `mob_43`, `openScreen('stadium', 375, 667)` only. A probe at 360 x 640, 430 x 932 and 767 x 1024 passes today. | Loop `mob_43` over 360 x 640, 375 x 667 and 767 x 1024, with the same before/after-scroll and hit assertions. | f02cb50 |

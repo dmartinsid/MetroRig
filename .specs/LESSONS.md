@@ -380,6 +380,18 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: src/ui/stadium.ts key target (C7) (ui)
 - last seen: 2026-11-13T02:07:07Z
 
+### L-062 - Measure a width-ranged layout criterion at both edges of its range (the narrowest phone and the breakpoint), not at one typical width.
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `tests/mobile` · harmful: 0
+- features: mobile-app
+- evidence: C4,C11,C43 (tests/mobile)
+- last seen: 2026-11-14T21:34:49Z
+
+### L-063 - Make a browser test helper navigate to the screen it needs instead of assuming which screen opens first.
+- signal: `gate_fail` · recurrence: 1 feature(s) · scope: `tests/mobile` · harmful: 0
+- features: mobile-app
+- evidence: tests/mobile/phone.test.ts:21 (tests/mobile)
+- last seen: 2026-11-14T21:34:49Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.
