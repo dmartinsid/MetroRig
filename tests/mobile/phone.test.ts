@@ -159,10 +159,11 @@ describe('Mobile App', () => {
   });
 
   it('mob_10 last element clears the fixed bars', async () => {
-    for (const screen of ['stadium', 'grooves', 'improv'] as Screen[]) {
+    for (const screen of ['editor', 'stadium', 'grooves', 'improv'] as Screen[]) {
       const page = await openScreen(screen, 375);
       await scrollToEnd(page);
-      const bar = (await box(page, '.view-nav'))!;
+      // In the Editor the transport bar sits on top of the tab bar, so the page must clear both
+      const bar = (await box(page, screen === 'editor' ? '#transport-bar' : '.view-nav'))!;
       const view = (await box(page, `#${screen}-view`))!;
       const footer = (await box(page, '.status-bar'))!;
       // The window scrolls in whole pixels, so a fractional page height may leave its end under a pixel low
@@ -213,5 +214,40 @@ describe('Mobile App', () => {
     expect(base).toBeGreaterThan(0);
     expect(await paddingWithInsets(page, 'header', 'top', 47)).toBe(base + 47);
     expect((await box(page, '.logo'))!.top).toBeGreaterThanOrEqual(47);
+  });
+  it('mob_13 transport bar fixed above the tab bar', async () => {
+    const page = await openScreen('editor', 375);
+    for (const scrolled of [false, true]) {
+      if (scrolled) await scrollToEnd(page);
+      if (scrolled) expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(1000);
+      const tabBar = (await box(page, '.view-nav'))!;
+      const transport = (await box(page, '#transport-bar'))!;
+      expect([scrolled, transport.bottom, transport.left, transport.right]).toEqual([scrolled, tabBar.top, 0, 375]);
+      // −, the tempo, + and Play, in that order, each drawn inside the bar
+      const parts = await page.evaluate(() => ['#transport-bpm-down', '#transport-bpm', '#transport-bpm-up', '#transport-play'].map(selector => {
+        const element = document.querySelector<HTMLElement>(selector)!;
+        const { top, bottom, left, right, width } = element.getBoundingClientRect();
+        return { text: element.innerText.trim(), top, bottom, left, right, width };
+      }));
+      expect(parts.map(part => part.text)).toEqual(['−', '120', '+', '▶ PLAY']);
+      for (const part of parts) {
+        expect(part.width).toBeGreaterThan(0);
+        expect(part.top).toBeGreaterThanOrEqual(transport.top);
+        expect(part.bottom).toBeLessThanOrEqual(transport.bottom);
+        expect(part.right).toBeLessThanOrEqual(375);
+      }
+      for (let i = 1; i < parts.length; i++) expect(parts[i].left).toBeGreaterThanOrEqual(parts[i - 1].right);
+    }
+  });
+
+  it('mob_14 transport bar only in the editor', async () => {
+    for (const screen of ['stadium', 'grooves', 'improv'] as Screen[]) {
+      const page = await openScreen(screen, 375);
+      expect([screen, await page.locator('#transport-bar').isVisible()]).toEqual([screen, false]);
+      expect([screen, await box(page, '#transport-bar')]).toEqual([screen, null]);
+      // Back on the Editor it returns
+      await page.click('#nav-editor');
+      expect(await page.locator('#transport-bar').isVisible()).toBe(true);
+    }
   });
 });

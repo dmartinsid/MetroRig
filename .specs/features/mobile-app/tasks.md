@@ -165,12 +165,13 @@ T9 → T10 → T11
 
 **Done when**:
 
-- [ ] `mob_10` (all four screens), `mob_13`, `mob_14` pass in Chrome, and `mob_11` still passes
-- [ ] Gate check passes: `npx vitest run && npm run test:mobile`
+- [x] `mob_10` (all four screens), `mob_13`, `mob_14` pass in Chrome, and `mob_11` still passes
+- [x] Gate check passes: `npx vitest run && npm run test:mobile`
 
 **Tests**: e2e
 **Gate**: full
 **Commit**: `feat(ui): pin the transport bar above the tabs on phones`
+**Status**: Done
 
 ---
 
