@@ -8,6 +8,7 @@ import type { PreferenceKey, PreferenceStore } from '../../src/storage/preferenc
 import type { CustomGroove, PracticeLog, Preset, TrainerSettings } from '../../src/domain/preset';
 import { FACTORY_PRESETS } from '../../src/data/factory';
 import { SONGS, songToPreset } from '../../src/domain/songs';
+import { FIGURES } from '../../src/domain/pattern';
 import { TRACKS, takesOf } from '../../src/domain/kit';
 import { DEFAULT_TIMBRE, PAD_TIMBRES, timbreNotes } from '../../src/domain/chords';
 import type { KeyTarget } from '../../src/domain/tempo';
@@ -634,5 +635,109 @@ describe('Stadium tempo', () => {
     session.setBpm(120.6);
     session.stepBpm(-1);
     expect(session.preset.bpm).toBe(120);
+  });
+});
+
+// --- Tuplets (AD-029): a beat of a /4 bar holds 4, 3 or 6 cells ---
+
+const STRAIGHT = 12; // A cell's length in twelfths of a sixteenth
+const TRIPLET = 16;
+const SEXTUPLET = 8;
+const units = (...beats: [number, number][]) => beats.flatMap(([count, unit]) => new Array(count).fill(unit));
+const figureOf = (id: string) => FIGURES.find(figure => figure.id === id)!;
+
+// The calls since the engine last took the bar length, in order
+// Each cell-length list the engine got, in order
+const unitsSent = (engine: FakeEngine) => engine.sent('setStepUnits').map(([sent]) => sent);
+
+function layoutCalls(engine: FakeEngine) {
+  return engine.calls.filter(call => ['setMeasureLength', 'setBars', 'setStepUnits', 'updateGrid'].includes(call.method));
+}
+
+describe('Session', () => {
+  it('sends each cell\'s length after the bar length and the bars on Play', async () => {
+    const { session, engine, database } = setup();
+    // A stored 4/4 bar whose beat 2 is a triplet: 15 cells, with the snare on the triplet
+    await database.savePreset({
+      id: 'user_triplet', name: 'Triplet', bpm: 120, timeSignature: '4/4', measureLength: 16, bars: 1,
+      beatCells: [[4, 3, 4, 4]],
+      gridData: { 0: [2, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0], 2: [0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0] },
+      trainerSettings: { ...trainer, enabled: false },
+    });
+    session.loadPreset('user:user_triplet');
+    await flush();
+
+    session.togglePlay();
+    await flush();
+
+    // Play sends the layout each time it syncs the engine, every time with the triplet
+    expect(unitsSent(engine).length).toBeGreaterThan(0);
+    unitsSent(engine).forEach(sent => expect(sent).toEqual(units([4, STRAIGHT], [3, TRIPLET], [8, STRAIGHT])));
+    const calls = layoutCalls(engine).map(call => call.method);
+    const unitsAt = calls.lastIndexOf('setStepUnits');
+    expect(calls.lastIndexOf('setMeasureLength')).toBeLessThan(unitsAt);
+    expect(calls.lastIndexOf('setBars')).toBeLessThan(unitsAt);
+    // Every track follows the units, padded to the pattern's 15 cells when the preset leaves it out
+    const grids = layoutCalls(engine).slice(unitsAt + 1);
+    expect(grids.map(call => call.args[0]).sort((a, b) => a - b)).toEqual(TRACKS.map(track => track.id).sort((a, b) => a - b));
+    const sent = new Map(grids.map(call => [call.args[0], call.args[1]]));
+    expect(sent.get(2)).toEqual([0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0]);
+    expect(sent.get(1)).toEqual(new Array(15).fill(0));
+    TRACKS.forEach(({ id }) => expect(sent.get(id), `track ${id}`).toHaveLength(15));
+  });
+
+  it('sends straight cells for a pattern with no tuplet', async () => {
+    const { session, engine } = setup();
+    session.togglePlay();
+    await flush();
+    expect(unitsSent(engine).length).toBeGreaterThan(0);
+    unitsSent(engine).forEach(sent => expect(sent).toEqual(units([16, STRAIGHT])));
+  });
+
+  it('sends the cell lengths and every track after each tuplet edit', async () => {
+    const { session, engine } = await startedEngine();
+    session.togglePlay();
+    await flush();
+    engine.calls.length = 0;
+
+    session.selectFigure(figureOf('triplet'));
+    session.editStep(2, 4); // Snare triplet on beat 2
+
+    expect(unitsSent(engine)).toEqual([units([4, STRAIGHT], [3, TRIPLET], [8, STRAIGHT])]);
+    let calls = layoutCalls(engine);
+    expect(calls[0].method).toBe('setStepUnits');
+    let sent = new Map(calls.slice(1).map(call => [call.args[0], call.args[1]]));
+    expect([...sent.keys()].sort((a, b) => a - b)).toEqual(TRACKS.map(track => track.id).sort((a, b) => a - b));
+    expect(sent.get(2)).toEqual([0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0]);
+    expect(sent.get(0)).toEqual([2, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0]); // The click stays on each beat
+
+    engine.calls.length = 0;
+    session.selectFigure(figureOf('sextuplet'));
+    session.editStep(1, 8); // Kick sextuplet on beat 3
+    expect(unitsSent(engine)).toEqual([units([4, STRAIGHT], [3, TRIPLET], [6, SEXTUPLET], [4, STRAIGHT])]);
+    expect(layoutCalls(engine)[0].method).toBe('setStepUnits');
+    expect(engine.sent('updateGrid').every(([, steps]) => steps.length === 17)).toBe(true);
+
+    // Back to straight cells: the beat returns to 4 units of 12
+    engine.calls.length = 0;
+    session.selectFigure(figureOf('quarter'));
+    session.editStep(2, 4);
+    session.editStep(1, 8); // Beat 3 starts at cell 8 once beat 2 is straight again
+    expect(unitsSent(engine)).toEqual([
+      units([8, STRAIGHT], [6, SEXTUPLET], [4, STRAIGHT]),
+      units([16, STRAIGHT]),
+    ]);
+    calls = layoutCalls(engine);
+    sent = new Map(calls.slice(calls.map(call => call.method).lastIndexOf('setStepUnits') + 1).map(call => [call.args[0], call.args[1]]));
+    expect(sent.get(2)).toEqual([0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+    expect(sent.get(1)).toEqual([0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0]);
+  });
+
+  it('sends one track and no cell lengths for an edit that keeps every beat\'s kind', async () => {
+    const { session, engine } = await startedEngine();
+    session.selectFigure(figureOf('eighths'));
+    session.editStep(3, 0);
+    expect(unitsSent(engine)).toEqual([]);
+    expect(engine.sent('updateGrid')).toEqual([[3, [1, 0, 1, 0, ...new Array(12).fill(0)]]]);
   });
 });
