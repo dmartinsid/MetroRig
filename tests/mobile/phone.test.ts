@@ -176,6 +176,71 @@ async function scrollGridTo(page: Page, left: number) {
   await settle(page, '.grid-scroller');
 }
 
+// What a select draws as its value: the chosen option's text, measured in the select's own font, against the room its box leaves for text
+function selectFit(page: Page, selector: string) {
+  return page.evaluate(selector => {
+    const select = document.querySelector<HTMLSelectElement>(selector)!;
+    const style = getComputedStyle(select);
+    const context = document.createElement('canvas').getContext('2d')!;
+    context.font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+    const text = select.options[select.selectedIndex].text;
+    return {
+      text,
+      needed: context.measureText(text).width,
+      room: select.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight),
+    };
+  }, selector);
+}
+
+// Every control a thumb taps that the screen draws, with the box it answers to: a checkbox answers to the label around it
+function targets(page: Page) {
+  return page.evaluate(() => {
+    const drawn = (element: Element) => {
+      const { width, height } = element.getBoundingClientRect();
+      return width > 0 && height > 0 && getComputedStyle(element).visibility !== 'hidden';
+    };
+    const name = (element: Element) => `${element.tagName.toLowerCase()}#${element.id}.${element.className} ${(element as HTMLElement).innerText?.trim().slice(0, 20) ?? ''}`;
+    const controls = [...document.querySelectorAll('button, select, .view-link, input[type=range], input[type=checkbox]')].filter(drawn).map(element => {
+      const target = element.matches('input[type=checkbox]') ? element.closest('label') ?? element : element;
+      const { width, height } = target.getBoundingClientRect();
+      return { control: name(element), width, height };
+    });
+    // A range thumb is a pseudo-element no box reports: its size is the last width and height the page's styles give it
+    const thumbSize = (range: HTMLInputElement) => {
+      let width = 0, height = 0;
+      const visit = (rules: CSSRuleList) => {
+        for (const rule of rules) {
+          if (rule instanceof CSSMediaRule) {
+            if (matchMedia(rule.conditionText).matches) visit(rule.cssRules);
+          } else if (rule instanceof CSSStyleRule) {
+            for (const selector of rule.selectorText.split(',').map(part => part.trim())) {
+              if (!selector.endsWith('::-webkit-slider-thumb') || !range.matches(selector.replace('::-webkit-slider-thumb', ''))) continue;
+              if (rule.style.width) width = parseFloat(rule.style.width);
+              if (rule.style.height) height = parseFloat(rule.style.height);
+            }
+          }
+        }
+      };
+      for (const sheet of document.styleSheets) {
+        // The Google Fonts sheet is cross-origin and holds no thumb
+        let rules: CSSRuleList | null = null;
+        try { rules = sheet.cssRules; } catch { /* not readable */ }
+        if (rules) visit(rules);
+      }
+      return { width, height };
+    };
+    const thumbs = [...document.querySelectorAll<HTMLInputElement>('input[type=range]')].filter(drawn).map(range => ({
+      control: `thumb of #${range.id}`,
+      ...thumbSize(range),
+    }));
+    const cells = [...document.querySelectorAll('.step-cell')].filter(drawn).map(cell => {
+      const { width, height } = cell.getBoundingClientRect();
+      return { control: 'step-cell', width, height };
+    });
+    return { controls: [...controls, ...thumbs], cells };
+  });
+}
+
 describe('Mobile App', () => {
   it('harness opens the editor at 375', async () => {
     const page = await openScreen('editor', 375);
@@ -422,5 +487,83 @@ describe('Mobile App', () => {
     expect(await fadeDrawn(page, 'left')).toBe(true);
     await scrollGridTo(page, 0);
     expect(await fadeDrawn(page, 'left')).toBe(false);
+  });
+
+  it('mob_01 no sideways page scroll at 360 375 390 430', async () => {
+    for (const width of [360, 375, 390, 430]) {
+      for (const screen of ['editor', 'stadium', 'grooves', 'improv'] as Screen[]) {
+        const page = await openScreen(screen, width);
+        const scrollWidth = await page.evaluate(() => Math.max(document.documentElement.scrollWidth, document.body.scrollWidth));
+        expect([width, screen, scrollWidth]).toEqual([width, screen, width]);
+        await page.context().close();
+      }
+    }
+  });
+
+  it('mob_02 header selectors show their value in full at 360', async () => {
+    const page = await openScreen('editor', 360);
+    const sounds = await page.evaluate(() => [...document.querySelectorAll<HTMLOptionElement>('#click-sound-selector option')].map(option => option.value));
+    expect(sounds).toHaveLength(5);
+    for (const sound of sounds) {
+      await page.selectOption('#click-sound-selector', sound);
+      const fit = await selectFit(page, '#click-sound-selector');
+      expect([fit.text, fit.needed <= fit.room]).toEqual([fit.text, true]);
+    }
+    await page.selectOption('#preset-selector', { label: '4/4 Metronome' });
+    const preset = await selectFit(page, '#preset-selector');
+    expect([preset.text, preset.needed <= preset.room]).toEqual(['4/4 Metronome', true]);
+    // Still side by side, inside the window
+    const click = (await box(page, '.click-field'))!;
+    const presets = (await box(page, '#preset-selector'))!;
+    expect(Math.abs(click.top - presets.top)).toBeLessThan(2);
+    expect(click.right).toBeLessThanOrEqual(presets.left);
+    expect(click.left).toBeGreaterThanOrEqual(0);
+    expect(presets.right).toBeLessThanOrEqual(360);
+  });
+
+  it('mob_03 stadium orbs and tempo buttons inside the panel at 360', async () => {
+    const page = await openScreen('stadium', 360);
+    const panel = (await box(page, '.stadium-panel'))!;
+    const parts = await page.evaluate(() => [...document.querySelectorAll<HTMLElement>('.stadium-panel .orb, .stadium-panel .orb-name, #btn-stadium-bpm-down, #btn-stadium-bpm-up')].map(element => {
+      const { left, right, top, bottom, width } = element.getBoundingClientRect();
+      // Text cut by its box draws wider than the box
+      return { part: element.id || element.innerText || element.className, left, right, top, bottom, width, cut: element.scrollWidth > element.clientWidth };
+    }));
+    expect(parts.filter(part => /^orb-\d$/.test(part.part))).toHaveLength(4);
+    expect(parts.map(part => part.part).filter(part => /^[A-Z/]+$/.test(part))).toEqual(['CLICK', 'KICK', 'SNARE/TOMS', 'CYMBALS']);
+    for (const part of parts) {
+      expect([part.part, part.width > 0, part.left >= panel.left, part.right <= panel.right, part.top >= panel.top, part.bottom <= panel.bottom, part.cut])
+        .toEqual([part.part, true, true, true, true, true, false]);
+    }
+    // Each name reads on its own: none runs into the next
+    const names = parts.filter(part => /^[A-Z/]+$/.test(part.part));
+    for (let i = 1; i < names.length; i++) expect([names[i].part, names[i].left >= names[i - 1].right]).toEqual([names[i].part, true]);
+  });
+
+  it('mob_04 touch targets 44 px and step cells 32 px', async () => {
+    for (const screen of ['editor', 'stadium', 'grooves', 'improv'] as Screen[]) {
+      const page = await openScreen(screen, 375);
+      // Open what a screen folds away, so its controls are measured too
+      if (screen === 'editor') {
+        await page.evaluate(() => {
+          const preset = document.querySelector<HTMLSelectElement>('#preset-selector')!;
+          preset.value = 'song:song_battery';
+          preset.dispatchEvent(new Event('change'));
+          const body = document.getElementById('trainer-body')!;
+          if (body.getBoundingClientRect().height === 0) document.getElementById('trainer-toggle')!.click();
+        });
+        await page.waitForSelector('#bar-selector:not([hidden])');
+        await page.waitForTimeout(400);
+      }
+      const { controls, cells } = await targets(page);
+      expect(controls.length).toBeGreaterThan(3);
+      for (const { control, width, height } of controls) {
+        expect([screen, control, width >= 44, height >= 44]).toEqual([screen, control, true, true]);
+      }
+      if (screen === 'editor') {
+        expect(cells.length).toBeGreaterThan(0);
+        for (const { width, height } of cells) expect([width >= 32, height >= 32]).toEqual([true, true]);
+      }
+    }
   });
 });

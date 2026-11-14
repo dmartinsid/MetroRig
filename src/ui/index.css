@@ -1805,6 +1805,12 @@ select:focus {
     scroll-snap-align: start;
   }
 
+  /* As wide as its steps, so the sticky names have the whole scroll to stay in */
+  .sequencer-grid {
+    width: max-content;
+    min-width: 100%;
+  }
+
   /* Opaque, and spread over the gaps around it, so no step shows beside or between the names */
   .track-label,
   .step-count-label {
@@ -1888,7 +1894,7 @@ select:focus {
     position: static;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
-    padding: calc(0.75rem + env(safe-area-inset-top)) 1rem 0.75rem;
+    padding: calc(0.75rem + env(safe-area-inset-top)) 0.75rem 0.75rem;
     gap: 0.75rem;
   }
 
@@ -2072,16 +2078,182 @@ select:focus {
     right: calc(50% - 18px);
   }
 
-  .preset-controls > select,
-  .click-field {
+  /* The Click field keeps the width of its longest sound, and the preset takes the rest of the row */
+  .preset-controls {
+    gap: 0.5rem;
+  }
+
+  .preset-controls > select {
     flex: 1;
     width: 0;
     max-width: none;
   }
 
-  .click-field select {
-    flex: 1;
-    width: 0;
+  .click-field {
+    flex: none;
+    padding-left: 0.6rem;
+  }
+
+  .preset-controls select {
+    padding: 0 1.4rem 0 0.6rem;
+    background-position: right 0.5rem center;
+  }
+
+  .preset-controls .click-field select {
+    width: auto;
+    max-width: none;
+    padding-left: 0.4rem;
+  }
+
+  /* A speaker stands in for the word: the label stays for assistive tech */
+  .click-field label {
+    flex: none;
+    width: 14px;
+    height: 14px;
+    overflow: hidden;
+    font-size: 0;
+    background: var(--text-muted);
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 9v6h4l5 4V5L8 9z'/%3E%3Cpath d='M16.5 8.5a5 5 0 0 1 0 7M19.5 5.5a9 9 0 0 1 0 13'/%3E%3C/svg%3E") center / contain no-repeat;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 9v6h4l5 4V5L8 9z'/%3E%3Cpath d='M16.5 8.5a5 5 0 0 1 0 7M19.5 5.5a9 9 0 0 1 0 13'/%3E%3C/svg%3E") center / contain no-repeat;
+  }
+
+  /* ─── Touch targets: 44 px for every control, 32 px for step cells ─── */
+  #app select {
+    min-height: 44px;
+  }
+
+  .step-cell {
+    min-width: 32px;
+  }
+
+  .figure-btn,
+  .genre-tab,
+  .song-play,
+  .song-open,
+  .pad-stop,
+  .btn-subtle,
+  .trainer-switch {
+    min-height: 44px;
+  }
+
+  .bar-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* Sliders answer to a 44 px band; the track stays a 4 px line and the thumb a glowing dot inside a 44 px touch circle */
+  #app input[type="range"] {
+    height: 44px;
+    background: transparent;
+  }
+
+  #app input[type="range"]::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 2px;
+    background: var(--glass-border);
+  }
+
+  #app input[type="range"]::-webkit-slider-thumb {
+    width: 44px;
+    height: 44px;
+    margin-top: -20px;
+    background: radial-gradient(circle, var(--neon-green) 0 9px, rgba(57, 255, 20, 0.28) 10px, transparent 17px);
+    box-shadow: none;
+  }
+
+  #app input[type="range"]::-moz-range-track {
+    height: 4px;
+    border-radius: 2px;
+    background: var(--glass-border);
+  }
+
+  #app input[type="range"]::-moz-range-thumb {
+    width: 44px;
+    height: 44px;
+    border: none;
+    background: radial-gradient(circle, var(--neon-green) 0 9px, rgba(57, 255, 20, 0.28) 10px, transparent 17px);
+  }
+
+  /* Trainer fields: the label sits over a full-height control */
+  .form-group {
+    gap: 0;
+    padding: 0.45rem 0.75rem 0;
+  }
+
+  .form-group input,
+  .form-group select {
+    min-height: 44px;
+  }
+
+  /* Numerator and denominator, one per row, with ▼ and ▲ side by side at the thumb */
+  .ui-row {
+    flex-direction: column;
+  }
+
+  .stepper-btns {
+    flex-direction: row-reverse;
+    gap: 0.4rem;
+  }
+
+  .stepper-btns button {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    font-size: 0.8rem;
+    line-height: 1;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-control);
+  }
+
+  /* Mute and Solo: two wide buttons under each track's name */
+  .track-mix-card {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+    padding: 0.7rem;
+  }
+
+  .track-mix-name {
+    grid-column: 1 / -1;
+  }
+
+  .track-mix-card:last-child {
+    grid-template-columns: minmax(0, 1fr) 4.5rem 4.5rem;
+    align-items: center;
+  }
+
+  .track-mix-card:last-child .track-mix-name {
+    grid-column: auto;
+  }
+
+  .mix-btn {
+    width: auto;
+    height: 44px;
+    font-size: 0.8rem;
+    border-radius: var(--radius-control);
+  }
+
+  /* Four orbs share the panel's width; a long group name wraps after its slash */
+  .orb-row {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+
+  .orb-cell {
+    min-width: 0;
+    gap: 0.6rem;
+  }
+
+  .orb {
+    width: 52px;
+    height: 52px;
+  }
+
+  .orb-name {
+    font-size: 0.7rem;
+    text-align: center;
   }
 
   .chord-roots {

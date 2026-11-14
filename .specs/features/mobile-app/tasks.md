@@ -225,12 +225,13 @@ T9 → T10 → T11
 
 **Done when**:
 
-- [ ] `mob_01` to `mob_04` pass in Chrome
-- [ ] Gate check passes: `npx vitest run && npm run test:mobile`
+- [x] `mob_01` to `mob_04` pass in Chrome
+- [x] Gate check passes: `npx vitest run && npm run test:mobile`
 
 **Tests**: e2e
 **Gate**: full
 **Commit**: `fix(ui): fit every screen to phone widths`
+**Status**: Done
 
 ---
 
