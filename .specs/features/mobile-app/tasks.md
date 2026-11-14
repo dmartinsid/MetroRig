@@ -286,12 +286,13 @@ T9 → T10 → T11
 
 **Done when**:
 
-- [ ] `mob_28`, `mob_29`, `mob_30` pass in `tests/install.test.ts`
-- [ ] Gate check passes: `npx vitest run && npm run test:mobile && npm run build`
+- [x] `mob_28`, `mob_29`, `mob_30` pass in `tests/install.test.ts`
+- [x] Gate check passes: `npx vitest run && npm run test:mobile && npm run build`
 
 **Tests**: unit
 **Gate**: build
 **Commit**: `feat(install): make MetroRig installable`
+**Status**: Done
 
 ---
 
