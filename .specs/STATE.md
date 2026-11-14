@@ -244,3 +244,11 @@
 - **Scope**: mobile-app; header links, tab bar, first visit, Stadium Play on phones. Amends AD-007's link order
 - **Date**: 2026-11-14
 - **Status**: active (AD-030)
+
+### AD-031
+- **Decision**: On phones the Stadium screen shows its controls first (routine, timer, tempo with − and +, Trainer status, orbs) and the beat clock below them. The clock takes the height left above the Play button, so on a 390 × 844 phone or larger the whole screen fits with no scroll; on a shorter phone the clock keeps a usable size and is reached by scrolling.
+- **Reason**: After mobile-app closed, user: "Acho que no modo stadium no mobile o tempo e controles tem que ser mostrado em cima e o circulo pode ir pra baixo, se der pra colocar tudo no mesmo espaco melhor, mas se nao der vamos alterar pra essa forma". Measured: header 114 px, controls about 490 px and clock about 390 px against 606 px free on 390 × 844 and 402 px on 360 × 640, so the fit holds only on taller phones.
+- **Trade-off**: The clock is smaller on phones than the full width it had, and the controls are tighter.
+- **Scope**: mobile-app; Stadium screen at 767 px and narrower
+- **Date**: 2026-11-14
+- **Status**: active (AD-031)
