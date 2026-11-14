@@ -83,6 +83,58 @@ async function paddingWithInsets(page: Page, selector: string, side: 'top' | 'bo
   return page.evaluate(([selector, side]) => parseFloat(getComputedStyle(document.querySelector(selector)!).getPropertyValue(`padding-${side}`)), [selector, side] as const);
 }
 
+
+// Waits until a scroller has stopped moving: the same scrollLeft over several frames
+async function settle(page: Page, selector: string) {
+  await page.evaluate(selector => new Promise<void>(resolve => {
+    const element = document.querySelector(selector)!;
+    let last = -1, still = 0;
+    const check = () => {
+      still = element.scrollLeft === last ? still + 1 : 0;
+      last = element.scrollLeft;
+      if (still >= 10) resolve(); else requestAnimationFrame(check);
+    };
+    requestAnimationFrame(check);
+  }), selector);
+}
+
+// The grid as drawn: the scroller's content edge, the track names' boxes and each beat's first cell
+function grid(page: Page) {
+  return page.evaluate(() => {
+    const scroller = document.querySelector<HTMLElement>('.grid-scroller')!;
+    const frame = scroller.getBoundingClientRect();
+    const names = [...document.querySelectorAll<HTMLElement>('.track-label')].map(label => {
+      const { left, right, top, bottom } = label.getBoundingClientRect();
+      // On top at its centre: no step cell drawn over the name
+      const onTop = label.contains(document.elementFromPoint((left + right) / 2, (top + bottom) / 2));
+      return { name: label.innerText, left, right, onTop };
+    });
+    const beats = [...document.querySelectorAll<HTMLElement>('.step-count.beat-start')].map(count => count.getBoundingClientRect().left);
+    return {
+      edge: frame.left + scroller.clientLeft + parseFloat(getComputedStyle(scroller).paddingLeft),
+      scrollLeft: scroller.scrollLeft,
+      maxScroll: scroller.scrollWidth - scroller.clientWidth,
+      names,
+      beats,
+    };
+  });
+}
+
+// A finger dragging the grid sideways by a distance, holding still, then lifting
+async function dragGrid(page: Page, distance: number) {
+  const scroller = (await box(page, '.grid-scroller'))!;
+  const cdp = await page.context().newCDPSession(page);
+  const x = Math.round(scroller.right - 20), y = Math.round(scroller.top + 60);
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
+  for (let move = 1; move <= 15; move++) {
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x: x - (distance * move) / 15, y }] });
+    await page.waitForTimeout(16);
+  }
+  await page.waitForTimeout(100);
+  await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  await settle(page, '.grid-scroller');
+}
+
 describe('Mobile App', () => {
   it('harness opens the editor at 375', async () => {
     const page = await openScreen('editor', 375);
@@ -249,5 +301,55 @@ describe('Mobile App', () => {
       await page.click('#nav-editor');
       expect(await page.locator('#transport-bar').isVisible()).toBe(true);
     }
+  });
+
+  it('mob_23 track names stay in view while steps scroll', async () => {
+    // Tall enough that every row sits above the fixed bars
+    const page = await openScreen('editor', 375, 1600);
+    const start = await grid(page);
+    expect(start.names.map(name => name.name)).toHaveLength(13);
+    expect(start.maxScroll).toBeGreaterThan(0);
+    await page.evaluate(() => document.querySelector('.grid-scroller')!.scrollTo({ left: 1e6, behavior: 'instant' as ScrollBehavior }));
+    await settle(page, '.grid-scroller');
+    const end = await grid(page);
+    expect(end.scrollLeft).toBeGreaterThan(0);
+    expect(Math.abs(end.scrollLeft - end.maxScroll)).toBeLessThan(1);
+    for (const name of end.names) {
+      expect([name.name, Math.abs(name.left - end.edge) < 0.5, name.onTop]).toEqual([name.name, true, true]);
+    }
+  });
+
+  it('mob_24 grid snaps to beat starts', async () => {
+    const page = await openScreen('editor', 375);
+    const start = await grid(page);
+    // The step area begins where beat 1 is drawn at rest
+    const stepArea = start.beats[0];
+    const beat = start.beats[1] - start.beats[0];
+    expect(stepArea).toBeGreaterThan(start.names[0].right);
+    // Released three quarters of a beat in: past the middle of the first beat, short of the scroll's end
+    expect(start.maxScroll).toBeGreaterThan(beat);
+    await dragGrid(page, beat * 0.75);
+    const end = await grid(page);
+    expect(end.scrollLeft).toBeGreaterThan(0);
+    const aligned = end.beats.filter(left => Math.abs(left - stepArea) < 1);
+    expect([end.scrollLeft, aligned.length]).toEqual([end.scrollLeft, 1]);
+  });
+
+  it('mob_27 figure palette is one scrolling row', async () => {
+    const page = await openScreen('editor', 375);
+    const palette = await page.evaluate(() => {
+      const element = document.getElementById('figure-palette')!;
+      const frame = element.getBoundingClientRect();
+      const chips = [...element.querySelectorAll<HTMLElement>('.figure-btn')].map(chip => chip.getBoundingClientRect().top);
+      return { chips, overflow: getComputedStyle(element).overflowX, scrollWidth: element.scrollWidth, clientWidth: element.clientWidth, right: frame.right };
+    });
+    expect(palette.chips).toHaveLength(11);
+    for (const top of palette.chips) expect(top).toBe(palette.chips[0]);
+    expect(['auto', 'scroll']).toContain(palette.overflow);
+    expect(palette.scrollWidth).toBeGreaterThan(palette.clientWidth);
+    // It scrolls by itself: the page stays put
+    await page.evaluate(() => document.getElementById('figure-palette')!.scrollTo({ left: 1e6, behavior: 'instant' as ScrollBehavior }));
+    expect(await page.evaluate(() => document.getElementById('figure-palette')!.scrollLeft)).toBeGreaterThan(0);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(375);
   });
 });

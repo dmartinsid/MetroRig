@@ -1783,9 +1783,90 @@ select:focus {
     padding: 1rem;
   }
 
+  /* The steps scroll sideways under a fixed column of track names, settling on each beat */
+  :root {
+    --names-w: 88px;
+  }
+
+  .grid-scroller {
+    padding-left: 0;
+    margin-left: 0;
+    scroll-snap-type: x mandatory;
+    scroll-padding-left: calc(var(--names-w) + 0.4rem);
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+  }
+
+  .grid-scroller::-webkit-scrollbar {
+    display: none;
+  }
+
+  .step-count.beat-start {
+    scroll-snap-align: start;
+  }
+
+  /* Opaque, and spread over the gaps around it, so no step shows beside or between the names */
+  .track-label,
+  .step-count-label {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    box-sizing: border-box;
+    width: var(--names-w);
+    box-shadow:
+      0 0.25rem 0 var(--surface-flat),
+      0 -0.25rem 0 var(--surface-flat),
+      0.4rem 0.25rem 0 var(--surface-flat),
+      0.4rem -0.25rem 0 var(--surface-flat);
+  }
+
+  .step-count-label {
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 4px;
+    opacity: 1;
+    color: color-mix(in srgb, var(--text-muted) 70%, var(--surface-flat));
+    background: var(--surface-flat);
+  }
+
   .track-label {
-    min-width: 88px;
+    align-self: stretch;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
     padding: 2px 4px;
+    background:
+      linear-gradient(color-mix(in srgb, var(--track-color) 8%, transparent) 0 0),
+      var(--surface-flat);
+  }
+
+  /* Dimmed by colour, not opacity, so the steps underneath stay hidden */
+  .track-label.silenced {
+    opacity: 1;
+    color: color-mix(in srgb, var(--track-color) 35%, var(--surface-flat));
+    border-color: color-mix(in srgb, var(--track-color) 35%, var(--surface-flat));
+  }
+
+  /* One row of chips that scrolls sideways, running to the panel's edges */
+  .figure-palette {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    margin-inline: -1rem;
+    padding-inline: 1rem;
+    scrollbar-width: none;
+    overscroll-behavior-x: contain;
+  }
+
+  .figure-palette::-webkit-scrollbar {
+    display: none;
+  }
+
+  .figure-btn {
+    flex: none;
+    white-space: nowrap;
   }
 
   .track-mix {

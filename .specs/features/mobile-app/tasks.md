@@ -185,12 +185,13 @@ T9 → T10 → T11
 
 **Done when**:
 
-- [ ] `mob_23`, `mob_24`, `mob_27` pass in Chrome
-- [ ] Gate check passes: `npx vitest run && npm run test:mobile`
+- [x] `mob_23`, `mob_24`, `mob_27` pass in Chrome
+- [x] Gate check passes: `npx vitest run && npm run test:mobile`
 
 **Tests**: e2e
 **Gate**: full
 **Commit**: `feat(ui): scroll the grid under fixed track names on phones`
+**Status**: Done
 
 ---
 
@@ -414,7 +415,7 @@ Proof: run mobile | ✓ tests/mobile/phone.test.ts > Mobile App > mob_39 pull pa
 ## Handoff
 
 **Settled mid-build:** none
-**Dispatched:** batch 1 (T1 to T5), from 1a2d9fa
+**Dispatched:** batch 1 (T1 to T5), from 1a2d9fa, returned at a8508b2; batch 2 (T6 to T11), from a8508b2
 **Walked:** none
 
 ---
