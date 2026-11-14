@@ -719,6 +719,16 @@ header {
   letter-spacing: 0.05em;
 }
 
+/* Tuplet figures outside /4: shown, but out of reach */
+.figure-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.figure-btn:disabled:hover {
+  border-color: var(--glass-border);
+}
+
 /* Bar selector */
 .bar-selector {
   display: flex;
@@ -784,6 +794,21 @@ header {
   font-weight: 700;
   color: var(--text);
   opacity: 1;
+}
+
+/* A tuplet beat's 3 or 6, centred over the beat's empty counts, under a bracket as wide as the beat */
+.tuplet-label {
+  justify-self: stretch;
+  align-self: start;
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  color: var(--neon-green);
+  border-top: 1px solid color-mix(in srgb, var(--neon-green) 45%, transparent);
+  padding-top: 1px;
+  pointer-events: none;
 }
 
 /* Track label */

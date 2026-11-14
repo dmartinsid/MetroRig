@@ -432,11 +432,12 @@ T19 → T20 → T21 → T22
 
 **Done when**:
 
-- [ ] Gate check passes: `npx vitest run && npx vite build`
+- [x] Gate check passes: `npx vitest run && npx vite build`
 
 **Tests**: none
 **Gate**: full
 **Commit**: `style(editor): mark tuplet beats and disabled figures`
+**Status**: Done
 
 ---
 
