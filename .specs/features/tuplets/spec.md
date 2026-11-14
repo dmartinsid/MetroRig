@@ -33,6 +33,8 @@ MetroRig's grid knows one subdivision: every step is a sixteenth, in the app and
 | Clicking one cell of a tuplet beat with no figure selected | Cycles its value as a straight cell does today | Q4 changed only the figures | y |
 | A groove applied to a bar of another length | Beat n of the bar takes beat n mod B of the groove, its kind included | Today's rule repeats the groove; beats keep a tuplet whole | y - follows Q13 |
 | Tuplet hits in the Stadium | Each cell takes its slice at its real place in the bar | Q8 | y |
+| A straight groove applied to a /4 bar with tuplets | Every beat of that bar becomes straight | Chosen during T14 by the batch worker, reading TUP-30 with every groove beat straight; Q23, user: "Compasso inteiro fica reto (Recommended)" | y |
+| The click track when a groove changes the bar's layout | The click is not a groove track: its hits move to the nearest cells (TUP-06), so each beat-start hit stays on its beat's first cell | Chosen during T14 by the batch worker; Q24, user: "Vai para a célula mais próxima (Recommended)" | y |
 
 **Open questions:** none - all resolved or logged above.
 
@@ -185,7 +187,7 @@ MetroRig's grid knows one subdivision: every step is a sixteenth, in the app and
 | TUP-15 | P1: Hear tuplets | Design | Implementing |
 | TUP-16 | P1: Hear tuplets | Design | Implementing |
 | TUP-17 | P1: Room for sextuplets | Design | Implementing |
-| TUP-18 | P1: Room for sextuplets | Design | Pending |
+| TUP-18 | P1: Room for sextuplets | Design | Implementing |
 | TUP-19 | P1: Room for sextuplets | Design | Pending |
 | TUP-20 | P1: Read tuplets | Design | Pending |
 | TUP-21 | P1: Read tuplets | Design | Pending |

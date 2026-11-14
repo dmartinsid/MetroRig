@@ -946,10 +946,10 @@ describe('Interface V2', () => {
 
   it('edit_11 steps label', async () => {
     await openPage();
-    expect(byId('pattern-steps').textContent).toBe('STEPS: 16/128');
+    expect(byId('pattern-steps').textContent).toBe('STEPS: 16/192');
 
     await selectPreset('factory:blues');
-    expect(byId('pattern-steps').textContent).toBe('STEPS: 24/128');
+    expect(byId('pattern-steps').textContent).toBe('STEPS: 24/192');
   });
 
   it('edit_12 resolution label', async () => {
@@ -990,7 +990,7 @@ describe('Interface V2', () => {
 
     byId('time-sig-num').value = '3';
     byId('time-sig-num').dispatchEvent(new Event('change'));
-    expect(byId('pattern-steps').textContent).toBe('STEPS: 12/128');
+    expect(byId('pattern-steps').textContent).toBe('STEPS: 12/192');
   });
 
   it('edge_03 stop resets position', async () => {
@@ -1031,7 +1031,7 @@ describe('Interface V2', () => {
 
     stepper('time-sig-num-up');
     expect(byId('time-sig-num').value).toBe('5');
-    expect(byId('pattern-steps').textContent).toBe('STEPS: 20/128');
+    expect(byId('pattern-steps').textContent).toBe('STEPS: 20/192');
     expect(byId('panel-header-text').textContent).toContain('5/4');
 
     stepper('time-sig-num-down');
@@ -1055,7 +1055,7 @@ describe('Interface V2', () => {
     const den = () => byId<HTMLSelectElement>('time-sig-den').value;
     stepper('time-sig-den-up');
     expect(den()).toBe('8');
-    expect(byId('pattern-steps').textContent).toBe('STEPS: 8/128');
+    expect(byId('pattern-steps').textContent).toBe('STEPS: 8/192');
     stepper('time-sig-den-up');
     expect(den()).toBe('16');
     stepper('time-sig-den-up');
@@ -2285,7 +2285,7 @@ describe('Song Bars', () => {
     byId('time-sig-num').dispatchEvent(new Event('change'));
 
     expect(confirmSpy).not.toHaveBeenCalled();
-    expect(byId('pattern-steps').textContent).toBe('STEPS: 64/128');
+    expect(byId('pattern-steps').textContent).toBe('STEPS: 64/192');
     expect(byId('bar-selector').hidden).toBe(false);
   });
 
@@ -2391,7 +2391,7 @@ describe('Song Bars', () => {
     await openSong();
     const confirmSpy = vi.fn(() => {
       // Nothing has changed when the question appears
-      expect(byId('pattern-steps').textContent).toBe('STEPS: 64/128');
+      expect(byId('pattern-steps').textContent).toBe('STEPS: 64/192');
       return false;
     });
     vi.stubGlobal('confirm', confirmSpy);
@@ -2412,7 +2412,7 @@ describe('Song Bars', () => {
     vi.stubGlobal('confirm', vi.fn(() => true));
     stepNumeratorDown();
 
-    expect(byId('pattern-steps').textContent).toBe('STEPS: 12/128');
+    expect(byId('pattern-steps').textContent).toBe('STEPS: 12/192');
     expect(shown(1)).toEqual(barOf(1, 1).slice(0, 12));
     expect(lastCall('setBars')).toEqual([1]);
     expect(lastCall('setMeasureLength')).toEqual([12]);
@@ -2435,7 +2435,7 @@ describe('Song Bars', () => {
     vi.stubGlobal('confirm', vi.fn(() => true));
     byId<HTMLButtonElement>('time-sig-num-up').click();
 
-    expect(byId('pattern-steps').textContent).toBe('STEPS: 20/128');
+    expect(byId('pattern-steps').textContent).toBe('STEPS: 20/192');
     expect(shown(1)).toEqual([...barOf(1, 1), 0, 0, 0, 0]);
   });
 
@@ -2446,7 +2446,7 @@ describe('Song Bars', () => {
 
     expect(byId('time-sig-num').value).toBe('4');
     expect(byId('time-sig-den').value).toBe('4');
-    expect(byId('pattern-steps').textContent).toBe('STEPS: 64/128');
+    expect(byId('pattern-steps').textContent).toBe('STEPS: 64/192');
     expect(byId('bar-selector').hidden).toBe(false);
     pressBar(4);
     expect(shown(1)).toEqual(barOf(1, 4));
@@ -2471,7 +2471,7 @@ describe('Song Bars', () => {
     expect(alertSpy).toHaveBeenCalledWith('Time signature exceeds the maximum limit of 32 steps!');
     expect(confirmSpy).not.toHaveBeenCalled();
     expect(byId('time-sig-num').value).toBe('4');
-    expect(byId('pattern-steps').textContent).toBe('STEPS: 64/128');
+    expect(byId('pattern-steps').textContent).toBe('STEPS: 64/192');
   });
 
   it('edge_01 load during bar three', async () => {
@@ -2626,9 +2626,9 @@ describe('Song Bars', () => {
 
   it('count_04 steps over the limit', async () => {
     await openPage();
-    expect(byId('pattern-steps').textContent).toBe('STEPS: 16/128');
+    expect(byId('pattern-steps').textContent).toBe('STEPS: 16/192');
     await selectPreset('song:song_battery');
-    expect(byId('pattern-steps').textContent).toBe('STEPS: 64/128');
+    expect(byId('pattern-steps').textContent).toBe('STEPS: 64/192');
   });
 
   it('bars_07 saved song keeps four bars', async () => {
@@ -2643,7 +2643,7 @@ describe('Song Bars', () => {
 
     await selectPreset('factory:default');
     await selectPreset(`user:${saved.id}`);
-    expect(byId('pattern-steps').textContent).toBe('STEPS: 64/128');
+    expect(byId('pattern-steps').textContent).toBe('STEPS: 64/192');
     expect(byId('pattern-name').textContent).toBe('PAT: My Battery');
     for (const bar of [1, 2, 3, 4]) {
       pressBar(bar);

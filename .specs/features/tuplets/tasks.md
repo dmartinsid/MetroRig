@@ -373,12 +373,13 @@ T19 → T20 → T21 → T22
 
 **Done when**:
 
-- [ ] Tests for `STEPS: 48/192` on an 8/4 bar of sextuplets and 64/192 on a straight 4-bar 4/4
-- [ ] Gate check passes: `npx vitest run`
+- [x] Tests for `STEPS: 48/192` on an 8/4 bar of sextuplets and 64/192 on a straight 4-bar 4/4
+- [x] Gate check passes: `npx vitest run`
 
 **Tests**: unit
 **Gate**: quick
 **Commit**: `feat(ui): count cells over 192 in the footer`
+**Status**: Done
 
 ---
 
@@ -637,6 +638,6 @@ Proof: run rust | tup_40_new_units_play_from_the_next_pass ... ok
 
 ## Handoff
 
-**Settled mid-build:** Q21, user: "sim, recomendacao". Three tests kept at 591f031 contradict TUP-17 and T8/T9. (a) `holds_128_steps` refuses 193 steps and checks `steps[191]`, keeping its name; (b) the kept WASM export list gains `engine_set_step_units`; (c) the two worklet tests expect `engine_update_grid(..., 192)`; (d) `tests/fixtures/tests_kept.py` lists these rewrites explicitly, citing AD-029. Each change lands in the commit of the task that causes it (T6, T8, T9); no other kept assertion changes.
-**Dispatched:** batch 1 (T1-T9, phases 1-2) at 22c3751 - returned blocked at T6 (T1-T5 done, 9126ea1); resumed after Q21 at 9126ea1; returned at 5436650 (T6-T9 done); batch 2 (T10-T14, phase 3) from 7f76d02
+**Settled mid-build:** Q21, user: "sim, recomendacao". Three tests kept at 591f031 contradict TUP-17 and T8/T9. (a) `holds_128_steps` refuses 193 steps and checks `steps[191]`, keeping its name; (b) the kept WASM export list gains `engine_set_step_units`; (c) the two worklet tests expect `engine_update_grid(..., 192)`; (d) `tests/fixtures/tests_kept.py` lists these rewrites explicitly, citing AD-029. Each change lands in the commit of the task that causes it (T6, T8, T9); no other kept assertion changes. Q22, after batch 3 stopped at T15 on 13 kept tests (18 assertions) reading `/128` against TUP-18's `/192`: "Posso reescrever só o '/128' → '/192' nelas, sem mudar as contagens, e registrar isso como as reescritas anteriores (Q21)?", user: "Sim, só /128 → /192 (Recommended)". Only the denominator changes in those 18 assertions; they join `REWRITES` in `tests/fixtures/tests_kept.py` citing AD-029 and TUP-18, in the T15 commit. Q23 and Q24 confirm the two T14 defaults (spec Assumptions).
+**Dispatched:** batch 1 (T1-T9, phases 1-2) at 22c3751 - returned blocked at T6 (T1-T5 done, 9126ea1); resumed after Q21 at 9126ea1; returned at 5436650 (T6-T9 done); batch 2 (T10-T14, phase 3) from 7f76d02, returned at b4c3274; batch 3 (T15-T22, phases 4-5) from cbaa9fa - returned blocked at T15 (kept tests assert `/128`, TUP-18 says `/192`), no commits; batch 3 re-dispatched after Q22 from cbaa9fa
 **Walked:** none
