@@ -29,11 +29,10 @@ async function openScreen(screen: Screen, width: number, height = 800): Promise<
   const page = await context.newPage();
   pages.push(page);
   await page.goto(inject('baseUrl'));
-  await page.waitForSelector('#grid-container .step-cell');
-  if (screen !== 'editor') {
-    await page.click(`#nav-${screen}`);
-    await page.waitForSelector(`#${screen}-view:not(.hidden)`);
-  }
+  // The grid is drawn whichever screen opens first (Stadium on a first visit, AD-030)
+  await page.waitForSelector('#grid-container .step-cell', { state: 'attached' });
+  await page.click(`#nav-${screen}`);
+  await page.waitForSelector(`#${screen}-view:not(.hidden)`);
   await page.evaluate(() => document.fonts.ready.then(() => undefined));
   return page;
 }
@@ -294,7 +293,7 @@ describe('Mobile App', () => {
         const bar = (await box(page, '.view-nav'))!;
         expect([screen, scrolled, bar.bottom, bar.left, bar.right]).toEqual([screen, scrolled, 800, 0, 375]);
         const shown = await tabs(page);
-        expect(shown.map(tab => [tab.name, tab.icon])).toEqual([['Editor', true], ['Stadium', true], ['Grooves', true], ['Improv', true]]);
+        expect(shown.map(tab => [tab.name, tab.icon])).toEqual([['Stadium', true], ['Editor', true], ['Grooves', true], ['Improv', true]]);
         for (const tab of shown) {
           expect(tab.top).toBeGreaterThanOrEqual(bar.top);
           expect(tab.bottom).toBeLessThanOrEqual(bar.bottom);
@@ -335,7 +334,7 @@ describe('Mobile App', () => {
       const page = await openScreen(screen, width);
       const header = (await box(page, 'header'))!;
       const shown = await tabs(page);
-      expect(shown.map(tab => tab.name)).toEqual(['Editor', 'Stadium', 'Grooves', 'Improv']);
+      expect(shown.map(tab => tab.name)).toEqual(['Stadium', 'Editor', 'Grooves', 'Improv']);
       for (const tab of shown) {
         expect(tab.top).toBeGreaterThanOrEqual(header.top);
         expect(tab.bottom).toBeLessThanOrEqual(header.bottom);
@@ -345,6 +344,16 @@ describe('Mobile App', () => {
         .filter(element => getComputedStyle(element).position === 'fixed' && element.getBoundingClientRect().height > 0)
         .map(element => element.id || element.className));
       expect([screen, pinned]).toEqual([screen, []]);
+    }
+  });
+
+  it('mob_40 stadium is the first screen link', async () => {
+    for (const width of [375, 1280]) {
+      const page = await openScreen('editor', width);
+      const shown = await tabs(page);
+      // In reading order on screen, not only in the markup
+      const onScreen = [...shown].sort((a, b) => a.left - b.left).map(tab => tab.name);
+      expect([width, onScreen]).toEqual([width, ['Stadium', 'Editor', 'Grooves', 'Improv']]);
     }
   });
 

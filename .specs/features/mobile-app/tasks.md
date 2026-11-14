@@ -332,13 +332,14 @@ T12 → T13 → T14
 
 **Done when**:
 
-- [ ] `mob_40` passes in Chrome at 375 and 1280 px; `mob_41` and `mob_42` pass in `tests/app.test.ts`
-- [ ] `tests/state.test.ts` default-view assertions follow AD-030 (Stadium), the saved-screen ones unchanged
-- [ ] Gate check passes: `npx vitest run && npm run test:mobile`
+- [x] `mob_40` passes in Chrome at 375 and 1280 px; `mob_41` and `mob_42` pass in `tests/app.test.ts`
+- [x] `tests/state.test.ts` default-view assertions follow AD-030 (Stadium), the saved-screen ones unchanged
+- [x] Gate check passes: `npx vitest run && npm run test:mobile`
 
 **Tests**: integration
 **Gate**: full
 **Commit**: `feat(ui): put stadium first and open on it`
+**Status**: Done
 
 ---
 
