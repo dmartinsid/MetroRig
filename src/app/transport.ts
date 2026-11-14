@@ -1,6 +1,7 @@
 import { TRACKS, takesOf } from '../domain/kit';
 import { audibleSteps, type TrackMix } from '../domain/mix';
-import { barCount, patternLength } from '../domain/pattern';
+import { patternCells, stepUnits } from '../domain/layout';
+import { barCount } from '../domain/pattern';
 import { startBpmFor, type Preset } from '../domain/preset';
 import type { EnginePort } from './ports';
 
@@ -102,14 +103,20 @@ export class Transport {
     const preset = this.host.preset();
     this.engine.setMeasureLength(preset.measureLength || 16);
     this.engine.setBars(barCount(preset));
+    this.syncLayout();
+  }
 
+  // Each cell's length, then every track: the length and the bars reset the units, and a re-laid beat moves every track's cells
+  syncLayout() {
+    if (!this.isAudioInit) return;
+    this.engine.setStepUnits(stepUnits(this.host.preset()));
     TRACKS.forEach(track => this.sendTrack(track.id));
   }
 
   // The one path to the engine: silenced tracks play an empty grid, the preset keeps its steps
   sendTrack(trackId: number) {
     const preset = this.host.preset();
-    const steps = preset.gridData[trackId] || new Array(patternLength(preset)).fill(0);
+    const steps = preset.gridData[trackId] || new Array(patternCells(preset)).fill(0);
     this.engine.updateGrid(trackId, audibleSteps(this.host.mix, trackId, steps));
   }
 

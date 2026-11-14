@@ -273,12 +273,13 @@ T19 → T20 → T21 → T22
 
 **Done when**:
 
-- [ ] Session tests see the units sent on play and after each tuplet edit
-- [ ] Gate check passes: `npx vitest run`
+- [x] Session tests see the units sent on play and after each tuplet edit
+- [x] Gate check passes: `npx vitest run`
 
 **Tests**: unit
 **Gate**: quick
 **Commit**: `feat(transport): send each cell's length with the grid`
+**Status**: Done
 
 ---
 
@@ -633,5 +634,5 @@ Proof: run rust | tup_40_new_units_play_from_the_next_pass ... ok
 ## Handoff
 
 **Settled mid-build:** Q21, user: "sim, recomendacao". Three tests kept at 591f031 contradict TUP-17 and T8/T9. (a) `holds_128_steps` refuses 193 steps and checks `steps[191]`, keeping its name; (b) the kept WASM export list gains `engine_set_step_units`; (c) the two worklet tests expect `engine_update_grid(..., 192)`; (d) `tests/fixtures/tests_kept.py` lists these rewrites explicitly, citing AD-029. Each change lands in the commit of the task that causes it (T6, T8, T9); no other kept assertion changes.
-**Dispatched:** batch 1 (T1-T9, phases 1-2) at 22c3751 - returned blocked at T6 (T1-T5 done, 9126ea1); resumed after Q21 at 9126ea1
+**Dispatched:** batch 1 (T1-T9, phases 1-2) at 22c3751 - returned blocked at T6 (T1-T5 done, 9126ea1); resumed after Q21 at 9126ea1; returned at 5436650 (T6-T9 done); batch 2 (T10-T14, phase 3) from 7f76d02
 **Walked:** none

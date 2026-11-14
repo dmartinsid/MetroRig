@@ -3,7 +3,7 @@ import type { ChordId } from '../domain/chords';
 import { TRACKS, nextStepValue } from '../domain/kit';
 import { measureLengthFor, timeSignatureOf } from '../domain/meter';
 import { createTrackMix, toggleMute, toggleSolo, type TrackMix } from '../domain/mix';
-import { FIGURES, applyFigure, barCount, barOfStep, barSteps, fitBar, patternLength, stepInBar, writeBar } from '../domain/pattern';
+import { FIGURES, applyFigureAt, barCount, barOfStep, barSteps, fitBar, patternLength, stepInBar, writeBar } from '../domain/pattern';
 import { completeKit, normalizePreset, startBpmFor, type CustomGroove, type Preset, type StoredPreset, type TrainerSettings, type ViewMode } from '../domain/preset';
 import { songToPreset, type Song } from '../domain/songs';
 import { steppedBpm, tempoKeyStep, typesText, type KeyTarget, type TempoStep } from '../domain/tempo';
@@ -338,15 +338,18 @@ export class Session {
     const preset = this.preset;
     const measureLength = preset.measureLength || 16;
     const allSteps = preset.gridData[trackId] ??= new Array(patternLength(preset)).fill(0);
-    const trackSteps = barSteps(allSteps, this.viewBar, measureLength);
+    const layout = JSON.stringify(preset.beatCells);
     if (this.figure) {
-      applyFigure(trackSteps, step, this.figure.pattern, measureLength);
+      applyFigureAt(preset, trackId, this.viewBar, step, this.figure);
     } else {
+      const trackSteps = barSteps(allSteps, this.viewBar, measureLength);
       trackSteps[step] = nextStepValue(trackId, trackSteps[step]);
+      writeBar(allSteps, this.viewBar, measureLength, trackSteps);
     }
-    writeBar(allSteps, this.viewBar, measureLength, trackSteps);
 
-    if (this.transport.isAudioInit) this.transport.sendTrack(trackId);
+    // A beat that changed kind moves every track's cells
+    if (JSON.stringify(preset.beatCells) !== layout) this.transport.syncLayout();
+    else if (this.transport.isAudioInit) this.transport.sendTrack(trackId);
     this.emit('grid');
     this.markEdited();
   }
