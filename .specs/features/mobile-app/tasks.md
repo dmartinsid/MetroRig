@@ -124,13 +124,14 @@ T9 → T10 → T11
 
 **Done when**:
 
-- [ ] `mob_06`, `mob_09`, `mob_10` (Stadium, Grooves, Improv), `mob_11`, `mob_12`, `mob_31` pass in Chrome
-- [ ] `mob_07` and `mob_08` pass in `tests/app.test.ts`
-- [ ] Gate check passes: `npx vitest run && npm run test:mobile`
+- [x] `mob_06`, `mob_09`, `mob_10` (Stadium, Grooves, Improv), `mob_11`, `mob_12`, `mob_31` pass in Chrome
+- [x] `mob_07` and `mob_08` pass in `tests/app.test.ts`
+- [x] Gate check passes: `npx vitest run && npm run test:mobile`
 
 **Tests**: e2e
 **Gate**: full
 **Commit**: `feat(ui): move the screens to a bottom tab bar on phones`
+**Status**: Done
 
 ---
 
