@@ -266,12 +266,13 @@ T9 → T10 → T11
 
 **Done when**:
 
-- [ ] `tests/install.test.ts` asserts each PNG exists with its pixel size
-- [ ] Gate check passes: `npx vitest run`
+- [x] `tests/install.test.ts` asserts each PNG exists with its pixel size
+- [x] Gate check passes: `npx vitest run`
 
 **Tests**: unit
 **Gate**: quick
 **Commit**: `feat(install): draw the MetroRig app icons`
+**Status**: Done
 
 ---
 

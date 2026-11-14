@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- MetroRig: a neon metronome on the app's night background. The mark sits in the central 66% -->
+  <defs>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="14"/>
+    </filter>
+    <g id="mark" fill="none" stroke="#39FF14" stroke-linecap="round" stroke-linejoin="round">
+      <!-- Body -->
+      <path d="M212 92 H300 L384 412 H128 Z" stroke-width="34"/>
+      <!-- Base -->
+      <path d="M156 344 H356" stroke-width="26"/>
+      <!-- Pendulum and its weight -->
+      <path d="M256 344 L346 112" stroke-width="28"/>
+      <rect x="259" y="250" width="56" height="26" rx="7" transform="rotate(21.2 287 263)" fill="#39FF14" stroke-width="8"/>
+    </g>
+  </defs>
+  <rect width="512" height="512" fill="#080810"/>
+  <use href="#mark" filter="url(#glow)" opacity="0.75"/>
+  <use href="#mark"/>
+</svg>
