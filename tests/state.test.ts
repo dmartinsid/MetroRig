@@ -14,7 +14,7 @@ describe('StateManager Tests', () => {
   });
 
   it('should initialize with default state settings', () => {
-    expect(stateManager.activeViewMode).toBe('editor');
+    expect(stateManager.activeViewMode).toBe('stadium'); // AD-030
     expect(stateManager.isPlaying).toBe(false);
     expect(stateManager.activePreset.bpm).toBe(120);
   });
@@ -371,8 +371,8 @@ describe('StateManager', () => {
     expect(new StateManager().activeViewMode).toBe('grooves');
   });
 
-  it('opens the Editor for an unknown stored mode', () => {
+  it('opens the Stadium for an unknown stored mode', () => {
     localStorage.setItem('metrorig_view_mode', 'presets');
-    expect(new StateManager().activeViewMode).toBe('editor');
+    expect(new StateManager().activeViewMode).toBe('stadium'); // AD-030
   });
 });

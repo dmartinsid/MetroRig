@@ -1751,7 +1751,7 @@ describe('Grooves Library', () => {
 
   it('nav_01 header links', async () => {
     await openPage();
-    expect([...document.querySelectorAll('header nav button')].map(link => link.textContent)).toEqual(['Editor', 'Stadium', 'Grooves', 'Improv']);
+    expect([...document.querySelectorAll('header nav button')].map(link => link.textContent)).toEqual(['Stadium', 'Editor', 'Grooves', 'Improv']);
   });
 
   it('nav_02 editor link', async () => {
@@ -1777,7 +1777,7 @@ describe('Grooves Library', () => {
     await openPage();
     const current = () => [...document.querySelectorAll('[aria-current]')].map(link => [link.textContent, link.getAttribute('aria-current')]);
 
-    expect(current()).toEqual([['Editor', 'page']]);
+    expect(current()).toEqual([['Stadium', 'page']]); // A first visit opens on Stadium (AD-030)
     openScreen('grooves');
     expect(current()).toEqual([['Grooves', 'page']]);
     openScreen('stadium');
@@ -2871,8 +2871,8 @@ describe('Improv', () => {
   it('pad_30 link and title', async () => {
     await openPage();
     const links = [...document.querySelectorAll<HTMLButtonElement>('header nav button')];
-    expect(links.map(link => link.textContent)).toEqual(['Editor', 'Stadium', 'Grooves', 'Improv']);
-    expect(shownScreens()).toEqual(['editor-view']);
+    expect(links.map(link => link.textContent)).toEqual(['Stadium', 'Editor', 'Grooves', 'Improv']);
+    expect(shownScreens()).toEqual(['stadium-view']); // A first visit opens on Stadium (AD-030)
 
     links[3].click();
 
@@ -4193,9 +4193,25 @@ describe('Mobile App', () => {
 
   afterEach(() => localStorage.removeItem('metrorig_view_mode'));
 
+  it('mob_41 first visit opens on stadium', async () => {
+    localStorage.removeItem('metrorig_view_mode');
+    await openPage();
+    expect(shownScreens()).toEqual(['stadium-view']);
+    expect(marked()).toEqual([['nav-stadium', 'page']]);
+  });
+
+  it('mob_42 a saved screen still opens first', async () => {
+    for (const name of ['editor', 'grooves', 'improv'] as const) {
+      localStorage.setItem('metrorig_view_mode', name);
+      await openPage();
+      expect(shownScreens()).toEqual([`${name}-view`]);
+      expect(marked()).toEqual([[`nav-${name}`, 'page']]);
+    }
+  });
+
   it('mob_07 tab shows its screen and marks only itself', async () => {
     await openPage();
-    expect(tabs().map(tab => tab.id)).toEqual(['nav-editor', 'nav-stadium', 'nav-grooves', 'nav-improv']);
+    expect(tabs().map(tab => tab.id)).toEqual(['nav-stadium', 'nav-editor', 'nav-grooves', 'nav-improv']);
     // Every order a thumb might take, ending back on the Editor
     for (const name of ['stadium', 'grooves', 'improv', 'editor', 'improv', 'stadium', 'editor'] as const) {
       byId<HTMLButtonElement>(`nav-${name}`).click();

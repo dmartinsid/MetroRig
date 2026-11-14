@@ -9,7 +9,8 @@ export class StateManager {
   // A copy of the factory 4/4 Metronome, so edits never reach the factory list
   public activePreset: Preset = structuredClone(FACTORY_PRESETS[0]);
 
-  public activeViewMode: ViewMode = 'editor';
+  // Stadium opens a first visit (AD-030); a saved screen wins
+  public activeViewMode: ViewMode = 'stadium';
   public isPlaying: boolean = false;
 
   constructor(private database: Database = openDatabase(), private prefs: PreferenceStore = browserPreferences) {
