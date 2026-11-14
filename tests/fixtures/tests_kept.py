@@ -105,6 +105,26 @@ REWRITES = [
     ('js', "Song Bars > meter_03 decline changes nothing",
      "expect(byId('pattern-steps').textContent).toBe('STEPS: 64/128');",
      "expect(byId('pattern-steps').textContent).toBe('STEPS: 64/192');"),
+    # AD-030 (mobile-app, user: "Sim, abre no Stadium (Recommended)"): Stadium is the first screen link and opens a
+    # first visit, so only the link order and the screen a first visit shows move (84dae55)
+    ('js', "Grooves Library > nav_01 header links",
+     "expect([...document.querySelectorAll('header nav button')].map(link => link.textContent)).toEqual(['Editor', 'Stadium', 'Grooves', 'Improv']);",
+     "expect([...document.querySelectorAll('header nav button')].map(link => link.textContent)).toEqual(['Stadium', 'Editor', 'Grooves', 'Improv']);"),
+    ('js', "Grooves Library > nav_05 aria current",
+     "expect(current()).toEqual([['Editor', 'page']]);",
+     "expect(current()).toEqual([['Stadium', 'page']]);"),
+    ('js', "Improv > pad_30 link and title",
+     "expect(links.map(link => link.textContent)).toEqual(['Editor', 'Stadium', 'Grooves', 'Improv']);",
+     "expect(links.map(link => link.textContent)).toEqual(['Stadium', 'Editor', 'Grooves', 'Improv']);"),
+    ('js', "Improv > pad_30 link and title",
+     "expect(shownScreens()).toEqual(['editor-view']);",
+     "expect(shownScreens()).toEqual(['stadium-view']);"),
+    ('js', "StateManager > opens the Editor for an unknown stored mode",
+     "expect(new StateManager().activeViewMode).toBe('editor');",
+     "expect(new StateManager().activeViewMode).toBe('stadium');"),
+    ('js', "StateManager Tests > should initialize with default state settings",
+     "expect(stateManager.activeViewMode).toBe('editor');",
+     "expect(stateManager.activeViewMode).toBe('stadium');"),
 ]
 
 
@@ -289,8 +309,16 @@ def head_assertions(suite):
     return js_tests(sorted((ROOT / 'tests').rglob('*.test.ts')) + sorted((ROOT / 'src').rglob('*.test.ts')))
 
 
+# Kept tests a later decision renamed, recorded name -> name now
+# AD-030 (mobile-app): an unknown stored screen opens the Stadium, so the test's name says so (84dae55)
+RENAMES = {
+    'StateManager > opens the Editor for an unknown stored mode': 'StateManager > opens the Stadium for an unknown stored mode',
+}
+
+
 def matching_name(name, tests):
-    """The test of that name, or for Rust the only one sharing its last segment."""
+    """The test of that name (or the name it was renamed to), or for Rust the only one sharing its last segment."""
+    name = RENAMES.get(name, name)
     if name in tests:
         return name
     if '::' not in name:
@@ -350,7 +378,7 @@ def main():
         missing = unmatched_rust(recorded, rust_results())
     else:
         results = js_results()
-        missing = [name for name in recorded if not results.get(name, False)]
+        missing = [name for name in recorded if not results.get(RENAMES.get(name, name), False)]
     for name in missing:
         print(f'missing or not passing: {name}')
     print(f'{suite}: {len(recorded) - len(missing)} of {len(recorded)} recorded tests pass')
