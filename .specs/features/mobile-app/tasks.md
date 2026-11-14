@@ -145,12 +145,13 @@ T9 → T10 → T11
 
 **Done when**:
 
-- [ ] `mob_15` to `mob_22` pass in `tests/app.test.ts`
-- [ ] Gate check passes: `npx vitest run`
+- [x] `mob_15` to `mob_22` pass in `tests/app.test.ts`
+- [x] Gate check passes: `npx vitest run`
 
 **Tests**: integration
 **Gate**: quick
 **Commit**: `feat(ui): add a transport bar to the editor`
+**Status**: Done
 
 ---
 
