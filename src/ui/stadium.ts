@@ -1,5 +1,6 @@
 import type { Session } from '../app/session';
-import { getBeatsPerMeasure, getBeatForStep, isSustainedStep } from '../domain/meter';
+import { getBeatsPerMeasure, isSustainedStep } from '../domain/meter';
+import { barBeatCells, barOffset, cellSpan, locateCell } from '../domain/layout';
 import { startBpmFor } from '../domain/preset';
 import { STADIUM_GROUPS, groupHit } from '../domain/kit';
 import { isAudible } from '../domain/mix';
@@ -8,7 +9,7 @@ import { byId, option } from './dom';
 
 declare const gsap: any;
 
-// Draw Stadium beat clock: one ring per group, one slice per step, 12 o'clock is step 0
+// Draw Stadium beat clock: one ring per group, one slice per cell from its start to its end in the bar, 12 o'clock is cell 0
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const CLOCK_RING_OUTER = 80;
 const CLOCK_RING_WIDTH = 15;
@@ -38,23 +39,28 @@ export function mount(session: Session): void {
     const { gridData, timeSignature } = session.preset;
     const measureLength = session.preset.measureLength || 16;
     const beats = getBeatsPerMeasure(timeSignature, measureLength);
+    const bar = session.playBar;
+    const beatCells = barBeatCells(session.preset, bar);
+    const cells = beatCells.reduce((sum, n) => sum + n, 0);
+    const offset = barOffset(session.preset, bar);
     clockFace.innerHTML = '';
 
     STADIUM_GROUPS.forEach(({ trackIds }, ring) => {
       const radius = CLOCK_RING_OUTER - CLOCK_RING_WIDTH * ring;
       const innerRadius = radius - CLOCK_RING_WIDTH + CLOCK_RING_GAP;
-      const ringSteps = Array.from({ length: measureLength }, (_, step) => (groupHit(trackIds, gridData, session.playBar * measureLength + step) ? 1 : 0));
-      for (let step = 0; step < measureLength; step++) {
+      const ringSteps = Array.from({ length: cells }, (_, cell) => (groupHit(trackIds, gridData, offset + cell) ? 1 : 0));
+      for (let step = 0; step < cells; step++) {
         // A slice can't span the full circle, which a single-step measure would need
-        const [x1, y1] = clockPoint(step / measureLength, radius);
-        const [x2, y2] = clockPoint((step + 1) / measureLength - 0.0001, radius);
-        const [x3, y3] = clockPoint((step + 1) / measureLength - 0.0001, innerRadius);
-        const [x4, y4] = clockPoint(step / measureLength, innerRadius);
-        const largeArc = measureLength === 1 ? 1 : 0;
+        const [start, end] = cellSpan(session.preset, bar, step);
+        const [x1, y1] = clockPoint(start, radius);
+        const [x2, y2] = clockPoint(end - 0.0001, radius);
+        const [x3, y3] = clockPoint(end - 0.0001, innerRadius);
+        const [x4, y4] = clockPoint(start, innerRadius);
+        const largeArc = end - start > 0.5 ? 1 : 0;
 
         const slice = document.createElementNS(SVG_NS, 'path');
         slice.setAttribute('d', `M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2} L ${x3} ${y3} A ${innerRadius} ${innerRadius} 0 ${largeArc} 0 ${x4} ${y4} Z`);
-        const sustained = isSustainedStep(ringSteps, step, measureLength, beats);
+        const sustained = isSustainedStep(ringSteps, step, beatCells);
         slice.setAttribute('class', ringSteps[step] > 0 ? 'clock-slice on' : sustained ? 'clock-slice sustain' : 'clock-slice');
         slice.setAttribute('data-track', String(ring));
         clockFace.appendChild(slice);
@@ -130,18 +136,18 @@ export function mount(session: Session): void {
 
     updateStadiumStatus();
 
-    const { timeSignature } = session.preset;
     const measureLength = session.preset.measureLength || 16;
     const step = session.position.step;
+    const bar = session.playBar;
 
-    // Beat clock
-    const beats = getBeatsPerMeasure(timeSignature, measureLength);
-    const stepDuration = 60 / Number(currentBpm) / 4; // Engine runs 4 steps per BPM beat
-    highlightBeat(getBeatForStep(step, measureLength, beats));
+    // Beat clock: the hand crosses the cell for its length, a sixteenth lasting a quarter of a BPM beat
+    const [start, end] = cellSpan(session.preset, bar, step);
+    const stepDuration = (60 / Number(currentBpm) / 4) * (end - start) * measureLength;
+    highlightBeat(locateCell(session.preset, barOffset(session.preset, bar) + step)?.beat ?? null);
     gsap.killTweensOf(clockHand);
     gsap.fromTo(clockHand,
-      { rotation: (step / measureLength) * 360, svgOrigin: '0 0' },
-      { rotation: ((step + 1) / measureLength) * 360, duration: stepDuration, ease: 'none' }
+      { rotation: start * 360, svgOrigin: '0 0' },
+      { rotation: end * 360, duration: stepDuration, ease: 'none' }
     );
 
     // Orbs keep a steady color and only nudge in size, avoiding luminance flashes

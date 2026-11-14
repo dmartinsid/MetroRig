@@ -4452,3 +4452,62 @@ describe('Editor', () => {
     expect(cells(2).slice(4, 7).map(cell => cell.classList.contains('sustain'))).toEqual([false, true, false]);
   });
 });
+
+describe('Stadium', () => {
+  afterEach(() => {
+    delete (globalThis as any).indexedDB;
+    mockGsap.fromTo.mockClear();
+  });
+
+  // Writes a triplet on beat 2 of the bar with the Editor's own controls
+  const writeTriplet = () => {
+    [...document.querySelectorAll<HTMLButtonElement>('.figure-btn')].find(button => button.firstChild?.textContent === 'Triplet')!.click();
+    document.querySelectorAll<HTMLElement>('.step-cell[data-track="1"]')[4].click();
+  };
+  // Where a point of the ring sits, as a fraction of the bar clockwise from 12 o'clock
+  const fractionAt = (x: number, y: number) => ((Math.atan2(y, x) + Math.PI / 2) / (2 * Math.PI) + 1) % 1;
+  const sliceEnds = (slice: Element) => {
+    const numbers = slice.getAttribute('d')!.match(/-?[\d.]+(e-?\d+)?/g)!.map(Number);
+    // M x1 y1 A r r 0 large 1 x2 y2 ...
+    return [fractionAt(numbers[0], numbers[1]), fractionAt(numbers[9], numbers[10])];
+  };
+
+  it('tup_23 tuplet slices sit at their time', async () => {
+    await openPage();
+    writeTriplet();
+
+    for (const ring of ['0', '1', '2', '3']) {
+      const slices = [...document.querySelectorAll(`.clock-slice[data-track="${ring}"]`)];
+      expect(slices).toHaveLength(4 + 3 + 4 + 4);
+      const triplet = slices.slice(4, 7).map(sliceEnds);
+      // 3 equal slices sharing the quarter of the ring from 1/4 to 1/2
+      [[1 / 4, 1 / 3], [1 / 3, 5 / 12], [5 / 12, 1 / 2]].forEach(([start, end], k) => {
+        expect(triplet[k][0]).toBeCloseTo(start, 3);
+        expect(triplet[k][1]).toBeCloseTo(end, 3);
+      });
+      expect(sliceEnds(slices[3])[1]).toBeCloseTo(1 / 4, 3);
+      expect(sliceEnds(slices[7])[0]).toBeCloseTo(1 / 2, 3);
+    }
+    // The Snare's triplet hits light their slices
+    const snareRing = STADIUM_GROUPS.findIndex(group => group.trackIds.includes(1));
+    const ring = [...document.querySelectorAll(`.clock-slice[data-track="${snareRing}"]`)];
+    expect(ring.slice(4, 7).map(slice => slice.classList.contains('on'))).toEqual([true, true, true]);
+  });
+
+  it('tup_24 the lit beat follows a tuplet cell', async () => {
+    await openPage();
+    writeTriplet();
+    await clickPlay();
+    mockGsap.fromTo.mockClear();
+
+    tick({ currentBpm: 120, beatIndex: 6 }); // The triplet's last cell
+    expect(document.querySelector('.clock-label.active')?.textContent).toBe('2');
+    const hand = mockGsap.fromTo.mock.calls.find(call => call[0] === byId('clock-hand'))!;
+    expect(hand[1].rotation).toBeCloseTo(150, 6);
+    expect(hand[2].rotation).toBeCloseTo(180, 6);
+    expect(hand[2].duration).toBeCloseTo(0.5 / 3, 6); // A third of a beat at 120 BPM
+
+    tick({ currentBpm: 120, beatIndex: 7 }); // Beat 3, straight again
+    expect(document.querySelector('.clock-label.active')?.textContent).toBe('3');
+  });
+});

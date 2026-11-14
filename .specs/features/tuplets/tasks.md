@@ -413,12 +413,13 @@ T19 → T20 → T21 → T22
 
 **Done when**:
 
-- [ ] App tests for 3 slices sharing a quarter of the ring and beat 2 lit on a triplet cell
-- [ ] Gate check passes: `npx vitest run`
+- [x] App tests for 3 slices sharing a quarter of the ring and beat 2 lit on a triplet cell
+- [x] Gate check passes: `npx vitest run`
 
 **Tests**: integration
 **Gate**: quick
 **Commit**: `feat(stadium): place tuplet hits at their time`
+**Status**: Done
 
 ---
 
