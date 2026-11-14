@@ -83,13 +83,14 @@ T9 → T10 → T11
 
 **Done when**:
 
-- [ ] `tests/mobile/phone.test.ts` has a helper that opens a screen at a width with touch emulation, and one smoke test that the Editor loads at 375 px
-- [ ] `tests/deploy.test.ts` asserts the `test` job runs `npm run test:mobile`
-- [ ] Gate check passes: `npx vitest run && npm run test:mobile`
+- [x] `tests/mobile/phone.test.ts` has a helper that opens a screen at a width with touch emulation, and one smoke test that the Editor loads at 375 px
+- [x] `tests/deploy.test.ts` asserts the `test` job runs `npm run test:mobile`
+- [x] Gate check passes: `npx vitest run && npm run test:mobile`
 
 **Tests**: e2e
 **Gate**: full
 **Commit**: `test(mobile): drive Chrome at phone widths`
+**Status**: Done
 
 ---
 
@@ -409,7 +410,7 @@ Proof: run mobile | ✓ tests/mobile/phone.test.ts > Mobile App > mob_39 pull pa
 ## Handoff
 
 **Settled mid-build:** none
-**Dispatched:** none
+**Dispatched:** batch 1 (T1 to T5), from 1a2d9fa
 **Walked:** none
 
 ---

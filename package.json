@@ -9,10 +9,12 @@
     "build:wasm": "cargo build --manifest-path engine/Cargo.toml --target wasm32-unknown-unknown --release && node scripts/copy_wasm.js",
     "build": "npm run build:wasm && vite build",
     "test:js": "vitest run",
+    "test:mobile": "vitest run --config vitest.mobile.config.ts",
     "test:rust": "cargo test --manifest-path engine/Cargo.toml"
   },
   "devDependencies": {
     "happy-dom": "^20.10.6",
+    "playwright-core": "^1.65.1",
     "typescript": "^5.0.0",
     "vite": "^5.0.0",
     "vitest": "^1.0.0"
