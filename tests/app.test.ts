@@ -4225,4 +4225,139 @@ describe('Mobile App', () => {
     await flush();
     expect(improvDotLit()).toBe(false);
   });
+  const transportPlay = () => byId<HTMLButtonElement>('transport-play');
+  const transportUp = () => byId<HTMLButtonElement>('transport-bpm-up');
+  const transportDown = () => byId<HTMLButtonElement>('transport-bpm-down');
+  const transportBpm = () => byId('transport-bpm').innerText;
+  const playing = () => [transportPlay().classList.contains('playing'), byId('btn-play').classList.contains('playing')];
+  // The tempo as the transport bar, the Tempo Bus number, its slider and the slider's readout show it
+  const shownTempo = () => [transportBpm(), byId('bpm-number').innerText, byId('bpm-slider').value, byId('bpm-slider-value').innerText];
+  const slideTo = (bpm: number) => {
+    byId('bpm-slider').value = String(bpm);
+    byId('bpm-slider').dispatchEvent(new Event('input'));
+  };
+  const setTrainer = (enabled: boolean) => {
+    byId('trainer-enable').checked = enabled;
+    byId('trainer-enable').dispatchEvent(new Event('change'));
+  };
+
+  it('mob_15 transport play starts and both show stop', async () => {
+    await openPage();
+    expect(byId('transport-bar').closest('#editor-view')).not.toBeNull();
+    expect(playing()).toEqual([false, false]);
+    transportPlay().click();
+    await flush();
+    expect(calls('start')).toHaveLength(1);
+    expect(calls('stop')).toHaveLength(0);
+    expect(playing()).toEqual([true, true]);
+    expect(transportPlay().querySelector('.icon-stop')!.textContent).toBe('■ STOP');
+  });
+
+  it('mob_16 transport stop stops and both show play', async () => {
+    await openPage();
+    transportPlay().click();
+    await flush();
+    transportPlay().click();
+    await flush();
+    expect(calls('start')).toHaveLength(1);
+    expect(calls('stop')).toHaveLength(1);
+    expect(playing()).toEqual([false, false]);
+    expect(transportPlay().querySelector('.icon-play')!.textContent).toBe('▶ PLAY');
+  });
+
+  it('mob_17 tempo bus play mirrors to the transport bar', async () => {
+    await openPage();
+    await clickPlay();
+    expect(calls('start')).toHaveLength(1);
+    expect(playing()).toEqual([true, true]);
+    await clickPlay();
+    expect(calls('stop')).toHaveLength(1);
+    expect(playing()).toEqual([false, false]);
+  });
+
+  it('mob_18 plus raises one bpm everywhere', async () => {
+    await openPage();
+    expect(shownTempo()).toEqual(['120', '120', '120', '120']);
+    transportUp().click();
+    expect(shownTempo()).toEqual(['121', '121', '121', '121']);
+    expect(byId('stadium-bpm').innerText).toBe('121.0');
+    // The independent test: two taps while playing
+    transportPlay().click();
+    await flush();
+    transportUp().click();
+    expect(shownTempo()).toEqual(['122', '122', '122', '122']);
+    expect(lastCall('setBpm')).toEqual([122]);
+  });
+
+  it('mob_19 minus lowers one bpm everywhere', async () => {
+    await openPage();
+    transportDown().click();
+    expect(shownTempo()).toEqual(['119', '119', '119', '119']);
+    expect(byId('stadium-bpm').innerText).toBe('119.0');
+    transportDown().click();
+    expect(shownTempo()).toEqual(['118', '118', '118', '118']);
+  });
+
+  it('mob_20 transport tempo follows slider preset and trainer', async () => {
+    await openPage();
+    slideTo(150);
+    expect(transportBpm()).toBe('150');
+
+    await selectPreset('factory:metal');
+    expect(transportBpm()).toBe('140');
+
+    // A Stadium step reaches it too
+    byId<HTMLButtonElement>('btn-stadium-bpm-up').click();
+    expect(transportBpm()).toBe('141');
+
+    // While playing it shows the live tempo a Trainer steps through, and the preset's again on Stop
+    setTrainer(true);
+    transportPlay().click();
+    await flush();
+    tick({ currentBpm: 130 });
+    expect(transportBpm()).toBe('130');
+    tick({ currentBpm: 127.34 });
+    expect(transportBpm()).toBe('127.3');
+    expect(transportBpm()).toBe(byId('bpm-number').innerText);
+    transportPlay().click();
+    await flush();
+    expect(transportBpm()).toBe(byId('bpm-number').innerText);
+    expect(transportBpm()).toBe(byId('bpm-slider').value);
+  });
+
+  it('mob_21 tempo bounds disable the steps', async () => {
+    await openPage();
+    expect([transportDown().disabled, transportUp().disabled]).toEqual([false, false]);
+    slideTo(239);
+    transportUp().click();
+    expect(shownTempo()).toEqual(['240', '240', '240', '240']);
+    expect([transportDown().disabled, transportUp().disabled]).toEqual([false, true]);
+    transportUp().click();
+    expect(shownTempo()).toEqual(['240', '240', '240', '240']);
+
+    slideTo(41);
+    transportDown().click();
+    expect(shownTempo()).toEqual(['40', '40', '40', '40']);
+    expect([transportDown().disabled, transportUp().disabled]).toEqual([true, false]);
+    transportDown().click();
+    expect(shownTempo()).toEqual(['40', '40', '40', '40']);
+  });
+
+  it('mob_22 trainer disables the steps', async () => {
+    await openPage();
+    setTrainer(true);
+    expect([transportDown().disabled, transportUp().disabled]).toEqual([true, true]);
+    transportUp().click();
+    transportDown().click();
+    expect(shownTempo()).toEqual(['120', '120', '120', '120']);
+
+    setTrainer(false);
+    expect([transportDown().disabled, transportUp().disabled]).toEqual([false, false]);
+    transportUp().click();
+    expect(shownTempo()).toEqual(['121', '121', '121', '121']);
+
+    // A Trainer routine loaded as a preset disables them as well
+    await selectPreset('factory:trainer_calvagada_148_190');
+    expect([transportDown().disabled, transportUp().disabled]).toEqual([true, true]);
+  });
 });

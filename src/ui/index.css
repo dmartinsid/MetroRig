@@ -237,6 +237,11 @@ header {
   font-weight: 700;
 }
 
+/* The Editor's transport bar shows only on phones */
+.transport-bar {
+  display: none;
+}
+
 /* The tab icons show only in the phone's tab bar */
 .view-icon {
   display: none;

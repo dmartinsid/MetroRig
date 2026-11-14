@@ -20,6 +20,11 @@ export function mount(session: Session): void {
   const bpmNumber = byId('bpm-number');
   const bpmSliderValue = byId('bpm-slider-value');
   const btnPlay = byId<HTMLButtonElement>('btn-play');
+  // The Editor's transport bar mirrors the Tempo Bus card: drawn in the same functions so the two never disagree
+  const transportPlay = byId<HTMLButtonElement>('transport-play');
+  const transportBpm = byId('transport-bpm');
+  const transportUp = byId<HTMLButtonElement>('transport-bpm-up');
+  const transportDown = byId<HTMLButtonElement>('transport-bpm-down');
   const footerClock = byId('footer-clock');
   const footerLatency = byId('footer-latency');
   const saveToast = byId('save-toast');
@@ -102,18 +107,27 @@ export function mount(session: Session): void {
     });
   }
 
+  // The tempo number on the Tempo Bus card and the transport bar
+  function showBpm(text: string) {
+    bpmNumber.innerText = text;
+    transportBpm.innerText = text;
+  }
+
+  // Each transport step is off where the Session refuses it, as on the Stadium
+  function renderTempoSteps() {
+    transportUp.disabled = !session.canStepBpm(1);
+    transportDown.disabled = !session.canStepBpm(-1);
+  }
+
   function renderPlayback() {
-    if (!session.isPlaying) {
-      btnPlay.classList.remove('playing');
-      bpmNumber.innerText = String(session.preset.bpm);
-    } else {
-      btnPlay.classList.add('playing');
-    }
+    btnPlay.classList.toggle('playing', session.isPlaying);
+    transportPlay.classList.toggle('playing', session.isPlaying);
+    if (!session.isPlaying) showBpm(String(session.preset.bpm));
   }
 
   // Draws the tick the Session took, once its sound has left the device
   function renderTick() {
-    bpmNumber.innerText = formatLiveBpm(Number(session.lastTick!.currentBpm));
+    showBpm(formatLiveBpm(Number(session.lastTick!.currentBpm)));
     if (session.position.step === 0) footerLatency.textContent = formatLatency(session.latencyMs());
   }
 
@@ -125,7 +139,8 @@ export function mount(session: Session): void {
     bpmSlider.value = String(preset.bpm);
     bpmSliderValue.innerText = String(preset.bpm);
     // During playback the engine jumps to the preset's start tempo
-    bpmNumber.innerText = String(session.isPlaying ? startBpmFor(preset) : preset.bpm);
+    showBpm(String(session.isPlaying ? startBpmFor(preset) : preset.bpm));
+    renderTempoSteps();
 
     presetNameInput.value = '';
     hideSaveToast();
@@ -136,7 +151,8 @@ export function mount(session: Session): void {
     const bpm = String(session.preset.bpm);
     bpmSlider.value = bpm;
     bpmSliderValue.innerText = bpm;
-    bpmNumber.innerText = bpm;
+    showBpm(bpm);
+    renderTempoSteps();
   }
 
   // The pattern was saved as a user preset
@@ -154,8 +170,10 @@ export function mount(session: Session): void {
     else if (change === 'tempo') renderTempo();
     else if (change === 'view') renderView();
     else if (change === 'library') renderSaved();
+    else if (change === 'trainer') renderTempoSteps();
   });
   renderView();
+  renderTempoSteps();
 
   viewLinks.forEach(link => {
     link.onclick = () => {
@@ -166,6 +184,9 @@ export function mount(session: Session): void {
   bpmSlider.oninput = () => session.setBpm(Number(bpmSlider.value));
 
   btnPlay.onclick = () => session.togglePlay();
+  transportPlay.onclick = () => session.togglePlay();
+  transportUp.onclick = () => session.stepBpm(1);
+  transportDown.onclick = () => session.stepBpm(-1);
 
   // Handle Preset Dropdown Selection Change
   presetSelector.onchange = () => {
