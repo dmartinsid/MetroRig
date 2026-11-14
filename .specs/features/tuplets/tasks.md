@@ -471,12 +471,13 @@ T19 → T20 → T21 → T22
 
 **Done when**:
 
-- [ ] Tests for a triplet beat, a sextuplet beat, a quintuplet refused, and every existing test unchanged
-- [ ] Gate check passes: `npx vitest run`
+- [x] Tests for a triplet beat, a sextuplet beat, a quintuplet refused, and every existing test unchanged
+- [x] Gate check passes: `npx vitest run`
 
 **Tests**: unit
 **Gate**: quick
 **Commit**: `feat(scripts): convert triplets and sextuplets from tabs`
+**Status**: Done
 
 ---
 
