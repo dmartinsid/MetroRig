@@ -461,6 +461,45 @@ describe('Mobile App', () => {
     }
   });
 
+  it('mob_48 stadium clock never shrinks under its floor', async () => {
+    // Between the named sizes, installed iPhones with their insets, and a Trainer status that wraps to two lines
+    const cases = [
+      { width: 360, height: 780, top: 0, bottom: 0, trainer: false },
+      { width: 412, height: 800, top: 0, bottom: 0, trainer: false },
+      { width: 390, height: 844, top: 47, bottom: 34, trainer: false },
+      { width: 375, height: 812, top: 44, bottom: 34, trainer: false },
+      { width: 390, height: 844, top: 0, bottom: 0, trainer: true },
+    ];
+    for (const { width, height, top, bottom, trainer } of cases) {
+      const label = `${width}x${height} insets ${top}/${bottom}${trainer ? ' trainer' : ''}`;
+      const context = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: 1, isMobile: true, hasTouch: true });
+      const page = await context.newPage();
+      pages.push(page);
+      if (top || bottom) {
+        const cdp = await context.newCDPSession(page);
+        await cdp.send('Emulation.setSafeAreaInsetsOverride' as any, { insets: { top, bottom, left: 0, right: 0 } });
+      }
+      await page.goto(inject('baseUrl'));
+      await page.click('#nav-stadium');
+      await page.waitForSelector('#stadium-view:not(.hidden)');
+      await page.evaluate(() => document.fonts.ready.then(() => undefined));
+      if (trainer) {
+        await page.evaluate(() => {
+          const routine = document.querySelector<HTMLSelectElement>('#stadium-preset-selector')!;
+          routine.value = [...routine.options].find(option => option.value && !option.disabled)!.value;
+          routine.dispatchEvent(new Event('change'));
+        });
+      }
+      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+      const clock = (await box(page, '.beat-clock'))!;
+      expect([label, clock.width >= 200]).toEqual([label, true]);
+      await scrollToEnd(page);
+      const play = (await box(page, '#btn-stadium-play'))!;
+      const legend = (await box(page, '.clock-legend'))!;
+      expect([label, legend.bottom <= play.top]).toEqual([label, true]);
+    }
+  });
+
   it('mob_13 transport bar fixed above the tab bar', async () => {
     const page = await openScreen('editor', 375);
     for (const scrolled of [false, true]) {
