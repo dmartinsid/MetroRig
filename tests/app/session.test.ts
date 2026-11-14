@@ -978,4 +978,122 @@ describe('Session', () => {
     expect(session.lastTick?.beatIndex).toBe(62);
     expect([session.playBar, session.position]).toEqual([3, { bar: 4, step: 15 }]);
   });
+
+  it('tup_29 a saved groove keeps its beat cells', async () => {
+    const fixture = setup();
+    await loadStored(fixture, structuredClone(TRIPLET_BAR));
+    const { session, database } = fixture;
+
+    await session.saveGroove('Triplet groove');
+
+    const [groove] = [...database.grooves.values()];
+    expect(groove).toMatchObject({ name: 'Triplet groove', measureLength: 16, beatCells: [4, 3, 4, 4] });
+    // Each drum track holds the bar's 15 cells; the click stays out, as today
+    expect(Object.keys(groove.gridData).map(Number).sort((a, b) => a - b)).toEqual(TRACKS.slice(1).map(t => t.id).sort((a, b) => a - b));
+    expect(groove.gridData[2]).toEqual(TRIPLET_BAR.gridData[2]);
+    expect(groove.gridData[3]).toEqual(TRIPLET_BAR.gridData[3]);
+    expect(groove.gridData[1]).toEqual(new Array(15).fill(0));
+
+    // From bar 2 of 4, past a bar of 15 cells, the groove takes bar 2's own cells and layout
+    await loadStored(fixture, {
+      timeSignature: '4/4', measureLength: 16, bars: 4, beatCells: [[4, 3, 4, 4], [4, 4, 4, 6], [4, 4, 4, 4], [4, 4, 4, 4]],
+      gridData: { 2: [...TRIPLET_BAR.gridData[2], 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, ...new Array(32).fill(1)] },
+    });
+    session.showBar(1);
+    database.grooves.clear();
+    await session.saveGroove('Bar 2');
+    const [second] = [...database.grooves.values()];
+    expect(second.beatCells).toEqual([4, 4, 4, 6]);
+    expect(second.gridData[2]).toEqual([0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]);
+
+    // A straight bar stores no beat cells, as before tuplets
+    session.loadPreset('factory:rock');
+    database.grooves.clear();
+    await session.saveGroove('Straight');
+    const [plain] = [...database.grooves.values()];
+    expect(plain).not.toHaveProperty('beatCells');
+    expect(plain.gridData[2]).toEqual(FACTORY_PRESETS.find(p => p.id === 'rock')!.gridData[2].slice(0, 16));
+  });
+
+  it('tup_30 a groove repeats beat by beat', async () => {
+    const fixture = setup();
+    // A 4-beat groove whose beat 1 is a triplet: kick on beats 1 and 3, snare on the triplet's last 2 cells, beat 2 and beat 4
+    await loadStored(fixture, {
+      timeSignature: '4/4', measureLength: 16, bars: 1, beatCells: [[3, 4, 4, 4]],
+      gridData: {
+        1: [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+        2: [0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0],
+      },
+    });
+    const { session, database } = fixture;
+    await session.saveGroove('Groove');
+    const [groove] = [...database.grooves.values()];
+
+    session.loadPreset('factory:default');
+    expect(session.setTimeSignature(5, 4)).toBe('changed');
+    session.applyGroove(`user:${groove.id}`);
+    await flush();
+
+    // Beats 1-4 take groove beats 1-4, and beat 5 takes groove beat 1: its kind and its hits
+    expect(session.preset.beatCells).toEqual([[3, 4, 4, 4, 3]]);
+    expect(session.preset.gridData[1]).toEqual([1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0]);
+    expect(session.preset.gridData[2]).toEqual([0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1]);
+    TRACKS.slice(1).forEach(({ id }) => expect(session.preset.gridData[id], `track ${id}`).toHaveLength(18));
+    // The click is no groove track: it keeps its hits, re-laid on beat 1's triplet with its accent on the beat start
+    expect(session.preset.gridData[0]).toEqual([2, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0]);
+
+    // A straight groove makes every beat of the bar straight again
+    session.applyGroove('factory:rock');
+    expect(session.preset.beatCells).toBeUndefined();
+    const rock = FACTORY_PRESETS.find(p => p.id === 'rock')!;
+    expect(session.preset.gridData[2]).toEqual([...rock.gridData[2].slice(0, 16), ...rock.gridData[2].slice(0, 4)]);
+    expect(session.preset.gridData[0]).toEqual([2, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0]);
+  });
+
+  it('tup_31 a tuplet groove lands straight in /8', async () => {
+    const fixture = setup();
+    await loadStored(fixture, structuredClone(TRIPLET_BAR));
+    const { session, database } = fixture;
+    await session.saveGroove('Triplet groove');
+    const [groove] = [...database.grooves.values()];
+
+    session.loadPreset('factory:default');
+    expect(session.setTimeSignature(6, 8)).toBe('changed');
+    session.applyGroove(`user:${groove.id}`);
+    await flush();
+
+    expect(session.preset.beatCells).toBeUndefined();
+    // The groove's triplet cells at 0, 1/3 and 2/3 of beat 2 land on its sixteenths 4, 5 and 7, then the 12-step bar takes them
+    expect(session.preset.gridData[2]).toEqual([0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0]);
+    // Hi-hat triplet cells 4 and 5 (beat 2's 0 and 1/3) land on 4 and 5; beats 1 and 3 keep their eighths
+    expect(session.preset.gridData[3]).toEqual([1, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 0]);
+    TRACKS.forEach(({ id }) => expect(session.preset.gridData[id], `track ${id}`).toHaveLength(12));
+  });
+
+  it('tup_27 a saved tuplet preset reloads the same', async () => {
+    const first = setup();
+    first.session.selectFigure(figureOf('triplet'));
+    first.session.editStep(2, 4); // Snare triplet on beat 2
+    first.session.selectFigure(figureOf('sextuplet'));
+    first.session.editStep(1, 12); // Kick sextuplet on beat 4, which starts at cell 4 + 3 + 4 = 11
+    const written = structuredClone(first.session.preset);
+    expect(written.beatCells).toEqual([[4, 3, 4, 6]]);
+    await first.session.savePreset('Tuplets');
+
+    // A page reload: a new Session over the same storage
+    const prefs = new MemoryPreferences();
+    const reloaded = new Session({
+      engine: new FakeEngine(), state: new StateManager(first.database, prefs), prefs,
+      dialogs: { confirm: () => true }, wasmUrl: '/engine.wasm', workletUrl: '/worklet.js',
+    });
+    const [stored] = await reloaded.userPresets();
+    reloaded.loadPreset(`user:${stored.id}`);
+    await flush();
+
+    expect(reloaded.preset.beatCells).toEqual([[4, 3, 4, 6]]);
+    // Every track as written; a track the pattern never held loads as the bar's 17 empty cells
+    TRACKS.forEach(({ id }) => expect(reloaded.preset.gridData[id], `track ${id}`).toEqual(written.gridData[id] ?? new Array(17).fill(0)));
+    expect(reloaded.preset.gridData[2].slice(4, 7)).toEqual([1, 1, 1]);
+    expect(reloaded.preset.gridData[1].slice(11, 17)).toEqual([1, 1, 1, 1, 1, 1]);
+  });
 });

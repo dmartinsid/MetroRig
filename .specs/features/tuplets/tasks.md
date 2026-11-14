@@ -353,12 +353,13 @@ T19 → T20 → T21 → T22
 
 **Done when**:
 
-- [ ] Session tests for saving a tuplet groove, applying it to 5/4, and applying it to 6/8
-- [ ] Gate check passes: `npx vitest run`
+- [x] Session tests for saving a tuplet groove, applying it to 5/4, and applying it to 6/8
+- [x] Gate check passes: `npx vitest run`
 
 **Tests**: unit
 **Gate**: quick
 **Commit**: `feat(session): save and apply grooves with tuplets`
+**Status**: Done
 
 ---
 
