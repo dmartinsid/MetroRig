@@ -1,9 +1,10 @@
 import { withBase } from '../domain/assets';
 import type { ChordId } from '../domain/chords';
 import { TRACKS, nextStepValue } from '../domain/kit';
+import { barOffset, isTupletSignature, patternCells } from '../domain/layout';
 import { measureLengthFor, timeSignatureOf } from '../domain/meter';
 import { createTrackMix, toggleMute, toggleSolo, type TrackMix } from '../domain/mix';
-import { FIGURES, applyFigureAt, barCount, barOfStep, barSteps, fitBar, patternLength, stepInBar, writeBar } from '../domain/pattern';
+import { FIGURES, applyFigureAt, barCount, barOfStep, fitBar, patternLength, stepInBar, writeBar } from '../domain/pattern';
 import { completeKit, normalizePreset, startBpmFor, type CustomGroove, type Preset, type StoredPreset, type TrainerSettings, type ViewMode } from '../domain/preset';
 import { songToPreset, type Song } from '../domain/songs';
 import { steppedBpm, tempoKeyStep, typesText, type KeyTarget, type TempoStep } from '../domain/tempo';
@@ -333,18 +334,19 @@ export class Session {
     return 'changed';
   }
 
-  // Changes one step of the bar on view, or stamps the selected figure over its quarter note
+  // Changes one cell of the bar on view, or stamps the selected figure over its beat.
+  // A tuplet figure outside /4 changes nothing
   editStep(trackId: number, step: number) {
     const preset = this.preset;
-    const measureLength = preset.measureLength || 16;
-    const allSteps = preset.gridData[trackId] ??= new Array(patternLength(preset)).fill(0);
+    if (this.figure && this.figure.cells !== 4 && !isTupletSignature(preset.timeSignature)) return;
+
     const layout = JSON.stringify(preset.beatCells);
     if (this.figure) {
       applyFigureAt(preset, trackId, this.viewBar, step, this.figure);
     } else {
-      const trackSteps = barSteps(allSteps, this.viewBar, measureLength);
-      trackSteps[step] = nextStepValue(trackId, trackSteps[step]);
-      writeBar(allSteps, this.viewBar, measureLength, trackSteps);
+      const allSteps = preset.gridData[trackId] ??= new Array(patternCells(preset)).fill(0);
+      const cell = barOffset(preset, this.viewBar) + step;
+      allSteps[cell] = nextStepValue(trackId, allSteps[cell]);
     }
 
     // A beat that changed kind moves every track's cells
