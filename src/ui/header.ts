@@ -200,6 +200,10 @@ export function mount(session: Session): void {
   // Initialize dropdown value from the stored choice
   clickSoundSelector.value = session.clickSound;
 
+  // The phone Stadium sizes its clock to the height the header leaves (AD-031)
+  const header = document.querySelector('header')!;
+  new ResizeObserver(() => document.documentElement.style.setProperty('--header-h', `${header.offsetHeight}px`)).observe(header);
+
   footerClock.textContent = formatClock(session.sampleRate());
   populatePresetsDropdown();
 }

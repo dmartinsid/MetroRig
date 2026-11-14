@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/mobile-app/design.md`
-**Status**: Done
+**Status**: In Progress
 **Approved**: 2026-11-14 - user: "aprovo e vamos com sub-agents"
 **Build**: `npm run build`
 **Run js**: `npx vitest run --reporter=verbose`
@@ -73,6 +73,12 @@ T9 → T10 → T11
 
 ```
 T12 → T13 → T14
+```
+
+### Phase 6: Stadium controls on top
+
+```
+T15
 ```
 
 ---
@@ -363,6 +369,26 @@ T12 → T13 → T14
 
 ---
 
+### T15: Stadium controls on top, clock sized to fit
+
+**What**: On phones the Stadium panel comes before the beat clock, its spacing is tightened, and the clock fills the height left above the Play button (the header's height reaches the CSS as `--header-h`), down to a floor that makes shorter phones scroll.
+**Where**: `src/ui/index.css`
+**Depends on**: None (Phase order: after T14)
+**Reuses**: `--tabbar-h`, `--stadium-play-h`; `src/ui/header.ts` for `--header-h`
+**Requirement**: MOB-45, MOB-46, MOB-47
+
+**Done when**:
+
+- [x] `mob_45`, `mob_46`, `mob_47` pass in Chrome; `mob_01`, `mob_03`, `mob_04`, `mob_10`, `mob_43`, `mob_44` still pass
+- [x] Gate check passes: `npx vitest run && npm run test:mobile && npm run build`
+
+**Tests**: e2e
+**Gate**: build
+**Commit**: `feat(ui): put the stadium controls above the clock on phones`
+**Status**: Done
+
+---
+
 ## Checks
 
 **C1** - At 360, 375, 390 and 430 px the Editor, Stadium, Grooves and Improv each have a page scroll width equal to the window width (MOB-01, AC 1)
@@ -497,11 +523,20 @@ Proof: run mobile | ✓ tests/mobile/phone.test.ts > Mobile App > mob_43 stadium
 **C44** - At 768 and 1280 px the Stadium Play button lies inside the Stadium panel (MOB-44, AC 5)
 Proof: run mobile | ✓ tests/mobile/phone.test.ts > Mobile App > mob_44 desktop stadium play stays in the panel
 
+**C45** - At 360, 375, 390 and 430 px on Stadium the routine selector, timer, tempo, − and +, Trainer status and orbs all end above the beat clock's top (MOB-45, AC 1)
+Proof: run mobile | ✓ tests/mobile/phone.test.ts > Mobile App > mob_45 stadium controls above the clock
+
+**C46** - At 390 × 844, 393 × 852, 412 × 915 and 430 × 932, at scroll 0, the tempo, − and +, orbs, clock and legend lie inside the window above the Play button, and the clock is at least 200 px wide (MOB-46, AC 2)
+Proof: run mobile | ✓ tests/mobile/phone.test.ts > Mobile App > mob_46 stadium fits one screen on taller phones
+
+**C47** - At 360 × 640 and 375 × 667, at scroll 0, the tempo with − and + lies above the Play button, and the clock is at least 240 px wide below the orbs (MOB-47, AC 3)
+Proof: run mobile | ✓ tests/mobile/phone.test.ts > Mobile App > mob_47 stadium tempo first on short phones
+
 ---
 
 ## Handoff
 
-**Settled mid-build:** after T11, user: "Acho que o botao stadium pode ser o primeiro no mobile e tb no desktop. Podemos colocar o start em cima ou em lugar mais facil nessa tela"; then "Sim, abre no Stadium (Recommended)" and "Fixo embaixo no celular (Recommended)". Recorded as AD-030, MOB-40 to MOB-44, T13 and T14. The Verifier findings 1 and 2 become T12.
+**Settled mid-build:** after T11, user: "Acho que o botao stadium pode ser o primeiro no mobile e tb no desktop. Podemos colocar o start em cima ou em lugar mais facil nessa tela"; then "Sim, abre no Stadium (Recommended)" and "Fixo embaixo no celular (Recommended)". Recorded as AD-030, MOB-40 to MOB-44, T13 and T14. The Verifier findings 1 and 2 become T12. After closing, user: "Acho que no modo stadium no mobile o tempo e controles tem que ser mostrado em cima e o circulo pode ir pra baixo, se der pra colocar tudo no mesmo espaco melhor, mas se nao der vamos alterar pra essa forma" - recorded as AD-031, MOB-45 to MOB-47, T15.
 **Dispatched:** batch 1 (T1 to T5), from 1a2d9fa, returned at a8508b2; batch 2 (T6 to T11), from a8508b2, returned at d41ac4c; Verifier over the proofs at 901911e, returned with 2 findings, closed at e02cdd6; Verifier for the mid-build checks C40 to C44 (AD-030) over the proofs at de03352, returned with 1 finding, closed at f02cb50
 **Walked:** Headless Chrome (playwright-core, touch emulation, 1x) on the Vite dev server, `npx vite --port 5199`, no sign-in or data needed; each screen reached by its tab. **P1 fit:** at 360 and 375 px Editor, Stadium, Grooves and Improv each had page scrollWidth equal to the window (360/375); before the feature Stadium was 366 at 360. Elements past the edge are only the figure chips inside the palette's own scroller. Header: logo row, then speaker icon + `Digital` and `4/4 Metronome` in full at 360. Stadium at 360: four orbs inside the panel, `SNARE/ TOMS` wrapping after the slash, − and + inside. **P1 tab bar:** four icon tabs fixed at the bottom on every screen, Improv tab lit neon on Improv, Stadium on Stadium. **P1 transport:** Editor shows `− 120 BPM + ▶ PLAY` directly above the tabs at the top and at the end of the page; the Tempo Bus card still reads 120 with its slider. **P1 grid:** names column fixed, first chip row scrolls sideways (`Step`, `Quarter`, `Eighths`, cut at the edge). **P2:** manifest and icons checked by the batch worker on `vite preview` under `/MetroRig/` (no manifest errors; only `in-incognito` from the test context). Wake lock not walked on a phone; it rests on tests/keepAwake.test.ts. Pictures: scratchpad `after/*.png`, no capture binds.
 
@@ -510,13 +545,14 @@ Proof: run mobile | ✓ tests/mobile/phone.test.ts > Mobile App > mob_44 desktop
 ## Phase Execution Map
 
 ```
-Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5
+Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5 → Phase 6
 
 Phase 1:  T1
 Phase 2:  T2 ------→ T3 ------→ T4 ------→ T5
 Phase 3:  T6 ------→ T7 ------→ T8
 Phase 4:  T9 ------→ T10 -----→ T11
 Phase 5:  T12 -----→ T13 -----→ T14
+Phase 6:  T15
 ```
 
 Execution is strictly sequential.
