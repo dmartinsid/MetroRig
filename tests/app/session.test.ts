@@ -935,4 +935,47 @@ describe('Session', () => {
     expect(session.setTimeSignature(8, 4)).toBe('changed');
     expect(session.preset.beatCells).toEqual([[4, 3, 4, 4, 4, 4, 4, 4]]);
   });
+
+  it('follows a tick in bar 2 after a bar with a triplet', async () => {
+    const fixture = setup();
+    // Bar 1 holds a triplet on beat 2 (15 cells), bars 2-4 are straight: 15 + 16 + 16 + 16 = 63 cells
+    const straight = new Array(16).fill(0);
+    await loadStored(fixture, {
+      timeSignature: '4/4', measureLength: 16, bars: 4, beatCells: [[4, 3, 4, 4], [4, 4, 4, 4], [4, 4, 4, 4], [4, 4, 4, 4]],
+      gridData: { 0: [...TRIPLET_BAR.gridData[0], ...straight, ...straight, ...straight] },
+    });
+    const { session, engine } = fixture;
+    session.togglePlay();
+    await flush();
+    const tick = (beatIndex: number) =>
+      engine.dispatchEvent(new CustomEvent('tick', { detail: { beatIndex, currentBpm: 120, activeTrackIds: [] } }));
+    const grids: number[] = [];
+    session.subscribe(change => { if (change === 'grid') grids.push(session.playBar); });
+
+    tick(5); // Bar 1, the triplet's second cell
+    expect([session.playBar, session.position]).toEqual([0, { bar: 1, step: 5 }]);
+    tick(14); // Bar 1's last cell
+    expect([session.playBar, session.position]).toEqual([0, { bar: 1, step: 14 }]);
+
+    tick(15); // Bar 2's first cell
+    expect(session.playBar).toBe(1);
+    expect(session.viewBar).toBe(1);
+    expect(session.position).toEqual({ bar: 2, step: 0 });
+    expect(grids).toEqual([1]);
+
+    tick(20); // Bar 2, beat 2's second cell
+    expect([session.playBar, session.position]).toEqual([1, { bar: 2, step: 5 }]);
+    tick(31); // Bar 3 starts at 15 + 16
+    expect([session.playBar, session.position]).toEqual([2, { bar: 3, step: 0 }]);
+    tick(47); // Bar 4 starts at 15 + 16 + 16
+    expect([session.playBar, session.position]).toEqual([3, { bar: 4, step: 0 }]);
+    tick(62); // The pattern's last cell
+    expect([session.playBar, session.position]).toEqual([3, { bar: 4, step: 15 }]);
+    expect(session.lastTick?.beatIndex).toBe(62);
+
+    // A cell past the pattern's 63 is the engine's old, longer pattern: ignored
+    tick(63);
+    expect(session.lastTick?.beatIndex).toBe(62);
+    expect([session.playBar, session.position]).toEqual([3, { bar: 4, step: 15 }]);
+  });
 });

@@ -1,10 +1,10 @@
 import { withBase } from '../domain/assets';
 import type { ChordId } from '../domain/chords';
 import { TRACKS, nextStepValue } from '../domain/kit';
-import { barBeatCells, barOffset, isTupletSignature, patternCells, setBeatCells } from '../domain/layout';
+import { barBeatCells, barOffset, isTupletSignature, locateCell, patternCells, setBeatCells } from '../domain/layout';
 import { measureLengthFor, timeSignatureOf } from '../domain/meter';
 import { createTrackMix, toggleMute, toggleSolo, type TrackMix } from '../domain/mix';
-import { FIGURES, applyFigureAt, barCount, barOfStep, fitBar, patternLength, stepInBar, writeBar } from '../domain/pattern';
+import { FIGURES, applyFigureAt, barCount, fitBar, writeBar } from '../domain/pattern';
 import { completeKit, normalizePreset, startBpmFor, type CustomGroove, type Preset, type StoredPreset, type TrainerSettings, type ViewMode } from '../domain/preset';
 import { songToPreset, type Song } from '../domain/songs';
 import { steppedBpm, tempoKeyStep, typesText, type KeyTarget, type TempoStep } from '../domain/tempo';
@@ -207,14 +207,13 @@ export class Session {
     // Ticks still in flight after stop must not restart anything
     if (!this.state.isPlaying) return;
     // The engine may not have taken a shorter pattern yet
-    if (detail.beatIndex >= patternLength(this.preset)) return;
+    const located = locateCell(this.preset, detail.beatIndex);
+    if (!located) return;
 
     this.lastTick = detail;
-    const measureLength = this.preset.measureLength || 16;
-    const step = stepInBar(detail.beatIndex, measureLength);
+    const { bar, inBar: step } = located;
 
     // A bar pressed during playback holds until here
-    const bar = barOfStep(detail.beatIndex, measureLength);
     if (bar !== this.playBar) {
       this.playBar = bar;
       this.viewBar = bar;
