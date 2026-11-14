@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/mobile-app/design.md`
-**Status**: Approved
+**Status**: Done
 **Approved**: 2026-11-14 - user: "aprovo e vamos com sub-agents"
 **Build**: `npm run build`
 **Run js**: `npx vitest run --reporter=verbose`
@@ -502,7 +502,7 @@ Proof: run mobile | ✓ tests/mobile/phone.test.ts > Mobile App > mob_44 desktop
 ## Handoff
 
 **Settled mid-build:** after T11, user: "Acho que o botao stadium pode ser o primeiro no mobile e tb no desktop. Podemos colocar o start em cima ou em lugar mais facil nessa tela"; then "Sim, abre no Stadium (Recommended)" and "Fixo embaixo no celular (Recommended)". Recorded as AD-030, MOB-40 to MOB-44, T13 and T14. The Verifier findings 1 and 2 become T12.
-**Dispatched:** batch 1 (T1 to T5), from 1a2d9fa, returned at a8508b2; batch 2 (T6 to T11), from a8508b2, returned at d41ac4c; Verifier over the proofs at 901911e
+**Dispatched:** batch 1 (T1 to T5), from 1a2d9fa, returned at a8508b2; batch 2 (T6 to T11), from a8508b2, returned at d41ac4c; Verifier over the proofs at 901911e, returned with 2 findings, closed at e02cdd6; Verifier for the mid-build checks C40 to C44 (AD-030) over the proofs at de03352, returned with 1 finding, closed at f02cb50
 **Walked:** Headless Chrome (playwright-core, touch emulation, 1x) on the Vite dev server, `npx vite --port 5199`, no sign-in or data needed; each screen reached by its tab. **P1 fit:** at 360 and 375 px Editor, Stadium, Grooves and Improv each had page scrollWidth equal to the window (360/375); before the feature Stadium was 366 at 360. Elements past the edge are only the figure chips inside the palette's own scroller. Header: logo row, then speaker icon + `Digital` and `4/4 Metronome` in full at 360. Stadium at 360: four orbs inside the panel, `SNARE/ TOMS` wrapping after the slash, − and + inside. **P1 tab bar:** four icon tabs fixed at the bottom on every screen, Improv tab lit neon on Improv, Stadium on Stadium. **P1 transport:** Editor shows `− 120 BPM + ▶ PLAY` directly above the tabs at the top and at the end of the page; the Tempo Bus card still reads 120 with its slider. **P1 grid:** names column fixed, first chip row scrolls sideways (`Step`, `Quarter`, `Eighths`, cut at the edge). **P2:** manifest and icons checked by the batch worker on `vite preview` under `/MetroRig/` (no manifest errors; only `in-incognito` from the test context). Wake lock not walked on a phone; it rests on tests/keepAwake.test.ts. Pictures: scratchpad `after/*.png`, no capture binds.
 
 ---

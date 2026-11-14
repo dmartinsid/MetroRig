@@ -1,9 +1,9 @@
 # mobile-app proofs
 
-**HEAD**: d41ac4c
+**HEAD**: f02cb50
 **Tree**: clean
 **Shell**: /bin/sh
-**Result**: 40 pass, 0 fail
+**Result**: 45 pass, 0 fail
 
 | Check | Proof | Result |
 | --- | --- | --- |
@@ -46,6 +46,11 @@
 | C37 | `run mobile / ✓ tests/mobile/phone.test.ts > Mobile App > mob_37 double tap does not zoom` | pass |
 | C38 | `run mobile / ✓ tests/mobile/phone.test.ts > Mobile App > mob_38 long press selects no text` | pass |
 | C39 | `run mobile / ✓ tests/mobile/phone.test.ts > Mobile App > mob_39 pull past the top does not reload` | pass |
+| C40 | `run mobile / ✓ tests/mobile/phone.test.ts > Mobile App > mob_40 stadium is the first screen link` | pass |
+| C41 | `run js / ✓ tests/app.test.ts > Mobile App > mob_41 first visit opens on stadium` | pass |
+| C42 | `run js / ✓ tests/app.test.ts > Mobile App > mob_42 a saved screen still opens first` | pass |
+| C43 | `run mobile / ✓ tests/mobile/phone.test.ts > Mobile App > mob_43 stadium play fixed above the tab bar` | pass |
+| C44 | `run mobile / ✓ tests/mobile/phone.test.ts > Mobile App > mob_44 desktop stadium play stays in the panel` | pass |
 | Build | `npm run build` | pass |
 
 ## Output
@@ -53,21 +58,21 @@
 `Run mobile` - exit 0
 
 ```
- ✓ tests/mobile/phone.test.ts > Mobile App > mob_27 figure palette is one scrolling row
- ✓ tests/mobile/phone.test.ts > Mobile App > mob_27 figure palette is one scrolling row 657ms
- ✓ tests/mobile/phone.test.ts > Mobile App > mob_25 right fade marks more steps
- ✓ tests/mobile/phone.test.ts > Mobile App > mob_25 right fade marks more steps 1352ms
- ✓ tests/mobile/phone.test.ts > Mobile App > mob_26 left fade marks hidden steps 1055ms
- ✓ tests/mobile/phone.test.ts > Mobile App > mob_01 no sideways page scroll at 360 375 390 430 8594ms
- ✓ tests/mobile/phone.test.ts > Mobile App > mob_02 header selectors show their value in full at 360 549ms
- ✓ tests/mobile/phone.test.ts > Mobile App > mob_03 stadium orbs and tempo buttons inside the panel at 360 466ms
+ ✓ tests/mobile/phone.test.ts > Mobile App > mob_23 track names stay in view while steps scroll 820ms
+ ✓ tests/mobile/phone.test.ts > Mobile App > mob_24 grid snaps to beat starts 1631ms
+ ✓ tests/mobile/phone.test.ts > Mobile App > mob_27 figure palette is one scrolling row 539ms
+ ✓ tests/mobile/phone.test.ts > Mobile App > mob_25 right fade marks more steps 1401ms
+ ✓ tests/mobile/phone.test.ts > Mobile App > mob_26 left fade marks hidden steps 1082ms
+ ✓ tests/mobile/phone.test.ts > Mobile App > mob_01 no sideways page scroll at 360 375 390 430 8705ms
+ ✓ tests/mobile/phone.test.ts > Mobile App > mob_02 header selectors show their value in full at 360 669ms
+ ✓ tests/mobile/phone.test.ts > Mobile App > mob_03 stadium orbs and tempo buttons inside the panel at 360 567ms
  ✓ tests/mobile/phone.test.ts > Mobile App > mob_04 touch targets 44 px and step cells 32 px
- ✓ tests/mobile/phone.test.ts > Mobile App > mob_04 touch targets 44 px and step cells 32 px 2628ms
+ ✓ tests/mobile/phone.test.ts > Mobile App > mob_04 touch targets 44 px and step cells 32 px 8762ms
 
  Test Files  1 passed (1)
-      Tests  23 passed (23)
-   Start at  17:46:41
-   Duration  35.85s (transform 108ms, setup 1ms, collect 355ms, tests 35.26s, environment 0ms, prepare 65ms)
+      Tests  26 passed (26)
+   Start at  18:33:01
+   Duration  51.83s (transform 93ms, setup 0ms, collect 369ms, tests 51.22s, environment 0ms, prepare 61ms)
 ```
 
 `Run js` - exit 0

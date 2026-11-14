@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 62,
+  "next_id": 64,
   "lessons": [
     {
       "id": "L-001",
@@ -1103,6 +1103,42 @@
       ],
       "created": "2026-11-13T02:07:07Z",
       "last_seen": "2026-11-13T02:07:07Z"
+    },
+    {
+      "id": "L-062",
+      "key": "weak_test::measure a width ranged layout criterion at both edges of its range the narrowest phone and the breakpoint not at one typical width",
+      "text": "Measure a width-ranged layout criterion at both edges of its range (the narrowest phone and the breakpoint), not at one typical width.",
+      "signal": "weak_test",
+      "scope": "tests/mobile",
+      "status": "candidate",
+      "features": [
+        "mobile-app"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "C4,C11,C43 (tests/mobile)"
+      ],
+      "created": "2026-11-14T21:34:49Z",
+      "last_seen": "2026-11-14T21:34:49Z"
+    },
+    {
+      "id": "L-063",
+      "key": "gate_fail::make a browser test helper navigate to the screen it needs instead of assuming which screen opens first",
+      "text": "Make a browser test helper navigate to the screen it needs instead of assuming which screen opens first.",
+      "signal": "gate_fail",
+      "scope": "tests/mobile",
+      "status": "candidate",
+      "features": [
+        "mobile-app"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "tests/mobile/phone.test.ts:21 (tests/mobile)"
+      ],
+      "created": "2026-11-14T21:34:49Z",
+      "last_seen": "2026-11-14T21:34:49Z"
     }
   ]
 }
