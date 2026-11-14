@@ -1887,6 +1887,8 @@ select:focus {
   :root {
     --tabbar-h: 60px;
     --transport-h: 56px;
+    /* The button's 56 px and a 0.5 rem gap above and below it */
+    --stadium-play-h: 72px;
   }
 
   /* Static, with no backdrop filter: a filtered ancestor would pin the tab bar to the header instead of the window */
@@ -1906,6 +1908,32 @@ select:focus {
   /* The Editor clears the transport bar as well */
   body:has(#editor-view:not(.hidden)) #app {
     padding-bottom: calc(var(--tabbar-h) + var(--transport-h) + env(safe-area-inset-bottom));
+  }
+
+  /* Stadium clears its Play button, which floats above the tab bar (AD-030) */
+  body:has(#stadium-view:not(.hidden)) #app {
+    padding-bottom: calc(var(--tabbar-h) + var(--stadium-play-h) + env(safe-area-inset-bottom));
+  }
+
+  /* No backdrop filter: a filtered panel would pin its Play button to the panel instead of the window */
+  .stadium-panel {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  /* Play in the thumb's reach on every scroll position; it lives in the Stadium, so it hides with it */
+  #btn-stadium-play {
+    position: fixed;
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom) + 0.5rem);
+    z-index: 199;
+    width: auto;
+    max-width: none;
+    height: 56px;
+    padding: 0;
+    background: rgba(8, 8, 16, 0.94);
+    box-shadow: 0 0 24px rgba(57, 255, 20, 0.18), 0 8px 24px rgba(0, 0, 0, 0.6);
   }
 
   /* Play and the tempo, pinned on top of the tab bar; it lives in the Editor, so it hides with it */

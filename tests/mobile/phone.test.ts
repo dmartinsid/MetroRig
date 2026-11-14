@@ -319,8 +319,8 @@ describe('Mobile App', () => {
     for (const screen of ['editor', 'stadium', 'grooves', 'improv'] as Screen[]) {
       const page = await openScreen(screen, 375);
       await scrollToEnd(page);
-      // In the Editor the transport bar sits on top of the tab bar, so the page must clear both
-      const bar = (await box(page, screen === 'editor' ? '#transport-bar' : '.view-nav'))!;
+      // In the Editor the transport bar, and on Stadium its Play button, sit on top of the tab bar, so the page must clear both
+      const bar = (await box(page, screen === 'editor' ? '#transport-bar' : screen === 'stadium' ? '#btn-stadium-play' : '.view-nav'))!;
       const view = (await box(page, `#${screen}-view`))!;
       const footer = (await box(page, '.status-bar'))!;
       // The window scrolls in whole pixels, so a fractional page height may leave its end under a pixel low
@@ -383,6 +383,37 @@ describe('Mobile App', () => {
     expect(await paddingWithInsets(page, 'header', 'top', 47)).toBe(base + 47);
     expect((await box(page, '.logo'))!.top).toBeGreaterThanOrEqual(47);
   });
+  it('mob_43 stadium play fixed above the tab bar', async () => {
+    const page = await openScreen('stadium', 375, 667);
+    for (const scrolled of [false, true]) {
+      if (scrolled) await scrollToEnd(page);
+      if (scrolled) expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(300);
+      const tabBar = (await box(page, '.view-nav'))!;
+      const play = (await box(page, '#btn-stadium-play'))!;
+      // Directly above: no more than the 0.5 rem gap between them, inside the window's width, the full 44 px tall at least
+      expect([scrolled, play.bottom <= tabBar.top, tabBar.top - play.bottom <= 8.5, play.left >= 0, play.right <= 375, play.height >= 44])
+        .toEqual([scrolled, true, true, true, true, true]);
+      // The button is the one on top at its centre, so a tap reaches it rather than what scrolls beneath
+      const hit = await page.evaluate(({ x, y }) => document.elementFromPoint(x, y)?.closest('#btn-stadium-play') !== null,
+        { x: (play.left + play.right) / 2, y: (play.top + play.bottom) / 2 });
+      expect([scrolled, hit]).toEqual([scrolled, true]);
+    }
+    // It stays with Stadium: on another screen it draws nothing
+    await page.click('#nav-grooves');
+    expect(await box(page, '#btn-stadium-play')).toBeNull();
+  });
+
+  it('mob_44 desktop stadium play stays in the panel', async () => {
+    for (const width of [768, 1280]) {
+      const page = await openScreen('stadium', width);
+      const panel = (await box(page, '.stadium-panel'))!;
+      const play = (await box(page, '#btn-stadium-play'))!;
+      expect([width, play.top >= panel.top, play.bottom <= panel.bottom, play.left >= panel.left, play.right <= panel.right])
+        .toEqual([width, true, true, true, true]);
+      expect([width, await page.evaluate(() => getComputedStyle(document.getElementById('btn-stadium-play')!).position)]).toEqual([width, 'static']);
+    }
+  });
+
   it('mob_13 transport bar fixed above the tab bar', async () => {
     const page = await openScreen('editor', 375);
     for (const scrolled of [false, true]) {

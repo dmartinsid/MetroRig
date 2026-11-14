@@ -353,12 +353,13 @@ T12 → T13 → T14
 
 **Done when**:
 
-- [ ] `mob_43`, `mob_44` pass in Chrome and `mob_10` measures Stadium's end against the Play button
-- [ ] Gate check passes: `npx vitest run && npm run test:mobile && npm run build`
+- [x] `mob_43`, `mob_44` pass in Chrome and `mob_10` measures Stadium's end against the Play button
+- [x] Gate check passes: `npx vitest run && npm run test:mobile && npm run build`
 
 **Tests**: e2e
 **Gate**: build
 **Commit**: `feat(ui): pin the stadium play button above the tabs on phones`
+**Status**: Done
 
 ---
 
