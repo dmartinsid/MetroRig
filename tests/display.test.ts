@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { formatClock, formatBarStep, formatLatency, formatLiveBpm, formatSteps, formatTimer, formatTrainerStatus } from '../src/ui/format';
 import { nextDenominator } from '../src/domain/meter';
+import { patternCells } from '../src/domain/layout';
 
 describe('Display rules', () => {
   it('prints the Trainer fields as typed', () => {
@@ -47,9 +48,9 @@ describe('Display rules', () => {
   });
 
   it('steps label reads the pattern over the engine limit', () => {
-    expect(formatSteps(16)).toBe('STEPS: 16/128');
-    expect(formatSteps(7)).toBe('STEPS: 7/128');
-    expect(formatSteps(64)).toBe('STEPS: 64/128');
+    expect(formatSteps(16)).toBe('STEPS: 16/192');
+    expect(formatSteps(7)).toBe('STEPS: 7/192');
+    expect(formatSteps(64)).toBe('STEPS: 64/192');
   });
 
   it('denominator moves through 4, 8 and 16 and stops at each end', () => {
@@ -59,5 +60,13 @@ describe('Display rules', () => {
     expect(nextDenominator(16, -1)).toBe(8);
     expect(nextDenominator(8, -1)).toBe(4);
     expect(nextDenominator(4, -1)).toBe(4);
+  });
+});
+
+describe('Format', () => {
+  it('tup_18 steps count cells over 192', () => {
+    const sextuplets = { timeSignature: '8/4', measureLength: 32, bars: 1, beatCells: [[6, 6, 6, 6, 6, 6, 6, 6]] };
+    expect(formatSteps(patternCells(sextuplets))).toBe('STEPS: 48/192');
+    expect(formatSteps(patternCells({ timeSignature: '4/4', measureLength: 16, bars: 4 }))).toBe('STEPS: 64/192');
   });
 });

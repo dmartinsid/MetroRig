@@ -1,7 +1,7 @@
 import type { TrainerFields } from '../app/session';
+import { MAX_PATTERN_CELLS } from '../domain/layout';
 
 const RENDER_QUANTUM = 128; // Frames in every AudioWorklet block
-const MAX_STEPS = 128; // STEPS_COUNT in engine/src/sequencer/pattern.rs
 
 const pad = (value: number): string => String(value).padStart(2, '0');
 
@@ -39,6 +39,7 @@ export function formatBarStep(bar: number, step: number): string {
   return `BAR ${pad(bar)} · STEP ${pad(step)}`;
 }
 
-export function formatSteps(measureLength: number): string {
-  return `STEPS: ${measureLength}/${MAX_STEPS}`;
+// A pattern's cells over all its bars, against the engine's limit (STEPS_COUNT in engine/src/sequencer/pattern.rs)
+export function formatSteps(cells: number): string {
+  return `STEPS: ${cells}/${MAX_PATTERN_CELLS}`;
 }

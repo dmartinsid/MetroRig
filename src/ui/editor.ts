@@ -4,6 +4,7 @@ import { FIGURES, barCount, barSteps, patternLength } from '../domain/pattern';
 import type { TrainerSettings } from '../domain/preset';
 import { STEP_ACCENT, STEP_GHOST, STEP_NORMAL, TRACKS } from '../domain/kit';
 import { isAudible } from '../domain/mix';
+import { patternCells } from '../domain/layout';
 import { formatBarStep, formatSteps, formatTimer } from './format';
 import { byId, option } from './dom';
 
@@ -197,7 +198,7 @@ export function mount(session: Session): void {
 
   function updatePatternBar() {
     patternName.textContent = `PAT: ${session.preset.name}`;
-    patternSteps.textContent = formatSteps(patternLength(session.preset));
+    patternSteps.textContent = formatSteps(patternCells(session.preset));
   }
 
   function resetPosition() {
