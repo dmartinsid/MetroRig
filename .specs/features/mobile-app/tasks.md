@@ -421,7 +421,7 @@ Proof: run mobile | ✓ tests/mobile/phone.test.ts > Mobile App > mob_39 pull pa
 
 **Settled mid-build:** none
 **Dispatched:** batch 1 (T1 to T5), from 1a2d9fa, returned at a8508b2; batch 2 (T6 to T11), from a8508b2
-**Walked:** none
+**Walked:** Headless Chrome (playwright-core, touch emulation, 1x) on the Vite dev server, `npx vite --port 5199`, no sign-in or data needed; each screen reached by its tab. **P1 fit:** at 360 and 375 px Editor, Stadium, Grooves and Improv each had page scrollWidth equal to the window (360/375); before the feature Stadium was 366 at 360. Elements past the edge are only the figure chips inside the palette's own scroller. Header: logo row, then speaker icon + `Digital` and `4/4 Metronome` in full at 360. Stadium at 360: four orbs inside the panel, `SNARE/ TOMS` wrapping after the slash, − and + inside. **P1 tab bar:** four icon tabs fixed at the bottom on every screen, Improv tab lit neon on Improv, Stadium on Stadium. **P1 transport:** Editor shows `− 120 BPM + ▶ PLAY` directly above the tabs at the top and at the end of the page; the Tempo Bus card still reads 120 with its slider. **P1 grid:** names column fixed, first chip row scrolls sideways (`Step`, `Quarter`, `Eighths`, cut at the edge). **P2:** manifest and icons checked by the batch worker on `vite preview` under `/MetroRig/` (no manifest errors; only `in-incognito` from the test context). Wake lock not walked on a phone; it rests on tests/keepAwake.test.ts. Pictures: scratchpad `after/*.png`, no capture binds.
 
 ---
 
