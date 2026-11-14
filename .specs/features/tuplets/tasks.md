@@ -313,12 +313,13 @@ T19 → T20 → T21 → T22
 
 **Done when**:
 
-- [ ] Session tests for 4/4 → 5/4, 4/4 → 3/4, 4/4 → 6/8, and the 32-step refusal unchanged
-- [ ] Gate check passes: `npx vitest run`
+- [x] Session tests for 4/4 → 5/4, 4/4 → 3/4, 4/4 → 6/8, and the 32-step refusal unchanged
+- [x] Gate check passes: `npx vitest run`
 
 **Tests**: unit
 **Gate**: quick
 **Commit**: `feat(session): keep tuplet beats when the signature changes`
+**Status**: Done
 
 ---
 
