@@ -451,12 +451,13 @@ T19 → T20 → T21 → T22
 
 **Done when**:
 
-- [ ] `tests/gpExtract.test.ts` builds a synthetic `.gp` zip and a literal-only BCFZ `.gpx` in a temp dir and reads both
-- [ ] Gate check passes: `npx vitest run`
+- [x] `tests/gpExtract.test.ts` builds a synthetic `.gp` zip and a literal-only BCFZ `.gpx` in a temp dir and reads both
+- [x] Gate check passes: `npx vitest run`
 
 **Tests**: unit
 **Gate**: quick
 **Commit**: `feat(scripts): read drum measures from Guitar Pro files`
+**Status**: Done
 
 ---
 
