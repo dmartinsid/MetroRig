@@ -1,10 +1,10 @@
 import { withBase } from '../domain/assets';
 import type { ChordId } from '../domain/chords';
 import { TRACKS, nextStepValue } from '../domain/kit';
-import { barBeatCells, barOffset, isTupletSignature, locateCell, patternCells, setBeatCells } from '../domain/layout';
+import { barBeatCells, barCells, barOffset, isTupletSignature, locateCell, patternCells, setBeatCells } from '../domain/layout';
 import { measureLengthFor, timeSignatureOf } from '../domain/meter';
 import { createTrackMix, toggleMute, toggleSolo, type TrackMix } from '../domain/mix';
-import { FIGURES, applyFigureAt, barCount, fitBar, writeBar } from '../domain/pattern';
+import { FIGURES, applyFigureAt, barCount, fitBar } from '../domain/pattern';
 import { completeKit, normalizePreset, startBpmFor, type CustomGroove, type Preset, type StoredPreset, type TrainerSettings, type ViewMode } from '../domain/preset';
 import { songToPreset, type Song } from '../domain/songs';
 import { steppedBpm, tempoKeyStep, typesText, type KeyTarget, type TempoStep } from '../domain/tempo';
@@ -476,6 +476,7 @@ export class Session {
       timeSignature: preset.timeSignature,
       measureLength: preset.measureLength || 16,
       bars: barCount(preset),
+      ...(preset.beatCells ? { beatCells: structuredClone(preset.beatCells) } : {}),
       gridData: JSON.parse(JSON.stringify(preset.gridData)),
       trainerSettings: JSON.parse(JSON.stringify(preset.trainerSettings))
     };
@@ -512,19 +513,37 @@ export class Session {
     if (loaded || !(this.state.isPlaying || this.isStarting)) this.togglePlay(); // Playing another song carries on at its tempo
   }
 
-  // Writes a groove's drum tracks over the bar on view
+  // Writes a groove's drum tracks over the bar on view. In /4 beat n of the bar takes the kind and hits of groove
+  // beat n mod B; elsewhere a tuplet groove goes straight first, and the bar repeats the groove cell by cell
   applyGroove(value: string) {
     const source = parseSource(value);
-    const activeLen = this.preset.measureLength || 16;
 
-    const applyPattern = (length: number, tracks: Record<number, number[]>) => {
+    const applyPattern = (length: number, tracks: Record<number, number[]>, beatCells?: number[]) => {
+      const preset = this.preset;
+      const bar = this.viewBar;
+      const beats = barBeatCells(preset, bar);
+      const tuplets = isTupletSignature(preset.timeSignature);
+
+      let source = tracks;
+      if (beatCells && !tuplets) {
+        const straight = { timeSignature: `${beatCells.length}/4`, measureLength: length, beatCells: [beatCells], gridData: structuredClone(tracks) };
+        beatCells.forEach((_, beat) => setBeatCells(straight, 0, beat, 4));
+        source = straight.gridData;
+      }
+
+      // Each beat of the bar, and where its cells come from in the groove
+      const grooveBeats = beatCells && tuplets ? beatCells : null;
+      const grooveStarts = grooveBeats?.map((_, n) => grooveBeats.slice(0, n).reduce((sum, cells) => sum + cells, 0));
+      if (tuplets) beats.forEach((_, n) => setBeatCells(preset, bar, n, grooveBeats ? grooveBeats[n % grooveBeats.length] : 4));
+      const sources = grooveBeats
+        ? barBeatCells(preset, bar).flatMap((cells, n) => Array.from({ length: cells }, (_, k) => grooveStarts![n % grooveBeats.length] + k))
+        : Array.from({ length: barCells(preset, bar) }, (_, i) => i % length);
+
+      const start = barOffset(preset, bar);
       for (const { id: trackId } of TRACKS.slice(1)) {
-        const srcPattern = tracks[trackId] || [];
-        const destPattern = new Array(activeLen).fill(0);
-        for (let i = 0; i < activeLen; i++) {
-          destPattern[i] = srcPattern[i % length] || 0;
-        }
-        writeBar(this.preset.gridData[trackId] ??= [], this.viewBar, activeLen, destPattern);
+        const srcPattern = source[trackId] || [];
+        const steps = preset.gridData[trackId] ??= new Array(patternCells(preset)).fill(0);
+        sources.forEach((from, i) => { steps[start + i] = srcPattern[from] || 0; });
       }
       this.emit('grid');
       this.transport.syncPlaybackSettings();
@@ -537,21 +556,27 @@ export class Session {
     } else if (source?.kind === 'user') {
       this.state.getAllGrooves().then(grooves => {
         const g = grooves.find(ug => ug.id === source.id);
-        if (g) applyPattern(g.measureLength, g.gridData);
+        if (g) applyPattern(g.measureLength, g.gridData, g.beatCells);
       });
     }
   }
 
-  // Stores the drum tracks of the bar on view as a groove
+  // Stores the drum tracks of the bar on view as a groove, with its beats' cells while one is a tuplet
   saveGroove(name: string): Promise<void> {
-    const activeLen = this.preset.measureLength || 16;
+    const preset = this.preset;
+    const start = barOffset(preset, this.viewBar);
+    const cells = barCells(preset, this.viewBar);
     const gridData: Record<number, number[]> = {};
     for (const { id: trackId } of TRACKS.slice(1)) {
-      gridData[trackId] = fitBar(this.preset.gridData[trackId] || [], this.viewBar, activeLen, activeLen);
+      gridData[trackId] = Array.from({ length: cells }, (_, i) => preset.gridData[trackId]?.[start + i] ?? 0);
     }
 
     const id = 'groove_' + Date.now();
-    const newGroove: CustomGroove = { id, name, gridData, measureLength: activeLen };
+    const beatCells = preset.beatCells?.[this.viewBar];
+    const newGroove: CustomGroove = {
+      id, name, gridData, measureLength: preset.measureLength || 16,
+      ...(beatCells?.some(n => n !== 4) ? { beatCells: [...beatCells] } : {}),
+    };
     return this.state.saveGroove(newGroove);
   }
 
