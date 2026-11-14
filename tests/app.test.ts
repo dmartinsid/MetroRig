@@ -4183,3 +4183,46 @@ describe('Stadium tempo', () => {
     expect(byId('bpm-slider').value).toBe('119');
   });
 });
+
+describe('Mobile App', () => {
+  const SCREENS = ['editor', 'stadium', 'grooves', 'improv'] as const;
+  const tabs = () => [...document.querySelectorAll<HTMLButtonElement>('.view-link')];
+  const shownScreens = () => SCREENS.map(name => `${name}-view`).filter(id => !byId(id).classList.contains('hidden'));
+  const marked = () => tabs().filter(tab => tab.hasAttribute('aria-current')).map(tab => [tab.id, tab.getAttribute('aria-current')]);
+  const improvDotLit = () => byId('nav-improv').querySelector('#improv-dot')!.classList.contains('lit');
+
+  afterEach(() => localStorage.removeItem('metrorig_view_mode'));
+
+  it('mob_07 tab shows its screen and marks only itself', async () => {
+    await openPage();
+    expect(tabs().map(tab => tab.id)).toEqual(['nav-editor', 'nav-stadium', 'nav-grooves', 'nav-improv']);
+    // Every order a thumb might take, ending back on the Editor
+    for (const name of ['stadium', 'grooves', 'improv', 'editor', 'improv', 'stadium', 'editor'] as const) {
+      byId<HTMLButtonElement>(`nav-${name}`).click();
+      await flush();
+      expect(shownScreens()).toEqual([`${name}-view`]);
+      expect(marked()).toEqual([[`nav-${name}`, 'page']]);
+    }
+  });
+
+  it('mob_08 improv tab dot follows the pad', async () => {
+    await openPage();
+    byId<HTMLButtonElement>('nav-improv').click();
+    await flush();
+    expect(improvDotLit()).toBe(false);
+
+    pressChord('Am');
+    await flush();
+    expect(improvDotLit()).toBe(true);
+
+    // The dot is on the tab, so it stays lit while another screen is shown
+    byId<HTMLButtonElement>('nav-editor').click();
+    await flush();
+    expect(improvDotLit()).toBe(true);
+
+    byId<HTMLButtonElement>('nav-improv').click();
+    byId<HTMLButtonElement>('pad-stop').click();
+    await flush();
+    expect(improvDotLit()).toBe(false);
+  });
+});
