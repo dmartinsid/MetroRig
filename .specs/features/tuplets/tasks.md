@@ -333,12 +333,13 @@ T19 → T20 → T21 → T22
 
 **Done when**:
 
-- [ ] Session tests for a tick in bar 2 after a bar with a triplet
-- [ ] Gate check passes: `npx vitest run`
+- [x] Session tests for a tick in bar 2 after a bar with a triplet
+- [x] Gate check passes: `npx vitest run`
 
 **Tests**: unit
 **Gate**: quick
 **Commit**: `feat(session): follow ticks across tuplet bars`
+**Status**: Done
 
 ---
 
