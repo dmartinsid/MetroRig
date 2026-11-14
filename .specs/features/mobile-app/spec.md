@@ -31,6 +31,7 @@ On a phone MetroRig spills off the screen and works like a shrunken desktop page
 
 | Assumption / decision | Chosen default | Rationale | Confirmed? |
 | --------------------- | --------------- | --------- | ---------- |
+| Stadium controls on top | Controls first, clock below, sized to fit above Play on 390 × 844 and larger; scrolls on shorter phones | User: "se der pra colocar tudo no mesmo espaco melhor, mas se nao der vamos alterar pra essa forma" (AD-031) | y |
 | Stadium first and its Play | Stadium first in both widths, opens first on a first visit, Play fixed above the tabs on phones | Mid-build, user: "Sim, abre no Stadium (Recommended)", "Fixo embaixo no celular (Recommended)" (AD-030) | y |
 | Phone layout | Applies at window widths up to 767 px, the existing narrow breakpoint | `src/ui/index.css` already switches there | y, presented with the spec, user: "Aprovada" |
 | Widths held to the criteria | 360, 375, 390 and 430 px wide, portrait | The common Android and iPhone widths | y, presented with the spec, user: "Aprovada" |
@@ -204,6 +205,22 @@ On a phone MetroRig spills off the screen and works like a shrunken desktop page
 
 ---
 
+### P1: Stadium controls on top
+
+**User Story**: As a musician on a phone, I want the tempo and controls at the top of Stadium and the clock below so that I set the tempo without scrolling.
+
+**Why P1**: Request after the feature closed, AD-031.
+
+**Acceptance Criteria**:
+
+1. MOB-45: WHILE Stadium is shown and the window is 767 px wide or narrower the system SHALL show the routine selector, the timer, the tempo with its − and + buttons, the Trainer status and the four orbs above the beat clock.
+2. MOB-46: WHILE the window is 390 × 844, 393 × 852, 412 × 915 or 430 × 932 the system SHALL show, at scroll 0 on Stadium, the tempo with − and +, the four orbs, the whole beat clock and its legend between the top of the window and the Stadium Play button, with the clock at least 200 px wide.
+3. MOB-47: WHILE the window is 360 × 640 or 375 × 667 the system SHALL show, at scroll 0 on Stadium, the tempo with − and + above the Stadium Play button, and SHALL draw the beat clock at least 240 px wide below the orbs.
+
+**Independent Test**: At 390 × 844 open Stadium: tempo, orbs and the whole clock show above PLAY without scrolling; at 375 × 667 the tempo shows at once and the clock is reached by scrolling.
+
+---
+
 ## Edge Cases
 
 - MOB-21 and MOB-22 cover the tempo bounds and the Trainer.
@@ -260,8 +277,11 @@ On a phone MetroRig spills off the screen and works like a shrunken desktop page
 | MOB-42 | P1: Stadium first | Execute | Verified |
 | MOB-43 | P1: Stadium first | Execute | Verified |
 | MOB-44 | P1: Stadium first | Execute | Verified |
+| MOB-45 | P1: Stadium controls on top | Design | Pending |
+| MOB-46 | P1: Stadium controls on top | Design | Pending |
+| MOB-47 | P1: Stadium controls on top | Design | Pending |
 
-**Coverage:** 44 total, 44 mapped to tasks, 0 unmapped
+**Coverage:** 47 total, 47 mapped to tasks, 0 unmapped
 
 ---
 
