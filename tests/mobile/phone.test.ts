@@ -417,6 +417,50 @@ describe('Mobile App', () => {
     }
   });
 
+  // The Stadium parts the tempo screen reads from, top to bottom
+  const STADIUM_CONTROLS = ['#stadium-preset-selector', '#stadium-timer', '#btn-stadium-bpm-down', '#stadium-bpm', '#btn-stadium-bpm-up', '#stadium-status-pill', '.orb-row'];
+
+  it('mob_45 stadium controls above the clock', async () => {
+    for (const [width, height] of [[360, 640], [375, 667], [390, 844], [430, 932]] as const) {
+      const page = await openScreen('stadium', width, height);
+      const clock = (await box(page, '.beat-clock'))!;
+      for (const selector of STADIUM_CONTROLS) {
+        const part = (await box(page, selector))!;
+        expect([width, selector, part.bottom <= clock.top]).toEqual([width, selector, true]);
+      }
+    }
+  });
+
+  it('mob_46 stadium fits one screen on taller phones', async () => {
+    for (const [width, height] of [[390, 844], [393, 852], [412, 915], [430, 932]] as const) {
+      const page = await openScreen('stadium', width, height);
+      expect([width, await page.evaluate(() => window.scrollY)]).toEqual([width, 0]);
+      const play = (await box(page, '#btn-stadium-play'))!;
+      for (const selector of ['#btn-stadium-bpm-down', '#stadium-bpm', '#btn-stadium-bpm-up', '.orb-row', '.beat-clock', '.clock-legend']) {
+        const part = (await box(page, selector))!;
+        expect([width, selector, part.top >= 0, part.left >= 0, part.right <= width, part.bottom <= play.top])
+          .toEqual([width, selector, true, true, true, true]);
+      }
+      const clock = (await box(page, '.beat-clock'))!;
+      expect([width, clock.width >= 200]).toEqual([width, true]);
+    }
+  });
+
+  it('mob_47 stadium tempo first on short phones', async () => {
+    for (const [width, height] of [[360, 640], [375, 667]] as const) {
+      const page = await openScreen('stadium', width, height);
+      expect([width, await page.evaluate(() => window.scrollY)]).toEqual([width, 0]);
+      const play = (await box(page, '#btn-stadium-play'))!;
+      for (const selector of ['#btn-stadium-bpm-down', '#stadium-bpm', '#btn-stadium-bpm-up']) {
+        const part = (await box(page, selector))!;
+        expect([width, selector, part.top >= 0, part.bottom <= play.top]).toEqual([width, selector, true, true]);
+      }
+      const orbs = (await box(page, '.orb-row'))!;
+      const clock = (await box(page, '.beat-clock'))!;
+      expect([width, clock.width >= 240, clock.top >= orbs.bottom]).toEqual([width, true, true]);
+    }
+  });
+
   it('mob_13 transport bar fixed above the tab bar', async () => {
     const page = await openScreen('editor', 375);
     for (const scrolled of [false, true]) {

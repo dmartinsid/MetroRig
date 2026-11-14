@@ -1921,6 +1921,74 @@ select:focus {
     -webkit-backdrop-filter: none;
   }
 
+  /* Stadium on phones: the controls first, then the beat clock filling the height left above Play (AD-031).
+     --header-h comes from header.ts; a phone too short for both lets the clock keep its floor and scroll */
+  #stadium-view {
+    min-height: calc(100dvh - var(--header-h, 114px) - var(--tabbar-h) - var(--stadium-play-h) - env(safe-area-inset-bottom));
+  }
+
+  .stadium-display {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+  }
+
+  /* Routine; timer beside the Trainer status; tempo; orbs */
+  .stadium-panel {
+    order: -1;
+    flex: none;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: 'field field' 'timer status' 'tempo tempo' 'orbs orbs';
+    align-items: center;
+    gap: 0.6rem 0.75rem;
+    padding: 0.875rem 1rem;
+  }
+
+  .stadium-field { grid-area: field; }
+  .stadium-timer-block { grid-area: timer; align-items: flex-start; }
+  .stadium-tempo { grid-area: tempo; }
+  .stadium-trainer-info { grid-area: status; }
+  .orb-row { grid-area: orbs; padding-top: 0.6rem; }
+
+  /* The select reads "Choose a speed trainer" and the time speaks for itself: the labels stay for screen readers only */
+  .stadium-field label,
+  .stadium-timer-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .stadium-timer {
+    font-size: 1.15rem;
+  }
+
+  .clock-legend {
+    gap: 0.25rem 0.9rem;
+    font-size: 0.68rem;
+  }
+
+  .clock-column {
+    flex: 1 1 0;
+    min-height: 0;
+    justify-content: center;
+  }
+
+  /* Square, as tall as the column lets it be and never wider than the screen */
+  .beat-clock {
+    flex: 1 1 0;
+    min-height: 0;
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+  }
+
   /* Play in the thumb's reach on every scroll position; it lives in the Stadium, so it hides with it */
   #btn-stadium-play {
     position: fixed;
@@ -1932,8 +2000,9 @@ select:focus {
     max-width: none;
     height: 56px;
     padding: 0;
-    background: rgba(8, 8, 16, 0.94);
-    box-shadow: 0 0 24px rgba(57, 255, 20, 0.18), 0 8px 24px rgba(0, 0, 0, 0.6);
+    background: var(--bg);
+    /* A solid 0.5 rem ring hides what scrolls beneath it, so the button reads as a bar above the tabs */
+    box-shadow: 0 0 0 0.5rem var(--bg), 0 0 24px 0.5rem rgba(57, 255, 20, 0.12);
   }
 
   /* Play and the tempo, pinned on top of the tab bar; it lives in the Editor, so it hides with it */
@@ -2336,6 +2405,13 @@ select:focus {
   .stadium-trainer-info {
     font-size: 0.7rem;
     border-radius: var(--radius-control);
+  }
+}
+
+/* A phone too short to fit the clock beside the controls gives it a usable size below them, reached by scrolling */
+@media (max-width: 767px) and (max-height: 760px) {
+  .clock-column {
+    min-height: 280px;
   }
 }
 
