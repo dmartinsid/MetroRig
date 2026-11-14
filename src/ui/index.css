@@ -57,6 +57,22 @@ body {
   min-height: 100vh;
 }
 
+/* Taps feel like an app: no double-tap zoom, no pull-to-refresh mid-practice */
+html,
+body {
+  touch-action: manipulation;
+  overscroll-behavior-y: none;
+}
+
+/* No flash under the thumb, and a long press selects no text */
+button,
+.step-cell,
+.chord-btn {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
 #app {
   min-height: 100vh;
   display: flex;
@@ -1743,6 +1759,12 @@ select:focus {
 }
 
 @media (max-width: 767px) {
+  /* iOS Safari zooms the page on focusing a field with text under 16 px */
+  #app input,
+  #app select {
+    font-size: 16px;
+  }
+
   #editor-view {
     padding: 1rem;
   }

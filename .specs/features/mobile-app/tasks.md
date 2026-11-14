@@ -104,12 +104,13 @@ T9 → T10 → T11
 
 **Done when**:
 
-- [ ] `mob_05`, `mob_36` to `mob_39` pass in Chrome
-- [ ] Gate check passes: `npx vitest run && npm run test:mobile`
+- [x] `mob_05`, `mob_36` to `mob_39` pass in Chrome
+- [x] Gate check passes: `npx vitest run && npm run test:mobile`
 
 **Tests**: e2e
 **Gate**: full
 **Commit**: `feat(ui): make taps feel native on phones`
+**Status**: Done
 
 ---
 
