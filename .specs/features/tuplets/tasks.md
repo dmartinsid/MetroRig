@@ -293,12 +293,13 @@ T19 → T20 → T21 → T22
 
 **Done when**:
 
-- [ ] Session tests for a triplet on bar 2 of 4, a cell click in a triplet beat, and a refused figure in 6/8
-- [ ] Gate check passes: `npx vitest run`
+- [x] Session tests for a triplet on bar 2 of 4, a cell click in a triplet beat, and a refused figure in 6/8
+- [x] Gate check passes: `npx vitest run`
 
 **Tests**: unit
 **Gate**: quick
 **Commit**: `feat(session): write tuplets from the figures`
+**Status**: Done
 
 ---
 

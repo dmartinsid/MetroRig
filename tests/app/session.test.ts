@@ -740,4 +740,101 @@ describe('Session', () => {
     expect(unitsSent(engine)).toEqual([]);
     expect(engine.sent('updateGrid')).toEqual([[3, [1, 0, 1, 0, ...new Array(12).fill(0)]]]);
   });
+
+  it('tup_09 a tuplet cell cycles like a straight one', async () => {
+    const { session, engine } = await startedEngine();
+    session.selectFigure(figureOf('triplet_rest'));
+    session.editStep(3, 13); // Beat 4 of the 4/4 bar becomes 3 empty hi-hat cells: cells 12, 13, 14
+    session.selectFigure(null);
+    engine.calls.length = 0;
+
+    // A straight cell's cycle, read from a straight cell of the same track
+    const straightCycle: number[] = [];
+    for (let i = 0; i < 4; i++) {
+      session.editStep(3, 1);
+      straightCycle.push(session.preset.gridData[3][1]);
+    }
+    expect(straightCycle.at(-1)).toBe(0); // The cycle returns to empty
+    expect(new Set(straightCycle).size).toBe(4);
+
+    const tupletCycle: number[] = [];
+    for (let i = 0; i < 4; i++) {
+      session.editStep(3, 13);
+      tupletCycle.push(session.preset.gridData[3][13]);
+      // Only the clicked cell changes: its neighbours in the triplet and the layout stay
+      expect(session.preset.gridData[3][12]).toBe(0);
+      expect(session.preset.gridData[3][14]).toBe(0);
+      expect(session.preset.beatCells).toEqual([[4, 4, 4, 3]]);
+    }
+    expect(tupletCycle).toEqual(straightCycle);
+    expect(session.preset.gridData[3]).toHaveLength(15);
+    // The track reaches the engine at its 15 cells; the layout did not change, so no units are sent
+    expect(unitsSent(engine)).toEqual([]);
+    session.editStep(3, 14);
+    expect(engine.sent('updateGrid').at(-1)).toEqual([3, [...new Array(14).fill(0), straightCycle[0]]]);
+
+    // In a later bar of 4 the click lands on that bar's own cell, past a bar holding a triplet
+    session.useSong(SONGS[0]);
+    session.showBar(1);
+    session.selectFigure(figureOf('triplet_rest'));
+    session.editStep(2, 4); // Bar 2: 4 + 3 + 4 + 4 = 15 cells, so bar 3 starts at cell 31
+    session.selectFigure(null);
+    session.showBar(2);
+    const before = session.preset.gridData[2][31 + 1];
+    session.editStep(2, 1);
+    expect(session.preset.gridData[2][31 + 1]).toBe(before === 0 ? straightCycle[0] : straightCycle[straightCycle.indexOf(before) + 1] ?? 0);
+    expect(session.preset.gridData[2]).toHaveLength(63);
+  });
+
+  it('tup_11 a tuplet in bar 2 leaves the other bars', () => {
+    const { session } = setup();
+    session.useSong(SONGS[0]); // 4 straight bars of 4/4: 64 cells
+    const before = structuredClone(session.preset.gridData);
+    const bar = (steps: number[], from: number, to: number) => steps.slice(from, to);
+
+    session.showBar(1);
+    session.selectFigure(figureOf('triplet'));
+    session.editStep(2, 5); // Snare triplet on beat 2 of bar 2
+
+    expect(session.preset.beatCells).toEqual([[4, 4, 4, 4], [4, 3, 4, 4], [4, 4, 4, 4], [4, 4, 4, 4]]);
+    for (const { id } of TRACKS) {
+      const steps = session.preset.gridData[id];
+      const old = before[id] ?? new Array(64).fill(0);
+      expect(steps, `track ${id}`).toHaveLength(63);
+      expect(bar(steps, 0, 16), `bar 1 of track ${id}`).toEqual(bar(old, 0, 16));
+      expect(bar(steps, 31, 63), `bars 3 and 4 of track ${id}`).toEqual(bar(old, 32, 64));
+      // Bar 2's straight beats keep their hits
+      expect(bar(steps, 16, 20), `bar 2 beat 1 of track ${id}`).toEqual(bar(old, 16, 20));
+      expect(bar(steps, 23, 31), `bar 2 beats 3-4 of track ${id}`).toEqual(bar(old, 24, 32));
+    }
+    expect(bar(session.preset.gridData[2], 20, 23)).toEqual([1, 1, 1]);
+    expect(session.hasUnsavedEdits).toBe(true);
+  });
+
+  it('tup_39 a tuplet figure outside /4 changes nothing', async () => {
+    const { session, engine } = await startedEngine();
+    expect(session.setTimeSignature(6, 8)).toBe('changed');
+    session.editStep(2, 3); // A snare hit, so the bar holds something to lose
+    session.hasUnsavedEdits = false;
+    const before = structuredClone(session.preset);
+    engine.calls.length = 0;
+    const changes: string[] = [];
+    session.subscribe(change => changes.push(change));
+
+    for (const id of ['triplet', 'triplet_rest', 'sextuplet', 'sextuplet_rest']) {
+      session.selectFigure(figureOf(id));
+      for (const step of [0, 3, 7, 11]) session.editStep(2, step);
+    }
+
+    expect(session.preset).toEqual(before);
+    expect(session.preset.beatCells).toBeUndefined();
+    expect(session.hasUnsavedEdits).toBe(false);
+    expect(engine.calls).toEqual([]);
+    expect(changes).toEqual([]);
+
+    // A straight figure still writes in 6/8
+    session.selectFigure(figureOf('sixteenths'));
+    session.editStep(1, 0);
+    expect(session.preset.gridData[1].slice(0, 4)).toEqual([1, 1, 1, 1]);
+  });
 });
