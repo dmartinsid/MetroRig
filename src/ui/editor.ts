@@ -1,10 +1,10 @@
 import type { Session, TrainerFields } from '../app/session';
-import { clampNumerator, getBeatsPerMeasure, getBeatForStep, isSustainedStep, nextDenominator, timeSignatureOf } from '../domain/meter';
-import { FIGURES, barCount, barSteps, patternLength } from '../domain/pattern';
+import { clampNumerator, isSustainedStep, nextDenominator, timeSignatureOf } from '../domain/meter';
+import { FIGURES, barCount } from '../domain/pattern';
 import type { TrainerSettings } from '../domain/preset';
 import { STEP_ACCENT, STEP_GHOST, STEP_NORMAL, TRACKS } from '../domain/kit';
 import { isAudible } from '../domain/mix';
-import { patternCells } from '../domain/layout';
+import { barBeatCells, barOffset, isTupletSignature, patternCells } from '../domain/layout';
 import { formatBarStep, formatSteps, formatTimer } from './format';
 import { byId, option } from './dom';
 
@@ -73,6 +73,7 @@ export function mount(session: Session): void {
     [null, ...FIGURES].forEach(figure => {
       const btn = document.createElement('button');
       btn.className = figure === session.figure ? 'figure-btn active' : 'figure-btn';
+      if (figure && figure.cells !== 4) btn.dataset.tuplet = String(figure.cells);
       btn.innerText = figure ? figure.name : 'Step';
       if (figure) {
         const pattern = document.createElement('span');
@@ -86,6 +87,13 @@ export function mount(session: Session): void {
       };
       figurePalette.appendChild(btn);
     });
+    updateFigureAvailability();
+  }
+
+  // Tuplets fill a quarter note, so their figures are off outside /4
+  function updateFigureAvailability() {
+    const off = !isTupletSignature(session.preset.timeSignature);
+    figurePalette.querySelectorAll<HTMLButtonElement>('.figure-btn[data-tuplet]').forEach(btn => { btn.disabled = off; });
   }
 
   function drawBarSelector() {
@@ -95,21 +103,34 @@ export function mount(session: Session): void {
 
   function drawGrid() {
     drawBarSelector();
+    updateFigureAvailability();
     gridContainer.innerHTML = '';
-    const { gridData, timeSignature } = session.preset;
-    const measureLength = session.preset.measureLength || 16;
-    const beats = getBeatsPerMeasure(timeSignature, measureLength);
-    const stepsPerBeat = measureLength / beats;
+    const { gridData } = session.preset;
+    const beatCells = barBeatCells(session.preset, session.viewBar);
+    const straight = barBeatCells({ ...session.preset, beatCells: undefined }, session.viewBar);
+    const hasTuplet = beatCells.some((cells, beat) => cells !== straight[beat]);
+    // A bar with a tuplet lays 12 sub-columns per beat and each cell spans 12 / cells of them,
+    // so 3 or 6 cells take a straight beat's width; any other bar keeps one column per cell
+    const subColumns = (cells: number) => (hasTuplet ? 12 : cells);
 
-    // A narrow spacer column separates beats, so each step maps to its own grid column
+    // A narrow spacer column separates beats
     const templateColumns = ['auto'];
-    const stepColumns: number[] = [];
-    for (let step = 0; step < measureLength; step++) {
-      const isBeatStart = (step * beats) % measureLength === 0;
-      if (step > 0 && isBeatStart) templateColumns.push('0.5rem');
-      templateColumns.push('1fr');
-      stepColumns.push(templateColumns.length);
-    }
+    const cellColumns: string[] = [];
+    const beatColumns: string[] = [];
+    const cellBeat: number[] = [];
+    const cellIndex: number[] = [];
+    beatCells.forEach((cells, beat) => {
+      if (beat > 0) templateColumns.push('0.5rem');
+      const first = templateColumns.length + 1;
+      for (let i = 0; i < subColumns(cells); i++) templateColumns.push('1fr');
+      const span = subColumns(cells) / cells;
+      beatColumns.push(`${first} / span ${subColumns(cells)}`);
+      for (let index = 0; index < cells; index++) {
+        cellColumns.push(span === 1 ? String(first + index) : `${first + index * span} / span ${span}`);
+        cellBeat.push(beat);
+        cellIndex.push(index);
+      }
+    });
     gridContainer.style.gridTemplateColumns = templateColumns.join(' ');
 
     const beatSubLabel = document.createElement('div');
@@ -119,19 +140,29 @@ export function mount(session: Session): void {
     beatSubLabel.style.gridColumn = '1';
     gridContainer.appendChild(beatSubLabel);
 
-    // Count row: 1 e & a 2 e & a ...
-    for (let step = 0; step < measureLength; step++) {
-      const beat = getBeatForStep(step, measureLength, beats);
-      const isBeatStart = (step * beats) % measureLength === 0;
+    // Count row: 1 e & a 2 e & a ...; a tuplet beat shows its number and a 3 or 6 above it
+    cellColumns.forEach((column, cell) => {
+      const beat = cellBeat[cell];
+      const isBeatStart = cellIndex[cell] === 0;
+      const isTuplet = beatCells[beat] !== straight[beat];
       const count = document.createElement('div');
       count.className = isBeatStart ? 'step-count beat-start' : 'step-count';
       count.innerText = isBeatStart
         ? String(beat + 1)
-        : SUBDIVISION_LABELS[stepsPerBeat]?.[step - beat * stepsPerBeat] ?? '';
+        : isTuplet ? '' : SUBDIVISION_LABELS[beatCells[beat]]?.[cellIndex[cell]] ?? '';
       count.style.gridRow = '1';
-      count.style.gridColumn = String(stepColumns[step]);
+      count.style.gridColumn = column;
       gridContainer.appendChild(count);
-    }
+    });
+    beatCells.forEach((cells, beat) => {
+      if (cells === straight[beat]) return;
+      const label = document.createElement('div');
+      label.className = 'tuplet-label';
+      label.innerText = String(cells);
+      label.style.gridRow = '1';
+      label.style.gridColumn = beatColumns[beat];
+      gridContainer.appendChild(label);
+    });
 
     for (const [index, { id: trackId, name }] of TRACKS.entries()) {
       const row = String(index + 2); // Ids are not in grid order
@@ -147,15 +178,16 @@ export function mount(session: Session): void {
       label.style.gridColumn = '1';
       gridContainer.appendChild(label);
 
-      const allSteps = gridData[trackId] ??= new Array(patternLength(session.preset)).fill(0);
-      const trackSteps = barSteps(allSteps, session.viewBar, measureLength);
+      const allSteps = gridData[trackId] ??= new Array(patternCells(session.preset)).fill(0);
+      const offset = barOffset(session.preset, session.viewBar);
+      const trackSteps = allSteps.slice(offset, offset + cellColumns.length);
 
-      for (let step = 0; step < measureLength; step++) {
+      for (let step = 0; step < cellColumns.length; step++) {
         const cell = document.createElement('div');
         cell.className = silenced ? 'step-cell silenced' : 'step-cell';
         cell.setAttribute('data-track', String(trackId));
         cell.style.gridRow = row;
-        cell.style.gridColumn = String(stepColumns[step]);
+        cell.style.gridColumn = cellColumns[step];
 
         if (trackSteps[step] === STEP_NORMAL) {
           cell.classList.add('active');
@@ -169,7 +201,7 @@ export function mount(session: Session): void {
           cell.classList.add('ghost');
           cell.innerText = '•';
         }
-        if (isSustainedStep(trackSteps, step, measureLength, beats)) cell.classList.add('sustain');
+        if (isSustainedStep(trackSteps, step, beatCells)) cell.classList.add('sustain');
 
         cell.onclick = () => session.editStep(trackId, step);
 
