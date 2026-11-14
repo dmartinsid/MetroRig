@@ -1,9 +1,9 @@
 # mobile-app proofs
 
-**HEAD**: f02cb50
+**HEAD**: 5c51be9
 **Tree**: clean
 **Shell**: /bin/sh
-**Result**: 45 pass, 0 fail
+**Result**: 48 pass, 0 fail
 
 | Check | Proof | Result |
 | --- | --- | --- |
@@ -51,6 +51,9 @@
 | C42 | `run js / ✓ tests/app.test.ts > Mobile App > mob_42 a saved screen still opens first` | pass |
 | C43 | `run mobile / ✓ tests/mobile/phone.test.ts > Mobile App > mob_43 stadium play fixed above the tab bar` | pass |
 | C44 | `run mobile / ✓ tests/mobile/phone.test.ts > Mobile App > mob_44 desktop stadium play stays in the panel` | pass |
+| C45 | `run mobile / ✓ tests/mobile/phone.test.ts > Mobile App > mob_45 stadium controls above the clock` | pass |
+| C46 | `run mobile / ✓ tests/mobile/phone.test.ts > Mobile App > mob_46 stadium fits one screen on taller phones` | pass |
+| C47 | `run mobile / ✓ tests/mobile/phone.test.ts > Mobile App > mob_47 stadium tempo first on short phones` | pass |
 | Build | `npm run build` | pass |
 
 ## Output
@@ -58,21 +61,21 @@
 `Run mobile` - exit 0
 
 ```
- ✓ tests/mobile/phone.test.ts > Mobile App > mob_23 track names stay in view while steps scroll 820ms
- ✓ tests/mobile/phone.test.ts > Mobile App > mob_24 grid snaps to beat starts 1631ms
- ✓ tests/mobile/phone.test.ts > Mobile App > mob_27 figure palette is one scrolling row 539ms
- ✓ tests/mobile/phone.test.ts > Mobile App > mob_25 right fade marks more steps 1401ms
- ✓ tests/mobile/phone.test.ts > Mobile App > mob_26 left fade marks hidden steps 1082ms
- ✓ tests/mobile/phone.test.ts > Mobile App > mob_01 no sideways page scroll at 360 375 390 430 8705ms
- ✓ tests/mobile/phone.test.ts > Mobile App > mob_02 header selectors show their value in full at 360 669ms
- ✓ tests/mobile/phone.test.ts > Mobile App > mob_03 stadium orbs and tempo buttons inside the panel at 360 567ms
+ ✓ tests/mobile/phone.test.ts > Mobile App > mob_27 figure palette is one scrolling row
+ ✓ tests/mobile/phone.test.ts > Mobile App > mob_27 figure palette is one scrolling row 738ms
+ ✓ tests/mobile/phone.test.ts > Mobile App > mob_25 right fade marks more steps
+ ✓ tests/mobile/phone.test.ts > Mobile App > mob_25 right fade marks more steps 1427ms
+ ✓ tests/mobile/phone.test.ts > Mobile App > mob_26 left fade marks hidden steps 1198ms
+ ✓ tests/mobile/phone.test.ts > Mobile App > mob_01 no sideways page scroll at 360 375 390 430 10816ms
+ ✓ tests/mobile/phone.test.ts > Mobile App > mob_02 header selectors show their value in full at 360 709ms
+ ✓ tests/mobile/phone.test.ts > Mobile App > mob_03 stadium orbs and tempo buttons inside the panel at 360 512ms
  ✓ tests/mobile/phone.test.ts > Mobile App > mob_04 touch targets 44 px and step cells 32 px
- ✓ tests/mobile/phone.test.ts > Mobile App > mob_04 touch targets 44 px and step cells 32 px 8762ms
+ ✓ tests/mobile/phone.test.ts > Mobile App > mob_04 touch targets 44 px and step cells 32 px 7334ms
 
  Test Files  1 passed (1)
-      Tests  26 passed (26)
-   Start at  18:33:01
-   Duration  51.83s (transform 93ms, setup 0ms, collect 369ms, tests 51.22s, environment 0ms, prepare 61ms)
+      Tests  29 passed (29)
+   Start at  18:47:30
+   Duration  61.69s (transform 67ms, setup 0ms, collect 359ms, tests 61.08s, environment 0ms, prepare 71ms)
 ```
 
 `Run js` - exit 0
@@ -82,15 +85,15 @@
 
 stderr | tests/app.test.ts > Improv > tim_30 brackets each load, so its files reach the notes once all have come or failed
 Failed to load /pads/choir/Fs3.flac: Error: 404
-    at MockMetronomeNode.<anonymous> (/home/deivid/Projects/Github/MetroRig/tests/app.test.ts:3299:52)
+    at MockMetronomeNode.<anonymous> (/tmp/claude-1000/-home-deivid-Projects-Github-MetroRig/ac9b25a2-709d-49ca-9bf0-27d170d99373/scratchpad/wt-stadium/tests/app.test.ts:3299:52)
     at MockMetronomeNode.mockCall (file:///home/deivid/Projects/Github/MetroRig/node_modules/@vitest/spy/dist/index.js:50:17)
     at MockMetronomeNode.spy [as padLoad] (file:///home/deivid/Projects/Github/MetroRig/node_modules/tinyspy/dist/index.js:42:80)
-    at /home/deivid/Projects/Github/MetroRig/src/app/improv.ts:85:29
+    at /tmp/claude-1000/-home-deivid-Projects-Github-MetroRig/ac9b25a2-709d-49ca-9bf0-27d170d99373/scratchpad/wt-stadium/src/app/improv.ts:85:29
     at processTicksAndRejections (node:internal/process/task_queues:104:5)
 Failed to load /pads/choir/Fs3.flac: Error: 404
-    at MockMetronomeNode.<anonymous> (/home/deivid/Projects/Github/MetroRig/tests/app.test.ts:3299:52)
+    at MockMetronomeNode.<anonymous> (/tmp/claude-1000/-home-deivid-Projects-Github-MetroRig/ac9b25a2-709d-49ca-9bf0-27d170d99373/scratchpad/wt-stadium/tests/app.test.ts:3299:52)
     at MockMetronomeNode.mockCall (file:///home/deivid/Projects/Github/MetroRig/node_modules/@vitest/spy/dist/index.js:50:17)
     at MockMetronomeNode.spy [as padLoad] (file:///home/deivid/Projects/Github/MetroRig/node_modules/tinyspy/dist/index.js:42:80)
-    at /home/deivid/Projects/Github/MetroRig/src/app/improv.ts:85:29
+    at /tmp/claude-1000/-home-deivid-Projects-Github-MetroRig/ac9b25a2-709d-49ca-9bf0-27d170d99373/scratchpad/wt-stadium/src/app/improv.ts:85:29
     at processTicksAndRejections (node:internal/process/task_queues:104:5)
 ```
