@@ -11,7 +11,7 @@ On a phone MetroRig spills off the screen and works like a shrunken desktop page
 - [ ] No screen scrolls sideways at any width from 360 to 430 px, and no control's text is cut.
 - [ ] Every screen is one thumb tap away, and Play and the tempo are always in reach in the Editor.
 - [ ] Added to the home screen, MetroRig opens full screen like an app and keeps the phone awake while it plays.
-- [ ] Windows 768 px and wider look and behave as they do today.
+- [ ] Windows 768 px and wider look and behave as they do today, apart from the screen order of AD-030.
 
 ## Out of Scope
 
@@ -20,7 +20,7 @@ On a phone MetroRig spills off the screen and works like a shrunken desktop page
 | Offline play (service worker) | Q3: offered, not chosen |
 | Haptic feedback | Q3: offered, not chosen; iOS Safari has no Vibration API |
 | The grid following the playhead while playing | It fights a user scrolling to edit; deferred |
-| A layout change for windows 768 px and wider | The request is about the phone |
+| A layout change for windows 768 px and wider | The request is about the phone; AD-030's screen order is the one exception |
 | Landscape-specific layouts | A phone on its side gets the same layout, held to MOB-01 only |
 | New features on any screen | The request is about how the existing screens fit and feel |
 | A Stitch capture for the phone layout | No capture came with the request; the layout follows `.stitch/DESIGN.md` |
@@ -31,6 +31,7 @@ On a phone MetroRig spills off the screen and works like a shrunken desktop page
 
 | Assumption / decision | Chosen default | Rationale | Confirmed? |
 | --------------------- | --------------- | --------- | ---------- |
+| Stadium first and its Play | Stadium first in both widths, opens first on a first visit, Play fixed above the tabs on phones | Mid-build, user: "Sim, abre no Stadium (Recommended)", "Fixo embaixo no celular (Recommended)" (AD-030) | y |
 | Phone layout | Applies at window widths up to 767 px, the existing narrow breakpoint | `src/ui/index.css` already switches there | y, presented with the spec, user: "Aprovada" |
 | Widths held to the criteria | 360, 375, 390 and 430 px wide, portrait | The common Android and iPhone widths | y, presented with the spec, user: "Aprovada" |
 | Navigation | Bottom tab bar, icon and name, for the four screens | Q1, user: "Tab bar fixa embaixo (Recommended)" | y |
@@ -185,6 +186,24 @@ On a phone MetroRig spills off the screen and works like a shrunken desktop page
 
 ---
 
+### P1: Stadium first
+
+**User Story**: As a musician, I want Stadium first and its Play in reach so that practice starts with one tap.
+
+**Why P1**: Mid-build request, AD-030.
+
+**Acceptance Criteria**:
+
+1. MOB-40: The system SHALL list the screen links in the order `Stadium`, `Editor`, `Grooves`, `Improv`, in the header at 768 px and wider and in the tab bar at 767 px and narrower.
+2. MOB-41: WHEN a visitor opens MetroRig with no saved screen THEN the system SHALL show Stadium and mark the `Stadium` link with `aria-current="page"`.
+3. MOB-42: WHEN a visitor opens MetroRig with a saved screen THEN the system SHALL show that screen.
+4. MOB-43: WHILE Stadium is shown and the window is 767 px wide or narrower the system SHALL show the Stadium Play button fixed directly above the tab bar, before and after scrolling.
+5. MOB-44: WHILE the window is 768 px wide or wider the system SHALL show the Stadium Play button inside the Stadium panel.
+
+**Independent Test**: Clear site data, open at 375 px: Stadium shows, its tab is first and lit, PLAY sits above the tabs; scroll, PLAY stays; at 1280 px the header reads Stadium first and PLAY is in the panel.
+
+---
+
 ## Edge Cases
 
 - MOB-21 and MOB-22 cover the tempo bounds and the Trainer.
@@ -236,8 +255,13 @@ On a phone MetroRig spills off the screen and works like a shrunken desktop page
 | MOB-37 | P2: Touch feel | Design | Pending |
 | MOB-38 | P2: Touch feel | Design | Pending |
 | MOB-39 | P2: Touch feel | Design | Pending |
+| MOB-40 | P1: Stadium first | Design | Pending |
+| MOB-41 | P1: Stadium first | Design | Pending |
+| MOB-42 | P1: Stadium first | Design | Pending |
+| MOB-43 | P1: Stadium first | Design | Pending |
+| MOB-44 | P1: Stadium first | Design | Pending |
 
-**Coverage:** 39 total, 0 mapped to tasks, 39 unmapped ⚠️
+**Coverage:** 44 total, 0 mapped to tasks, 39 unmapped ⚠️
 
 ---
 

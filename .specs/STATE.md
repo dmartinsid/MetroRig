@@ -236,3 +236,11 @@
 - **Scope**: tuplets; every pattern, engine included. Supersedes AD-011
 - **Date**: 2026-11-13
 - **Status**: active (AD-029)
+
+### AD-030
+- **Decision**: `Stadium` is the first screen: the screen links read `Stadium`, `Editor`, `Grooves`, `Improv` in the header and in the phone tab bar, and a first visit with no saved screen opens on Stadium. On phones the Stadium Play button sits fixed above the tab bar.
+- **Reason**: Mid-build of mobile-app, user: "Acho que o botao stadium pode ser o primeiro no mobile e tb no desktop. Podemos colocar o start em cima ou em lugar mais facil nessa tela". Asked "ele também vira a tela que abre na primeira visita?", user chose "Sim, abre no Stadium (Recommended)"; asked where the Stadium Play goes, user chose "Fixo embaixo no celular (Recommended)".
+- **Trade-off**: The desktop header changes order, which mobile-app had otherwise left alone; a returning user still opens on the last saved screen.
+- **Scope**: mobile-app; header links, tab bar, first visit, Stadium Play on phones. Amends AD-007's link order
+- **Date**: 2026-11-14
+- **Status**: active (AD-030)

@@ -69,6 +69,12 @@ T6 → T7 → T8
 T9 → T10 → T11
 ```
 
+### Phase 5: Verifier findings and Stadium first
+
+```
+T12 → T13 → T14
+```
+
 ---
 
 ## Task Breakdown
@@ -296,6 +302,64 @@ T9 → T10 → T11
 
 ---
 
+### T12: Close the Verifier's width findings
+
+**What**: `mob_04` also measures at 360 and 767 px, and `mob_11` also at 768 px, as `verification.md` findings 1 and 2 ask.
+**Where**: `tests/mobile/phone.test.ts`
+**Depends on**: None (Phase order: after T11)
+**Reuses**: `openScreen`
+**Requirement**: MOB-04, MOB-11
+
+**Done when**:
+
+- [ ] `mob_04` runs at 360, 375 and 767 px and `mob_11` at 768 and 1280 px
+- [ ] Gate check passes: `npx vitest run && npm run test:mobile`
+
+**Tests**: e2e
+**Gate**: full
+**Commit**: `test(mobile): measure touch targets and the breakpoint at their edges`
+
+---
+
+### T13: Stadium first
+
+**What**: The screen links read `Stadium`, `Editor`, `Grooves`, `Improv`, and with no saved screen the app opens on Stadium.
+**Where**: `src/app/stateManager.ts`
+**Depends on**: T12
+**Reuses**: `loadActiveViewMode`, `.view-link` markup in `index.html`
+**Requirement**: MOB-40, MOB-41, MOB-42
+
+**Done when**:
+
+- [ ] `mob_40` passes in Chrome at 375 and 1280 px; `mob_41` and `mob_42` pass in `tests/app.test.ts`
+- [ ] `tests/state.test.ts` default-view assertions follow AD-030 (Stadium), the saved-screen ones unchanged
+- [ ] Gate check passes: `npx vitest run && npm run test:mobile`
+
+**Tests**: integration
+**Gate**: full
+**Commit**: `feat(ui): put stadium first and open on it`
+
+---
+
+### T14: Stadium Play above the tabs on phones
+
+**What**: On phones the existing `#btn-stadium-play` sits fixed directly above the tab bar, and the Stadium screen clears it at its end; at 768 px and wider it stays in the panel.
+**Where**: `src/ui/index.css`
+**Depends on**: T13
+**Reuses**: Tab bar height and the transport bar placement from T5
+**Requirement**: MOB-10, MOB-43, MOB-44
+
+**Done when**:
+
+- [ ] `mob_43`, `mob_44` pass in Chrome and `mob_10` measures Stadium's end against the Play button
+- [ ] Gate check passes: `npx vitest run && npm run test:mobile && npm run build`
+
+**Tests**: e2e
+**Gate**: build
+**Commit**: `feat(ui): pin the stadium play button above the tabs on phones`
+
+---
+
 ## Checks
 
 **C1** - At 360, 375, 390 and 430 px the Editor, Stadium, Grooves and Improv each have a page scroll width equal to the window width (MOB-01, AC 1)
@@ -415,12 +479,27 @@ Proof: run mobile | ✓ tests/mobile/phone.test.ts > Mobile App > mob_38 long pr
 **C39** - `html` and `body` compute `overscroll-behavior-y: none` (MOB-39, AC 39)
 Proof: run mobile | ✓ tests/mobile/phone.test.ts > Mobile App > mob_39 pull past the top does not reload
 
+**C40** - The screen links read `Stadium`, `Editor`, `Grooves`, `Improv` in the tab bar at 375 px and in the header at 1280 px (MOB-40, AC 1)
+Proof: run mobile | ✓ tests/mobile/phone.test.ts > Mobile App > mob_40 stadium is the first screen link
+
+**C41** - With no saved screen the page shows Stadium and marks its link current (MOB-41, AC 2)
+Proof: run js | ✓ tests/app.test.ts > Mobile App > mob_41 first visit opens on stadium
+
+**C42** - With `editor` saved the page opens on the Editor (MOB-42, AC 3)
+Proof: run js | ✓ tests/app.test.ts > Mobile App > mob_42 a saved screen still opens first
+
+**C43** - At 375 px on Stadium the Play button's bottom meets the tab bar's top, before and after scrolling (MOB-43, AC 4)
+Proof: run mobile | ✓ tests/mobile/phone.test.ts > Mobile App > mob_43 stadium play fixed above the tab bar
+
+**C44** - At 768 and 1280 px the Stadium Play button lies inside the Stadium panel (MOB-44, AC 5)
+Proof: run mobile | ✓ tests/mobile/phone.test.ts > Mobile App > mob_44 desktop stadium play stays in the panel
+
 ---
 
 ## Handoff
 
-**Settled mid-build:** none
-**Dispatched:** batch 1 (T1 to T5), from 1a2d9fa, returned at a8508b2; batch 2 (T6 to T11), from a8508b2
+**Settled mid-build:** after T11, user: "Acho que o botao stadium pode ser o primeiro no mobile e tb no desktop. Podemos colocar o start em cima ou em lugar mais facil nessa tela"; then "Sim, abre no Stadium (Recommended)" and "Fixo embaixo no celular (Recommended)". Recorded as AD-030, MOB-40 to MOB-44, T13 and T14. The Verifier findings 1 and 2 become T12.
+**Dispatched:** batch 1 (T1 to T5), from 1a2d9fa, returned at a8508b2; batch 2 (T6 to T11), from a8508b2, returned at d41ac4c; Verifier over the proofs at 901911e
 **Walked:** Headless Chrome (playwright-core, touch emulation, 1x) on the Vite dev server, `npx vite --port 5199`, no sign-in or data needed; each screen reached by its tab. **P1 fit:** at 360 and 375 px Editor, Stadium, Grooves and Improv each had page scrollWidth equal to the window (360/375); before the feature Stadium was 366 at 360. Elements past the edge are only the figure chips inside the palette's own scroller. Header: logo row, then speaker icon + `Digital` and `4/4 Metronome` in full at 360. Stadium at 360: four orbs inside the panel, `SNARE/ TOMS` wrapping after the slash, − and + inside. **P1 tab bar:** four icon tabs fixed at the bottom on every screen, Improv tab lit neon on Improv, Stadium on Stadium. **P1 transport:** Editor shows `− 120 BPM + ▶ PLAY` directly above the tabs at the top and at the end of the page; the Tempo Bus card still reads 120 with its slider. **P1 grid:** names column fixed, first chip row scrolls sideways (`Step`, `Quarter`, `Eighths`, cut at the edge). **P2:** manifest and icons checked by the batch worker on `vite preview` under `/MetroRig/` (no manifest errors; only `in-incognito` from the test context). Wake lock not walked on a phone; it rests on tests/keepAwake.test.ts. Pictures: scratchpad `after/*.png`, no capture binds.
 
 ---
@@ -428,12 +507,13 @@ Proof: run mobile | ✓ tests/mobile/phone.test.ts > Mobile App > mob_39 pull pa
 ## Phase Execution Map
 
 ```
-Phase 1 → Phase 2 → Phase 3 → Phase 4
+Phase 1 → Phase 2 → Phase 3 → Phase 4 → Phase 5
 
 Phase 1:  T1
 Phase 2:  T2 ------→ T3 ------→ T4 ------→ T5
 Phase 3:  T6 ------→ T7 ------→ T8
 Phase 4:  T9 ------→ T10 -----→ T11
+Phase 5:  T12 -----→ T13 -----→ T14
 ```
 
 Execution is strictly sequential.
