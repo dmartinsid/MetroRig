@@ -393,12 +393,13 @@ T19 → T20 → T21 → T22
 
 **Done when**:
 
-- [ ] App tests against `index.html` for cell spans, labels, disabled buttons in 6/8 and enabled in 4/4
-- [ ] Gate check passes: `npx vitest run`
+- [x] App tests against `index.html` for cell spans, labels, disabled buttons in 6/8 and enabled in 4/4
+- [x] Gate check passes: `npx vitest run`
 
 **Tests**: integration
 **Gate**: quick
 **Commit**: `feat(editor): draw triplet and sextuplet beats`
+**Status**: Done
 
 ---
 

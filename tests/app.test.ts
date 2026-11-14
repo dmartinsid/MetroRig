@@ -4377,3 +4377,78 @@ describe('Mobile App', () => {
     expect([transportDown().disabled, transportUp().disabled]).toEqual([true, true]);
   });
 });
+
+describe('Editor', () => {
+  afterEach(() => {
+    delete (globalThis as any).indexedDB;
+  });
+
+  const cells = (trackId: number) => [...document.querySelectorAll<HTMLElement>(`.step-cell[data-track="${trackId}"]`)];
+  const figure = (name: string) =>
+    [...document.querySelectorAll<HTMLButtonElement>('.figure-btn')].find(button => button.firstChild?.textContent === name)!;
+  const stamp = (name: string, trackId: number, cell: number) => {
+    figure(name).click();
+    cells(trackId)[cell].click();
+  };
+  const TUPLET_FIGURES = ['Triplet', 'Triplet Rest', 'Sextuplet', 'Sextuplet Rest'];
+
+  it('tup_10 tuplet figures are disabled outside /4', async () => {
+    await openPage();
+    expect(TUPLET_FIGURES.map(name => figure(name).disabled)).toEqual([false, false, false, false]);
+
+    byId<HTMLButtonElement>('time-sig-den-up').click(); // 4/8
+    expect(byId('time-sig-den').value).toBe('8');
+    expect(TUPLET_FIGURES.map(name => figure(name).disabled)).toEqual([true, true, true, true]);
+    expect(figure('16ths').disabled).toBe(false);
+
+    byId<HTMLButtonElement>('time-sig-den-down').click(); // 4/4
+    expect(TUPLET_FIGURES.map(name => figure(name).disabled)).toEqual([false, false, false, false]);
+  });
+
+  it("tup_20 tuplet cells share a straight beat's width", async () => {
+    await openPage();
+    stamp('Triplet', 1, 4); // Beat 2
+    stamp('Sextuplet', 1, 7); // Beat 3, after the triplet's 3 cells
+
+    // 12 sub-columns per beat, a spacer between beats: beat 1 is columns 2-13, beat 2 15-26, beat 3 28-39
+    const columns = byId('grid-container').style.gridTemplateColumns.split(' ');
+    expect(columns.filter(column => column === '1fr')).toHaveLength(48);
+    expect(columns.filter(column => column === '0.5rem')).toHaveLength(3);
+
+    for (const trackId of [0, 1, 2]) {
+      const spans = cells(trackId).map(cell => cell.style.gridColumn);
+      expect(spans).toHaveLength(4 + 3 + 6 + 4);
+      expect(spans.slice(0, 4)).toEqual(['2 / span 3', '5 / span 3', '8 / span 3', '11 / span 3']);
+      expect(spans.slice(4, 7)).toEqual(['15 / span 4', '19 / span 4', '23 / span 4']);
+      expect(spans.slice(7, 13)).toEqual(['28 / span 2', '30 / span 2', '32 / span 2', '34 / span 2', '36 / span 2', '38 / span 2']);
+    }
+    expect(cells(1).slice(4, 13).map(cell => cell.innerText)).toEqual(new Array(9).fill('●'));
+  });
+
+  it('tup_21 tuplet beats carry 3 or 6', async () => {
+    await openPage();
+    expect(document.querySelectorAll('.tuplet-label')).toHaveLength(0);
+
+    stamp('Triplet', 1, 4);
+    stamp('Sextuplet Rest', 1, 7);
+    const labels = [...document.querySelectorAll<HTMLElement>('.tuplet-label')];
+    expect(labels.map(label => [label.innerText, label.style.gridRow, label.style.gridColumn]))
+      .toEqual([['3', '1', '15 / span 12'], ['6', '1', '28 / span 12']]);
+    // Each beat keeps its number on its first cell
+    expect([...document.querySelectorAll<HTMLElement>('.step-count.beat-start')].map(count => count.innerText))
+      .toEqual(['1', '2', '3', '4']);
+
+    stamp('Quarter', 1, 4); // Beat 2 back to straight
+    expect([...document.querySelectorAll<HTMLElement>('.tuplet-label')].map(label => label.innerText)).toEqual(['6']);
+  });
+
+  it('tup_22 the grid marks sustain inside a triplet beat', async () => {
+    await openPage();
+    stamp('Triplet Rest', 2, 4);
+    figure('Step').click();
+    cells(2)[4].click();
+    cells(2)[6].click();
+
+    expect(cells(2).slice(4, 7).map(cell => cell.classList.contains('sustain'))).toEqual([false, true, false]);
+  });
+});
