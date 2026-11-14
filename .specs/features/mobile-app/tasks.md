@@ -312,12 +312,13 @@ T12 → T13 → T14
 
 **Done when**:
 
-- [ ] `mob_04` runs at 360, 375 and 767 px and `mob_11` at 768 and 1280 px
-- [ ] Gate check passes: `npx vitest run && npm run test:mobile`
+- [x] `mob_04` runs at 360, 375 and 767 px and `mob_11` at 768 and 1280 px
+- [x] Gate check passes: `npx vitest run && npm run test:mobile`
 
 **Tests**: e2e
 **Gate**: full
 **Commit**: `test(mobile): measure touch targets and the breakpoint at their edges`
+**Status**: Done
 
 ---
 
