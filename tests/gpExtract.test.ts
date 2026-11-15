@@ -124,24 +124,54 @@ function bcfs(gpif: string): Buffer {
   return Buffer.concat([Buffer.from('BCFS'), image]);
 }
 
-// BCFZ with literals only: per run a 0 bit, its length (1 to 3) in 2 bits low bit first, then its bytes high bit first
-function bcfz(content: Buffer): Buffer {
+// A BCFZ run: literal bytes (1 to 3), or a copy of `size` bytes from `offset` bytes back
+type BcfzRun = Buffer | { offset: number; size: number };
+
+// Per literal run a 0 bit, its length in 2 bits low bit first, then its bytes high bit first. Per copy run a 1 bit,
+// the width of its numbers in 4 bits high bit first, then the offset and the size in that width, low bit first
+function packBcfz(runs: BcfzRun[], length: number): Buffer {
   const bits: number[] = [];
   const push = (value: number, count: number, lowFirst = false) => {
     for (let i = 0; i < count; i++) bits.push((value >> (lowFirst ? i : count - 1 - i)) & 1);
   };
-  for (let at = 0; at < content.length; at += 3) {
-    const run = content.subarray(at, at + 3);
-    push(0, 1);
-    push(run.length, 2, true);
-    run.forEach(byte => push(byte, 8));
+  for (const run of runs) {
+    if (Buffer.isBuffer(run)) {
+      push(0, 1);
+      push(run.length, 2, true);
+      run.forEach(byte => push(byte, 8));
+    } else {
+      const width = Math.max(run.offset, run.size).toString(2).length;
+      push(1, 1);
+      push(width, 4);
+      push(run.offset, width, true);
+      push(run.size, width, true);
+    }
   }
   const packed = Buffer.alloc(Math.ceil(bits.length / 8));
   bits.forEach((bit, i) => { packed[i >> 3] |= bit << (7 - (i & 7)); });
   const header = Buffer.alloc(8);
   header.write('BCFZ', 0, 'latin1');
-  header.writeUInt32LE(content.length, 4);
+  header.writeUInt32LE(length, 4);
   return Buffer.concat([header, packed]);
+}
+
+// BCFZ with literals only
+function bcfz(content: Buffer): Buffer {
+  const runs: Buffer[] = [];
+  for (let at = 0; at < content.length; at += 3) runs.push(content.subarray(at, at + 3));
+  return packBcfz(runs, content.length);
+}
+
+// What gp_extract.py's BCFZ decoder makes of a file
+function decodeBcfz(file: string): Buffer {
+  const program = [
+    'import importlib.util, sys',
+    'spec = importlib.util.spec_from_file_location("gp_extract", sys.argv[1])',
+    'module = importlib.util.module_from_spec(spec)',
+    'spec.loader.exec_module(module)',
+    'sys.stdout.buffer.write(module.bcfz(open(sys.argv[2], "rb").read()))',
+  ].join('\n');
+  return execFileSync('python3', ['-I', '-c', program, SCRIPT, file]);
 }
 
 let folder: string;
@@ -206,6 +236,14 @@ describe('gp_extract', () => {
       expect(bar1(1).flatMap((value: number, cell: number) => (value ? [cell] : [])), file).toEqual([0]);
       expect(bar1(3).flatMap((value: number, cell: number) => (value ? [cell] : [])), file).toEqual([8, 9, 10]);
     }
+
+    // A real .gpx repeats bytes already written: copies, one reaching back past a literal and one asking for more
+    // bytes than its offset holds, which copies only the offset's bytes (alphaTab's GpxFileSystem does the same)
+    const copies = write('copies.gpx', packBcfz([
+      Buffer.from('abc'), Buffer.from('def'), { offset: 6, size: 3 }, Buffer.from('XY'), { offset: 1, size: 4 }, { offset: 11, size: 2 },
+      Buffer.from('!'),
+    ], 15));
+    expect(decodeBcfz(copies).toString('latin1')).toBe('abcdefabcXYYbc!');
   });
 
   it('refuses a file with no drum track or too few measures', () => {
