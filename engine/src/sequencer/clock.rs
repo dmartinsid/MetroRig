@@ -44,6 +44,11 @@ impl Clock {
         self.step_length = self.samples_per_step * self.step_scale;
     }
 
+    // The step due next waits the given twelfths of a sixteenth longer
+    pub fn delay_units(&mut self, units: usize) {
+        self.samples_in_current_step -= self.samples_per_step * units as f64 / 12.0;
+    }
+
     pub fn start(&mut self) {
         self.first_hit = true;
         self.samples_in_current_step = 0.0;

@@ -109,8 +109,12 @@ impl Engine {
     }
 
     // Each cell's length in twelfths of a sixteenth; a layout that does not fit the bars is refused
+    // The pulse holds: a cell the new layout cuts into waits for the next new cell to start
     pub fn set_step_units(&mut self, units: &[u8]) {
-        self.pattern.set_step_units(units);
+        let at = self.pattern.next_start();
+        if self.pattern.set_step_units(units) {
+            self.clock.delay_units(self.pattern.wait_from(at));
+        }
     }
 
     pub fn set_click_mode(&mut self, mode: u32) {
@@ -592,11 +596,24 @@ mod tests {
         assert_onsets(&first, &[0.0, beat, beat + sixteenth, beat + 2.0 * sixteenth, beat + 3.0 * sixteenth]);
         click_layout(&mut engine, &[4, 3, 4, 4], &[0, 4, 5, 6]);
 
-        // The next pass plays beat 2 at thirds of the beat, counted from that pass's first cell
+        // The pulse holds: the next downbeat lands on beat 5, and that pass plays beat 2 at thirds of the beat
         let next = onsets(&mut engine, 90000, 60000);
-        assert_eq!(next.len(), 4, "onsets {:?}", next);
-        let bar = next[0] as f64;
-        assert_onsets(&next[1..], &[bar + beat, bar + beat + beat / 3.0, bar + beat + 2.0 * beat / 3.0]);
+        let bar = 4.0 * beat;
+        assert_onsets(&next, &[bar, bar + beat, bar + beat + beat / 3.0, bar + beat + 2.0 * beat / 3.0]);
+    }
+
+    #[test]
+    fn a_re_lay_inside_the_playing_beat_keeps_the_pulse() {
+        let beat = beat_samples(120.0);
+        let mut engine = click_engine(120.0, &[4, 4, 4, 4], &[0, 4, 5, 6, 7]);
+        engine.start();
+
+        // Beat 2 becomes a triplet between its second and third sixteenths: its third triplet cell sounds on time
+        onsets(&mut engine, 30000, 0);
+        click_layout(&mut engine, &[4, 3, 4, 4], &[0, 4, 5, 6]);
+        let next = onsets(&mut engine, 90000, 30000);
+        let bar = 4.0 * beat;
+        assert_onsets(&next, &[beat + 2.0 * beat / 3.0, bar, bar + beat, bar + beat + beat / 3.0]);
     }
 
     #[test]
