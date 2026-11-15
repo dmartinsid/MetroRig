@@ -1,6 +1,6 @@
 # mobile-app proofs
 
-**HEAD**: 9b803c1
+**HEAD**: be385e0
 **Tree**: clean
 **Shell**: /bin/sh
 **Result**: 49 pass, 0 fail
@@ -62,21 +62,21 @@
 `Run mobile` - exit 0
 
 ```
- ✓ tests/mobile/phone.test.ts > Mobile App > mob_23 track names stay in view while steps scroll 712ms
- ✓ tests/mobile/phone.test.ts > Mobile App > mob_24 grid snaps to beat starts 3519ms
- ✓ tests/mobile/phone.test.ts > Mobile App > mob_27 figure palette is one scrolling row 1658ms
- ✓ tests/mobile/phone.test.ts > Mobile App > mob_25 right fade marks more steps 1297ms
- ✓ tests/mobile/phone.test.ts > Mobile App > mob_26 left fade marks hidden steps 1080ms
- ✓ tests/mobile/phone.test.ts > Mobile App > mob_01 no sideways page scroll at 360 375 390 430 8702ms
- ✓ tests/mobile/phone.test.ts > Mobile App > mob_02 header selectors show their value in full at 360 831ms
- ✓ tests/mobile/phone.test.ts > Mobile App > mob_03 stadium orbs and tempo buttons inside the panel at 360 835ms
+ ✓ tests/mobile/phone.test.ts > Mobile App > mob_23 track names stay in view while steps scroll 904ms
+ ✓ tests/mobile/phone.test.ts > Mobile App > mob_24 grid snaps to beat starts 1696ms
+ ✓ tests/mobile/phone.test.ts > Mobile App > mob_27 figure palette is one scrolling row 767ms
+ ✓ tests/mobile/phone.test.ts > Mobile App > mob_25 right fade marks more steps 1523ms
+ ✓ tests/mobile/phone.test.ts > Mobile App > mob_26 left fade marks hidden steps 1093ms
+ ✓ tests/mobile/phone.test.ts > Mobile App > mob_01 no sideways page scroll at 360 375 390 430 7977ms
+ ✓ tests/mobile/phone.test.ts > Mobile App > mob_02 header selectors show their value in full at 360 533ms
+ ✓ tests/mobile/phone.test.ts > Mobile App > mob_03 stadium orbs and tempo buttons inside the panel at 360 496ms
  ✓ tests/mobile/phone.test.ts > Mobile App > mob_04 touch targets 44 px and step cells 32 px
- ✓ tests/mobile/phone.test.ts > Mobile App > mob_04 touch targets 44 px and step cells 32 px 8439ms
+ ✓ tests/mobile/phone.test.ts > Mobile App > mob_04 touch targets 44 px and step cells 32 px 8197ms
 
  Test Files  1 passed (1)
       Tests  31 passed (31)
-   Start at  21:56:16
-   Duration  116.90s (transform 65ms, setup 0ms, collect 314ms, tests 116.33s, environment 0ms, prepare 85ms)
+   Start at  21:58:52
+   Duration  62.22s (transform 108ms, setup 0ms, collect 351ms, tests 61.62s, environment 0ms, prepare 85ms)
 ```
 
 `Run js` - exit 0
