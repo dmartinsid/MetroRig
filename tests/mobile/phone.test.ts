@@ -525,6 +525,26 @@ describe('Mobile App', () => {
     }
   });
 
+  it('mob_49 trainer status never covers the timer', async () => {
+    for (const width of [320, 360, 375, 390, 430]) {
+      const page = await openScreen('stadium', width, 844);
+      const routines = await page.$$eval('#stadium-preset-selector option', options =>
+        options.filter(option => option.value && !option.disabled).map(option => option.value));
+      expect(routines.length).toBeGreaterThan(0);
+      // The Trainer off first, then every routine
+      for (const routine of [null, ...routines]) {
+        if (routine) await page.selectOption('#stadium-preset-selector', routine);
+        const { timer, status, panel, text } = await page.evaluate(() => {
+          const rect = (id: string) => document.getElementById(id)!.getBoundingClientRect().toJSON();
+          return { timer: rect('stadium-timer'), status: rect('stadium-status-pill'), panel: document.querySelector('.stadium-panel')!.getBoundingClientRect().toJSON(), text: document.getElementById('stadium-status')!.textContent };
+        });
+        const apart = timer.right <= status.left || status.right <= timer.left || timer.bottom <= status.top || status.bottom <= timer.top;
+        const inside = [timer, status].every(r => r.left >= panel.left && r.right <= panel.right);
+        expect([width, text, apart, inside]).toEqual([width, text, true, true]);
+      }
+    }
+  });
+
   it('mob_13 transport bar fixed above the tab bar', async () => {
     const page = await openScreen('editor', 375);
     for (const scrolled of [false, true]) {
