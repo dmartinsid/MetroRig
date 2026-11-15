@@ -534,13 +534,24 @@ describe('Mobile App', () => {
       // The Trainer off first, then every routine
       for (const routine of [null, ...routines]) {
         if (routine) await page.selectOption('#stadium-preset-selector', routine);
-        const { timer, status, panel, text } = await page.evaluate(() => {
+        const { timer, status, panel, text, scrollWidth } = await page.evaluate(() => {
           const rect = (id: string) => document.getElementById(id)!.getBoundingClientRect().toJSON();
-          return { timer: rect('stadium-timer'), status: rect('stadium-status-pill'), panel: document.querySelector('.stadium-panel')!.getBoundingClientRect().toJSON(), text: document.getElementById('stadium-status')!.textContent };
+          // The status words themselves, line by line, not the pill that holds them
+          const range = document.createRange();
+          range.selectNodeContents(document.getElementById('stadium-status')!);
+          const lines = [...range.getClientRects()].filter(r => r.width > 0);
+          const status = {
+            left: Math.min(...lines.map(r => r.left)), right: Math.max(...lines.map(r => r.right)),
+            top: Math.min(...lines.map(r => r.top)), bottom: Math.max(...lines.map(r => r.bottom)),
+          };
+          return {
+            timer: rect('stadium-timer'), status, panel: document.querySelector('.stadium-panel')!.getBoundingClientRect().toJSON(),
+            text: document.getElementById('stadium-status')!.textContent, scrollWidth: document.documentElement.scrollWidth,
+          };
         });
         const apart = timer.right <= status.left || status.right <= timer.left || timer.bottom <= status.top || status.bottom <= timer.top;
         const inside = [timer, status].every(r => r.left >= panel.left && r.right <= panel.right);
-        expect([width, text, apart, inside]).toEqual([width, text, true, true]);
+        expect([width, text, apart, inside, scrollWidth]).toEqual([width, text, true, true, width]);
       }
     }
   });
