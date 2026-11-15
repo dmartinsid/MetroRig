@@ -510,11 +510,12 @@ T19 → T20 → T21 → T22
 
 **Done when**:
 
-- [ ] Gate check passes: `cargo test --manifest-path engine/Cargo.toml && npx vitest run && npm run build`
+- [x] Gate check passes: `cargo test --manifest-path engine/Cargo.toml && npx vitest run && npm run build`
 
 **Tests**: none
 **Gate**: build
 **Commit**: `docs: define cells and tuplets`
+**Status**: Done
 
 ---
 
