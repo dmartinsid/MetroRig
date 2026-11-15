@@ -100,11 +100,28 @@ impl Pattern {
         if filled != 0 || bars != self.bars {
             return false;
         }
+        // The next cell keeps its time from the pattern start: the first new cell starting there or after it
+        let at = self.next_start();
         self.units[..units.len()].copy_from_slice(units);
         self.bar_start = bar_start;
         self.cells = units.len();
+        self.step_index = 0;
+        while self.step_index < self.cells && self.next_start() < at {
+            self.step_index += 1;
+        }
         self.keep_step_in_pattern();
         true
+    }
+
+    // When the next cell starts, in twelfths of a sixteenth from the pattern start
+    pub fn next_start(&self) -> usize {
+        self.units[..self.step_index].iter().map(|&unit| unit as usize).sum()
+    }
+
+    // How long a wait that ended at `at` must go on for the next cell to start, in twelfths of a sixteenth
+    pub fn wait_from(&self, at: usize) -> usize {
+        let pass = self.measure_length * self.bars * STRAIGHT_UNITS as usize;
+        (self.next_start() + pass - at) % pass
     }
 
     fn keep_step_in_pattern(&mut self) {
@@ -259,8 +276,10 @@ mod tests {
         pattern.step_index = 15;
         assert!(pattern.set_step_units(&bar_units(&[3, 3, 3, 3])));
         assert_eq!(pattern.index(), 0);
+        // Cell 10 of the triplets starts at 160 twelfths: the first new cell from there starts at 168 (TUP-40)
         pattern.step_index = 10;
         assert!(pattern.set_step_units(&bar_units(&[6, 4, 4, 4])));
-        assert_eq!(pattern.index(), 10);
+        assert_eq!(pattern.index(), 16);
+        assert_eq!(pattern.wait_from(160), 8);
     }
 }
