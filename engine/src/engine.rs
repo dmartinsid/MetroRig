@@ -603,17 +603,35 @@ mod tests {
     }
 
     #[test]
-    fn a_re_lay_inside_the_playing_beat_keeps_the_pulse() {
+    fn tup_40_a_re_lay_inside_the_playing_beat_waits_for_its_end() {
         let beat = beat_samples(120.0);
+        let sixteenth = beat / 4.0;
         let mut engine = click_engine(120.0, &[4, 4, 4, 4], &[0, 4, 5, 6, 7]);
         engine.start();
 
-        // Beat 2 becomes a triplet between its second and third sixteenths: its third triplet cell sounds on time
+        // Beat 2 becomes a triplet between its second and third sixteenths: this pass ends as sixteenths,
+        // and the next pass plays the triplet
         onsets(&mut engine, 30000, 0);
         click_layout(&mut engine, &[4, 3, 4, 4], &[0, 4, 5, 6]);
         let next = onsets(&mut engine, 90000, 30000);
         let bar = 4.0 * beat;
-        assert_onsets(&next, &[beat + 2.0 * beat / 3.0, bar, bar + beat, bar + beat + beat / 3.0]);
+        assert_onsets(&next, &[beat + 2.0 * sixteenth, beat + 3.0 * sixteenth, bar, bar + beat, bar + beat + beat / 3.0]);
+    }
+
+    #[test]
+    fn tup_40_a_re_lay_waiting_for_its_beat_follows_the_newest_layout() {
+        let beat = beat_samples(120.0);
+        let mut engine = click_engine(120.0, &[4, 4, 4, 4], &[0, 4, 5, 6, 7]);
+        engine.start();
+
+        // Two re-lays of the playing beat: the second replaces the first, which never sounds
+        onsets(&mut engine, 30000, 0);
+        click_layout(&mut engine, &[4, 3, 4, 4], &[0, 4, 5, 6]);
+        click_layout(&mut engine, &[4, 6, 4, 4], &[0, 4, 5, 6, 7, 8, 9]);
+        let next = onsets(&mut engine, 120000, 30000);
+        let bar = 4.0 * beat;
+        let sixths: Vec<f64> = (0..6).map(|k| bar + beat + k as f64 * beat / 6.0).collect();
+        assert_onsets(&next, &[&[beat + beat / 2.0, beat + 3.0 * beat / 4.0, bar][..], &sixths].concat());
     }
 
     #[test]

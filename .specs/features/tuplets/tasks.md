@@ -639,7 +639,7 @@ Proof: walk - the user plays Times Like These and Everlong from Grooves and appr
 Proof: run js | ✓ Session > tup_39 a tuplet figure outside /4 changes nothing
 
 **C40** - A beat re-laid during playback plays its new cells from the next pass (TUP-40, edge case)
-Proof: run rust | tup_40_new_units_play_from_the_next_pass ... ok
+Proof: run rust | tup_40_a_re_lay_inside_the_playing_beat_waits_for_its_end ... ok
 
 ---
 
