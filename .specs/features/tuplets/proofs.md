@@ -1,7 +1,7 @@
 # tuplets proofs
 
-**HEAD**: f7f0156
-**Tree**: clean
+**HEAD**: d3aad53
+**Tree**: dirty - public/pkg/metrorig_audio_bg.wasm
 **Shell**: /bin/sh
 **Result**: 41 pass, 0 fail
 
@@ -46,7 +46,7 @@
 | C37 | `run js / ✓ Songs > tup_37 no Guitar Pro file is tracked` | pass |
 | C38 | `walk - the user plays Times Like These and Everlong from Grooves and approves them` | pass (Walked) |
 | C39 | `run js / ✓ Session > tup_39 a tuplet figure outside /4 changes nothing` | pass |
-| C40 | `run rust / tup_40_new_units_play_from_the_next_pass ... ok` | pass |
+| C40 | `run rust / tup_40_a_re_lay_inside_the_playing_beat_waits_for_its_end ... ok` | pass |
 | Build | `npm run build` | pass |
 
 ## Output
@@ -74,19 +74,19 @@ Failed to load /pads/choir/Fs3.flac: Error: 404
 `Run rust` - exit 0
 
 ```
-test instruments::pad::tests::tim_30_synth_holds_while_loading has been running for over 60 seconds
-test instruments::pad::tests::tim_20_default_peak ... ok
 test instruments::pad::tests::tim_16_notes_within_5_cents ... ok
+test instruments::pad::tests::tim_20_default_peak ... ok
 test instruments::pad::tests::tim_30_synth_holds_while_loading ... ok
 
-test result: ok. 162 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 218.77s
+test result: ok. 166 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 244.38s
 
 
 running 0 tests
 
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-    Finished `test` profile [optimized + debuginfo] target(s) in 0.00s
+   Compiling metrorig_audio v1.0.0 (/home/deivid/Projects/Github/MetroRig/engine)
+    Finished `test` profile [optimized + debuginfo] target(s) in 3.68s
      Running unittests src/lib.rs (engine/target/debug/deps/metrorig_audio-e3c84ac815f4f448)
    Doc-tests metrorig_audio
 ```
