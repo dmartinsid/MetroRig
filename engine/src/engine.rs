@@ -617,6 +617,27 @@ mod tests {
     }
 
     #[test]
+    fn tup_13_resending_the_same_meter_keeps_the_place() {
+        // A Trainer edit resends the length, the bars and the units the pattern already has
+        let beats = [6, 6, 4, 4];
+        let clicks: Vec<usize> = (0..20).collect();
+        let mut steady = click_engine(120.0, &beats, &clicks);
+        steady.start();
+        let heard = onsets(&mut steady, 90000, 0);
+
+        for split in [10000, 17000, 30000, 50000] {
+            let mut engine = click_engine(120.0, &beats, &clicks);
+            engine.start();
+            let mut resent = onsets(&mut engine, split, 0);
+            engine.set_measure_length(16);
+            engine.set_bars(1);
+            click_layout(&mut engine, &beats, &clicks);
+            resent.extend(onsets(&mut engine, 90000 - split, split));
+            assert_eq!(resent, heard, "resent at frame {}", split);
+        }
+    }
+
+    #[test]
     fn straight_cells_wait_exactly_one_step() {
         let mut engine = Engine::new(44100.0);
         engine.set_bpm(137.0);

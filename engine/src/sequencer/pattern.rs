@@ -46,9 +46,13 @@ impl Pattern {
         true
     }
 
+    // The same length again changes nothing, so the layout and the place in it hold
     pub fn set_measure_length(&mut self, length: usize) -> bool {
         if length == 0 || length > MEASURE_LENGTH_MAX {
             return false;
+        }
+        if length == self.measure_length {
+            return true;
         }
         self.measure_length = length;
         self.straighten();
@@ -58,6 +62,9 @@ impl Pattern {
     pub fn set_bars(&mut self, bars: usize) -> bool {
         if bars == 0 || bars > BARS_MAX {
             return false;
+        }
+        if bars == self.bars {
+            return true;
         }
         self.bars = bars;
         self.straighten();
@@ -281,5 +288,15 @@ mod tests {
         assert!(pattern.set_step_units(&bar_units(&[6, 4, 4, 4])));
         assert_eq!(pattern.index(), 16);
         assert_eq!(pattern.wait_from(160), 8);
+    }
+
+    #[test]
+    fn the_same_length_and_bars_keep_the_layout_and_the_place() {
+        let mut pattern = Pattern::new();
+        assert!(pattern.set_step_units(&bar_units(&[6, 6, 4, 4])));
+        pattern.step_index = 10;
+        assert!(pattern.set_measure_length(16));
+        assert!(pattern.set_bars(1));
+        assert_eq!((pattern.index(), pattern.next_start(), pattern.length()), (10, 80, 20));
     }
 }
