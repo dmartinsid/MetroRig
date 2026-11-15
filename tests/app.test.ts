@@ -1823,11 +1823,11 @@ describe('Grooves Library', () => {
       .toEqual(['All', 'Rock', 'Metal', 'Metalcore', 'Blues']);
   });
 
-  it('grv_02 all shows fourteen', async () => {
+  it('grv_02 all shows sixteen', async () => {
     await openPage();
     openScreen('grooves');
     expect(genreTab('All').getAttribute('aria-pressed')).toBe('true');
-    expect(cards()).toHaveLength(14);
+    expect(cards()).toHaveLength(16);
   });
 
   it('grv_03 genre counts', async () => {
@@ -1837,14 +1837,14 @@ describe('Grooves Library', () => {
       expect(genreTab(name).getAttribute('aria-pressed')).toBe('true');
       return cards().map(card => card.querySelector('.song-artist')?.textContent);
     };
-    expect(shown('Rock')).toEqual(['AC/DC', 'AC/DC']);
+    expect(shown('Rock')).toEqual(['AC/DC', 'AC/DC', 'Foo Fighters', 'Foo Fighters']);
     expect(shown('Metal')).toHaveLength(5);
     expect(new Set(shown('Metal'))).toEqual(new Set(['Iron Maiden', 'Metallica']));
     expect(new Set(shown('Metalcore'))).toEqual(new Set(['Bullet for My Valentine']));
     expect(shown('Metalcore')).toHaveLength(3);
     expect(shown('Blues')).toHaveLength(4);
     expect(new Set(shown('Blues'))).toEqual(new Set(['Eric Clapton', 'Cream (Eric Clapton)', 'B.B. King']));
-    expect(shown('All')).toHaveLength(14);
+    expect(shown('All')).toHaveLength(16);
   });
 
   it('grv_04 card fields', async () => {
@@ -1859,7 +1859,7 @@ describe('Grooves Library', () => {
     await openPage();
     const group = byId('group-songs') as unknown as HTMLOptGroupElement;
     expect((group as any).label).toBe('Songs');
-    expect(group.children).toHaveLength(14);
+    expect(group.children).toHaveLength(16);
 
     await selectPreset('song:song_enter_sandman');
     expect(byId('pattern-name').textContent).toBe('PAT: Enter Sandman');
