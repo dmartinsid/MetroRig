@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/mobile-app/design.md`
-**Status**: In Progress
+**Status**: Done
 **Approved**: 2026-11-14 - user: "aprovo e vamos com sub-agents"
 **Build**: `npm run build`
 **Run js**: `npx vitest run --reporter=verbose`

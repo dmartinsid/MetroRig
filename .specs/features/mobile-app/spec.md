@@ -279,10 +279,10 @@ On a phone MetroRig spills off the screen and works like a shrunken desktop page
 | MOB-42 | P1: Stadium first | Execute | Verified |
 | MOB-43 | P1: Stadium first | Execute | Verified |
 | MOB-44 | P1: Stadium first | Execute | Verified |
-| MOB-45 | P1: Stadium controls on top | Design | Pending |
-| MOB-46 | P1: Stadium controls on top | Design | Pending |
-| MOB-47 | P1: Stadium controls on top | Design | Pending |
-| MOB-48 | P1: Stadium controls on top | Design | Pending |
+| MOB-45 | P1: Stadium controls on top | Execute | Verified |
+| MOB-46 | P1: Stadium controls on top | Execute | Verified |
+| MOB-47 | P1: Stadium controls on top | Execute | Verified |
+| MOB-48 | P1: Stadium controls on top | Execute | Verified |
 
 **Coverage:** 48 total, 48 mapped to tasks, 0 unmapped
 
