@@ -1,7 +1,7 @@
 # tuplets proofs
 
-**HEAD**: d3aad53
-**Tree**: dirty - public/pkg/metrorig_audio_bg.wasm
+**HEAD**: 646ebcf
+**Tree**: clean
 **Shell**: /bin/sh
 **Result**: 41 pass, 0 fail
 
@@ -74,19 +74,19 @@ Failed to load /pads/choir/Fs3.flac: Error: 404
 `Run rust` - exit 0
 
 ```
+test instruments::pad::tests::tim_19_timbres_match_within_3_db ... ok
 test instruments::pad::tests::tim_16_notes_within_5_cents ... ok
 test instruments::pad::tests::tim_20_default_peak ... ok
 test instruments::pad::tests::tim_30_synth_holds_while_loading ... ok
 
-test result: ok. 166 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 244.38s
+test result: ok. 166 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 249.28s
 
 
 running 0 tests
 
 test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
 
-   Compiling metrorig_audio v1.0.0 (/home/deivid/Projects/Github/MetroRig/engine)
-    Finished `test` profile [optimized + debuginfo] target(s) in 3.68s
+    Finished `test` profile [optimized + debuginfo] target(s) in 0.00s
      Running unittests src/lib.rs (engine/target/debug/deps/metrorig_audio-e3c84ac815f4f448)
    Doc-tests metrorig_audio
 ```
