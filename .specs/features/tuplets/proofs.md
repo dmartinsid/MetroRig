@@ -1,6 +1,6 @@
 # tuplets proofs
 
-**HEAD**: f0bb616
+**HEAD**: f7f0156
 **Tree**: clean
 **Shell**: /bin/sh
 **Result**: 41 pass, 0 fail
@@ -74,12 +74,12 @@ Failed to load /pads/choir/Fs3.flac: Error: 404
 `Run rust` - exit 0
 
 ```
-test instruments::pad::tests::tim_19_timbres_match_within_3_db ... ok
-test instruments::pad::tests::tim_16_notes_within_5_cents ... ok
+test instruments::pad::tests::tim_30_synth_holds_while_loading has been running for over 60 seconds
 test instruments::pad::tests::tim_20_default_peak ... ok
+test instruments::pad::tests::tim_16_notes_within_5_cents ... ok
 test instruments::pad::tests::tim_30_synth_holds_while_loading ... ok
 
-test result: ok. 161 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 257.24s
+test result: ok. 162 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 218.77s
 
 
 running 0 tests
