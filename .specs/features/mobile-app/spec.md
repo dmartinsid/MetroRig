@@ -284,7 +284,7 @@ On a phone MetroRig spills off the screen and works like a shrunken desktop page
 | MOB-46 | P1: Stadium controls on top | Execute | Verified |
 | MOB-47 | P1: Stadium controls on top | Execute | Verified |
 | MOB-48 | P1: Stadium controls on top | Execute | Verified |
-| MOB-49 | P1: Stadium controls on top | Design | Pending |
+| MOB-49 | P1: Stadium controls on top | Execute | Verified |
 
 **Coverage:** 49 total, 49 mapped to tasks, 0 unmapped
 
