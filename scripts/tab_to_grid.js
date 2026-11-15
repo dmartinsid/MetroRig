@@ -10,14 +10,15 @@ const TRACK_COUNT = 13;
 const STEPS_MAX = 32;
 const STEPS_PER_WHOLE = 16;
 
-// General MIDI notes, plus the articulations tabs write above them: 91 rim shot, 92 half-open hat, 93 ride edge
+// General MIDI notes, plus the articulations tabs write above them: 91 rim shot, 92 half-open hat, 93 ride edge,
+// 127 ride bell (Guitar Pro 6's, through alphaTab's table)
 const PIECES = {
   35: KICK, 36: KICK,
   37: SNARE, 38: SNARE, 40: SNARE, 91: SNARE,
   42: HI_HAT, 44: HI_HAT,
   46: OPEN_HAT, 92: OPEN_HAT,
   51: RIDE, 59: RIDE, 93: RIDE,
-  53: RIDE_BELL,
+  53: RIDE_BELL, 127: RIDE_BELL,
   49: CRASH, 55: CRASH, 57: CRASH,
   52: CHINA,
   50: HIGH_TOM,

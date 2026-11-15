@@ -98,24 +98,31 @@ def read_gpif(path):
         return archive.read('Content/score.gpif')
 
 
-# Guitar Pro 6 names a drum piece by Element and Variation (alphaTab's table), as General MIDI notes
-GP6_DRUMS = {
-    (0, 0): 35,  # Kick
-    (1, 0): 38, (1, 1): 91, (1, 2): 37,  # Snare: hit, rim shot, side stick
-    (2, 0): 37,  # Snare side stick
-    (5, 0): 41,  # Very low floor tom
-    (6, 0): 43,  # Low floor tom
-    (7, 0): 45,  # Low tom
-    (8, 0): 47,  # Mid tom
-    (9, 0): 50,  # High tom
-    (10, 0): 42, (10, 1): 92, (10, 2): 46,  # Hi-hat: closed, half, open
-    (11, 0): 44,  # Pedal hi-hat
-    (12, 0): 49,  # Crash medium
-    (13, 0): 57,  # Crash high
-    (14, 0): 55,  # Splash
-    (15, 0): 51, (15, 1): 53, (15, 2): 59,  # Ride: middle, bell, edge
-    (16, 0): 52,  # China
-}
+# Guitar Pro 6 names a drum piece by Element and Variation: alphaTab's table (PercussionMapper.ts,
+# gp6ElementAndVariationToArticulation), as Guitar Pro 7 articulations: General MIDI notes, plus 91 rim shot,
+# 92 half-open hat, 93 ride edge, 95-98 chokes, 99, 100, 102 and 103 cowbells, 127 ride bell
+GP6_ARTICULATIONS = [
+    (35, 35, 35),  # 0 Kick: hit, unused, unused
+    (38, 91, 37),  # 1 Snare: hit, rim shot, side stick
+    (99, 100, 99),  # 2 Cowbell low: hit, tip, unused
+    (56, 100, 56),  # 3 Cowbell medium: hit, tip, unused
+    (102, 103, 102),  # 4 Cowbell high: hit, tip, unused
+    (43, 43, 43),  # 5 Tom very low
+    (45, 45, 45),  # 6 Tom low
+    (47, 47, 47),  # 7 Tom medium
+    (48, 48, 48),  # 8 Tom high
+    (50, 50, 50),  # 9 Tom very high
+    (42, 92, 46),  # 10 Hi-hat: closed, half, open
+    (44, 44, 44),  # 11 Pedal hi-hat
+    (57, 98, 57),  # 12 Crash medium: hit, choke, unused
+    (49, 97, 49),  # 13 Crash high: hit, choke, unused
+    (55, 95, 55),  # 14 Splash: hit, choke, unused
+    (51, 93, 127),  # 15 Ride: middle, edge, bell
+    (52, 96, 52),  # 16 China: hit, choke, unused
+]
+GP6_DRUMS = {(element, variation): articulation
+             for element, variations in enumerate(GP6_ARTICULATIONS)
+             for variation, articulation in enumerate(variations)}
 
 NOTE_VALUES = {'Whole': 1, 'Half': 2, 'Quarter': 4, 'Eighth': 8, '16th': 16, '32nd': 32, '64th': 64, '128th': 128}
 
