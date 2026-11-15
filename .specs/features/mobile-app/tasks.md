@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/mobile-app/design.md`
-**Status**: Done
+**Status**: In Progress
 **Approved**: 2026-11-14 - user: "aprovo e vamos com sub-agents"
 **Build**: `npm run build`
 **Run js**: `npx vitest run --reporter=verbose`
@@ -78,7 +78,7 @@ T12 → T13 → T14
 ### Phase 6: Stadium controls on top
 
 ```
-T15 → T16
+T15 → T16 → T17
 ```
 
 ---
@@ -409,6 +409,25 @@ T15 → T16
 
 ---
 
+### T17: Keep the Trainer status off the timer
+
+**What**: On phones the timer keeps its own width and the Trainer status takes the rest of the row, wrapping its text, so a long routine (`Trainer 140 → 180 BPM · +1 every 2 bars`) never draws over the timer.
+**Where**: `src/ui/index.css`
+**Depends on**: T16
+**Reuses**: The phone `.stadium-panel` grid from T15
+**Requirement**: MOB-49
+
+**Done when**:
+
+- [ ] `mob_49` fails before the change and passes after it, at 320, 360, 375, 390 and 430 px for every routine and with the Trainer off; `mob_45` to `mob_48` still pass
+- [ ] Gate check passes: `npx vitest run && npm run test:mobile && npm run build`
+
+**Tests**: e2e
+**Gate**: build
+**Commit**: `fix(ui): keep the trainer status off the stadium timer on phones`
+
+---
+
 ## Checks
 
 **C1** - At 360, 375, 390 and 430 px the Editor, Stadium, Grooves and Improv each have a page scroll width equal to the window width (MOB-01, AC 1)
@@ -555,11 +574,14 @@ Proof: run mobile | ✓ tests/mobile/phone.test.ts > Mobile App > mob_47 stadium
 **C48** - At 360 × 780, 412 × 800, 390 × 844 with insets 47/34, 375 × 812 with 44/34, and 390 × 844 with a Trainer routine on, the Stadium clock is at least 200 px wide, and scrolled to the end its legend ends above the Play button (MOB-48, AC 4)
 Proof: run mobile | ✓ tests/mobile/phone.test.ts > Mobile App > mob_48 stadium clock never shrinks under its floor
 
+**C49** - At 320, 360, 375, 390 and 430 px on Stadium, for every speed-trainer routine and with the Trainer off, the timer and the Trainer status do not overlap and both lie inside the Stadium panel (MOB-49, AC 5)
+Proof: run mobile | ✓ tests/mobile/phone.test.ts > Mobile App > mob_49 trainer status never covers the timer
+
 ---
 
 ## Handoff
 
-**Settled mid-build:** after T11, user: "Acho que o botao stadium pode ser o primeiro no mobile e tb no desktop. Podemos colocar o start em cima ou em lugar mais facil nessa tela"; then "Sim, abre no Stadium (Recommended)" and "Fixo embaixo no celular (Recommended)". Recorded as AD-030, MOB-40 to MOB-44, T13 and T14. The Verifier findings 1 and 2 become T12. After closing, user: "Acho que no modo stadium no mobile o tempo e controles tem que ser mostrado em cima e o circulo pode ir pra baixo, se der pra colocar tudo no mesmo espaco melhor, mas se nao der vamos alterar pra essa forma" - recorded as AD-031, MOB-45 to MOB-47, T15.
+**Settled mid-build:** after T11, user: "Acho que o botao stadium pode ser o primeiro no mobile e tb no desktop. Podemos colocar o start em cima ou em lugar mais facil nessa tela"; then "Sim, abre no Stadium (Recommended)" and "Fixo embaixo no celular (Recommended)". Recorded as AD-030, MOB-40 to MOB-44, T13 and T14. The Verifier findings 1 and 2 become T12. After closing, user: "Acho que no modo stadium no mobile o tempo e controles tem que ser mostrado em cima e o circulo pode ir pra baixo, se der pra colocar tudo no mesmo espaco melhor, mas se nao der vamos alterar pra essa forma" - recorded as AD-031, MOB-45 to MOB-47, T15. After closing, user: "Quanto coloca no stadium com trainer no mobile o tempo 00:00:00 ta vindo em cima do trainer 189 to 213" - reproduced for all 11 routines at 320-430 px; recorded as MOB-49, T17, C49.
 **Dispatched:** batch 1 (T1 to T5), from 1a2d9fa, returned at a8508b2; batch 2 (T6 to T11), from a8508b2, returned at d41ac4c; Verifier over the proofs at 901911e, returned with 2 findings, closed at e02cdd6; Verifier for the mid-build checks C40 to C44 (AD-030) over the proofs at de03352, returned with 1 finding, closed at f02cb50; Verifier for the checks C45 to C47 (AD-031) over the proofs at 5c51be9, in the `mobile-stadium-top` worktree, returned with 2 findings, closed at b2ead64; Verifier for the check C48 over the proofs at b2ead64, in the same worktree, returned: C48 holds, findings 4 and 5 fixed, new findings 6 (bottom inset changed after load is missed; fix: observe #stadium-view) and 7 (under ~340 px the legend wraps; fix: decide with the measured legend height), both closed at f653a1a
 **Walked:** Headless Chrome (playwright-core, touch emulation, 1x) on the Vite dev server, `npx vite --port 5199`, no sign-in or data needed; each screen reached by its tab. **P1 fit:** at 360 and 375 px Editor, Stadium, Grooves and Improv each had page scrollWidth equal to the window (360/375); before the feature Stadium was 366 at 360. Elements past the edge are only the figure chips inside the palette's own scroller. Header: logo row, then speaker icon + `Digital` and `4/4 Metronome` in full at 360. Stadium at 360: four orbs inside the panel, `SNARE/ TOMS` wrapping after the slash, − and + inside. **P1 tab bar:** four icon tabs fixed at the bottom on every screen, Improv tab lit neon on Improv, Stadium on Stadium. **P1 transport:** Editor shows `− 120 BPM + ▶ PLAY` directly above the tabs at the top and at the end of the page; the Tempo Bus card still reads 120 with its slider. **P1 grid:** names column fixed, first chip row scrolls sideways (`Step`, `Quarter`, `Eighths`, cut at the edge). **P2:** manifest and icons checked by the batch worker on `vite preview` under `/MetroRig/` (no manifest errors; only `in-incognito` from the test context). Wake lock not walked on a phone; it rests on tests/keepAwake.test.ts. Pictures: scratchpad `after/*.png`, no capture binds.
 
@@ -575,7 +597,7 @@ Phase 2:  T2 ------→ T3 ------→ T4 ------→ T5
 Phase 3:  T6 ------→ T7 ------→ T8
 Phase 4:  T9 ------→ T10 -----→ T11
 Phase 5:  T12 -----→ T13 -----→ T14
-Phase 6:  T15 -----→ T16
+Phase 6:  T15 -----→ T16 -----→ T17
 ```
 
 Execution is strictly sequential.

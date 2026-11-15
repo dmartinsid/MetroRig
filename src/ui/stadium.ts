@@ -236,10 +236,13 @@ export function mount(session: Session): void {
   const clockLegend = document.querySelector<HTMLElement>('.clock-legend')!;
   const CLOCK_FLOOR = 200; // the smallest clock the screen draws
   const LEGEND_GAP = 4; // the clock column's gap above the legend
-  const PLAY_GAP = 20; // the 0.5 rem ring around Play and the display's bottom padding
+  const stadiumDisplay = document.querySelector<HTMLElement>('.stadium-display')!;
   function fitClock() {
     if (stadiumView.classList.contains('hidden') || getComputedStyle(btnStadiumPlay).position !== 'fixed') return;
-    const room = btnStadiumPlay.getBoundingClientRect().top - PLAY_GAP - (clockColumn.getBoundingClientRect().top + window.scrollY);
+    // The room is what the view's minimum height leaves below the controls, read from the layout rather than assumed
+    const viewTop = stadiumView.getBoundingClientRect().top + window.scrollY;
+    const viewBottom = viewTop + parseFloat(getComputedStyle(stadiumView).minHeight);
+    const room = viewBottom - parseFloat(getComputedStyle(stadiumDisplay).paddingBottom) - (clockColumn.getBoundingClientRect().top + window.scrollY);
     // The legend takes two rows on the narrowest phones, so its height is read, not assumed
     stadiumView.dataset.clock = room - clockLegend.offsetHeight - LEGEND_GAP >= CLOCK_FLOOR ? 'fit' : 'scroll';
   }
