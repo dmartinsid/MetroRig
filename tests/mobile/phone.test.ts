@@ -469,6 +469,9 @@ describe('Mobile App', () => {
       { width: 390, height: 844, top: 47, bottom: 34, trainer: false },
       { width: 375, height: 812, top: 44, bottom: 34, trainer: false },
       { width: 390, height: 844, top: 0, bottom: 0, trainer: true },
+      // The narrowest phones, where the legend wraps to two rows
+      { width: 320, height: 815, top: 0, bottom: 0, trainer: false },
+      { width: 335, height: 819, top: 0, bottom: 0, trainer: false },
     ];
     for (const { width, height, top, bottom, trainer } of cases) {
       const label = `${width}x${height} insets ${top}/${bottom}${trainer ? ' trainer' : ''}`;
@@ -497,6 +500,28 @@ describe('Mobile App', () => {
       const play = (await box(page, '#btn-stadium-play'))!;
       const legend = (await box(page, '.clock-legend'))!;
       expect([label, legend.bottom <= play.top]).toEqual([label, true]);
+    }
+  });
+
+  it('mob_48 stadium clock follows a bottom inset that changes after load', async () => {
+    for (const [width, height] of [[390, 844], [412, 860]] as const) {
+      const context = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: 1, isMobile: true, hasTouch: true });
+      const page = await context.newPage();
+      pages.push(page);
+      await page.goto(inject('baseUrl'));
+      await page.click('#nav-stadium');
+      await page.waitForSelector('#stadium-view:not(.hidden)');
+      await page.evaluate(() => document.fonts.ready.then(() => undefined));
+      // Only the bottom inset changes, with no resize of the window
+      const cdp = await context.newCDPSession(page);
+      await cdp.send('Emulation.setSafeAreaInsetsOverride' as any, { insets: { top: 0, bottom: 34, left: 0, right: 0 } });
+      await page.waitForTimeout(300);
+      const clock = (await box(page, '.beat-clock'))!;
+      expect([width, clock.width >= 200]).toEqual([width, true]);
+      await scrollToEnd(page);
+      const play = (await box(page, '#btn-stadium-play'))!;
+      const legend = (await box(page, '.clock-legend'))!;
+      expect([width, legend.bottom <= play.top]).toEqual([width, true]);
     }
   });
 
