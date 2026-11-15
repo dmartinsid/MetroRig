@@ -218,6 +218,7 @@ On a phone MetroRig spills off the screen and works like a shrunken desktop page
 2. MOB-46: WHILE the window is 390 × 844, 393 × 852, 412 × 915 or 430 × 932 the system SHALL show, at scroll 0 on Stadium, the tempo with − and +, the four orbs, the whole beat clock and its legend between the top of the window and the Stadium Play button, with the clock at least 200 px wide.
 3. MOB-47: WHILE the window is 360 × 640 or 375 × 667 the system SHALL show, at scroll 0 on Stadium, the tempo with − and + above the Stadium Play button, and SHALL draw the beat clock at least 240 px wide below the orbs.
 4. MOB-48: WHILE Stadium is shown and the window is 767 px wide or narrower the system SHALL draw the beat clock at least 200 px wide at every window height and safe-area inset; where the room above the Play button cannot hold it, the clock SHALL sit below the orbs and be reached by scrolling.
+5. MOB-49: WHILE Stadium is shown and the window is 767 px wide or narrower the system SHALL draw the timer and the Trainer status side by side with no overlap and both inside the Stadium panel, for every speed-trainer routine and with the Trainer off.
 
 **Independent Test**: At 390 × 844 open Stadium: tempo, orbs and the whole clock show above PLAY without scrolling; at 375 × 667 the tempo shows at once and the clock is reached by scrolling.
 
@@ -283,8 +284,9 @@ On a phone MetroRig spills off the screen and works like a shrunken desktop page
 | MOB-46 | P1: Stadium controls on top | Execute | Verified |
 | MOB-47 | P1: Stadium controls on top | Execute | Verified |
 | MOB-48 | P1: Stadium controls on top | Execute | Verified |
+| MOB-49 | P1: Stadium controls on top | Design | Pending |
 
-**Coverage:** 48 total, 48 mapped to tasks, 0 unmapped
+**Coverage:** 49 total, 49 mapped to tasks, 0 unmapped
 
 ---
 
