@@ -1,9 +1,9 @@
 # mobile-app proofs
 
-**HEAD**: be385e0
+**HEAD**: 3f0fb8a
 **Tree**: clean
 **Shell**: /bin/sh
-**Result**: 49 pass, 0 fail
+**Result**: 50 pass, 0 fail
 
 | Check | Proof | Result |
 | --- | --- | --- |
@@ -55,6 +55,7 @@
 | C46 | `run mobile / ✓ tests/mobile/phone.test.ts > Mobile App > mob_46 stadium fits one screen on taller phones` | pass |
 | C47 | `run mobile / ✓ tests/mobile/phone.test.ts > Mobile App > mob_47 stadium tempo first on short phones` | pass |
 | C48 | `run mobile / ✓ tests/mobile/phone.test.ts > Mobile App > mob_48 stadium clock never shrinks under its floor` | pass |
+| C49 | `run mobile / ✓ tests/mobile/phone.test.ts > Mobile App > mob_49 trainer status never covers the timer` | pass |
 | Build | `npm run build` | pass |
 
 ## Output
@@ -62,21 +63,21 @@
 `Run mobile` - exit 0
 
 ```
- ✓ tests/mobile/phone.test.ts > Mobile App > mob_23 track names stay in view while steps scroll 904ms
- ✓ tests/mobile/phone.test.ts > Mobile App > mob_24 grid snaps to beat starts 1696ms
- ✓ tests/mobile/phone.test.ts > Mobile App > mob_27 figure palette is one scrolling row 767ms
- ✓ tests/mobile/phone.test.ts > Mobile App > mob_25 right fade marks more steps 1523ms
- ✓ tests/mobile/phone.test.ts > Mobile App > mob_26 left fade marks hidden steps 1093ms
- ✓ tests/mobile/phone.test.ts > Mobile App > mob_01 no sideways page scroll at 360 375 390 430 7977ms
- ✓ tests/mobile/phone.test.ts > Mobile App > mob_02 header selectors show their value in full at 360 533ms
- ✓ tests/mobile/phone.test.ts > Mobile App > mob_03 stadium orbs and tempo buttons inside the panel at 360 496ms
+ ✓ tests/mobile/phone.test.ts > Mobile App > mob_23 track names stay in view while steps scroll 852ms
+ ✓ tests/mobile/phone.test.ts > Mobile App > mob_24 grid snaps to beat starts 1570ms
+ ✓ tests/mobile/phone.test.ts > Mobile App > mob_27 figure palette is one scrolling row 688ms
+ ✓ tests/mobile/phone.test.ts > Mobile App > mob_25 right fade marks more steps 1552ms
+ ✓ tests/mobile/phone.test.ts > Mobile App > mob_26 left fade marks hidden steps 1538ms
+ ✓ tests/mobile/phone.test.ts > Mobile App > mob_01 no sideways page scroll at 360 375 390 430 7629ms
+ ✓ tests/mobile/phone.test.ts > Mobile App > mob_02 header selectors show their value in full at 360 475ms
+ ✓ tests/mobile/phone.test.ts > Mobile App > mob_03 stadium orbs and tempo buttons inside the panel at 360 425ms
  ✓ tests/mobile/phone.test.ts > Mobile App > mob_04 touch targets 44 px and step cells 32 px
- ✓ tests/mobile/phone.test.ts > Mobile App > mob_04 touch targets 44 px and step cells 32 px 8197ms
+ ✓ tests/mobile/phone.test.ts > Mobile App > mob_04 touch targets 44 px and step cells 32 px 8311ms
 
  Test Files  1 passed (1)
-      Tests  31 passed (31)
-   Start at  21:58:52
-   Duration  62.22s (transform 108ms, setup 0ms, collect 351ms, tests 61.62s, environment 0ms, prepare 85ms)
+      Tests  32 passed (32)
+   Start at  23:47:51
+   Duration  61.35s (transform 114ms, setup 0ms, collect 299ms, tests 60.80s, environment 0ms, prepare 92ms)
 ```
 
 `Run js` - exit 0
