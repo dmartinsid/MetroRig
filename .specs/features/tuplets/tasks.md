@@ -491,12 +491,13 @@ T19 → T20 → T21 → T22
 
 **Done when**:
 
-- [ ] Song tests list 16 songs, match both new grids to the fixture through `barsToGrid`, and find no `.gp` or `.gpx` tracked
-- [ ] Gate check passes: `npx vitest run`
+- [x] Song tests list 16 songs, match both new grids to the fixture through `barsToGrid`, and find no `.gp` or `.gpx` tracked
+- [x] Gate check passes: `npx vitest run`
 
 **Tests**: unit
 **Gate**: quick
 **Commit**: `feat(songs): add Times Like These and Everlong`
+**Status**: Done
 
 ---
 

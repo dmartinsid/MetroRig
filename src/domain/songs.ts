@@ -1,6 +1,5 @@
-import { patternLength } from './pattern';
 import { STEP_ACCENT, STEP_GHOST, STEP_NORMAL, TRACKS } from './kit';
-import { getBeatsPerMeasure } from './meter';
+import { locateCell, patternCells } from './layout';
 import type { Preset } from './preset';
 
 export type Genre = 'Rock' | 'Metal' | 'Metalcore' | 'Blues';
@@ -16,10 +15,12 @@ export interface Song {
   section: string;
   bpm: number;
   timeSignature: string;
-  measureLength: number; // The steps of one bar
+  measureLength: number; // The straight sixteenths of one bar (AD-029)
   bars: number;
-  gridData: Record<number, number[]>; // Drum tracks only, every bar in a row; a track left out is empty
-  source: { url: string; revisionId: number; measure: number }; // The first bar, counting from 0
+  beatCells?: number[][]; // Per bar, per beat, as a preset holds them. Absent: every beat straight
+  gridData: Record<number, number[]>; // Drum tracks only, every bar's cells in a row; a track left out is empty
+  // The first bar, counting from 0: a Songsterr tab, or a Guitar Pro file from Ultimate Guitar (TUP-34)
+  source: { url: string; revisionId: number; measure: number } | { site: 'Ultimate Guitar'; file: string; measure: number };
 }
 
 // Bars as text: . empty, x normal, X accent, g ghost
@@ -28,8 +29,12 @@ function bars(...text: string[]): number[] {
   return [...text.join('')].map(step => values[step] ?? 0);
 }
 
-// Four consecutive measures of the song's Songsterr drum tab, fills included, read with
-// scripts/tab_to_grid.js. The BPM is the tab's tempo at the first one.
+function silence(cells: number): number[] {
+  return new Array(cells).fill(0);
+}
+
+// Four consecutive measures of the song's drum tab, fills included, read with scripts/tab_to_grid.js:
+// a Songsterr tab, or a Guitar Pro file read by scripts/gp_extract.py. The BPM is the tab's tempo at the first one.
 export const SONGS: Song[] = [
   {
     id: 'song_back_in_black',
@@ -69,6 +74,51 @@ export const SONGS: Song[] = [
       10: bars('................', '................', '................', '....x.x.x.x.x.x.'),
     },
     source: { url: 'https://www.songsterr.com/a/wsa/ac-dc-highway-to-hell-drum-tab-s289', revisionId: 10066396, measure: 21 },
+  },
+  {
+    id: 'song_times_like_these',
+    title: 'Times Like These',
+    artist: 'Foo Fighters',
+    genre: 'Rock',
+    section: 'Intro Riff',
+    bpm: 144,
+    timeSignature: '7/4',
+    measureLength: 28,
+    bars: 4,
+    gridData: {
+      1: bars('x.x...x.x.x...x.x.x...x...x.', 'x.x...x.x.x...x.x.x...x...x.', 'x.x...x.x.x...x.x.x...x...x.', 'x.x...x.x.x...x.x.x.x.x.x...'),
+      2: bars('....x.......x.......x...xx..', '....x.......x.......x...xx..', '....x.......x.......x...xx..', '....x.......x....gxx......x.'),
+      3: bars('....x.x.x.x.x.x.x.x.x.x...x.', 'x.x.x.x.x.x.x.x.x.x.x.x...x.', 'x.x.x.x.x.x.x.x.x.x.x.x...x.', 'x.x.x.x.x.x.x.x.x...........'),
+      4: silence(112),
+      5: silence(112),
+      6: silence(112),
+      7: bars('x...........................', '............................', '............................', '..........................x.'),
+      8: silence(112),
+      9: bars('............................', '............................', '............................', '.....................xx.x...'),
+      10: silence(112),
+      11: silence(112),
+      12: silence(112),
+    },
+    source: { site: 'Ultimate Guitar', file: 'Foo Fighters - Times Like These (ver 6 by nicholasp248).gpx', measure: 8 },
+  },
+  {
+    id: 'song_everlong',
+    title: 'Everlong',
+    artist: 'Foo Fighters',
+    genre: 'Rock',
+    section: 'Chorus',
+    bpm: 160,
+    timeSignature: '4/4',
+    measureLength: 16,
+    bars: 4,
+    gridData: {
+      1: bars('..x.....x.x...x.', '..x.....x.x...x.', '..x...x.x...x.x.', '..x.x.........x.'),
+      2: bars('....x.......x...', '....x.......x...', '....x.....xx....', 'xx....xxxx......'),
+      4: bars('................', '................', '..............x.', '....x...........'),
+      7: bars('....x...x...x.x.', 'x...x...x...x.x.', 'x...x...x.......', '..............x.'),
+      11: bars('................', '................', '................', '..........xxxx..'),
+    },
+    source: { site: 'Ultimate Guitar', file: 'Foo Fighters - Everlong (ver 11 by pierrelateur).gp', measure: 64 },
   },
   {
     id: 'song_the_trooper',
@@ -297,18 +347,17 @@ export function songsForGenre(genre: GenreTab): Song[] {
 
 // A song is an ordinary preset, so every load, save and playback path serves it
 export function songToPreset(song: Song): Preset {
-  const { id, title, bpm, timeSignature, measureLength, bars } = song;
-  const length = patternLength(song);
-  const beats = getBeatsPerMeasure(timeSignature, measureLength);
-  const stepsPerBeat = measureLength / beats;
+  const { id, title, bpm, timeSignature, measureLength, bars, beatCells } = song;
+  const length = patternCells(song);
 
   const gridData: Record<number, number[]> = {};
   TRACKS.forEach(track => {
-    gridData[track.id] = [...(song.gridData[track.id] ?? new Array(length).fill(0))];
+    gridData[track.id] = [...(song.gridData[track.id] ?? silence(length))];
   });
-  gridData[0] = Array.from({ length }, (_, step) => {
-    if (step % stepsPerBeat !== 0) return 0;
-    return step === 0 ? STEP_ACCENT : STEP_NORMAL;
+  // The click sounds on the first cell of every beat, accented on the pattern's first
+  gridData[0] = Array.from({ length }, (_, cell) => {
+    if (locateCell(song, cell)?.index !== 0) return 0;
+    return cell === 0 ? STEP_ACCENT : STEP_NORMAL;
   });
 
   return {
@@ -318,6 +367,7 @@ export function songToPreset(song: Song): Preset {
     timeSignature,
     measureLength,
     bars,
+    ...(beatCells ? { beatCells: beatCells.map(bar => [...bar]) } : {}),
     gridData,
     trainerSettings: { enabled: false, startBpm: bpm, targetBpm: Math.min(240, bpm + 40), increment: 5, stepType: 'measures', stepValue: 4, curve: 'stepped' },
   };

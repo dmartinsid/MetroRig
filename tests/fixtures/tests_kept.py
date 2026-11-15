@@ -125,6 +125,44 @@ REWRITES = [
     ('js', "StateManager Tests > should initialize with default state settings",
      "expect(stateManager.activeViewMode).toBe('editor');",
      "expect(stateManager.activeViewMode).toBe('stadium');"),
+    # AD-029 / TUP-32 / TUP-33 (tuplets, Q25, user: "Generalizar pelas músicas (Recommended)"): Times Like These
+    # (7/4) and Everlong (4/4) join the songs, so the counts go from 14 to 16, Rock lists AC/DC and Foo Fighters twice
+    # each, steps per bar and the click follow each song's signature, and only the 14 Songsterr songs owe a url and
+    # revisionId; the two new songs carry the Ultimate Guitar source (T21). Q26, user: "Battery e Everlong usam
+    # (Recommended)": Battery and Everlong are the only songs with a Mid or Low Tom hit (TUP-33)
+    ('js', 'Grooves Library > grv_02 all shows fourteen',
+     'expect(cards()).toHaveLength(14);',
+     'expect(cards()).toHaveLength(16);'),
+    ('js', 'Grooves Library > grv_03 genre counts',
+     "expect(shown('Rock')).toEqual(['AC/DC', 'AC/DC']);",
+     "expect(shown('Rock')).toEqual(['AC/DC', 'AC/DC', 'Foo Fighters', 'Foo Fighters']);"),
+    ('js', 'Grooves Library > grv_03 genre counts',
+     "expect(shown('All')).toHaveLength(14);",
+     "expect(shown('All')).toHaveLength(16);"),
+    ('js', 'Grooves Library > song_07 songs group',
+     'expect(group.children).toHaveLength(14);',
+     'expect(group.children).toHaveLength(16);'),
+    ('js', 'Songs > bars_01 four bars of sixteen',
+     'expect(SONGS).toHaveLength(14);',
+     'expect(SONGS).toHaveLength(16);'),
+    ('js', 'Songs > bars_01 four bars of sixteen',
+     "SONGS.forEach(song => { expect([song.timeSignature, song.measureLength, song.bars], song.id).toEqual(['4/4', 16, 4]); const preset = songToPreset(song); TRACKS.forEach(track => expect(preset.gridData[track.id], `${song.id} ${track.name}`).toHaveLength(64)); });",
+     "SONGS.forEach(song => { const signature = song.id === 'song_times_like_these' ? ['7/4', 28, 4] : ['4/4', 16, 4]; expect([song.timeSignature, song.measureLength, song.bars], song.id).toEqual(signature); const preset = songToPreset(song); TRACKS.forEach(track => expect(preset.gridData[track.id], `${song.id} ${track.name}`).toHaveLength(song.measureLength * 4)); });"),
+    ('js', 'Songs > bars_05 click marks every beat',
+     'SONGS.forEach(song => { const click = songToPreset(song).gridData[0]; const expected = new Array(64).fill(0).map((_, step) => (step % 4 === 0 ? 1 : 0)); expected[0] = 2; expect(click, song.id).toEqual(expected); });',
+     'SONGS.forEach(song => { const click = songToPreset(song).gridData[0]; const expected = new Array(song.measureLength * song.bars).fill(0).map((_, step) => (step % 4 === 0 ? 1 : 0)); expected[0] = 2; expect(click, song.id).toEqual(expected); });'),
+    ('js', 'Songs > filters by genre',
+     "expect(songsForGenre('Rock').map(song => song.artist)).toEqual(['AC/DC', 'AC/DC']);",
+     "expect(songsForGenre('Rock').map(song => song.artist)).toEqual(['AC/DC', 'AC/DC', 'Foo Fighters', 'Foo Fighters']);"),
+    ('js', 'Songs > hk_23 toms on four tracks',
+     "SONGS.filter(song => song.id !== 'song_battery').forEach(song => { expect(tomHits(song.id)[11], song.id).toEqual([]); expect(tomHits(song.id)[12], song.id).toEqual([]); });",
+     "expect(SONGS.filter(song => [...tomHits(song.id)[11], ...tomHits(song.id)[12]].length > 0).map(song => song.id).sort()) .toEqual(['song_battery', 'song_everlong']);"),
+    ('js', 'Songs > song_01 fourteen songs with sources',
+     "SONGS.forEach(song => { expect(song.section, song.id).not.toBe(''); expect(song.timeSignature, song.id).toMatch(/^\\d+\\/\\d+$/); expect(song.source.url, song.id).toMatch(/^https:\\/\\/www\\.songsterr\\.com\\/a\\/wsa\\/.+-drum-tab-s\\d+$/); expect(song.source.revisionId, song.id).toBeGreaterThan(0); });",
+     "SONGS.forEach(song => { expect(song.section, song.id).not.toBe(''); expect(song.timeSignature, song.id).toMatch(/^\\d+\\/\\d+$/); if (ultimateGuitar.includes(song.id)) { expect(song.source, song.id).toMatchObject({ site: 'Ultimate Guitar' }); } else { expect(song.source.url, song.id).toMatch(/^https:\\/\\/www\\.songsterr\\.com\\/a\\/wsa\\/.+-drum-tab-s\\d+$/); expect(song.source.revisionId, song.id).toBeGreaterThan(0); } });"),
+    ('js', 'Songs > song_01 fourteen songs with sources',
+     'expect(new Set(SONGS.map(song => song.id)).size).toBe(14);',
+     'expect(new Set(SONGS.map(song => song.id)).size).toBe(16);'),
 ]
 
 
@@ -313,6 +351,11 @@ def head_assertions(suite):
 # AD-030 (mobile-app): an unknown stored screen opens the Stadium, so the test's name says so (84dae55)
 RENAMES = {
     'StateManager > opens the Editor for an unknown stored mode': 'StateManager > opens the Stadium for an unknown stored mode',
+    # AD-029 / TUP-32 / TUP-33 (tuplets, Q25): 16 songs, and Times Like These is in 7/4, so "fourteen" and
+    # "sixteen" steps a bar no longer hold (T21)
+    'Songs > song_01 fourteen songs with sources': 'Songs > song_01 sixteen songs with sources',
+    'Songs > bars_01 four bars of sixteen': "Songs > bars_01 four bars of the song's signature",
+    'Grooves Library > grv_02 all shows fourteen': 'Grooves Library > grv_02 all shows sixteen',
 }
 
 
