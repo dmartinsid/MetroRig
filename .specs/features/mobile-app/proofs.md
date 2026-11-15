@@ -1,6 +1,6 @@
 # mobile-app proofs
 
-**HEAD**: b2ead64
+**HEAD**: f43793a
 **Tree**: clean
 **Shell**: /bin/sh
 **Result**: 49 pass, 0 fail
@@ -62,21 +62,21 @@
 `Run mobile` - exit 0
 
 ```
- ✓ tests/mobile/phone.test.ts > Mobile App > mob_23 track names stay in view while steps scroll 745ms
- ✓ tests/mobile/phone.test.ts > Mobile App > mob_24 grid snaps to beat starts 1649ms
- ✓ tests/mobile/phone.test.ts > Mobile App > mob_27 figure palette is one scrolling row 525ms
- ✓ tests/mobile/phone.test.ts > Mobile App > mob_25 right fade marks more steps 1265ms
- ✓ tests/mobile/phone.test.ts > Mobile App > mob_26 left fade marks hidden steps 1146ms
- ✓ tests/mobile/phone.test.ts > Mobile App > mob_01 no sideways page scroll at 360 375 390 430 10159ms
- ✓ tests/mobile/phone.test.ts > Mobile App > mob_02 header selectors show their value in full at 360 569ms
- ✓ tests/mobile/phone.test.ts > Mobile App > mob_03 stadium orbs and tempo buttons inside the panel at 360 493ms
+ ✓ tests/mobile/phone.test.ts > Mobile App > mob_24 grid snaps to beat starts 2475ms
+ ✓ tests/mobile/phone.test.ts > Mobile App > mob_27 figure palette is one scrolling row 841ms
+ ✓ tests/mobile/phone.test.ts > Mobile App > mob_25 right fade marks more steps 1303ms
+ ✓ tests/mobile/phone.test.ts > Mobile App > mob_26 left fade marks hidden steps
+ ✓ tests/mobile/phone.test.ts > Mobile App > mob_26 left fade marks hidden steps 1120ms
+ ✓ tests/mobile/phone.test.ts > Mobile App > mob_01 no sideways page scroll at 360 375 390 430 12099ms
+ ✓ tests/mobile/phone.test.ts > Mobile App > mob_02 header selectors show their value in full at 360 499ms
+ ✓ tests/mobile/phone.test.ts > Mobile App > mob_03 stadium orbs and tempo buttons inside the panel at 360 516ms
  ✓ tests/mobile/phone.test.ts > Mobile App > mob_04 touch targets 44 px and step cells 32 px
- ✓ tests/mobile/phone.test.ts > Mobile App > mob_04 touch targets 44 px and step cells 32 px 8425ms
+ ✓ tests/mobile/phone.test.ts > Mobile App > mob_04 touch targets 44 px and step cells 32 px 7248ms
 
  Test Files  1 passed (1)
-      Tests  30 passed (30)
-   Start at  19:41:14
-   Duration  65.68s (transform 61ms, setup 0ms, collect 299ms, tests 65.17s, environment 0ms, prepare 52ms)
+      Tests  31 passed (31)
+   Start at  21:54:04
+   Duration  87.30s (transform 112ms, setup 0ms, collect 303ms, tests 86.73s, environment 0ms, prepare 100ms)
 ```
 
 `Run js` - exit 0
@@ -86,15 +86,15 @@
 
 stderr | tests/app.test.ts > Improv > tim_30 brackets each load, so its files reach the notes once all have come or failed
 Failed to load /pads/choir/Fs3.flac: Error: 404
-    at MockMetronomeNode.<anonymous> (/tmp/claude-1000/-home-deivid-Projects-Github-MetroRig/ac9b25a2-709d-49ca-9bf0-27d170d99373/scratchpad/wt-stadium/tests/app.test.ts:3299:52)
+    at MockMetronomeNode.<anonymous> (/home/deivid/Projects/Github/MetroRig/tests/app.test.ts:3299:52)
     at MockMetronomeNode.mockCall (file:///home/deivid/Projects/Github/MetroRig/node_modules/@vitest/spy/dist/index.js:50:17)
     at MockMetronomeNode.spy [as padLoad] (file:///home/deivid/Projects/Github/MetroRig/node_modules/tinyspy/dist/index.js:42:80)
-    at /tmp/claude-1000/-home-deivid-Projects-Github-MetroRig/ac9b25a2-709d-49ca-9bf0-27d170d99373/scratchpad/wt-stadium/src/app/improv.ts:85:29
+    at /home/deivid/Projects/Github/MetroRig/src/app/improv.ts:85:29
     at processTicksAndRejections (node:internal/process/task_queues:104:5)
 Failed to load /pads/choir/Fs3.flac: Error: 404
-    at MockMetronomeNode.<anonymous> (/tmp/claude-1000/-home-deivid-Projects-Github-MetroRig/ac9b25a2-709d-49ca-9bf0-27d170d99373/scratchpad/wt-stadium/tests/app.test.ts:3299:52)
+    at MockMetronomeNode.<anonymous> (/home/deivid/Projects/Github/MetroRig/tests/app.test.ts:3299:52)
     at MockMetronomeNode.mockCall (file:///home/deivid/Projects/Github/MetroRig/node_modules/@vitest/spy/dist/index.js:50:17)
     at MockMetronomeNode.spy [as padLoad] (file:///home/deivid/Projects/Github/MetroRig/node_modules/tinyspy/dist/index.js:42:80)
-    at /tmp/claude-1000/-home-deivid-Projects-Github-MetroRig/ac9b25a2-709d-49ca-9bf0-27d170d99373/scratchpad/wt-stadium/src/app/improv.ts:85:29
+    at /home/deivid/Projects/Github/MetroRig/src/app/improv.ts:85:29
     at processTicksAndRejections (node:internal/process/task_queues:104:5)
 ```

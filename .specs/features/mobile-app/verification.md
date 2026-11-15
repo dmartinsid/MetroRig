@@ -1,7 +1,7 @@
 # Mobile App verification
 
 **Verdict**: FAIL
-**After fixes**: all three findings closed (e02cdd6, f02cb50); `check_proofs.py` 45 pass, 0 fail at f02cb50; `validate_verification.py` exits 0
+**After fixes**: all seven findings closed (e02cdd6, f02cb50, b2ead64, f653a1a); `check_proofs.py` 49 pass, 0 fail at f43793a; `validate_verification.py` exits 0
 **Proofs**: `proofs.md` at de03352; for C45-C47 (AD-031), `proofs.md` at 5c51be9
 **Verifier**: independent sub-agent (author != verifier)
 
