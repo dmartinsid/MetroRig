@@ -9,6 +9,12 @@ The words the code and the specs use for MetroRig's parts. `CONTRIBUTING.md` say
 - **Instrument**: A voice of the engine that turns a step or a chord into sound: the click, the drums or the Pad. Each one lives under `engine/src/instruments/` and uses only the `dsp` layer.
 - **Screen**: One view of the page: the Editor, Stadium, Grooves or Improv. Each is a module of `src/ui/` that mounts on the Session, next to the header.
 
+## Patterns
+
+- **Cell**: One place a hit can fall in a bar. A straight cell lasts a sixteenth; a triplet cell lasts a third of a beat and a sextuplet cell a sixth. The engine plays each cell for its length in twelfths of a sixteenth: 12, 16 or 8 (AD-029). A pattern holds up to 48 cells in a bar and 192 in all.
+- **Beat cells**: The optional `beatCells` of a preset, a song or a groove: each bar's cell count per beat, 4 straight, 3 triplet or 6 sextuplet. With no `beatCells` every beat is straight. `src/domain/layout.ts` holds every rule that places a cell in its bar, beat and time.
+- **Tuplet**: A beat of a /4 bar split into 3 cells (a triplet) or 6 (a sextuplet) in place of 4 sixteenths. It is written with the `Triplet` and `Sextuplet` figures, and changing a beat's kind moves each hit to the nearest cell.
+
 ## Layers of the app (`src/`)
 
 - **domain**: The music and pattern rules with no I/O: meter, pattern, preset, kit, chords, songs and the track mix. It imports nothing from `src/`.

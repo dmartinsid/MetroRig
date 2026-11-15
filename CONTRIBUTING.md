@@ -55,6 +55,7 @@ Each layer depends only on the layers below it. Code inside one layer may use an
 
 - **A rule a user sees** (what a click does to the pattern, which preset loads, what a chord plays) goes in `src/domain/` when it needs no I/O, or in the Session (`src/app/session.ts`) when it talks to the engine or the storage. `tests/app/session.test.ts` drives the Session with a fake engine and in-memory storage, without a DOM.
 - **A screen** goes in `src/ui/`: `header.ts`, `editor.ts`, `stadium.ts`, `grooves.ts` and `improv.ts` each export `mount(session)`, render Session state and turn gestures into Session commands. Shared DOM helpers live in `src/ui/dom.ts`, display formats in `src/ui/format.ts`.
+- **A song** goes in `src/domain/songs.ts` as 4 measures of its drum tab. `scripts/gp_extract.py` reads the drum measures of a Guitar Pro file (`.gp` or `.gpx`) into Songsterr's JSON shape (`python3 -I scripts/gp_extract.py <file> <first measure>`), and `scripts/tab_to_grid.js` turns them into MetroRig's grid, tuplet beats included. The Guitar Pro file itself never goes in the repository; only the extracted measures go in `tests/fixtures/song_tabs.json`.
 - **Factory content** goes in `src/data/factory.ts`; **stored data** in `src/storage/`; **the worklet and its node** in `src/audio/`.
 - **A sound primitive** goes in `engine/src/dsp/`; **a voice** in `engine/src/instruments/`; **timing, the pattern and the Speed Trainer** in `engine/src/sequencer/`; **mixing** in `engine/src/engine.rs`; **a new export** in `engine/src/ffi.rs`.
 
