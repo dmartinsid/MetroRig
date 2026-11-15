@@ -5,6 +5,7 @@ pub const BAR_STEPS_MAX: usize = 48; // The cells of one bar: 8 beats of sextupl
 pub const MEASURE_LENGTH_MAX: usize = 32; // A bar's straight sixteenths
 pub const BARS_MAX: usize = 4;
 const STRAIGHT_UNITS: u8 = 12; // A cell's length in twelfths of a sixteenth: 12 straight, 16 triplet, 8 sextuplet
+const BEAT_UNITS: usize = 4 * STRAIGHT_UNITS as usize; // A quarter note, the span one tuplet fills
 
 pub struct SequencerTrack {
     pub(crate) steps: [u8; STEPS_COUNT], // 0 = Off, 1 = Low, 2 = High
@@ -18,6 +19,13 @@ pub struct Pattern {
     units: [u8; STEPS_COUNT], // Each cell's length
     bar_start: [bool; STEPS_COUNT],
     pub(crate) cells: usize,
+    // A layout that re-lays the beat now playing waits for that beat to end (TUP-40), and the grids
+    // sent for it wait with it, since they count its cells
+    pending: Option<usize>, // When it takes over, in twelfths of a sixteenth from the pattern start
+    pending_units: [u8; STEPS_COUNT],
+    pending_bar_start: [bool; STEPS_COUNT],
+    pending_cells: usize,
+    pending_steps: [[u8; STEPS_COUNT]; TRACKS],
 }
 
 impl Pattern {
@@ -30,17 +38,25 @@ impl Pattern {
             units: [STRAIGHT_UNITS; STEPS_COUNT],
             bar_start: [false; STEPS_COUNT],
             cells: 0,
+            pending: None,
+            pending_units: [STRAIGHT_UNITS; STEPS_COUNT],
+            pending_bar_start: [false; STEPS_COUNT],
+            pending_cells: 0,
+            pending_steps: [[0; STEPS_COUNT]; TRACKS],
         };
         pattern.straighten();
         pattern
     }
 
-    // The steps past the given ones are cleared
+    // The steps past the given ones are cleared. While a layout waits, the grid counts its cells and waits too
     pub fn update_grid(&mut self, track: usize, steps: &[u8]) -> bool {
         if track >= TRACKS || steps.len() > STEPS_COUNT {
             return false;
         }
-        let track_steps = &mut self.tracks[track].steps;
+        let track_steps = match self.pending {
+            Some(_) => &mut self.pending_steps[track],
+            None => &mut self.tracks[track].steps,
+        };
         track_steps[..steps.len()].copy_from_slice(steps);
         track_steps[steps.len()..].fill(0);
         true
@@ -71,8 +87,9 @@ impl Pattern {
         true
     }
 
-    // Every cell a sixteenth, as many as the bars hold
+    // Every cell a sixteenth, as many as the bars hold. A waiting layout no longer fits, so it goes
     fn straighten(&mut self) {
+        self.take_pending();
         self.cells = self.measure_length * self.bars;
         self.units[..self.cells].fill(STRAIGHT_UNITS);
         for (cell, start) in self.bar_start[..self.cells].iter_mut().enumerate() {
@@ -107,17 +124,59 @@ impl Pattern {
         if filled != 0 || bars != self.bars {
             return false;
         }
-        // The next cell keeps its time from the pattern start: the first new cell starting there or after it
+        // A layout that changes the beat now playing waits for its end; any other takes over now
         let at = self.next_start();
+        let due = (at + BEAT_UNITS - 1) / BEAT_UNITS * BEAT_UNITS;
+        if due != at && due <= self.pass() && !self.same_cells(units, at, due) {
+            if self.pending.is_none() {
+                for (pending, track) in self.pending_steps.iter_mut().zip(&self.tracks) {
+                    *pending = track.steps;
+                }
+            }
+            self.pending = Some(due);
+            self.pending_units[..units.len()].copy_from_slice(units);
+            self.pending_bar_start = bar_start;
+            self.pending_cells = units.len();
+            return true;
+        }
+        self.pending = None;
         self.units[..units.len()].copy_from_slice(units);
         self.bar_start = bar_start;
         self.cells = units.len();
+        self.move_to(at);
+        true
+    }
+
+    // Whether `units` holds the same cells as the playing layout from `from` to `to`
+    fn same_cells(&self, units: &[u8], from: usize, to: usize) -> bool {
+        cells_between(&self.units[..self.cells], from, to).eq(cells_between(units, from, to))
+    }
+
+    // The next cell keeps its time from the pattern start: the first cell starting there or after it
+    fn move_to(&mut self, at: usize) {
         self.step_index = 0;
         while self.step_index < self.cells && self.next_start() < at {
             self.step_index += 1;
         }
         self.keep_step_in_pattern();
-        true
+    }
+
+    // The waiting layout and its grids take over, if one waits
+    fn take_pending(&mut self) {
+        if self.pending.take().is_none() {
+            return;
+        }
+        self.units = self.pending_units;
+        self.bar_start = self.pending_bar_start;
+        self.cells = self.pending_cells;
+        for (track, pending) in self.tracks.iter_mut().zip(&self.pending_steps) {
+            track.steps = *pending;
+        }
+    }
+
+    // One pass over every bar, in twelfths of a sixteenth
+    fn pass(&self) -> usize {
+        self.measure_length * self.bars * STRAIGHT_UNITS as usize
     }
 
     // When the next cell starts, in twelfths of a sixteenth from the pattern start
@@ -127,7 +186,7 @@ impl Pattern {
 
     // How long a wait that ended at `at` must go on for the next cell to start, in twelfths of a sixteenth
     pub fn wait_from(&self, at: usize) -> usize {
-        let pass = self.measure_length * self.bars * STRAIGHT_UNITS as usize;
+        let pass = self.pass();
         (self.next_start() + pass - at) % pass
     }
 
@@ -137,8 +196,9 @@ impl Pattern {
         }
     }
 
-    // The next step plays bar 1
+    // The next step plays bar 1, in the newest layout
     pub fn restart(&mut self) {
+        self.take_pending();
         self.step_index = 0;
     }
 
@@ -155,8 +215,15 @@ impl Pattern {
         self.units[self.step_index]
     }
 
+    // The playing beat ends where a waiting layout is due, and the next cell is the new layout's
     pub fn advance(&mut self) {
         self.step_index = (self.step_index + 1) % self.length();
+        if let Some(due) = self.pending {
+            if self.next_start() == due % self.pass() {
+                self.take_pending();
+                self.move_to(due % self.pass());
+            }
+        }
     }
 
     pub fn index(&self) -> usize {
@@ -170,6 +237,16 @@ impl Pattern {
     fn length(&self) -> usize {
         self.cells
     }
+}
+
+// Each cell's start and length, for the cells that start from `from` up to `to`
+fn cells_between(units: &[u8], from: usize, to: usize) -> impl Iterator<Item = (usize, u8)> + '_ {
+    let cells = units.iter().scan(0, |start, &unit| {
+        let cell = (*start, unit);
+        *start += unit as usize;
+        Some(cell)
+    });
+    cells.filter(move |&(start, _)| start >= from && start < to)
 }
 
 #[cfg(test)]
@@ -278,16 +355,48 @@ mod tests {
     }
 
     #[test]
-    fn units_past_the_end_return_the_step_to_the_start() {
+    fn new_units_keep_the_next_cell_on_its_time() {
         let mut pattern = Pattern::new();
+        // Cell 15 is past the triplets' 12 cells: it plays out its beat, and bar 1 starts the triplets
         pattern.step_index = 15;
         assert!(pattern.set_step_units(&bar_units(&[3, 3, 3, 3])));
-        assert_eq!(pattern.index(), 0);
-        // Cell 10 of the triplets starts at 160 twelfths: the first new cell from there starts at 168 (TUP-40)
+        assert_eq!(pattern.index(), 15);
+        pattern.advance();
+        assert_eq!((pattern.index(), pattern.length()), (0, 12));
+        // Cell 10 of the triplets starts at 160 twelfths, in beat 4. A re-lay of beat 1 takes over now,
+        // on the cell that starts at 160 in the new layout
         pattern.step_index = 10;
+        assert!(pattern.set_step_units(&bar_units(&[6, 3, 3, 3])));
+        assert_eq!(pattern.index(), 13);
+        assert_eq!(pattern.wait_from(160), 0);
+    }
+
+    #[test]
+    fn tup_40_a_re_lay_of_the_playing_beat_waits_with_its_grids() {
+        let mut pattern = Pattern::new();
+        assert!(pattern.set_step_units(&bar_units(&[3, 3, 3, 3])));
+        assert!(pattern.update_grid(1, &[1; 12]));
+        pattern.step_index = 10; // Beat 4's second triplet cell
+
+        // Beat 4 becomes sixteenths: the triplet and its grid play out, the new ones wait for bar 1
+        assert!(pattern.set_step_units(&bar_units(&[4, 4, 4, 4])));
+        assert!(pattern.update_grid(1, &[2; 16]));
+        assert_eq!((pattern.index(), pattern.units(), pattern.step(1), pattern.length()), (10, 16, 1, 12));
+        pattern.advance();
+        assert_eq!((pattern.index(), pattern.units(), pattern.step(1)), (11, 16, 1));
+        pattern.advance();
+        assert_eq!((pattern.index(), pattern.units(), pattern.step(1), pattern.length()), (0, 12, 2, 16));
+
+        // A change of length drops a waiting layout; a restart takes it now
+        pattern.step_index = 2;
         assert!(pattern.set_step_units(&bar_units(&[6, 4, 4, 4])));
-        assert_eq!(pattern.index(), 16);
-        assert_eq!(pattern.wait_from(160), 8);
+        assert_eq!(pattern.length(), 16);
+        pattern.restart();
+        assert_eq!((pattern.index(), pattern.units(), pattern.length()), (0, 8, 18));
+        pattern.step_index = 3;
+        assert!(pattern.set_step_units(&bar_units(&[4, 4, 4, 4])));
+        assert!(pattern.set_measure_length(12));
+        assert_eq!((pattern.length(), pattern.units()), (12, 12));
     }
 
     #[test]
