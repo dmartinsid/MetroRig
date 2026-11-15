@@ -81,6 +81,23 @@ const gp6Score = score(
   '<Track id="1"><Name>Drums</Name><Instrument ref="drmkt" /></Track>',
 );
 
+// One 4/4 measure of sixteenths in Guitar Pro 6, a note on each of these Element and Variation pairs, then rests
+const GP6_KIT: [number, number][] = [[5, 0], [6, 0], [7, 0], [8, 0], [9, 0], [12, 0], [12, 2], [13, 0], [13, 2], [15, 0], [15, 1], [15, 2]];
+const gp6KitScore = `<?xml version="1.0" encoding="utf-8"?>
+<GPIF>
+<MasterTrack><Automations><Automation><Type>Tempo</Type><Bar>0</Bar><Value>100 2</Value></Automation></Automations></MasterTrack>
+<Tracks><Track id="0"><Name>Drums</Name><Instrument ref="drmkt" /></Track></Tracks>
+<MasterBars><MasterBar><Time>4/4</Time><Bars>0</Bars></MasterBar></MasterBars>
+<Bars><Bar id="0"><Voices>0 -1 -1 -1</Voices></Bar></Bars>
+<Voices><Voice id="0"><Beats>${Array.from({ length: 16 }, (_, beat) => beat).join(' ')}</Beats></Voice></Voices>
+<Beats>${Array.from({ length: 16 }, (_, beat) =>
+  `<Beat id="${beat}"><Rhythm ref="0" />${beat < GP6_KIT.length ? `<Notes>${beat}</Notes>` : ''}</Beat>`).join('')}</Beats>
+<Notes>${GP6_KIT.map(([element, variation], note) =>
+  `<Note id="${note}"><Properties><Property name="Element"><Element>${element}</Element></Property><Property name="Variation"><Variation>${variation}</Variation></Property></Properties></Note>`).join('')}</Notes>
+<Rhythms><Rhythm id="0"><NoteValue>16th</NoteValue></Rhythm></Rhythms>
+</GPIF>
+`;
+
 // A zip holding Content/score.gpif, stored without compression
 function gpFile(gpif: string): Buffer {
   const name = Buffer.from('Content/score.gpif');
@@ -244,6 +261,16 @@ describe('gp_extract', () => {
       Buffer.from('!'),
     ], 15));
     expect(decodeBcfz(copies).toString('latin1')).toBe('abcdefabcXYYbc!');
+
+    // Guitar Pro 6's toms, crashes and ride follow alphaTab's table (Q18), and land on MetroRig's pieces
+    const kit = extract(write('kit.gpx', bcfz(bcfs(gp6KitScore))), 0, 1);
+    const frets = kit.measures[0].voices[0].beats.flatMap((beat: { notes: { fret?: number }[] }) => beat.notes.map(note => note.fret ?? null));
+    expect(frets).toEqual([43, 45, 47, 48, 50, 57, 57, 49, 49, 51, 93, 127, null, null, null, null]);
+    const kitGrid = barsToGrid(kit, 0, 1);
+    const pieceOn = (cell: number) => Number(Object.keys(kitGrid.tracks).find(track => kitGrid.tracks[track][cell] > 0));
+    const FLOOR_TOM = 10, LOW_TOM = 12, MID_TOM = 11, HIGH_TOM = 9, CRASH = 7, RIDE = 5, RIDE_BELL = 6;
+    expect(GP6_KIT.map((_, cell) => pieceOn(cell))).toEqual(
+      [FLOOR_TOM, LOW_TOM, MID_TOM, MID_TOM, HIGH_TOM, CRASH, CRASH, CRASH, CRASH, RIDE, RIDE, RIDE_BELL]);
   });
 
   it('refuses a file with no drum track or too few measures', () => {
