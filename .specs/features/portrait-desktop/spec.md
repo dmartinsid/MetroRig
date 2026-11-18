@@ -136,5 +136,5 @@ Proof: run mobile | ✓ tests/mobile/phone.test.ts > Mobile App > prt_07 desktop
 ## Handoff
 
 **Settled mid-build:** none
-**Dispatched:** none
+**Dispatched:** Verifier at 3044adc, returned with 1 finding, closed at 6e5c676
 **Walked:** Headless Chrome on the Vite dev server (no sign-in or seed data; screens opened via `#nav-*`). At 1080 × 1920 and 900 × 1600: Stadium opened with the compact two-row header, full-width panel (1048 px at 1080, 868 px at 900) above a 1:1 square beat clock (1048 × 1048 and 868 × 868) and legend above the fixed PLAY bar and bottom tab bar (`scrollWidth === width`), clicking `+` twice stepped tempo to `122.0`. Editor stacked in one column with one-row figure palette, full-width 16-step grid (`maxScroll: 0`), two-column mix cards, fixed transport bar (showing `122` then `123` on `+`) above the tab bar. Grooves (`1` song column, `scrollWidth: 1080`) and Improv (`6` root columns, `scrollWidth: 1080`) fit without overflow. At 1280 × 800, desktop header links, two-column Stadium (560 × 560 clock beside 576 px panel with static PLAY inside), and two-column Editor returned unchanged.

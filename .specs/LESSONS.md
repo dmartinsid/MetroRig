@@ -392,6 +392,12 @@ Seen once or not yet corroborated. Tracked, not trusted.
 - evidence: tests/mobile/phone.test.ts:21 (tests/mobile)
 - last seen: 2026-11-14T21:34:49Z
 
+### L-064 - Trigger every conditionally revealed UI state, such as an edit toast, before measuring all visible controls on a screen.
+- signal: `weak_test` · recurrence: 1 feature(s) · scope: `tests/mobile` · harmful: 0
+- features: portrait-desktop
+- evidence: C5 (tests/mobile/phone.test.ts) (tests/mobile)
+- last seen: 2026-11-18T03:25:07Z
+
 ## Quarantined (failed when applied - ignore)
 
 A confirmed lesson that recurred alongside failure. Kept for the maintainer to review.

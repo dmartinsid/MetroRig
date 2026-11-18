@@ -3,7 +3,7 @@
   "promote_threshold": 2,
   "window_days": 45,
   "quarantine_threshold": 2,
-  "next_id": 64,
+  "next_id": 65,
   "lessons": [
     {
       "id": "L-001",
@@ -1139,6 +1139,24 @@
       ],
       "created": "2026-11-14T21:34:49Z",
       "last_seen": "2026-11-14T21:34:49Z"
+    },
+    {
+      "id": "L-064",
+      "key": "weak_test::trigger every conditionally revealed ui state such as an edit toast before measuring all visible controls on a screen",
+      "text": "Trigger every conditionally revealed UI state, such as an edit toast, before measuring all visible controls on a screen.",
+      "signal": "weak_test",
+      "scope": "tests/mobile",
+      "status": "candidate",
+      "features": [
+        "portrait-desktop"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "C5 (tests/mobile/phone.test.ts) (tests/mobile)"
+      ],
+      "created": "2026-11-18T03:25:07Z",
+      "last_seen": "2026-11-18T03:25:07Z"
     }
   ]
 }
