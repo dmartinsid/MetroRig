@@ -1793,7 +1793,7 @@ select:focus {
   }
 }
 
-@media (max-width: 767px) {
+@media (max-width: 767px), (max-aspect-ratio: 3/4) {
   /* iOS Safari zooms the page on focusing a field with text under 16 px */
   #app input,
   #app select {
@@ -1801,6 +1801,7 @@ select:focus {
   }
 
   #editor-view {
+    grid-template-columns: minmax(0, 1fr);
     padding: 1rem;
   }
 
@@ -1919,6 +1920,7 @@ select:focus {
   /* Static, with no backdrop filter: a filtered ancestor would pin the tab bar to the header instead of the window */
   header {
     position: static;
+    flex-wrap: wrap;
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
     padding: calc(0.75rem + env(safe-area-inset-top)) 0.75rem 0.75rem;
@@ -1964,6 +1966,7 @@ select:focus {
   .stadium-panel {
     order: -1;
     flex: none;
+    max-width: none;
     display: grid;
     /* The timer keeps its width; the Trainer status takes the rest and wraps, so a long routine never covers the time */
     grid-template-columns: auto minmax(0, 1fr);
@@ -2013,6 +2016,7 @@ select:focus {
     flex: 1 1 0;
     min-height: 0;
     justify-content: center;
+    container-type: inline-size;
   }
 
   /* Square, as tall as the column lets it be and never wider than the screen */
@@ -2021,6 +2025,7 @@ select:focus {
     min-height: 0;
     width: auto;
     max-width: 100%;
+    max-height: 100cqi;
     height: auto;
     aspect-ratio: 1;
   }
@@ -2445,7 +2450,7 @@ select:focus {
 }
 
 /* When the room above Play can't hold a usable clock, stadium.ts marks the view and the clock keeps a floor below the controls, reached by scrolling */
-@media (max-width: 767px) {
+@media (max-width: 767px), (max-aspect-ratio: 3/4) {
   #stadium-view[data-clock="scroll"] .clock-column {
     flex: none;
     min-height: 280px;
@@ -2478,7 +2483,7 @@ select:focus {
     #000 calc(var(--fade-start) + 2rem), #000 calc(100% - 2rem), var(--fade-right) 100%);
 }
 
-@media (max-width: 767px) {
+@media (max-width: 767px), (max-aspect-ratio: 3/4) {
   .grid-scroller {
     --fade-start: calc(var(--names-w) + 0.4rem);
   }

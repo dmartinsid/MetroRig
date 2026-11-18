@@ -750,4 +750,251 @@ describe('Mobile App', () => {
       }
     }
   });
+
+  it('prt_01 no sideways page scroll on portrait desktop windows', async () => {
+    for (const [width, height] of [[540, 960], [720, 1280], [900, 1600], [1080, 1800], [1080, 1920], [768, 1024]] as const) {
+      const page = await openScreen('stadium', width, height);
+      for (const screen of ['editor', 'stadium', 'grooves', 'improv'] as Screen[]) {
+        await page.click(`#nav-${screen}`);
+        await page.waitForSelector(`#${screen}-view:not(.hidden)`);
+        const scrollWidth = await page.evaluate(() => Math.max(document.documentElement.scrollWidth, document.body.scrollWidth));
+        expect([width, height, screen, scrollWidth]).toEqual([width, height, screen, width]);
+      }
+      await page.context().close();
+    }
+  });
+
+  it('prt_02 compact header and fixed bottom tab bar on portrait desktop', async () => {
+    for (const [width, height] of [[768, 1024], [900, 1600], [1080, 1800], [1080, 1920]] as const) {
+      const page = await openScreen('stadium', width, height);
+      for (const screen of ['editor', 'stadium', 'grooves', 'improv'] as Screen[]) {
+        await page.click(`#nav-${screen}`);
+        await page.waitForSelector(`#${screen}-view:not(.hidden)`);
+        const header = (await box(page, 'header'))!;
+        const logo = (await box(page, '.logo'))!;
+        const click = (await box(page, '#click-sound-selector'))!;
+        const preset = (await box(page, '#preset-selector'))!;
+        expect([width, height, screen, click.top >= logo.bottom, preset.top >= logo.bottom]).toEqual([width, height, screen, true, true]);
+        expect(Math.abs(click.top - preset.top)).toBeLessThan(2);
+        expect(click.right).toBeLessThanOrEqual(preset.left);
+        expect(click.bottom).toBeLessThanOrEqual(header.bottom);
+        expect(preset.bottom).toBeLessThanOrEqual(header.bottom);
+        for (const tab of await tabs(page)) expect([screen, tab.name, tab.top >= header.bottom]).toEqual([screen, tab.name, true]);
+
+        for (const scrolled of [false, true]) {
+          if (scrolled) await scrollToEnd(page);
+          const bar = (await box(page, '.view-nav'))!;
+          expect([width, height, screen, scrolled, bar.bottom, bar.left, bar.right]).toEqual([width, height, screen, scrolled, height, 0, width]);
+          const shown = await tabs(page);
+          expect(shown.map(tab => [tab.name, tab.icon])).toEqual([['Stadium', true], ['Editor', true], ['Grooves', true], ['Improv', true]]);
+          for (const tab of shown) {
+            expect(tab.top).toBeGreaterThanOrEqual(bar.top);
+            expect(tab.bottom).toBeLessThanOrEqual(bar.bottom);
+            expect(tab.top).toBe(shown[0].top);
+          }
+          expect(shown.map(tab => tab.left)).toEqual([...shown.map(tab => tab.left)].sort((a, b) => a - b));
+        }
+        await page.evaluate(() => window.scrollTo(0, 0));
+      }
+      await page.context().close();
+    }
+  });
+
+  it('prt_03 stadium full-width panel, square clock and fixed play on 9:16 desktop', async () => {
+    for (const [width, height] of [[900, 1600], [1080, 1800], [1080, 1920]] as const) {
+      const page = await openScreen('stadium', width, height);
+      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+      expect([width, height, await page.evaluate(() => window.scrollY)]).toEqual([width, height, 0]);
+      const layout = await page.evaluate(() => {
+        const display = document.querySelector<HTMLElement>('.stadium-display')!;
+        const style = getComputedStyle(display);
+        const rect = display.getBoundingClientRect();
+        const panel = document.querySelector<HTMLElement>('.stadium-panel')!.getBoundingClientRect();
+        return {
+          innerLeft: rect.left + parseFloat(style.paddingLeft),
+          innerRight: rect.right - parseFloat(style.paddingRight),
+          panelLeft: panel.left,
+          panelRight: panel.right,
+        };
+      });
+      expect(Math.abs(layout.panelLeft - layout.innerLeft)).toBeLessThan(1);
+      expect(Math.abs(layout.panelRight - layout.innerRight)).toBeLessThan(1);
+
+      const clock = (await box(page, '.beat-clock'))!;
+      for (const selector of STADIUM_CONTROLS) {
+        const part = (await box(page, selector))!;
+        expect([width, height, selector, part.bottom <= clock.top]).toEqual([width, height, selector, true]);
+      }
+
+      const playAtZero = (await box(page, '#btn-stadium-play'))!;
+      for (const selector of ['#btn-stadium-bpm-down', '#stadium-bpm', '#btn-stadium-bpm-up', '.orb-row', '.beat-clock', '.clock-legend']) {
+        const part = (await box(page, selector))!;
+        expect([width, height, selector, part.top >= 0, part.left >= 0, part.right <= width, part.bottom <= playAtZero.top])
+          .toEqual([width, height, selector, true, true, true, true]);
+      }
+      const legend = (await box(page, '.clock-legend'))!;
+      expect([width, height, clock.width >= 200, Math.abs(clock.width - clock.height) <= 1, legend.top >= clock.bottom && legend.top - clock.bottom <= 8])
+        .toEqual([width, height, true, true, true]);
+
+      for (const scrolled of [false, true]) {
+        if (scrolled) await scrollToEnd(page);
+        const tabBar = (await box(page, '.view-nav'))!;
+        const play = (await box(page, '#btn-stadium-play'))!;
+        expect([width, height, scrolled, play.bottom <= tabBar.top, tabBar.top - play.bottom <= 8.5, play.left >= 0, play.right <= width, play.height >= 44])
+          .toEqual([width, height, scrolled, true, true, true, true, true]);
+      }
+      await page.context().close();
+    }
+  });
+
+  it('prt_04 editor single column, transport bar, one-row palette and sticky grid on portrait desktop', async () => {
+    for (const [width, height] of [[768, 1024], [900, 1600], [1080, 1800], [1080, 1920]] as const) {
+      const page = await openScreen('editor', width, height);
+      const seq = (await box(page, '.sequencer-column'))!;
+      const controls = (await box(page, '.controls-container'))!;
+      expect([width, height, controls.top >= seq.bottom, Math.abs(seq.left - controls.left) < 1, Math.abs(seq.width - controls.width) < 1])
+        .toEqual([width, height, true, true, true]);
+
+      for (const scrolled of [false, true]) {
+        if (scrolled) await scrollToEnd(page);
+        const tabBar = (await box(page, '.view-nav'))!;
+        const transport = (await box(page, '#transport-bar'))!;
+        expect([width, height, scrolled, transport.bottom, transport.left, transport.right]).toEqual([width, height, scrolled, tabBar.top, 0, width]);
+        const parts = await page.evaluate(() => ['#transport-bpm-down', '#transport-bpm', '#transport-bpm-up', '#transport-play'].map(selector => {
+          const element = document.querySelector<HTMLElement>(selector)!;
+          const { top, bottom, left, right, width } = element.getBoundingClientRect();
+          return { text: element.innerText.trim(), top, bottom, left, right, width };
+        }));
+        expect(parts.map(part => part.text)).toEqual(['−', '120', '+', '▶ PLAY']);
+        for (const part of parts) {
+          expect(part.width).toBeGreaterThan(0);
+          expect(part.top).toBeGreaterThanOrEqual(transport.top);
+          expect(part.bottom).toBeLessThanOrEqual(transport.bottom);
+          expect(part.right).toBeLessThanOrEqual(width);
+        }
+        for (let i = 1; i < parts.length; i++) expect(parts[i].left).toBeGreaterThanOrEqual(parts[i - 1].right);
+      }
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+
+      const palette = await page.evaluate(() => {
+        const element = document.getElementById('figure-palette')!;
+        const chips = [...element.querySelectorAll<HTMLElement>('.figure-btn')].map(chip => chip.getBoundingClientRect().top);
+        return { chips, overflow: getComputedStyle(element).overflowX };
+      });
+      expect(palette.chips).toHaveLength(11);
+      for (const top of palette.chips) expect(top).toBe(palette.chips[0]);
+      expect(['auto', 'scroll']).toContain(palette.overflow);
+
+      if (width === 1080 && height === 1920) {
+        expect((await grid(page)).maxScroll).toBe(0);
+        expect(await fadeDrawn(page, 'left')).toBe(false);
+        expect(await fadeDrawn(page, 'right')).toBe(false);
+      }
+
+      await page.fill('#time-sig-num', '8');
+      await page.locator('#time-sig-num').dispatchEvent('change');
+      await page.waitForFunction(() => document.querySelectorAll('.step-count').length === 32);
+      // Filling #time-sig-num below the sequencer scrolls the page down, so return to the top before clipping the grid
+      await page.evaluate(() => window.scrollTo(0, 0));
+      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+      await settle(page, '.grid-scroller');
+      const wideStart = await grid(page);
+      expect([width, height, wideStart.maxScroll > 0]).toEqual([width, height, true]);
+      expect(await fadeDrawn(page, 'left')).toBe(false);
+      expect(await fadeDrawn(page, 'right')).toBe(true);
+      await scrollGridTo(page, 1e6);
+      const wideEnd = await grid(page);
+      expect(wideEnd.scrollLeft).toBeGreaterThan(0);
+      expect(Math.abs(wideEnd.scrollLeft - wideEnd.maxScroll)).toBeLessThan(1);
+      for (const name of wideEnd.names) {
+        expect([width, height, name.name, Math.abs(name.left - wideEnd.edge) < 0.5, name.onTop]).toEqual([width, height, name.name, true, true]);
+      }
+      expect(await fadeDrawn(page, 'left')).toBe(true);
+      expect(await fadeDrawn(page, 'right')).toBe(false);
+
+      await page.context().close();
+    }
+  });
+
+  it('prt_05 touch targets 44 px, step cells 32 px and fields 16 px on portrait desktop', async () => {
+    for (const [width, height] of [[768, 1024], [900, 1600], [1080, 1920]] as const) {
+      const page = await openScreen('stadium', width, height);
+      for (const screen of ['editor', 'stadium', 'grooves', 'improv'] as Screen[]) {
+        await page.click(`#nav-${screen}`);
+        await page.waitForSelector(`#${screen}-view:not(.hidden)`);
+        if (screen === 'editor') {
+          await page.evaluate(() => {
+            const preset = document.querySelector<HTMLSelectElement>('#preset-selector')!;
+            preset.value = 'song:song_battery';
+            preset.dispatchEvent(new Event('change'));
+            const body = document.getElementById('trainer-body')!;
+            if (body.getBoundingClientRect().height === 0) document.getElementById('trainer-toggle')!.click();
+          });
+          await page.waitForSelector('#bar-selector:not([hidden])');
+          await page.waitForTimeout(400);
+        }
+        const { controls, cells } = await targets(page);
+        expect(controls.length).toBeGreaterThan(3);
+        for (const { control, width: controlWidth, height: controlHeight } of controls) {
+          expect([width, height, screen, control, controlWidth >= 44, controlHeight >= 44]).toEqual([width, height, screen, control, true, true]);
+        }
+        if (screen === 'editor') {
+          expect(cells.length).toBeGreaterThan(0);
+          for (const { width: cellWidth, height: cellHeight } of cells) expect([cellWidth >= 32, cellHeight >= 32]).toEqual([true, true]);
+        }
+        const sizes = await computed(page, 'input, select', 'font-size');
+        expect(sizes.length).toBeGreaterThan(10);
+        for (const [field, size] of sizes) expect([width, height, screen, field, parseFloat(size) >= 16]).toEqual([width, height, screen, field, true]);
+      }
+      await page.context().close();
+    }
+  });
+
+  it('prt_06 last element clears the fixed bars on portrait desktop', async () => {
+    for (const [width, height] of [[768, 1024], [900, 1600], [1080, 1920]] as const) {
+      const page = await openScreen('stadium', width, height);
+      for (const screen of ['editor', 'stadium', 'grooves', 'improv'] as Screen[]) {
+        await page.click(`#nav-${screen}`);
+        await page.waitForSelector(`#${screen}-view:not(.hidden)`);
+        await scrollToEnd(page);
+        const bar = (await box(page, screen === 'editor' ? '#transport-bar' : screen === 'stadium' ? '#btn-stadium-play' : '.view-nav'))!;
+        const view = (await box(page, `#${screen}-view`))!;
+        const footer = (await box(page, '.status-bar'))!;
+        expect([width, height, screen, view.bottom <= bar.top + 0.5, footer.bottom <= bar.top + 0.5]).toEqual([width, height, screen, true, true]);
+        await page.evaluate(() => window.scrollTo(0, 0));
+      }
+      await page.context().close();
+    }
+  });
+
+  it('prt_07 desktop windows wider than 3:4 keep the desktop layout', async () => {
+    for (const [width, height] of [[768, 800], [769, 1024], [900, 600], [1280, 800], [1920, 1080]] as const) {
+      const page = await openScreen('stadium', width, height);
+      for (const screen of ['editor', 'stadium', 'grooves', 'improv'] as Screen[]) {
+        await page.click(`#nav-${screen}`);
+        await page.waitForSelector(`#${screen}-view:not(.hidden)`);
+        const header = (await box(page, 'header'))!;
+        const shown = await tabs(page);
+        expect(shown.map(tab => [tab.name, tab.icon])).toEqual([['Stadium', false], ['Editor', false], ['Grooves', false], ['Improv', false]]);
+        for (const tab of shown) {
+          expect(tab.top).toBeGreaterThanOrEqual(header.top);
+          expect(tab.bottom).toBeLessThanOrEqual(header.bottom);
+        }
+        const pinned = await page.evaluate(() => [...document.querySelectorAll<HTMLElement>('body *')]
+          .filter(element => getComputedStyle(element).position === 'fixed' && element.getBoundingClientRect().height > 0)
+          .map(element => element.id || element.className));
+        expect([width, height, screen, pinned]).toEqual([width, height, screen, []]);
+        expect([width, height, screen, await box(page, '#transport-bar')]).toEqual([width, height, screen, null]);
+        if (screen === 'stadium') {
+          const panel = (await box(page, '.stadium-panel'))!;
+          const play = (await box(page, '#btn-stadium-play'))!;
+          expect([width, height, play.top >= panel.top, play.bottom <= panel.bottom, play.left >= panel.left, play.right <= panel.right])
+            .toEqual([width, height, true, true, true, true]);
+          expect([width, height, await page.evaluate(() => getComputedStyle(document.getElementById('btn-stadium-play')!).position)]).toEqual([width, height, 'static']);
+        }
+      }
+      await page.context().close();
+    }
+  });
 });
