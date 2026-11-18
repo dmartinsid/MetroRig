@@ -2269,6 +2269,7 @@ select:focus {
   .song-play,
   .song-open,
   .pad-stop,
+  .btn-save,
   .btn-subtle,
   .trainer-switch {
     min-height: 44px;
