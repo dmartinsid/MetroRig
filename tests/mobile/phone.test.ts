@@ -932,6 +932,8 @@ describe('Mobile App', () => {
             if (body.getBoundingClientRect().height === 0) document.getElementById('trainer-toggle')!.click();
           });
           await page.waitForSelector('#bar-selector:not([hidden])');
+          await page.evaluate(() => document.querySelector<HTMLElement>('#grid-container .step-cell')!.click());
+          await page.waitForFunction(() => document.getElementById('save-toast')!.getBoundingClientRect().height > 0);
           await page.waitForTimeout(400);
         }
         const { controls, cells } = await targets(page);
@@ -940,6 +942,7 @@ describe('Mobile App', () => {
           expect([width, height, screen, control, controlWidth >= 44, controlHeight >= 44]).toEqual([width, height, screen, control, true, true]);
         }
         if (screen === 'editor') {
+          expect(controls.some(c => c.control.includes('btn-save'))).toBe(true);
           expect(cells.length).toBeGreaterThan(0);
           for (const { width: cellWidth, height: cellHeight } of cells) expect([cellWidth >= 32, cellHeight >= 32]).toEqual([true, true]);
         }
