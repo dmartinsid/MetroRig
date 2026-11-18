@@ -252,3 +252,11 @@
 - **Scope**: mobile-app; Stadium screen at 767 px and narrower
 - **Date**: 2026-11-14
 - **Status**: active (AD-031)
+
+### AD-032
+- **Decision**: The phone layout of `mobile-app` applies when the window is 767 px wide or narrower, or has an aspect ratio of 3:4 or narrower (`@media (max-width: 767px), (max-aspect-ratio: 3/4)`). On 9:16 and portrait windows up to 3:4 at 768 px and wider, the four screens use the full-width phone layout: bottom tab bar, compact two-row header, Stadium controls on top with a square beat clock below and Play fixed above the tab bar, Editor in one column with its fixed transport bar, sticky track names and one-row figure palette, and 44 px touch targets (32 px step cells). Windows 768 px and wider that are wider than 3:4 keep the desktop layout.
+- **Reason**: Q1: "Sim, usamos a opção A (`max-width: 767px` ou `max-aspect-ratio: 3/4`)?" Q2: "Sim, seguimos com a opção A (layout mobile ocupando a largura da janela 9:16)?" Q3: "Sim, aplicamos a experiência completa do mobile (opção A)?" The user answered "recomendacoes". A 1080 × 1920 desktop window opened with browser bars sits around 1080 × 1800 (9.6:16), which `max-aspect-ratio: 3/4` covers while leaving landscape and near-square desktop windows untouched.
+- **Trade-off**: A tall, narrow desktop window up to 3:4 gets the bottom tab bar and single-column layout instead of the two-column desktop view.
+- **Scope**: portrait-desktop, mobile-app; `src/ui/index.css`. Amends the 768 px boundary of MOB-04 to MOB-06, MOB-11 to MOB-13, MOB-23, MOB-27, MOB-40 and MOB-43 to MOB-49
+- **Date**: 2026-11-17
+- **Status**: active (AD-032)
