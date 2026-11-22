@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, afterAll, afterEach, inject } from 'vi
 import { chromium, type Browser, type Page } from 'playwright-core';
 
 type Screen = 'editor' | 'stadium' | 'grooves' | 'improv';
+const SCREENS: Screen[] = ['editor', 'stadium', 'grooves', 'improv'];
 
 let browser: Browser;
 const pages: Page[] = [];
@@ -31,10 +32,32 @@ async function openScreen(screen: Screen, width: number, height = 800): Promise<
   await page.goto(inject('baseUrl'));
   // The grid is drawn whichever screen opens first (Stadium on a first visit, AD-030)
   await page.waitForSelector('#grid-container .step-cell', { state: 'attached' });
-  await page.click(`#nav-${screen}`);
-  await page.waitForSelector(`#${screen}-view:not(.hidden)`);
+  await switchScreen(page, screen);
   await page.evaluate(() => document.fonts.ready.then(() => undefined));
   return page;
+}
+
+// Taps a screen's tab and waits for its view to show
+async function switchScreen(page: Page, screen: Screen) {
+  await page.click(`#nav-${screen}`);
+  await page.waitForSelector(`#${screen}-view:not(.hidden)`);
+}
+
+// Waits two frames, so layout and the observers that react to it have run
+async function twoFrames(page: Page) {
+  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+}
+
+// Loads a song and opens the trainer, so the Editor controls it folds away are measured too
+async function openEditorTrainer(page: Page) {
+  await page.evaluate(() => {
+    const preset = document.querySelector<HTMLSelectElement>('#preset-selector')!;
+    preset.value = 'song:song_battery';
+    preset.dispatchEvent(new Event('change'));
+    const body = document.getElementById('trainer-body')!;
+    if (body.getBoundingClientRect().height === 0) document.getElementById('trainer-toggle')!.click();
+  });
+  await page.waitForSelector('#bar-selector:not([hidden])');
 }
 
 // Every button, tab, step cell and pad on the page: the controls a thumb taps or long-presses
@@ -63,7 +86,7 @@ function box(page: Page, selector: string): Promise<Box | null> {
 
 async function scrollToEnd(page: Page) {
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
-  await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  await twoFrames(page);
 }
 
 // What the tab bar shows: each tab's name, whether it draws an icon, and its box
@@ -240,6 +263,20 @@ function targets(page: Page) {
   });
 }
 
+// Every control on a screen is a 44 px target and, on the Editor, every step cell 32 px; `where` names the case in a failure
+async function expectTargets(page: Page, screen: Screen, where: unknown[]): Promise<string[]> {
+  const { controls, cells } = await targets(page);
+  expect(controls.length).toBeGreaterThan(3);
+  for (const { control, width, height } of controls) {
+    expect([...where, screen, control, width >= 44, height >= 44]).toEqual([...where, screen, control, true, true]);
+  }
+  if (screen === 'editor') {
+    expect(cells.length).toBeGreaterThan(0);
+    for (const { width, height } of cells) expect([...where, width >= 32, height >= 32]).toEqual([...where, true, true]);
+  }
+  return controls.map(({ control }) => control);
+}
+
 describe('Mobile App', () => {
   it('harness opens the editor at 375', async () => {
     const page = await openScreen('editor', 375);
@@ -248,7 +285,7 @@ describe('Mobile App', () => {
     expect(await page.locator('#grid-container .step-cell').count()).toBeGreaterThan(0);
   });
   it('mob_05 fields use 16 px text', async () => {
-    for (const screen of ['editor', 'stadium', 'grooves', 'improv'] as Screen[]) {
+    for (const screen of SCREENS) {
       const page = await openScreen(screen, 375);
       const sizes = await computed(page, 'input, select', 'font-size');
       expect(sizes.length).toBeGreaterThan(10);
@@ -316,7 +353,7 @@ describe('Mobile App', () => {
   });
 
   it('mob_10 last element clears the fixed bars', async () => {
-    for (const screen of ['editor', 'stadium', 'grooves', 'improv'] as Screen[]) {
+    for (const screen of SCREENS) {
       const page = await openScreen(screen, 375);
       await scrollToEnd(page);
       // In the Editor the transport bar, and on Stadium its Play button, sit on top of the tab bar, so the page must clear both
@@ -330,7 +367,7 @@ describe('Mobile App', () => {
 
   it('mob_11 desktop keeps header links', async () => {
     // 768 is the first desktop width, where the header is tightest
-    for (const [screen, width] of (['editor', 'stadium', 'grooves', 'improv'] as Screen[]).flatMap(screen => [768, 1280].map(width => [screen, width] as const))) {
+    for (const [screen, width] of SCREENS.flatMap(screen => [768, 1280].map(width => [screen, width] as const))) {
       const page = await openScreen(screen, width);
       const header = (await box(page, 'header'))!;
       const shown = await tabs(page);
@@ -358,7 +395,7 @@ describe('Mobile App', () => {
   });
 
   it('mob_12 compact top bar rows', async () => {
-    for (const screen of ['editor', 'stadium', 'grooves', 'improv'] as Screen[]) {
+    for (const screen of SCREENS) {
       const page = await openScreen(screen, 375);
       const header = (await box(page, 'header'))!;
       const logo = (await box(page, '.logo'))!;
@@ -493,7 +530,7 @@ describe('Mobile App', () => {
           routine.dispatchEvent(new Event('change'));
         });
       }
-      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+      await twoFrames(page);
       const clock = (await box(page, '.beat-clock'))!;
       expect([label, clock.width >= 200]).toEqual([label, true]);
       await scrollToEnd(page);
@@ -674,7 +711,7 @@ describe('Mobile App', () => {
 
   it('mob_01 no sideways page scroll at 360 375 390 430', async () => {
     for (const width of [360, 375, 390, 430]) {
-      for (const screen of ['editor', 'stadium', 'grooves', 'improv'] as Screen[]) {
+      for (const screen of SCREENS) {
         const page = await openScreen(screen, width);
         const scrollWidth = await page.evaluate(() => Math.max(document.documentElement.scrollWidth, document.body.scrollWidth));
         expect([width, screen, scrollWidth]).toEqual([width, screen, width]);
@@ -725,38 +762,22 @@ describe('Mobile App', () => {
 
   it('mob_04 touch targets 44 px and step cells 32 px', async () => {
     // 360 is the narrowest phone, 767 the widest window the phone layout applies to
-    for (const [screen, width] of (['editor', 'stadium', 'grooves', 'improv'] as Screen[]).flatMap(screen => [360, 375, 767].map(width => [screen, width] as const))) {
+    for (const [screen, width] of SCREENS.flatMap(screen => [360, 375, 767].map(width => [screen, width] as const))) {
       const page = await openScreen(screen, width);
       // Open what a screen folds away, so its controls are measured too
       if (screen === 'editor') {
-        await page.evaluate(() => {
-          const preset = document.querySelector<HTMLSelectElement>('#preset-selector')!;
-          preset.value = 'song:song_battery';
-          preset.dispatchEvent(new Event('change'));
-          const body = document.getElementById('trainer-body')!;
-          if (body.getBoundingClientRect().height === 0) document.getElementById('trainer-toggle')!.click();
-        });
-        await page.waitForSelector('#bar-selector:not([hidden])');
+        await openEditorTrainer(page);
         await page.waitForTimeout(400);
       }
-      const { controls, cells } = await targets(page);
-      expect(controls.length).toBeGreaterThan(3);
-      for (const { control, width, height } of controls) {
-        expect([screen, control, width >= 44, height >= 44]).toEqual([screen, control, true, true]);
-      }
-      if (screen === 'editor') {
-        expect(cells.length).toBeGreaterThan(0);
-        for (const { width, height } of cells) expect([width >= 32, height >= 32]).toEqual([true, true]);
-      }
+      await expectTargets(page, screen, [width]);
     }
   });
 
   it('prt_01 no sideways page scroll on portrait desktop windows', async () => {
     for (const [width, height] of [[540, 960], [720, 1280], [900, 1600], [1080, 1800], [1080, 1920], [768, 1024]] as const) {
       const page = await openScreen('stadium', width, height);
-      for (const screen of ['editor', 'stadium', 'grooves', 'improv'] as Screen[]) {
-        await page.click(`#nav-${screen}`);
-        await page.waitForSelector(`#${screen}-view:not(.hidden)`);
+      for (const screen of SCREENS) {
+        await switchScreen(page, screen);
         const scrollWidth = await page.evaluate(() => Math.max(document.documentElement.scrollWidth, document.body.scrollWidth));
         expect([width, height, screen, scrollWidth]).toEqual([width, height, screen, width]);
       }
@@ -767,9 +788,8 @@ describe('Mobile App', () => {
   it('prt_02 compact header and fixed bottom tab bar on portrait desktop', async () => {
     for (const [width, height] of [[768, 1024], [900, 1600], [1080, 1800], [1080, 1920]] as const) {
       const page = await openScreen('stadium', width, height);
-      for (const screen of ['editor', 'stadium', 'grooves', 'improv'] as Screen[]) {
-        await page.click(`#nav-${screen}`);
-        await page.waitForSelector(`#${screen}-view:not(.hidden)`);
+      for (const screen of SCREENS) {
+        await switchScreen(page, screen);
         const header = (await box(page, 'header'))!;
         const logo = (await box(page, '.logo'))!;
         const click = (await box(page, '#click-sound-selector'))!;
@@ -803,7 +823,7 @@ describe('Mobile App', () => {
   it('prt_03 stadium full-width panel, square clock and fixed play on 9:16 desktop', async () => {
     for (const [width, height] of [[900, 1600], [1080, 1800], [1080, 1920]] as const) {
       const page = await openScreen('stadium', width, height);
-      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+      await twoFrames(page);
       expect([width, height, await page.evaluate(() => window.scrollY)]).toEqual([width, height, 0]);
       const layout = await page.evaluate(() => {
         const display = document.querySelector<HTMLElement>('.stadium-display')!;
@@ -875,7 +895,7 @@ describe('Mobile App', () => {
         for (let i = 1; i < parts.length; i++) expect(parts[i].left).toBeGreaterThanOrEqual(parts[i - 1].right);
       }
       await page.evaluate(() => window.scrollTo(0, 0));
-      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+      await twoFrames(page);
 
       const palette = await page.evaluate(() => {
         const element = document.getElementById('figure-palette')!;
@@ -897,7 +917,7 @@ describe('Mobile App', () => {
       await page.waitForFunction(() => document.querySelectorAll('.step-count').length === 32);
       // Filling #time-sig-num below the sequencer scrolls the page down, so return to the top before clipping the grid
       await page.evaluate(() => window.scrollTo(0, 0));
-      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+      await twoFrames(page);
       await settle(page, '.grid-scroller');
       const wideStart = await grid(page);
       expect([width, height, wideStart.maxScroll > 0]).toEqual([width, height, true]);
@@ -920,32 +940,16 @@ describe('Mobile App', () => {
   it('prt_05 touch targets 44 px, step cells 32 px and fields 16 px on portrait desktop', async () => {
     for (const [width, height] of [[768, 1024], [900, 1600], [1080, 1920]] as const) {
       const page = await openScreen('stadium', width, height);
-      for (const screen of ['editor', 'stadium', 'grooves', 'improv'] as Screen[]) {
-        await page.click(`#nav-${screen}`);
-        await page.waitForSelector(`#${screen}-view:not(.hidden)`);
+      for (const screen of SCREENS) {
+        await switchScreen(page, screen);
         if (screen === 'editor') {
-          await page.evaluate(() => {
-            const preset = document.querySelector<HTMLSelectElement>('#preset-selector')!;
-            preset.value = 'song:song_battery';
-            preset.dispatchEvent(new Event('change'));
-            const body = document.getElementById('trainer-body')!;
-            if (body.getBoundingClientRect().height === 0) document.getElementById('trainer-toggle')!.click();
-          });
-          await page.waitForSelector('#bar-selector:not([hidden])');
+          await openEditorTrainer(page);
           await page.evaluate(() => document.querySelector<HTMLElement>('#grid-container .step-cell')!.click());
           await page.waitForFunction(() => document.getElementById('save-toast')!.getBoundingClientRect().height > 0);
           await page.waitForTimeout(400);
         }
-        const { controls, cells } = await targets(page);
-        expect(controls.length).toBeGreaterThan(3);
-        for (const { control, width: controlWidth, height: controlHeight } of controls) {
-          expect([width, height, screen, control, controlWidth >= 44, controlHeight >= 44]).toEqual([width, height, screen, control, true, true]);
-        }
-        if (screen === 'editor') {
-          expect(controls.some(c => c.control.includes('btn-save'))).toBe(true);
-          expect(cells.length).toBeGreaterThan(0);
-          for (const { width: cellWidth, height: cellHeight } of cells) expect([cellWidth >= 32, cellHeight >= 32]).toEqual([true, true]);
-        }
+        const controls = await expectTargets(page, screen, [width, height]);
+        if (screen === 'editor') expect(controls.some(control => control.includes('btn-save'))).toBe(true);
         const sizes = await computed(page, 'input, select', 'font-size');
         expect(sizes.length).toBeGreaterThan(10);
         for (const [field, size] of sizes) expect([width, height, screen, field, parseFloat(size) >= 16]).toEqual([width, height, screen, field, true]);
@@ -957,9 +961,8 @@ describe('Mobile App', () => {
   it('prt_06 last element clears the fixed bars on portrait desktop', async () => {
     for (const [width, height] of [[768, 1024], [900, 1600], [1080, 1920]] as const) {
       const page = await openScreen('stadium', width, height);
-      for (const screen of ['editor', 'stadium', 'grooves', 'improv'] as Screen[]) {
-        await page.click(`#nav-${screen}`);
-        await page.waitForSelector(`#${screen}-view:not(.hidden)`);
+      for (const screen of SCREENS) {
+        await switchScreen(page, screen);
         await scrollToEnd(page);
         const bar = (await box(page, screen === 'editor' ? '#transport-bar' : screen === 'stadium' ? '#btn-stadium-play' : '.view-nav'))!;
         const view = (await box(page, `#${screen}-view`))!;
@@ -974,9 +977,8 @@ describe('Mobile App', () => {
   it('prt_07 desktop windows wider than 3:4 keep the desktop layout', async () => {
     for (const [width, height] of [[768, 800], [769, 1024], [900, 600], [1280, 800], [1920, 1080]] as const) {
       const page = await openScreen('stadium', width, height);
-      for (const screen of ['editor', 'stadium', 'grooves', 'improv'] as Screen[]) {
-        await page.click(`#nav-${screen}`);
-        await page.waitForSelector(`#${screen}-view:not(.hidden)`);
+      for (const screen of SCREENS) {
+        await switchScreen(page, screen);
         const header = (await box(page, 'header'))!;
         const shown = await tabs(page);
         expect(shown.map(tab => [tab.name, tab.icon])).toEqual([['Stadium', false], ['Editor', false], ['Grooves', false], ['Improv', false]]);
