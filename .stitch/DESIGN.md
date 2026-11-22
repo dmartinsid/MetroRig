@@ -295,7 +295,7 @@ The hero of Stadium: an SVG up to 700px wide (`min(70vh, 90vw)`). Four concentri
 
 ### Stadium Readout
 
-A glass panel beside the clock, up to 576px wide: `SPEED TRAINER ROUTINE` selector (`Choose a speed trainer`), `ELAPSED REHEARSAL` timer `00:00:00`, tempo `120.0 BPM` with one decimal, status pill, orbs, Play.
+A glass panel beside the clock, up to 576px wide (full width above the clock in the phone layout): `SPEED TRAINER ROUTINE` selector (`Choose a speed trainer`), `ELAPSED REHEARSAL` timer `00:00:00`, tempo `120.0 BPM` with one decimal, status pill, orbs, Play.
 
 The pill is Cyber Yellow on a faint tint. It reads `Trainer Off`, or `Trainer 120 → 160 BPM · +5 every 4 bars` with a steady neon dot.
 
@@ -334,10 +334,10 @@ All beat-driven visuals are delayed by the device's reported output latency, so 
 
 - **1024px and up**: two columns in both modes.
 - **Under 1024px**: the Editor stacks the controls under the sequencer, and the Stadium stacks the clock above the readout.
-- **Under 768px**: the header wraps, the track mix becomes two columns, and the Stadium tempo drops to 5rem.
+- **767px or narrower, or 3:4 and narrower** (`@media (max-width: 767px), (max-aspect-ratio: 3/4)`): the phone layout, at any width, so 9:16 and portrait desktop windows get it too. All four screens go full width with a bottom tab bar and a compact two-row header. The Stadium puts its controls on top, a square beat clock below, and Play fixed above the tab bar. The Editor runs in one column with a fixed transport bar, sticky track names, a one-row figure palette and the track mix in two columns. Touch targets are at least 44px, step cells 32px.
 - **The grid**: step cells never go under 14px. If the grid doesn't fit, only the grid scrolls sideways.
 
-Orbs are 60px. Step cells are 32px tall.
+Windows 768px and wider that are wider than 3:4 keep the desktop layout. Orbs are 60px. Step cells are 32px tall.
 
 ## 6. Design System Notes for Stitch Generation
 
