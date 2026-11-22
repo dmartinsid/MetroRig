@@ -2448,10 +2448,8 @@ select:focus {
     font-size: 0.7rem;
     border-radius: var(--radius-control);
   }
-}
 
-/* When the room above Play can't hold a usable clock, stadium.ts marks the view and the clock keeps a floor below the controls, reached by scrolling */
-@media (max-width: 767px), (max-aspect-ratio: 3/4) {
+  /* When the room above Play can't hold a usable clock, stadium.ts marks the view and the clock keeps a floor below the controls, reached by scrolling */
   #stadium-view[data-clock="scroll"] .clock-column {
     flex: none;
     min-height: 280px;
