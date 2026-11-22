@@ -8,8 +8,8 @@ MetroRig's phone layout (`mobile-app`) only activates at `@media (max-width: 767
 
 ## Goals
 
-- [ ] Every 9:16 and portrait window up to a 3:4 aspect ratio (`max-aspect-ratio: 3/4`) gets the full-width phone experience across `Stadium`, `Editor`, `Grooves` and `Improv`, at any width.
-- [ ] Windows 768 px and wider that are wider than 3:4 keep today's desktop layout.
+- [x] Every 9:16 and portrait window up to a 3:4 aspect ratio (`max-aspect-ratio: 3/4`) gets the full-width phone experience across `Stadium`, `Editor`, `Grooves` and `Improv`, at any width.
+- [x] Windows 768 px and wider that are wider than 3:4 keep today's desktop layout.
 
 ## Out of Scope
 
@@ -94,8 +94,8 @@ MetroRig's phone layout (`mobile-app`) only activates at `@media (max-width: 767
 
 ## Success Criteria
 
-- [ ] At `900 × 1600`, `1080 × 1800` and `1080 × 1920`, all four screens show the mobile layout with full-width panels, a square Stadium clock above the fixed Play button, and no horizontal page overflow.
-- [ ] At `768 × 800` and `1280 × 800`, the desktop layout is unchanged.
+- [x] At `900 × 1600`, `1080 × 1800` and `1080 × 1920`, all four screens show the mobile layout with full-width panels, a square Stadium clock above the fixed Play button, and no horizontal page overflow.
+- [x] At `768 × 800` and `1280 × 800`, the desktop layout is unchanged.
 
 ---
 
